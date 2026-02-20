@@ -1,0 +1,1440 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Handy & Fiend — Premium handyman service in Los Angeles. Labor only, no markup on materials. Same-week availability.">
+  <title>Handy & Fiend | Premium Handyman Los Angeles</title>
+
+  <!-- PERF HINTS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com">
+  <link rel="preload" href="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200" as="image">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --navy:        #1B2B4B;
+      --yellow:      #F5C518;
+      --white:       #FFFFFF;
+      --gray:        #F4F6F9;
+      --text:        #1A1A1A;
+      --muted:       rgba(26,26,26,0.65);
+      --shadow:      0 10px 30px rgba(27,43,75,0.12);
+      --shadow-hov:  0 18px 40px rgba(27,43,75,0.22);
+      --radius-card: 18px;
+      --radius-btn:  14px;
+      --navH:        64px;
+      --maxW:        1180px;
+      --padM:        20px;
+      --padD:        28px;
+      --gap:         16px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: var(--gray);
+      line-height: 1.45;
+      word-break: normal;
+      overflow-wrap: anywhere;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+    a { color: inherit; }
+    button { font-family: inherit; }
+    .wrap { max-width: var(--maxW); margin: 0 auto; padding: 0 var(--padM); }
+    @media (min-width: 900px) { .wrap { padding: 0 var(--padD); } }
+
+    /* NAVBAR */
+    nav {
+      position: sticky; top: 0; z-index: 999;
+      background: rgba(27,43,75,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+    }
+    .nav-inner {
+      display: flex; align-items: center; gap: 12px;
+      min-height: 64px;
+    }
+    .logo {
+      font-weight: 800; color: var(--white);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: 20px;
+      max-width: 40vw;
+    }
+    @media (min-width: 600px) { .logo { font-size: 22px; } }
+    .spacer { flex: 1; }
+
+    .btn {
+      min-height: 44px;
+      border-radius: var(--radius-btn);
+      border: 1px solid transparent;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 10px;
+      text-decoration: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:focus { outline: 2px solid rgba(245,197,24,0.55); outline-offset: 2px; }
+    .btn-yellow { background: var(--yellow); color: #122; border-radius: 999px; }
+    .btn-ghost { background: rgba(255,255,255,0.10); color: var(--white); border-color: rgba(255,255,255,0.22); border-radius: 999px; }
+    .btn-outline { background: transparent; color: var(--white); border-color: rgba(255,255,255,0.35); border-radius: 999px; }
+
+    @media (max-width: 400px) {
+      .nav-inner .btn { padding: 8px 10px; font-size: 13px; }
+      #navPricing { display: none; }
+    }
+
+    .lang-btn {
+      min-width: 64px;
+      height: 44px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.08);
+      color: var(--white);
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .caret { width: 12px; height: 12px; opacity: 0.9; }
+
+    /* HERO */
+    header.hero {
+      position: relative;
+      min-height: 100vh;
+      background-image: url('https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200');
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: rgba(15,30,60,0.78);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .hero::after{
+      content:"";
+      position:absolute; inset:0;
+      opacity:0.04;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.25) 0, rgba(255,255,255,0.25) 1px, transparent 1px, transparent 3px),
+        repeating-linear-gradient(90deg, rgba(0,0,0,0.25) 0, rgba(0,0,0,0.25) 1px, transparent 1px, transparent 4px);
+      mix-blend-mode: overlay;
+      pointer-events:none;
+    }
+    .hero-inner {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      min-height: calc(100vh - var(--navH));
+      padding: 40px var(--padM);
+      max-width: var(--maxW);
+      margin: 0 auto;
+    }
+    @media (min-width: 900px){
+      .hero-inner { padding: 80px var(--padD); }
+    }
+    .hero-content { max-width: 720px; }
+    h1 {
+      margin: 0 0 10px 0;
+      font-weight: 800;
+      line-height: 1.05;
+      font-size: clamp(28px, 5vw, 52px);
+      color: var(--white);
+      letter-spacing: -0.02em;
+    }
+    .hero-sub {
+      margin: 0 0 18px 0;
+      font-weight: 600;
+      color: rgba(255,255,255,0.92);
+      font-size: clamp(16px, 2vw, 18px);
+    }
+    .hero-ctas { display:flex; flex-wrap:wrap; gap:12px; margin: 18px 0 18px; }
+    .hero-ctas .btn { min-height: 52px; padding: 12px 18px; }
+    .chips { display:flex; flex-wrap:wrap; gap:10px; margin-top: 6px; }
+    .chip {
+      border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.92);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.06);
+    }
+
+    section { padding: 36px 0; }
+    @media (min-width: 900px){ section { padding: 56px 0; } }
+
+    /* SERVICES */
+    .services { background: var(--gray); }
+    .section-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--navy);
+      margin: 0 0 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--gap);
+    }
+    @media (min-width: 640px){ .grid { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 980px){ .grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+    .card {
+      background: var(--white);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(27,43,75,0.08);
+      transition: transform 220ms ease, box-shadow 220ms ease;
+    }
+    @media (hover:hover){
+      .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hov); }
+    }
+
+    .service-btn {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 0;
+      padding: 16px;
+      cursor: pointer;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+    @media (min-width: 980px){
+      .service-btn { flex-direction: column; align-items: flex-start; }
+    }
+
+    .badge {
+      position: absolute;
+      top: 12px; right: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 12px;
+      background: rgba(245,197,24,0.35);
+      color: var(--navy);
+      border: 1px solid rgba(255,255,255,0.25);
+      backdrop-filter: blur(8px);
+    }
+
+    .chev {
+      position:absolute;
+      top: 14px;
+      right: 14px;
+      width: 18px; height: 18px;
+      opacity: 0.7;
+      pointer-events:none;
+      transform: translateX(-2px);
+    }
+    .badge { right: 44px; }
+
+    .svc-icon {
+      width: 48px; height: 48px;
+      flex: 0 0 48px;
+    }
+    @media (min-width: 980px){
+      .svc-icon { width: 56px; height: 56px; flex: 0 0 56px; }
+    }
+    .svc-main { flex: 1; min-width: 0; }
+    .svc-title {
+      margin: 0;
+      font-weight: 800;
+      color: var(--navy);
+      font-size: 16px;
+      line-height: 1.15;
+      padding-right: 95px;
+    }
+    @media (min-width: 980px) {
+      .svc-title { font-size: 18px; padding-right: 0; }
+    }
+    .svc-price {
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .svc-footer {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(27,43,75,0.10);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      color: rgba(27,43,75,0.85);
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .svc-footer span { display:inline-flex; align-items:center; gap:8px; }
+    .mini-arrow {
+      width: 14px; height: 14px; opacity: 0.8;
+    }
+
+    .accordion-panel {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 300ms ease, opacity 300ms ease;
+      padding: 0 16px;
+    }
+    .accordion-inner {
+      padding: 0 0 16px 0;
+    }
+    .price-row {
+      display:flex;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(27,43,75,0.06);
+      font-size: 14px;
+    }
+    .price-row:last-child { border-bottom: 0; }
+    .price-left { color: rgba(27,43,75,0.92); font-weight: 700; }
+    .price-right { color: rgba(27,43,75,0.88); font-weight: 800; white-space: nowrap; }
+    .note {
+      margin-top: 10px;
+      color: rgba(27,43,75,0.65);
+      font-style: italic;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* HOW-IT-WORKS TILE */
+    .how-tile { padding: 16px; }
+    .how-head { display:flex; align-items:center; gap: 10px; }
+    .how-title { margin:0; font-size: 18px; font-weight: 800; color: var(--navy); }
+    .steps { display:flex; gap: 12px; margin: 14px 0 12px; flex-wrap: wrap; }
+    .step {
+      display:flex; align-items:center; gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(27,43,75,0.10);
+      background: rgba(27,43,75,0.03);
+      font-weight: 800;
+      color: rgba(27,43,75,0.9);
+      font-size: 14px;
+    }
+    .bullets { margin: 10px 0 0; padding-left: 18px; color: rgba(27,43,75,0.78); font-weight: 700; }
+    .bullets li { margin: 8px 0; }
+    .pill {
+      margin-top: 12px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(245,197,24,0.32);
+      color: var(--navy);
+      font-weight: 900;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    @media (min-width: 980px){
+      .how-span2 { grid-column: 2 / span 2; }
+    }
+
+    /* CALCULATOR */
+    .calc { background: var(--gray); }
+    .panel {
+      background: var(--white);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(27,43,75,0.08);
+      padding: 16px;
+    }
+    @media (min-width: 900px){ .panel { padding: 20px; } }
+    .field { margin: 12px 0; }
+    .label { display:block; font-weight: 800; color: rgba(27,43,75,0.88); margin-bottom: 6px; font-size: 13px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(27,43,75,0.18);
+      font-size: 16px;
+      outline: none;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    .row { display:grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 740px){ .row { grid-template-columns: 1fr 1fr; } }
+    .check {
+      display:flex; align-items:center; gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(27,43,75,0.10);
+      background: rgba(27,43,75,0.03);
+      font-weight: 800;
+      color: rgba(27,43,75,0.88);
+    }
+    .check input { width:auto; }
+    .hint-toggle {
+      display:flex; align-items:center; justify-content: space-between;
+      width: 100%;
+      border: 1px solid rgba(27,43,75,0.12);
+      background: rgba(27,43,75,0.03);
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor:pointer;
+      font-weight: 900;
+      color: rgba(27,43,75,0.88);
+    }
+    .hint-panel {
+      overflow:hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 300ms ease, opacity 300ms ease;
+      margin-top: 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(27,43,75,0.10);
+      background: rgba(27,43,75,0.02);
+      padding: 0 12px;
+    }
+    .hint-panel .hint-inner { padding: 10px 0; color: rgba(27,43,75,0.78); font-weight: 700; }
+
+    .result {
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(27,43,75,0.12);
+      background: rgba(245,197,24,0.20);
+      padding: 14px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: transform 250ms ease, opacity 250ms ease;
+    }
+    .result.show { opacity: 1; transform: translateY(0); }
+    .result-amt { font-size: 28px; font-weight: 900; color: var(--navy); margin: 6px 0 0; }
+    .muted { color: rgba(27,43,75,0.65); font-weight: 700; font-size: 13px; }
+    .min-pill {
+      display:inline-flex; align-items:center; gap:8px;
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(245,197,24,0.38);
+      color: var(--navy);
+      font-weight: 900;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+
+    .actions {
+      margin-top: 12px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 900px){
+      .actions { display:flex; flex-wrap: wrap; }
+      .actions .btn { flex: 0 0 auto; }
+    }
+    .btn-navy-outline {
+      background: transparent;
+      border: 1px solid rgba(27,43,75,0.35);
+      color: var(--navy);
+      font-weight: 900;
+      border-radius: 999px;
+    }
+
+    .history {
+      margin-top: 12px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 740px){ .history { grid-template-columns: 1fr 1fr; } }
+    .hist-card {
+      border-radius: 16px;
+      border: 1px solid rgba(27,43,75,0.10);
+      padding: 12px;
+      background: rgba(27,43,75,0.02);
+    }
+    .hist-top { display:flex; justify-content: space-between; gap: 10px; }
+    .hist-title { font-weight: 900; color: rgba(27,43,75,0.92); }
+    .hist-sub { margin-top: 6px; color: rgba(27,43,75,0.65); font-weight: 700; font-size: 13px; }
+    .hist-btn { margin-top: 10px; }
+
+    .leadbox {
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(27,43,75,0.12);
+      background: rgba(27,43,75,0.02);
+      padding: 0 14px;
+      overflow:hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 300ms ease, opacity 300ms ease;
+    }
+    .leadbox.show { opacity: 1; }
+    .leadbox .lead-inner { padding: 14px 0; }
+    .inline-msg {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 900;
+      border: 1px solid rgba(27,43,75,0.10);
+    }
+    .ok { background: rgba(245,197,24,0.25); color: rgba(27,43,75,0.92); }
+    .err { background: rgba(27,43,75,0.06); color: rgba(27,43,75,0.92); }
+
+    /* QUOTE FORM */
+    .quote { background: var(--gray); }
+    .submit-wide { width: 100%; min-height: 52px; }
+
+    /* SMS BANNER */
+    .top-banner {
+      position: fixed;
+      top: var(--navH);
+      left: 0; right: 0;
+      z-index: 998;
+      transform: translateY(-110%);
+      transition: transform 300ms ease;
+      background: var(--navy);
+      color: var(--white);
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+    }
+    .top-banner.show { transform: translateY(0); }
+    .banner-inner {
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .banner-text { font-weight: 800; font-size: 14px; }
+    .banner-actions { display:flex; gap: 10px; align-items:center; }
+    .banner-actions .btn { min-height: 44px; }
+    .banner-mini {
+      overflow:hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 300ms ease, opacity 300ms ease;
+      margin-top: 10px;
+    }
+    .banner-mini.show { opacity: 1; }
+    .banner-mini .mini-inner { display:flex; gap: 10px; flex-wrap: wrap; }
+    .banner-mini input { max-width: 240px; }
+    .xbtn {
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: var(--white);
+      border-radius: 12px;
+      min-height: 44px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    /* STICKY BOTTOM BAR */
+    .sticky {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      z-index: 1000;
+      background: var(--navy);
+      padding: 12px var(--padM);
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      display:flex;
+      gap: 12px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+    }
+    @media (min-width: 900px){ .sticky { padding-left: var(--padD); padding-right: var(--padD); } }
+    .sticky .btn { flex: 1; }
+    .btn-ghost-navy {
+      background: transparent;
+      color: var(--white);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 999px;
+    }
+
+    /* FOOTER */
+    footer {
+      background: var(--navy);
+      color: rgba(255,255,255,0.88);
+      padding: 24px var(--padM);
+      text-align: center;
+      font-weight: 700;
+    }
+
+    @media print {
+      body { padding-bottom: 0; background: #fff; }
+      nav, .sticky, .top-banner, header.hero, section.services, section.calc, section.quote, footer { display:none !important; }
+      #print-sheet { display:block !important; }
+    }
+    #print-sheet { display:none; padding: 24px; color: var(--navy); }
+    #print-sheet .p-logo { font-size: 22px; font-weight: 900; }
+    #print-sheet .p-phone { margin-top: 6px; font-weight: 800; }
+    #print-sheet .p-box {
+      margin-top: 14px;
+      border: 1px solid rgba(27,43,75,0.18);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    #print-sheet .p-total { font-size: 26px; font-weight: 900; margin-top: 8px; }
+  </style>
+</head>
+
+<body>
+  <div class="top-banner" id="banner" aria-live="polite">
+    <div class="wrap">
+      <div class="banner-inner">
+        <div class="banner-text" data-i18n="banner_txt"></div>
+        <div class="banner-actions">
+          <button class="btn btn-yellow" id="bannerYes" type="button" data-i18n="banner_yes"></button>
+          <button class="xbtn" id="bannerNo" type="button" aria-label="Close" data-i18n="banner_no"></button>
+        </div>
+      </div>
+
+      <div class="banner-mini" id="bannerMini">
+        <form id="bannerForm" action="https://formspree.io/f/YOUR_FORMSPREE_ID">
+          <div class="mini-inner">
+            <input id="bannerPhone" name="phone" type="tel" required data-i18n-placeholder="lead_phone" inputmode="tel" autocomplete="tel">
+            <label class="check" style="background:transparent;border-color:rgba(255,255,255,0.18);color:rgba(255,255,255,0.92);">
+              <input id="bannerConsent" type="checkbox" required>
+              <span data-i18n="lead_consent"></span>
+            </label>
+            <button class="btn btn-yellow" type="submit" data-i18n="lead_btn"></button>
+          </div>
+          <div id="bannerMsg"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <nav>
+    <div class="wrap">
+      <div class="nav-inner">
+        <div class="logo" aria-label="Handy & Fiend">Handy & Fiend</div>
+        <div class="spacer"></div>
+
+        <button class="lang-btn" id="langBtn" type="button" aria-label="Language">
+          <span id="langTxt">EN</span>
+          <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 9l6 6 6-6"></path>
+          </svg>
+        </button>
+
+        <a class="btn btn-ghost" href="#pricing" id="navPricing" data-i18n="nav_pricing"></a>
+        <a class="btn btn-yellow" href="#quote" data-i18n="nav_cta"></a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <h1 data-i18n="hero_title"></h1>
+        <p class="hero-sub" data-i18n="hero_sub"></p>
+
+        <div class="hero-ctas">
+          <a class="btn btn-yellow" href="#quote" data-i18n="nav_cta"></a>
+          <a class="btn btn-outline" href="#pricing" data-i18n="nav_pricing"></a>
+        </div>
+
+        <div class="chips" aria-label="trust chips">
+          <div class="chip" data-i18n="chip1"></div>
+          <div class="chip" data-i18n="chip2"></div>
+          <div class="chip" data-i18n="chip3"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="services" id="pricing">
+    <div class="wrap">
+      <h2 class="section-title" data-i18n="services_heading"></h2>
+      <div class="grid" id="servicesGrid"></div>
+    </div>
+  </section>
+
+  <section class="calc" id="calculator">
+    <div class="wrap">
+      <h2 class="section-title" data-i18n="calc_title"></h2>
+      <div class="panel">
+        <div class="field">
+          <label class="label" data-i18n="calc_pick_label"></label>
+          <select id="calcService" data-i18n-placeholder="calc_pick" aria-label="service select">
+            <option value="" selected disabled></option>
+          </select>
+        </div>
+
+        <div id="paintGroup" style="display:none;">
+          <div class="row">
+            <div class="field">
+              <label class="label" data-i18n="calc_wallsf"></label>
+              <input id="wallSF" type="number" min="1" inputmode="decimal" placeholder="" required>
+            </div>
+            <div class="field">
+              <label class="label" data-i18n="calc_ceilsf"></label>
+              <input id="ceilSF" type="number" min="0" inputmode="decimal" placeholder="">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" data-i18n="calc_coats"></label>
+            <select id="coats">
+              <option value="1" data-i18n="c1coat"></option>
+              <option value="2" data-i18n="c2coat"></option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label class="check"><input id="prep" type="checkbox"><span data-i18n="calc_prep"></span></label>
+            <label class="check"><input id="wallp" type="checkbox"><span data-i18n="calc_wallp"></span></label>
+          </div>
+          <div class="row">
+            <label class="check"><input id="mold" type="checkbox"><span data-i18n="calc_mold"></span></label>
+            <div class="field">
+              <label class="label" data-i18n="calc_base_p"></label>
+              <input id="baseLF" type="number" min="0" inputmode="decimal" placeholder="">
+            </div>
+          </div>
+
+          <button class="hint-toggle" id="measureToggle" type="button">
+            <span data-i18n="measure_hint"></span>
+            <svg class="mini-arrow" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </button>
+          <div class="hint-panel" id="measurePanel">
+            <div class="hint-inner">
+              <div data-i18n="m1"></div>
+              <div data-i18n="m2"></div>
+              <div data-i18n="m3"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="floorGroup" style="display:none;">
+          <div class="row">
+            <div class="field">
+              <label class="label" data-i18n="calc_floorsf"></label>
+              <input id="floorSF" type="number" min="1" inputmode="decimal" placeholder="" required>
+            </div>
+            <div class="field">
+              <label class="label" data-i18n="calc_mat"></label>
+              <select id="mat">
+                <option value="lam" data-i18n="calc_lam"></option>
+                <option value="lvp" data-i18n="calc_lvp"></option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <label class="check"><input id="demo" type="checkbox"><span data-i18n="calc_demo"></span></label>
+            <label class="check"><input id="under" type="checkbox"><span data-i18n="calc_under"></span></label>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label class="label" data-i18n="calc_base_f"></label>
+              <input id="floorBaseLF" type="number" min="0" inputmode="decimal" placeholder="">
+            </div>
+            <div class="field">
+              <label class="label" data-i18n="calc_trans"></label>
+              <input id="transQty" type="number" min="0" inputmode="numeric" placeholder="">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-yellow submit-wide" id="calcBtn" type="button" data-i18n="calc_btn"></button>
+
+        <div class="result" id="resultBox" aria-live="polite">
+          <div class="muted" id="resultLabel"></div>
+          <div class="result-amt" id="resultAmt"></div>
+          <div class="muted" id="resultId"></div>
+          <div class="muted" id="resultDisc"></div>
+          <div id="minApplied" style="display:none;" class="min-pill"></div>
+        </div>
+
+        <div class="actions" id="actionBtns" aria-label="actions" style="display:none;">
+          <button class="btn btn-navy-outline" type="button" id="actSave" data-i18n="act_save"></button>
+          <button class="btn btn-navy-outline" type="button" id="actShare" data-i18n="act_share"></button>
+          <button class="btn btn-navy-outline" type="button" id="actSmsSelf" data-i18n="act_sms_self"></button>
+          <button class="btn btn-navy-outline" type="button" id="actSmsUs" data-i18n="act_sms_us"></button>
+          <button class="btn btn-navy-outline" type="button" id="actWa" data-i18n="act_wa"></button>
+          <button class="btn btn-navy-outline" type="button" id="actPdf" data-i18n="act_pdf"></button>
+          <button class="btn btn-navy-outline" type="button" id="actContact" data-i18n="act_contact"></button>
+        </div>
+
+        <div class="history" id="history"></div>
+
+        <div class="leadbox" id="leadBox">
+          <div class="lead-inner">
+            <form id="leadForm" action="https://formspree.io/f/YOUR_FORMSPREE_ID">
+              <div class="row">
+                <div class="field">
+                  <label class="label" data-i18n="lead_name"></label>
+                  <input name="name" id="leadName" type="text" required data-i18n-placeholder="lead_name">
+                </div>
+                <div class="field">
+                  <label class="label" data-i18n="lead_phone"></label>
+                  <input name="phone" id="leadPhone" type="tel" required data-i18n-placeholder="lead_phone" inputmode="tel" autocomplete="tel">
+                </div>
+              </div>
+              <label class="check">
+                <input id="leadConsent" type="checkbox" required>
+                <span data-i18n="lead_consent"></span>
+              </label>
+              <button class="btn btn-yellow submit-wide" type="submit" data-i18n="lead_btn"></button>
+              <div id="leadMsg"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="quote" id="quote">
+    <div class="wrap">
+      <h2 class="section-title" data-i18n="form_heading"></h2>
+      <div class="panel">
+        <form id="quoteForm" action="https://formspree.io/f/YOUR_FORMSPREE_ID">
+          <div class="row">
+            <div class="field">
+              <label class="label" data-i18n="form_name"></label>
+              <input name="name" type="text" required data-i18n-placeholder="form_name" autocomplete="name">
+            </div>
+            <div class="field">
+              <label class="label" data-i18n="form_phone"></label>
+              <input name="phone" id="quotePhone" type="tel" required data-i18n-placeholder="form_phone" inputmode="tel" autocomplete="tel">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label class="label" data-i18n="form_service"></label>
+              <select name="service" id="quoteService" required></select>
+            </div>
+            <div class="field">
+              <label class="label" data-i18n="form_zip"></label>
+              <input name="zip" type="text" required data-i18n-placeholder="form_zip" inputmode="numeric" autocomplete="postal-code">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" data-i18n="form_desc"></label>
+            <textarea name="desc" id="quoteDesc" data-i18n-placeholder="form_desc"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="label" data-i18n="form_photo"></label>
+            <input name="photos" id="photos" type="file" accept="image/*" multiple>
+          </div>
+
+          <label class="check">
+            <input id="quoteConsent" type="checkbox" required>
+            <span data-i18n="form_consent"></span>
+          </label>
+
+          <input type="hidden" name="source" value="website">
+          <input type="hidden" name="estimate_id" id="hfEstimateId">
+          <input type="hidden" name="estimate_total" id="hfEstimateTotal">
+          <input type="hidden" name="hf_lang" id="hfLang">
+          <input type="hidden" name="utm_source" id="utm_source">
+          <input type="hidden" name="utm_medium" id="utm_medium">
+          <input type="hidden" name="utm_campaign" id="utm_campaign">
+
+          <button class="btn btn-yellow submit-wide" type="submit" data-i18n="form_submit"></button>
+          <div id="quoteMsg"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+  </main>
+
+  <div id="print-sheet">
+    <div class="p-logo">Handy & Fiend</div>
+    <div class="p-phone" data-phone-display></div>
+    <div class="p-box">
+      <div class="muted" id="pEstimateId"></div>
+      <div class="muted" id="pService"></div>
+      <div class="muted" id="pInputs"></div>
+      <div class="p-total" id="pTotal"></div>
+      <div class="muted" id="pDisc"></div>
+      <div class="muted" data-i18n="print_disclaimer"></div>
+    </div>
+  </div>
+
+  <div class="sticky" role="navigation" aria-label="sticky actions">
+    <a class="btn btn-yellow" href="#quote" id="barQuote" data-i18n="bar_quote"></a>
+    <a class="btn btn-ghost-navy" href="#" id="barCall" data-i18n="bar_call"></a>
+    <a class="btn btn-ghost-navy" href="#" id="barWa">
+      <span data-i18n="bar_wa"></span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 11.5a8 8 0 0 1-11.6 7.1L4 20l1.5-4.2A8 8 0 1 1 20 11.5z"></path>
+        <path d="M8.6 9.4c.2-.4.4-.4.6-.4h.5c.1 0 .3 0 .4.3l.8 1.9c.1.2 0 .4-.1.5l-.4.5c-.1.1-.2.3-.1.5.2.4.7 1.2 1.5 1.8.8.6 1.4.8 1.9.9.2 0 .4 0 .5-.2l.5-.6c.1-.2.3-.2.5-.1l2 .9c.2.1.3.3.2.5-.2.8-.9 1.6-1.7 1.8-1 .2-2.2.1-3.8-.8-1.9-1.1-3.4-3.1-3.8-4.0-.4-.9-.4-2 .1-2.9z"></path>
+      </svg>
+    </a>
+  </div>
+
+  <footer data-i18n="footer"></footer>
+
+  <script>
+    const CONTACT = {
+      phoneDisplay: "(626) 600-8780",
+      tel: "+16266008780",
+      wa: "16266008780",
+      site: "https://handyfiend.com"
+    };
+
+    const PRICES = {
+      base: { minimumCall: 150, hourlyAfter2: 70, estimateVisit: 75 },
+      tv: { standard: 150, hiddenWire: 220, artMirrors: 150, curtainRod1st: 150, curtainRodEach: 30 },
+      furniture: { small: 150, dresser: 200, bedFrame: 275, paxHourly: 70, paxMinHours: 4 },
+      painting: {
+        wall1coat: 2.25, wall2coat: 3.00,
+        ceilSmooth: 2.50, ceilTextured: 3.25, ceilGloss: 4.00,
+        prep: 0.80, wallpaper: 1.60, mold: 2.00,
+        baseboardPaint: 4.50, casingSimple: 5.00, casingProfile: 5.75, crownMolding: 6.75,
+        minimum: 500
+      },
+      flooring: {
+        laminate: 4.25, lvp: 5.00, demo: 2.00, underlayment: 0.75,
+        baseboard: 2.50, transition: 45, doorUndercut: [45,65], haul: [75,150],
+        minimum: 500
+      },
+      plumbing: { faucet: 195, showerHead: 150, toiletFlapper: 150, recaulk: 215 },
+      electrical: { fixture: 175, switchesFirst3: 150, switchesEachAdd: 20, smartDevice: 195 }
+    };
+
+    const i18n = {
+      en: {
+        lang_btn:"EN", nav_cta:"Get Quote", nav_pricing:"See Pricing",
+        hero_title:"Premium Handyman • Labor Only", hero_sub:"Same-Week Availability.",
+        chip1:"Fast Response", chip2:"Clean Work", chip3:"Upfront Price",
+        services_heading:"Our Services", from:"From", view_services:"View Services", note:"Note:",
+        how_title:"How it works", step1:"Send Photos", step2:"Get Quote", step3:"We Schedule",
+        how_b1:"Minimum service call", how_b2:"Labor only (materials by client)", how_b3:"Licensed scope referred out",
+        licenses:"C-10 / C-36 / C-33",
+        s1:"TV Mounting", s2:"Furniture Assembly", s3:"Interior Painting", s4:"Flooring (LVP/Laminate)", s5:"Plumbing (Cosmetic)", s6:"Electrical (Like-for-like)",
+        b1:"Basic Setup", b2:"Fast Setup", b3:"Same-week", b4:"Basic Setup", b5:"Cosmetic", b6:"Like-for-like",
+        tv_r1:"Standard mount (up to 65\")", tv_r2:"Mount + concealed wires", tv_r3:"Art / Mirrors (up to 5 pcs)", tv_r4:"Curtain rod / Blinds 1st window", tv_r5:"Each additional window", tv_note:"Mount not included. Drywall/studs only.",
+        fur_r1:"Small items (2–3 pcs)", fur_r2:"Dresser (3–6 drawers)", fur_r3:"Bed frame", fur_r4:"PAX / Large closet", fur_r4_note:"min 4hrs", fur_note:"Minimum call applies.",
+        paint_r1:"Walls 1 coat (same color)", paint_r2:"Walls 2 coats (color change)", paint_r3:"Ceiling smooth 2 coats", paint_r4:"Ceiling textured 2 coats", paint_r5:"Ceiling semi/high-gloss", paint_r6:"+ Prep / sanding", paint_r7:"+ Wallpaper removal", paint_r8:"+ Mold surface treatment", paint_r9:"Baseboards", paint_r10:"Door casings simple", paint_r11:"Door casings profile", paint_r12:"Crown molding", paint_note:"Labor only. Surface area ≠ floor area.",
+        floor_r1:"Laminate click-lock", floor_r2:"LVP luxury vinyl", floor_r3:"Demo existing floor", floor_r4:"Underlayment install", floor_r5:"Baseboard remove+install", floor_r6:"Transition strip", floor_r7:"Door undercut per door", floor_r8:"Debris haul away", floor_note:"Labor only. Materials by client.",
+        plumb_r1:"Faucet replacement", plumb_r2:"Shower head", plumb_r3:"Toilet tank / flapper", plumb_r4:"Re-caulk tub/shower", plumb_note:"Cosmetic only. Licensed scope referred out.",
+        elec_r1:"Light fixture swap", elec_r2:"Outlets / switches (first 3)", elec_r3:"Each additional outlet/switch", elec_r4:"Smart doorbell / lock + app setup", elec_note:"Existing boxes only. Panel/circuits/permits referred out.",
+        calc_title:"Quick Estimate Calculator", calc_pick_label:"Select service", calc_pick:"Select a service…", calc_paint:"Interior Painting", calc_floor:"Flooring (LVP/Laminate)", calc_wallsf:"Wall area (sq ft)", calc_ceilsf:"Ceiling area (sq ft, optional)", calc_coats:"Number of coats", c1coat:"1 coat – same color", c2coat:"2 coats – color change", calc_prep:"Prep / sanding", calc_wallp:"Wallpaper removal", calc_mold:"Mold surface treatment", calc_base_p:"Baseboard painting (lin ft)", calc_floorsf:"Floor area (sq ft)", calc_mat:"Material type", calc_lam:"Laminate", calc_lvp:"LVP Luxury Vinyl", calc_demo:"Demo existing floor", calc_under:"Underlayment install", calc_base_f:"Baseboard remove + install (lin ft)", calc_trans:"Transition strips (qty)", calc_btn:"Calculate", calc_result:"Estimated Labor:", calc_min:"Minimum job applied.", calc_disc:"Estimate only. Final quote after photos.", measure_hint:"How to measure?", m1:"Measure painted surface area, not floor area.", m2:"Width × Height of each wall.", m3:"Exclude doors/windows if not painted.", act_save:"💾 Save Estimate", act_share:"🔗 Share Link", act_sms_self:"📱 Text to Myself", act_sms_us:"📲 Text Handy & Fiend", act_wa:"💬 WhatsApp", act_pdf:"📄 Download PDF", act_contact:"📇 Add to Contacts", copied:"Copied!", lead_name:"Your name", lead_phone:"Your phone number", lead_consent:"Text me updates about my request", lead_btn:"Send to Me + Save Request", lead_ok:"✅ Got it! You’ll receive a text confirmation shortly.",
+        form_heading:"Get a Free Quote", form_name:"Full Name", form_phone:"Phone Number", form_service:"Service needed", form_zip:"ZIP Code", form_desc:"Describe your project", form_photo:"Upload photos (max 3)", form_consent:"I agree to receive SMS updates. Reply STOP to opt out.", form_submit:"Send Quote Request", form_sending:"Sending…", form_ok:"✅ Got it! We’ll reply within 1 hour.", form_err:"❌ Something went wrong. Please call us.", photo_warn:"Max 3 photos allowed. First 3 selected.", size_warn:"Total photo size exceeds 15MB. Please reduce.", bar_quote:"Get Quote →", bar_call:"Call", bar_wa:"WhatsApp", banner_txt:"Get availability updates via SMS/WhatsApp", banner_yes:"Yes, notify me", banner_no:"✕", footer:"© 2026 Handy & Fiend · Los Angeles · Labor Only Services", print_disclaimer:"Final quote after site visit or photos.",
+        sms_body:"Estimate [ID] — [SERVICE]: [TOTAL]\nInputs: [INPUTS]\nConfirm: [URL]",
+        wa_body:"Hi Handy & Fiend! Estimate [ID] for [SERVICE]: [TOTAL]. Please confirm."
+      },
+      es: {
+        lang_btn:"ES", nav_cta:"Cotizar", nav_pricing:"Ver precios",
+        hero_title:"Manitas Premium • Solo Mano de Obra", hero_sub:"Disponibilidad en la misma semana.",
+        chip1:"Respuesta Rápida", chip2:"Trabajo Limpio", chip3:"Precio Claro",
+        services_heading:"Nuestros Servicios", from:"Desde", view_services:"Ver servicios", note:"Nota:",
+        how_title:"Cómo funciona", step1:"Envía Fotos", step2:"Cotización", step3:"Agendamos",
+        how_b1:"Llamada mínima de servicio", how_b2:"Solo mano de obra (materiales por cliente)", how_b3:"Trabajo con licencia referido",
+        licenses:"C-10 / C-36 / C-33",
+        s1:"Instalación de TV", s2:"Ensamble de Muebles", s3:"Pintura Interior", s4:"Pisos (LVP/Laminado)", s5:"Plomería Cosmética", s6:"Eléctrico Igual×Igual",
+        b1:"Básico", b2:"Rápido", b3:"Esta Semana", b4:"Básico", b5:"Cosmético", b6:"Igual×Igual",
+        tv_r1:"Montaje estándar (hasta 65\")", tv_r2:"Montaje + cables ocultos", tv_r3:"Arte / Espejos (hasta 5 piezas)", tv_r4:"Barra de cortina / persianas 1ra ventana", tv_r5:"Cada ventana adicional", tv_note:"Soporte no incluido. Solo tablaroca/montantes.",
+        fur_r1:"Artículos pequeños (2–3 piezas)", fur_r2:"Cómoda (3–6 cajones)", fur_r3:"Cama / estructura", fur_r4:"PAX / clóset grande", fur_r4_note:"mín 4h", fur_note:"Aplica mínimo.",
+        paint_r1:"Paredes 1 capa (mismo color)", paint_r2:"Paredes 2 capas (cambio de color)", paint_r3:"Techo liso 2 capas", paint_r4:"Techo texturizado 2 capas", paint_r5:"Techo semi/alto brillo", paint_r6:"+ Preparación / lijado", paint_r7:"+ Quitar tapiz", paint_r8:"+ Tratamiento de moho", paint_r9:"Zócalos", paint_r10:"Marcos simples", paint_r11:"Marcos con perfil", paint_r12:"Moldura corona", paint_note:"Solo mano de obra. Superficie ≠ piso.",
+        floor_r1:"Laminado click-lock", floor_r2:"LVP vinilo de lujo", floor_r3:"Demo piso existente", floor_r4:"Instalación de base", floor_r5:"Zócalo quitar+instalar", floor_r6:"Tira de transición", floor_r7:"Recorte de puerta (por puerta)", floor_r8:"Retiro de escombros", floor_note:"Solo mano de obra. Materiales por cliente.",
+        plumb_r1:"Reemplazo de grifo", plumb_r2:"Cabezal de ducha", plumb_r3:"Tanque / válvula", plumb_r4:"Re-sellar bañera/ducha", plumb_note:"Solo cosmético. Trabajo con licencia referido.",
+        elec_r1:"Cambio de lámpara", elec_r2:"Enchufes/interruptores (primeros 3)", elec_r3:"Cada adicional", elec_r4:"Timbre/cerradura smart + app", elec_note:"Solo cajas existentes. Panel/circuitos/permiso referido.",
+        calc_title:"Calculadora de Estimado", calc_pick_label:"Selecciona servicio", calc_pick:"Selecciona un servicio…", calc_paint:"Pintura Interior", calc_floor:"Pisos (LVP/Laminado)", calc_wallsf:"Área de paredes (ft²)", calc_ceilsf:"Área de techo (ft², opcional)", calc_coats:"Número de capas", c1coat:"1 capa – mismo color", c2coat:"2 capas – cambio de color", calc_prep:"Preparación / lijado", calc_wallp:"Quitar tapiz", calc_mold:"Tratamiento de moho", calc_base_p:"Zócalos pintados (pie lineal)", calc_floorsf:"Área de piso (ft²)", calc_mat:"Tipo de material", calc_lam:"Laminado", calc_lvp:"LVP Vinilo de Lujo", calc_demo:"Demo piso existente", calc_under:"Instalación de base", calc_base_f:"Zócalo quitar + instalar (pie lineal)", calc_trans:"Transiciones (cant.)", calc_btn:"Calcular", calc_result:"Mano de Obra Est.:", calc_min:"Se aplicó mínimo.", calc_disc:"Solo estimado. Precio final tras fotos.", measure_hint:"¿Cómo medir?", m1:"Mide la superficie pintada, no el piso.", m2:"Ancho × Alto de cada pared.", m3:"Excluye puertas y ventanas si no se pintan.", act_save:"💾 Guardar", act_share:"🔗 Compartir Enlace", act_sms_self:"📱 Mensaje a Mí", act_sms_us:"📲 Mensaje a Handy & Fiend", act_wa:"💬 WhatsApp", act_pdf:"📄 Descargar PDF", act_contact:"📇 Agregar Contacto", copied:"¡Copiado!", lead_name:"Tu nombre", lead_phone:"Tu teléfono", lead_consent:"Envíame actualizaciones por mensaje", lead_btn:"Guardar y Enviar", lead_ok:"✅ ¡Recibido! Te confirmaremos pronto.",
+        form_heading:"Cotización Gratis", form_name:"Nombre completo", form_phone:"Teléfono", form_service:"Servicio necesario", form_zip:"Código ZIP", form_desc:"Describe tu proyecto", form_photo:"Fotos (máx 3)", form_consent:"Acepto recibir SMS. Responde STOP para cancelar.", form_submit:"Enviar Solicitud", form_sending:"Enviando…", form_ok:"✅ ¡Recibido! Te respondemos en 1 hora.", form_err:"❌ Algo salió mal. Por favor llámanos.", photo_warn:"Máx 3 fotos. Se usarán las primeras 3.", size_warn:"Tamaño total > 15MB. Reduce las fotos.", bar_quote:"Cotizar →", bar_call:"Llamar", bar_wa:"WhatsApp", banner_txt:"Recibe avisos por SMS/WhatsApp", banner_yes:"Sí, avísame", banner_no:"✕", footer:"© 2026 Handy & Fiend · Los Ángeles · Solo Mano de Obra", print_disclaimer:"Precio final tras visita o fotos.",
+        sms_body:"Estimado [ID] — [SERVICE]: [TOTAL]\nEntradas: [INPUTS]\nConfirmar: [URL]",
+        wa_body:"¡Hola! Estimado [ID] para [SERVICE]: [TOTAL]. Por favor confirma."
+      },
+      ru: {
+        lang_btn:"RU", nav_cta:"Заявка", nav_pricing:"Прайс",
+        hero_title:"Мастер на дом • Только работа", hero_sub:"Выезд в течение недели.",
+        chip1:"Быстрый ответ", chip2:"Чистая работа", chip3:"Цена заранее",
+        services_heading:"Наши услуги", from:"От", view_services:"Смотреть услуги", note:"Важно:",
+        how_title:"Как это работает", step1:"Отправь фото", step2:"Получи расчёт", step3:"Назначим дату",
+        how_b1:"Минимальный выезд", how_b2:"Только работа, материалы клиента", how_b3:"Лицензируемые работы — к специалистам",
+        licenses:"C-10 / C-36 / C-33",
+        s1:"Монтаж ТВ", s2:"Сборка мебели", s3:"Покраска", s4:"Укладка полов (LVP/Ламинат)", s5:"Сантехника (косметика)", s6:"Электрика (замена)",
+        b1:"Базовый", b2:"Быстро", b3:"На этой неделе", b4:"Базовый", b5:"Косметика", b6:"Замена",
+        tv_r1:"Стандартный монтаж (до 65\")", tv_r2:"Монтаж + скрытие проводов", tv_r3:"Картины / зеркала (до 5 шт.)", tv_r4:"Карниз / жалюзи — 1 окно", tv_r5:"Каждое доп. окно", tv_note:"Крепёж не включён. Только гипсокартон/стойки.",
+        fur_r1:"Небольшие вещи (2–3 шт.)", fur_r2:"Комод (3–6 ящиков)", fur_r3:"Кровать/каркас", fur_r4:"PAX / большой шкаф", fur_r4_note:"мин 4ч", fur_note:"Действует минимум выезда.",
+        paint_r1:"Стены 1 слой (тот же цвет)", paint_r2:"Стены 2 слоя (смена цвета)", paint_r3:"Потолок гладкий 2 слоя", paint_r4:"Потолок текстура 2 слоя", paint_r5:"Потолок полу/высокий глянец", paint_r6:"+ Подготовка / шлифовка", paint_r7:"+ Снятие обоев", paint_r8:"+ Обработка плесени", paint_r9:"Плинтуса", paint_r10:"Наличники простые", paint_r11:"Наличники профиль", paint_r12:"Карниз (crown)", paint_note:"Только работа. Площадь стен ≠ площадь пола.",
+        floor_r1:"Ламинат click-lock", floor_r2:"LVP виниловые полы", floor_r3:"Демонтаж старого покрытия", floor_r4:"Укладка подложки", floor_r5:"Плинтус снять+поставить", floor_r6:"Порожек/переход", floor_r7:"Подрезка двери (за дверь)", floor_r8:"Вывоз мусора", floor_note:"Только работа. Материалы клиента.",
+        plumb_r1:"Замена смесителя", plumb_r2:"Лейка душа", plumb_r3:"Бачок/клапан", plumb_r4:"Герметик ванна/душ", plumb_note:"Только косметика. Лицензируемые работы — к специалистам.",
+        elec_r1:"Замена светильника", elec_r2:"Розетки/выключатели (первые 3)", elec_r3:"Каждый следующий", elec_r4:"Умный звонок/замок + настройка", elec_note:"Только замена. Щит/проводка/permits — к специалистам.",
+        calc_title:"Быстрый калькулятор", calc_pick_label:"Выбери услугу", calc_pick:"Выбери услугу…", calc_paint:"Покраска", calc_floor:"Укладка полов", calc_wallsf:"Площадь стен (кв.фут)", calc_ceilsf:"Площадь потолка (кв.фут, необязательно)", calc_coats:"Количество слоёв", c1coat:"1 слой — тот же цвет", c2coat:"2 слоя — смена цвета", calc_prep:"Подготовка / шлифовка", calc_wallp:"Снятие обоев", calc_mold:"Обработка плесени", calc_base_p:"Плинтус покраска (пог.фут)", calc_floorsf:"Площадь пола (кв.фут)", calc_mat:"Тип материала", calc_lam:"Ламинат", calc_lvp:"LVP винил", calc_demo:"Демонтаж старого покрытия", calc_under:"Укладка подложки", calc_base_f:"Плинтус снять + поставить (пог.фут)", calc_trans:"Порожки (шт.)", calc_btn:"Рассчитать", calc_result:"Стоимость работ:", calc_min:"Применён минимум.", calc_disc:"Примерно. Точная цена после фото.", measure_hint:"Как измерить?", m1:"Измеряй окрашиваемую поверхность, не пол.", m2:"Ширина × Высота каждой стены.", m3:"Исключи двери и окна если не красим.", act_save:"💾 Сохранить", act_share:"🔗 Поделиться ссылкой", act_sms_self:"📱 SMS себе", act_sms_us:"📲 SMS Handy & Fiend", act_wa:"💬 WhatsApp", act_pdf:"📄 PDF/Печать", act_contact:"📇 Добавить контакт", copied:"Скопировано!", lead_name:"Ваше имя", lead_phone:"Ваш телефон", lead_consent:"Присылайте мне обновления по SMS", lead_btn:"Сохранить и отправить", lead_ok:"✅ Принято! Скоро придёт подтверждение.",
+        form_heading:"Получить бесплатный расчёт", form_name:"Имя", form_phone:"Телефон", form_service:"Вид работы", form_zip:"ZIP код", form_desc:"Опишите задачу", form_photo:"Фото (макс 3)", form_consent:"Согласен получать SMS. Ответьте STOP для отмены.", form_submit:"Отправить заявку", form_sending:"Отправляем…", form_ok:"✅ Принято! Ответим в течение 1 часа.", form_err:"❌ Ошибка. Позвоните нам.", photo_warn:"Макс 3 фото. Выбраны первые 3.", size_warn:"Размер фото > 15MB. Уменьшите.", bar_quote:"Заявка →", bar_call:"Звонок", bar_wa:"WhatsApp", banner_txt:"Получайте обновления по SMS/WhatsApp", banner_yes:"Да, уведомляйте", banner_no:"✕", footer:"© 2026 Handy & Fiend · Лос-Анджелес · Только работа", print_disclaimer:"Точная цена после фото или выезда.",
+        sms_body:"Расчёт [ID] — [SERVICE]: [TOTAL]\nДанные: [INPUTS]\nПодтвердить: [URL]",
+        wa_body:"Привет! Расчёт [ID] для [SERVICE]: [TOTAL]. Пожалуйста подтвердите."
+      }
+    };
+
+    let currentLang = localStorage.getItem('hf_lang') || 'en';
+    function t(key){ return (i18n[currentLang] && i18n[currentLang][key]) || i18n.en[key] || key; }
+
+    function applyLang(){
+      document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+      localStorage.setItem('hf_lang', currentLang);
+      document.getElementById('langTxt').textContent = i18n[currentLang].lang_btn;
+      hydrateSelects();
+      hydrateServices();
+      hydrateHowTile();
+    }
+
+    function cycleLang(){
+      const order = ['en','es','ru'];
+      currentLang = order[(order.indexOf(currentLang)+1)%3];
+      applyLang();
+    }
+
+    function updateNavH(){
+      const nav = document.querySelector('nav');
+      if(!nav) return;
+      const h = nav.offsetHeight || 64;
+      document.documentElement.style.setProperty('--navH', h+'px');
+    }
+    window.addEventListener('resize', updateNavH);
+
+    function money(n){ return '$' + Number(n).toLocaleString(undefined, {maximumFractionDigits: 0}); }
+    function rate(n){ return '$' + Number(n).toFixed(2); }
+    function range(arr){ return money(arr[0]) + '–' + money(arr[1]); }
+    function plusMoney(n){ return '+$' + Number(n).toLocaleString(); }
+
+    function iconSVG(kind){
+      const base = 'viewBox="0 0 24 24" stroke="#1B2B4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"';
+      switch(kind){
+        case 'tv': return `<svg ${base} aria-hidden="true"><rect x="4" y="6" width="16" height="10" rx="2"></rect><path d="M8 20h8"></path><path d="M12 16v4"></path></svg>`;
+        case 'furniture': return `<svg ${base} aria-hidden="true"><path d="M6 10h12"></path><path d="M7 10V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3"></path><path d="M7 10v6"></path><path d="M17 10v6"></path><path d="M6 16h12"></path></svg>`;
+        case 'painting': return `<svg ${base} aria-hidden="true"><path d="M7 6h10"></path><path d="M8 6v6a4 4 0 0 0 8 0V6"></path><path d="M12 16v5"></path><path d="M10 21h4"></path></svg>`;
+        case 'flooring': return `<svg ${base} aria-hidden="true"><path d="M5 9h14"></path><path d="M5 13h14"></path><path d="M7 5v14"></path><path d="M12 5v14"></path><path d="M17 5v14"></path></svg>`;
+        case 'plumbing': return `<svg ${base} aria-hidden="true"><path d="M8 7h8"></path><path d="M10 7v4a2 2 0 0 0 4 0V7"></path><path d="M12 13v4"></path><path d="M9 17h6"></path><path d="M12 21s2-1.5 2-3a2 2 0 0 0-4 0c0 1.5 2 3 2 3z"></path></svg>`;
+        case 'electrical': return `<svg ${base} aria-hidden="true"><path d="M13 2L6 14h7l-1 8 7-12h-7l1-8z"></path></svg>`;
+        default: return '';
+      }
+    }
+
+    const SERVICES = [
+      { key:'s1', badge:'b1', icon:'tv', minFrom: () => PRICES.tv.standard,
+        rows: () => ([
+          { label:'tv_r1', value: money(PRICES.tv.standard) },
+          { label:'tv_r2', value: money(PRICES.tv.hiddenWire) },
+          { label:'tv_r3', value: money(PRICES.tv.artMirrors) },
+          { label:'tv_r4', value: money(PRICES.tv.curtainRod1st) },
+          { label:'tv_r5', value: plusMoney(PRICES.tv.curtainRodEach) }
+        ]),
+        note: 'tv_note'
+      },
+      { key:'s2', badge:'b2', icon:'furniture', minFrom: () => PRICES.furniture.small,
+        rows: () => ([
+          { label:'fur_r1', value: money(PRICES.furniture.small) },
+          { label:'fur_r2', value: money(PRICES.furniture.dresser) },
+          { label:'fur_r3', value: money(PRICES.furniture.bedFrame) },
+          { label:'fur_r4', value: money(PRICES.furniture.paxHourly) + '/hr (' + t('fur_r4_note') + ')' }
+        ]),
+        note: 'fur_note'
+      },
+      { key:'s3', badge:'b3', icon:'painting', minFrom: () => PRICES.painting.wall1coat,
+        rows: () => ([
+          { label:'paint_r1', value: rate(PRICES.painting.wall1coat) + '/sf' },
+          { label:'paint_r2', value: rate(PRICES.painting.wall2coat) + '/sf' },
+          { label:'paint_r3', value: rate(PRICES.painting.ceilSmooth) + '/sf' },
+          { label:'paint_r4', value: rate(PRICES.painting.ceilTextured) + '/sf' },
+          { label:'paint_r5', value: rate(PRICES.painting.ceilGloss) + '/sf' },
+          { label:'paint_r6', value: plusMoney(PRICES.painting.prep) + '/sf' },
+          { label:'paint_r7', value: rate(PRICES.painting.wallpaper) + '/sf' },
+          { label:'paint_r8', value: rate(PRICES.painting.mold) + '/sf' },
+          { label:'paint_r9', value: rate(PRICES.painting.baseboardPaint) + '/lf' },
+          { label:'paint_r10', value: rate(PRICES.painting.casingSimple) + '/lf' },
+          { label:'paint_r11', value: rate(PRICES.painting.casingProfile) + '/lf' },
+          { label:'paint_r12', value: rate(PRICES.painting.crownMolding) + '/lf' }
+        ]),
+        note: 'paint_note'
+      },
+      { key:'s4', badge:'b4', icon:'flooring', minFrom: () => PRICES.flooring.laminate,
+        rows: () => ([
+          { label:'floor_r1', value: rate(PRICES.flooring.laminate) + '/sf' },
+          { label:'floor_r2', value: rate(PRICES.flooring.lvp) + '/sf' },
+          { label:'floor_r3', value: rate(PRICES.flooring.demo) + '/sf' },
+          { label:'floor_r4', value: rate(PRICES.flooring.underlayment) + '/sf' },
+          { label:'floor_r5', value: rate(PRICES.flooring.baseboard) + '/lf' },
+          { label:'floor_r6', value: money(PRICES.flooring.transition) + '/ea' },
+          { label:'floor_r7', value: range(PRICES.flooring.doorUndercut) },
+          { label:'floor_r8', value: range(PRICES.flooring.haul) }
+        ]),
+        note: 'floor_note'
+      },
+      { key:'s5', badge:'b5', icon:'plumbing', minFrom: () => PRICES.plumbing.showerHead,
+        rows: () => ([
+          { label:'plumb_r1', value: money(PRICES.plumbing.faucet) },
+          { label:'plumb_r2', value: money(PRICES.plumbing.showerHead) },
+          { label:'plumb_r3', value: money(PRICES.plumbing.toiletFlapper) },
+          { label:'plumb_r4', value: money(PRICES.plumbing.recaulk) }
+        ]),
+        note: 'plumb_note'
+      },
+      { key:'s6', badge:'b6', icon:'electrical', minFrom: () => PRICES.electrical.switchesFirst3,
+        rows: () => ([
+          { label:'elec_r1', value: money(PRICES.electrical.fixture) },
+          { label:'elec_r2', value: money(PRICES.electrical.switchesFirst3) },
+          { label:'elec_r3', value: plusMoney(PRICES.electrical.switchesEachAdd) },
+          { label:'elec_r4', value: money(PRICES.electrical.smartDevice) }
+        ]),
+        note: 'elec_note'
+      }
+    ];
+
+    function openAccordion(panel){
+      document.querySelectorAll('.accordion-panel').forEach(p => {
+        if(p !== panel){ p.style.maxHeight = '0'; p.style.opacity = '0'; p.closest('.card').setAttribute('aria-expanded','false'); }
+      });
+      const isOpen = panel.style.maxHeight && panel.style.maxHeight !== '0px';
+      if(isOpen){ panel.style.maxHeight = '0'; panel.style.opacity = '0'; panel.closest('.card').setAttribute('aria-expanded','false'); }
+      else { panel.style.maxHeight = panel.scrollHeight + 'px'; panel.style.opacity = '1'; panel.closest('.card').setAttribute('aria-expanded','true'); }
+    }
+
+    function hydrateServices(){
+      const grid = document.getElementById('servicesGrid');
+      if(!grid) return;
+      grid.innerHTML = '';
+      SERVICES.forEach((svc, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.setAttribute('aria-expanded','false');
+        const badge = document.createElement('div');
+        badge.className = 'badge'; badge.textContent = t(svc.badge);
+        card.appendChild(badge);
+        const chev = document.createElementNS('http://www.w3.org/2000/svg','svg');
+        chev.setAttribute('class','chev'); chev.setAttribute('viewBox','0 0 24 24'); chev.setAttribute('fill','none'); chev.setAttribute('stroke','rgba(27,43,75,0.85)'); chev.setAttribute('stroke-width','2.2'); chev.setAttribute('stroke-linecap','round'); chev.setAttribute('stroke-linejoin','round');
+        chev.innerHTML = '<path d="M6 9l6 6 6-6"></path>';
+        card.appendChild(chev);
+        const btn = document.createElement('button');
+        btn.className = 'service-btn'; btn.type = 'button';
+        const iconWrap = document.createElement('div'); iconWrap.className = 'svc-icon'; iconWrap.innerHTML = iconSVG(svc.icon);
+        const main = document.createElement('div'); main.className = 'svc-main';
+        const title = document.createElement('div'); title.className = 'svc-title'; title.textContent = t(svc.key);
+        const price = document.createElement('div'); price.className = 'svc-price';
+        const fromVal = svc.minFrom();
+        const fromStr = (svc.key === 's3' || svc.key === 's4') ? (rate(fromVal) + (currentLang==='es' ? '/ft²' : (currentLang==='ru' ? '/кв.фут' : '/sf'))) : money(fromVal);
+        price.textContent = t('from') + ' ' + fromStr;
+        const footer = document.createElement('div');
+        footer.className = 'svc-footer';
+        footer.innerHTML = `<span><span>${t('view_services')}</span></span><svg class="mini-arrow" viewBox="0 0 24 24" fill="none" stroke="rgba(27,43,75,0.92)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>`;
+        main.appendChild(title); main.appendChild(price); main.appendChild(footer);
+        btn.appendChild(iconWrap); btn.appendChild(main);
+        const panel = document.createElement('div'); panel.className = 'accordion-panel';
+        const inner = document.createElement('div'); inner.className = 'accordion-inner';
+        svc.rows().forEach(r => {
+          const row = document.createElement('div'); row.className = 'price-row';
+          const left = document.createElement('div'); left.className = 'price-left'; left.textContent = t(r.label);
+          const right = document.createElement('div'); right.className = 'price-right'; right.textContent = r.value;
+          row.appendChild(left); row.appendChild(right); inner.appendChild(row);
+        });
+        const note = document.createElement('div'); note.className = 'note';
+        let minText = '';
+        if(svc.key === 's3') minText = ' ' + '(' + money(PRICES.painting.minimum) + ' min)';
+        if(svc.key === 's4') minText = ' ' + '(' + money(PRICES.flooring.minimum) + ' min)';
+        if(svc.key === 's2') minText = ' ' + '(' + money(PRICES.base.minimumCall) + ' min call)';
+        note.textContent = t(svc.note) + minText;
+        inner.appendChild(note); panel.appendChild(inner);
+        btn.addEventListener('click', () => {
+          openAccordion(panel);
+          const expanded = card.getAttribute('aria-expanded') === 'true';
+          chev.style.transform = expanded ? 'rotate(180deg)' : 'rotate(0deg)';
+        });
+        card.appendChild(btn); card.appendChild(panel); grid.appendChild(card);
+      });
+      const how = document.createElement('div');
+      how.className = 'card how-span2';
+      how.innerHTML = `<div class="how-tile"><div class="how-head"><div class="svc-icon" style="width:48px;height:48px;">${iconSVG('painting')}</div><h3 class="how-title" id="howTitle"></h3></div><div class="steps"><div class="step">📷 <span id="st1"></span></div><div class="step">✅ <span id="st2"></span></div><div class="step">🛠️ <span id="st3"></span></div></div><ul class="bullets"><li id="hb1"></li><li id="hb2"></li><li id="hb3"></li></ul><div class="pill" id="lic"></div></div>`;
+      grid.appendChild(how); hydrateHowTile();
+    }
+
+    function hydrateHowTile(){
+      const howTitle = document.getElementById('howTitle'); if(!howTitle) return;
+      howTitle.textContent = t('how_title');
+      document.getElementById('st1').textContent = t('step1'); document.getElementById('st2').textContent = t('step2'); document.getElementById('st3').textContent = t('step3');
+      document.getElementById('hb1').textContent = t('how_b1') + ': ' + money(PRICES.base.minimumCall);
+      document.getElementById('hb2').textContent = t('how_b2'); document.getElementById('hb3').textContent = t('how_b3');
+      document.getElementById('lic').textContent = t('licenses');
+    }
+
+    function hydrateSelects(){
+      const s = document.getElementById('calcService');
+      if(s){
+        const cur = s.value; s.innerHTML = '';
+        const opt0 = document.createElement('option'); opt0.value = ''; opt0.disabled = true; opt0.selected = true; opt0.textContent = t('calc_pick'); s.appendChild(opt0);
+        const o1 = document.createElement('option'); o1.value = 'paint'; o1.textContent = t('calc_paint'); s.appendChild(o1);
+        const o2 = document.createElement('option'); o2.value = 'floor'; o2.textContent = t('calc_floor'); s.appendChild(o2);
+        if(cur) s.value = cur;
+      }
+      const qs = document.getElementById('quoteService');
+      if(qs){
+        const cur = qs.value; qs.innerHTML = '';
+        const opt0 = document.createElement('option'); opt0.value = ''; opt0.disabled = true; opt0.selected = true; opt0.textContent = t('form_service'); qs.appendChild(opt0);
+        SERVICES.forEach(svc=>{ const o = document.createElement('option'); o.value = svc.key; o.textContent = t(svc.key); qs.appendChild(o); });
+        if(cur) qs.value = cur;
+      }
+    }
+
+    function initBanner(){
+      if(localStorage.getItem('hf_push')) return;
+      const banner = document.getElementById('banner');
+      const mini = document.getElementById('bannerMini');
+      const yes = document.getElementById('bannerYes');
+      const no = document.getElementById('bannerNo');
+      const form = document.getElementById('bannerForm');
+      setTimeout(()=>{ banner.classList.add('show'); }, 8000);
+      yes.addEventListener('click', ()=>{ mini.classList.add('show'); mini.style.maxHeight = mini.scrollHeight + 'px'; mini.style.opacity = '1'; });
+      no.addEventListener('click', ()=>{ localStorage.setItem('hf_push','dismissed'); banner.classList.remove('show'); });
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const ok = await submitForm(form, { source: 'banner', timestamp: new Date().toISOString() });
+        if(ok){ localStorage.setItem('hf_push','subscribed'); document.getElementById('bannerMsg').textContent = t('lead_ok'); }
+      });
+    }
+
+    async function submitForm(formEl, extraFields={}){
+      const btn = formEl.querySelector('[type=submit]');
+      if(btn){ btn.disabled = true; btn.dataset.old = btn.textContent; btn.textContent = t('form_sending'); }
+      const fd = new FormData(formEl);
+      Object.entries(extraFields).forEach(([k,v]) => fd.append(k,v));
+      try { const res = await fetch(formEl.action, { method:'POST', body:fd, headers:{'Accept':'application/json'} }); if(res.ok) return true; } catch(e){}
+      if(btn){ btn.disabled = false; btn.textContent = btn.dataset.old; }
+      return false;
+    }
+
+    function genEstimateId(){
+      const now = new Date();
+      const d = now.toISOString().slice(0,10).replace(/-/g,'');
+      const t2 = now.toTimeString().slice(0,5).replace(':','');
+      const r = Math.random().toString(36).slice(2,6).toUpperCase();
+      return `HF-${d}-${t2}-${r}`;
+    }
+    function saveEstimateToHash(data){
+      try { window.location.hash = 'e=' + btoa(unescape(encodeURIComponent(JSON.stringify(data)))); } catch(e){}
+    }
+    function restoreEstimateFromHash(){
+      const hash = window.location.hash;
+      if(!hash.startsWith('#e=')) return null;
+      try { return JSON.parse(decodeURIComponent(escape(atob(hash.slice(3))))); } catch(e){ return null; }
+    }
+    function downloadVCard(){
+      const vcf = `BEGIN:VCARD\nVERSION:3.0\nFN:Handy & Fiend\nTEL;TYPE=CELL:${CONTACT.tel}\nURL:${CONTACT.site}\nEND:VCARD`;
+      const blob = new Blob([vcf], {type:'text/vcard'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'handy-fiend-contact.vcf'; a.click();
+    }
+    function isMobile(){ return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent); }
+
+    function calcPainting(inputs){
+      const wallSF = Number(inputs.wallSF||0);
+      const ceilSF = Number(inputs.ceilSF||0);
+      const coats = Number(inputs.coats||1);
+      const baseLF = Number(inputs.baseLF||0);
+      const wallRate = (coats===1) ? PRICES.painting.wall1coat : PRICES.painting.wall2coat;
+      const wallTotal = wallSF * wallRate;
+      const ceilTotal = ceilSF * PRICES.painting.ceilSmooth;
+      const addons = wallSF * (inputs.prep ? PRICES.painting.prep : 0) + wallSF * (inputs.wallp ? PRICES.painting.wallpaper : 0) + wallSF * (inputs.mold ? PRICES.painting.mold : 0);
+      const baseboard = baseLF * PRICES.painting.baseboardPaint;
+      let total = wallTotal + ceilTotal + addons + baseboard;
+      const minApplied = total < PRICES.painting.minimum;
+      if(minApplied) total = PRICES.painting.minimum;
+      return { total: Math.round(total), minApplied };
+    }
+    function calcFlooring(inputs){
+      const floorSF = Number(inputs.floorSF||0);
+      const mat = inputs.mat || 'lam';
+      const baseLF = Number(inputs.baseLF||0);
+      const transQty = Number(inputs.transQty||0);
+      const matRate = (mat==='lam') ? PRICES.flooring.laminate : PRICES.flooring.lvp;
+      const install = floorSF * matRate;
+      const demo = inputs.demo ? floorSF * PRICES.flooring.demo : 0;
+      const underlay = inputs.under ? floorSF * PRICES.flooring.underlayment : 0;
+      const baseboard = baseLF * PRICES.flooring.baseboard;
+      const transitions = transQty * PRICES.flooring.transition;
+      let total = install + demo + underlay + baseboard + transitions;
+      const minApplied = total < PRICES.flooring.minimum;
+      if(minApplied) total = PRICES.flooring.minimum;
+      return { total: Math.round(total), minApplied };
+    }
+    function inputsSummary(serviceKey, inputs){
+      const parts = [];
+      if(serviceKey==='paint'){
+        parts.push(`walls=${inputs.wallSF||0}`); if(inputs.ceilSF) parts.push(`ceil=${inputs.ceilSF}`);
+        parts.push(`coats=${inputs.coats}`); if(inputs.prep) parts.push('prep');
+        if(inputs.wallp) parts.push('wallpaper'); if(inputs.mold) parts.push('mold');
+        if(inputs.baseLF) parts.push(`baseLF=${inputs.baseLF}`);
+      } else {
+        parts.push(`floor=${inputs.floorSF||0}`); parts.push(`mat=${inputs.mat}`);
+        if(inputs.demo) parts.push('demo'); if(inputs.under) parts.push('under');
+        if(inputs.baseLF) parts.push(`baseLF=${inputs.baseLF}`);
+        if(inputs.transQty) parts.push(`trans=${inputs.transQty}`);
+      }
+      return parts.join(', ');
+    }
+    function fillMessageTemplate(templateKey, estimate){
+      const template = t(templateKey);
+      return template.replace('[ID]', estimate.id).replace('[SERVICE]', estimate.serviceName)
+        .replace('[TOTAL]', '$' + estimate.total.toLocaleString()).replace('[INPUTS]', estimate.inputStr)
+        .replace('[URL]', window.location.href);
+    }
+
+    function initCalculator(){
+      const serviceSel = document.getElementById('calcService');
+      const paintGroup = document.getElementById('paintGroup');
+      const floorGroup = document.getElementById('floorGroup');
+      const btn = document.getElementById('calcBtn');
+      const resultBox = document.getElementById('resultBox');
+      const measureToggle = document.getElementById('measureToggle');
+      const measurePanel = document.getElementById('measurePanel');
+
+      measureToggle.addEventListener('click', ()=>{
+        const open = measurePanel.style.maxHeight && measurePanel.style.maxHeight !== '0px';
+        measurePanel.style.maxHeight = open ? '0' : measurePanel.scrollHeight + 'px';
+        measurePanel.style.opacity = open ? '0' : '1';
+      });
+
+      serviceSel.addEventListener('change', ()=>{
+        const v = serviceSel.value;
+        paintGroup.style.display = (v==='paint') ? 'block' : 'none';
+        floorGroup.style.display = (v==='floor') ? 'block' : 'none';
+      });
+
+      let lastEstimate = null;
+
+      btn.addEventListener('click', ()=>{
+        const v = serviceSel.value; if(!v) return;
+        let computed, inputs = {}, serviceName = '';
+        if(v==='paint'){
+          const wallSF = Number(document.getElementById('wallSF').value||0); if(wallSF < 1) return;
+          inputs = { wallSF, ceilSF: Number(document.getElementById('ceilSF').value||0), coats: Number(document.getElementById('coats').value||1), prep: document.getElementById('prep').checked, wallp: document.getElementById('wallp').checked, mold: document.getElementById('mold').checked, baseLF: Number(document.getElementById('baseLF').value||0) };
+          computed = calcPainting(inputs); serviceName = t('calc_paint');
+        } else {
+          const floorSF = Number(document.getElementById('floorSF').value||0); if(floorSF < 1) return;
+          inputs = { floorSF, mat: document.getElementById('mat').value, demo: document.getElementById('demo').checked, under: document.getElementById('under').checked, baseLF: Number(document.getElementById('floorBaseLF').value||0), transQty: Number(document.getElementById('transQty').value||0) };
+          computed = calcFlooring(inputs); serviceName = t('calc_floor');
+        }
+        const id = genEstimateId();
+        lastEstimate = { id, serviceKey:v, serviceName, inputs, total: computed.total, inputStr: inputsSummary(v, inputs), timestamp: Date.now() };
+        document.getElementById('resultLabel').textContent = t('calc_result');
+        document.getElementById('resultAmt').textContent = money(computed.total);
+        document.getElementById('resultId').textContent = id;
+        document.getElementById('resultDisc').textContent = t('calc_disc');
+        document.getElementById('minApplied').style.display = computed.minApplied ? 'inline-flex' : 'none';
+        document.getElementById('minApplied').textContent = t('calc_min');
+        resultBox.classList.add('show');
+        document.getElementById('actionBtns').style.display = 'flex';
+        document.getElementById('leadBox').classList.add('show');
+        document.getElementById('leadBox').style.maxHeight = '1000px';
+        saveEstimateToHash({ s:v, i:inputs, t:computed.total, id });
+        document.getElementById('hfEstimateId').value = id;
+        document.getElementById('hfEstimateTotal').value = String(computed.total);
+
+        // Setup action listeners once
+        setupActionListeners(lastEstimate);
+      });
+
+      function setupActionListeners(estimate){
+        document.getElementById('actSave').onclick = () => {
+          const arr = JSON.parse(localStorage.getItem('hf_estimates')||'[]');
+          arr.unshift(estimate); localStorage.setItem('hf_estimates', JSON.stringify(arr.slice(0,3)));
+          renderHistory();
+        };
+        document.getElementById('actShare').onclick = async () => {
+          await navigator.clipboard.writeText(window.location.href);
+          const old = document.getElementById('actShare').textContent;
+          document.getElementById('actShare').textContent = t('copied');
+          setTimeout(()=> document.getElementById('actShare').textContent = old, 2000);
+        };
+        document.getElementById('actSmsSelf').onclick = () => {
+          const body = fillMessageTemplate('sms_body', estimate);
+          if(isMobile()) window.location.href = 'sms:?body=' + encodeURIComponent(body);
+          else navigator.clipboard.writeText(body);
+        };
+        document.getElementById('actSmsUs').onclick = () => {
+          const body = fillMessageTemplate('sms_body', estimate);
+          if(isMobile()) window.location.href = 'sms:' + CONTACT.tel + '?body=' + encodeURIComponent(body);
+          else navigator.clipboard.writeText(body);
+        };
+        document.getElementById('actWa').onclick = () => {
+          const body = fillMessageTemplate('wa_body', estimate);
+          window.open('https://wa.me/' + CONTACT.wa + '?text=' + encodeURIComponent(body), '_blank');
+        };
+        document.getElementById('actPdf').onclick = () => {
+          document.getElementById('pEstimateId').textContent = 'ID: ' + estimate.id;
+          document.getElementById('pService').textContent = estimate.serviceName;
+          document.getElementById('pInputs').textContent = estimate.inputStr;
+          document.getElementById('pTotal').textContent = money(estimate.total);
+          window.print();
+        };
+        document.getElementById('actContact').onclick = downloadVCard;
+      }
+
+      function renderHistory(){
+        const host = document.getElementById('history');
+        const arr = JSON.parse(localStorage.getItem('hf_estimates')||'[]');
+        host.innerHTML = '';
+        arr.forEach(item => {
+          const card = document.createElement('div'); card.className = 'hist-card';
+          card.innerHTML = `<div class="hist-top"><div class="hist-title">${item.serviceName}</div><div class="hist-title">${money(item.total)}</div></div><div class="hist-sub">${new Date(item.timestamp).toLocaleString()}</div>`;
+          host.appendChild(card);
+        });
+      }
+      renderHistory();
+
+      const restored = restoreEstimateFromHash();
+      if(restored){
+        serviceSel.value = restored.s; serviceSel.dispatchEvent(new Event('change'));
+        if(restored.s === 'paint'){
+          document.getElementById('wallSF').value = restored.i.wallSF; document.getElementById('ceilSF').value = restored.i.ceilSF;
+          document.getElementById('coats').value = restored.i.coats; document.getElementById('prep').checked = restored.i.prep;
+          document.getElementById('wallp').checked = restored.i.wallp; document.getElementById('mold').checked = restored.i.mold;
+          document.getElementById('baseLF').value = restored.i.baseLF;
+        } else {
+          document.getElementById('floorSF').value = restored.i.floorSF; document.getElementById('mat').value = restored.i.mat;
+          document.getElementById('demo').checked = restored.i.demo; document.getElementById('under').checked = restored.i.under;
+          document.getElementById('floorBaseLF').value = restored.i.baseLF; document.getElementById('transQty').value = restored.i.transQty;
+        }
+        btn.click();
+      }
+    }
+
+    function initQuoteForm(){
+      const form = document.getElementById('quoteForm');
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const ok = await submitForm(form, { timestamp: new Date().toISOString() });
+        if(ok){ document.getElementById('quoteMsg').textContent = t('form_ok'); form.reset(); }
+      });
+    }
+
+    function initLeadForm(){
+      const form = document.getElementById('leadForm');
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const ok = await submitForm(form, { source: 'calculator', timestamp: new Date().toISOString() });
+        if(ok){ document.getElementById('leadMsg').textContent = t('lead_ok'); }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      updateNavH();
+      document.getElementById('langBtn').addEventListener('click', cycleLang);
+      document.getElementById('barCall').href = 'tel:' + CONTACT.tel;
+      document.getElementById('barWa').href = 'https://wa.me/' + CONTACT.wa;
+      document.querySelectorAll('[data-phone-display]').forEach(el => el.textContent = CONTACT.phoneDisplay);
+      applyLang();
+      initBanner();
+      initCalculator();
+      initQuoteForm();
+      initLeadForm();
+    });
+  </script>
+</body>
+</html>
