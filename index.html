@@ -70,35 +70,47 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 
 /* GRID */
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-@media(min-width:900px){.grid{grid-template-columns:repeat(4,1fr);gap:12px}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(4,1fr);gap:16px}}
 
 /* CARD */
 .scard{border-radius:14px;overflow:hidden;background:var(--card);
   border:1px solid rgba(255,255,255,.65);box-shadow:0 4px 16px rgba(42,31,20,.08);
   cursor:pointer;-webkit-tap-highlight-color:transparent;
-  transition:transform 160ms ease,box-shadow 160ms ease}
+  transition:transform 180ms ease,box-shadow 180ms ease}
 .scard:active{transform:scale(.97)}
 .scard.open{box-shadow:0 8px 32px rgba(42,31,20,.18);}
-@media(hover:hover){.scard:hover{transform:translateY(-3px);box-shadow:0 18px 52px rgba(42,31,20,.17)}}
+@media(hover:hover){.scard:hover{transform:translateY(-4px);box-shadow:0 24px 64px rgba(42,31,20,.18)}}
+@media(min-width:900px){.scard{border-radius:18px}}
+
+/* IMAGE */
 .sph{height:78px;position:relative;overflow:hidden}
-@media(min-width:900px){.sph{height:96px}}
-.sph img{transition:transform 350ms ease}
+@media(min-width:900px){.sph{height:190px}}
+.sph img{transition:transform 400ms ease}
+.scard:hover .sph img{transform:scale(1.06)}
 .scard:active .sph img{transform:scale(1.05)}
 .sph::after{content:"";position:absolute;inset:0;
-  background:linear-gradient(180deg,transparent 40%,rgba(42,31,20,.28) 100%)}
+  background:linear-gradient(180deg,transparent 35%,rgba(42,31,20,.38) 100%)}
+
 /* TV wrap */
 .tvw{height:78px;overflow:hidden;background:#EDE8DF}
-@media(min-width:900px){.tvw{height:96px}}
+@media(min-width:900px){.tvw{height:190px}}
 .tvw svg{width:100%;height:100%;display:block}
-.scb{padding:7px 9px 8px;background:rgba(255,255,255,.82);
-  display:flex;align-items:center;gap:4px}
+
+/* CARD BODY */
+.scb{padding:8px 10px 9px;background:rgba(255,255,255,.88);
+  display:flex;align-items:center;gap:6px}
+@media(min-width:900px){.scb{padding:13px 15px 14px;gap:8px}}
 .scbd{flex:1;min-width:0}
-.scn{font-family:var(--fs);font-size:13px;font-weight:700;color:var(--ink);line-height:1.15}
+.scn{font-family:var(--fs);font-size:13px;font-weight:700;color:var(--ink);line-height:1.2}
+@media(min-width:900px){.scn{font-size:16px;line-height:1.2}}
 .scp{margin-top:2px;font-size:10px;font-weight:600;color:var(--ink2)}
+@media(min-width:900px){.scp{margin-top:4px;font-size:12px}}
 .scp b{color:var(--ink);font-weight:700}
 .schev{width:18px;height:18px;border-radius:50%;background:var(--glt);border:1px solid var(--gbd);
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
   transition:transform 300ms ease,background 200ms;color:var(--gold)}
+@media(min-width:900px){.schev{width:28px;height:28px}}
+@media(min-width:900px){.schev svg{width:12px;height:12px}}
 .schev svg{transition:transform 300ms ease}
 .scard.open .schev{background:var(--ink);border-color:var(--ink);color:#fff}
 .scard.open .schev svg{transform:rotate(180deg)}
