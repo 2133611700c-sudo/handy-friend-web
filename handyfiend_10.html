@@ -103,47 +103,69 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 .scard.open .schev{background:var(--ink);border-color:var(--ink);color:#fff}
 .scard.open .schev svg{transform:rotate(180deg)}
 
-/* DRAWER */
+/* ═══ DRAWER — полностью переработан ═══ */
 .drawer{max-height:0;overflow:hidden;
-  transition:max-height 340ms cubic-bezier(.4,0,.2,1);
-  background:rgba(255,255,255,.92);border-top:1px solid var(--st2)}
-.dri{padding:2px 10px 12px}
-.drow{display:flex;justify-content:space-between;align-items:baseline;
-  padding:5px 0;border-bottom:1px solid var(--st2);font-size:11.5px}
-.drow:last-of-type{border-bottom:0}
-.dl{color:var(--ink2);font-weight:500;flex:1;padding-right:8px;line-height:1.35}
-.dr{color:var(--ink);font-weight:700;white-space:nowrap;font-size:11px}
-.dsect{padding:6px 0 3px;font-size:9px;font-weight:800;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--ink3);border-bottom:1px solid var(--st)}
-.dnote{margin-top:7px;padding-top:6px;border-top:1px dashed var(--st);
-  font-size:9.5px;font-weight:500;color:var(--ink3);line-height:1.5;font-style:italic}
-.dmin{display:inline-flex;align-items:center;gap:4px;margin:5px 0 0;
-  padding:3px 9px;border-radius:999px;background:var(--glt);border:1px solid var(--gbd);
-  font-size:9px;font-weight:700;color:var(--gold)}
+  transition:max-height 380ms cubic-bezier(.4,0,.2,1);
+  background:#fff;border-top:2px solid var(--gbd)}
 
-/* DRAWER HEADER — scope badge */
-.dhead{display:flex;align-items:center;gap:7px;padding:7px 10px 6px;
-  background:var(--glt);border-bottom:1px solid var(--gbd)}
-.dscope{font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+/* Скрываем фото карточки когда drawer открыт — больше места для прайса */
+.scard.open .sph,.scard.open .tvw{
+  height:0!important;overflow:hidden;transition:height 220ms ease}
+
+.dri{padding:0 0 14px}
+
+/* ── Заголовок drawer ── */
+.dhead{padding:10px 12px 8px;background:var(--glt);border-bottom:1px solid var(--gbd);display:flex;flex-direction:column;gap:4px}
+.dscope{display:inline-flex;align-items:center;
+  font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
   color:var(--gold);background:rgba(184,137,44,.18);border:1px solid var(--gbd);
-  padding:2px 7px;border-radius:999px;white-space:nowrap;flex-shrink:0}
-.dclaim{font-size:9px;font-weight:500;color:var(--ink3);line-height:1.3}
+  padding:3px 9px;border-radius:999px;align-self:flex-start}
+.dclaim{font-size:11px;font-weight:500;color:var(--ink2);line-height:1.45}
 
-/* DRAWER ROW — with time badge */
-.drr{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;min-width:64px;text-align:right}
-.dt{font-size:8.5px;font-weight:600;color:var(--ink3);white-space:nowrap}
+/* ── Шапка колонок ── */
+.dthead{display:grid;grid-template-columns:1fr 68px 52px;gap:0;
+  padding:5px 12px;background:rgba(42,31,20,.05);border-bottom:1px solid var(--st);
+  font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3)}
+.dthead span:nth-child(2),.dthead span:nth-child(3){text-align:right}
 
-/* CLIENT PROVIDES footer */
-.dprov{display:flex;align-items:flex-start;gap:5px;margin-top:8px;
-  padding:6px 9px;border-radius:8px;background:rgba(42,31,20,.035);
-  border:1px dashed var(--st);font-size:9px;line-height:1.45;color:var(--ink3)}
-.dprov strong{color:var(--ink2);font-weight:700}
+/* ── Строка прайса ── */
+.drow{display:grid;grid-template-columns:1fr 68px 52px;gap:2px 0;align-items:start;
+  padding:8px 12px;border-bottom:1px solid var(--st2);word-break:break-word}
+.drow:last-of-type{border-bottom:0}
+.dlw{display:flex;flex-direction:column;gap:2px;padding-right:6px}
+.dl{font-size:12px;font-weight:600;color:var(--ink);line-height:1.35}
+.dlsub{font-size:10px;font-weight:400;color:var(--ink3);line-height:1.3;font-style:italic}
+.drr{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.dr{font-size:13px;font-weight:800;color:var(--ink);line-height:1;white-space:nowrap}
+.dt{font-size:10px;font-weight:600;color:var(--ink3);white-space:nowrap;text-align:right}
 
-/* ADD-ON rows styling */
-.drow.addon{background:rgba(184,137,44,.04);border-radius:6px;
-  padding-left:4px;border-left:2px solid var(--gbd);border-bottom:none;margin-bottom:2px}
-.drow.addon .dl{color:var(--ink3)}
+/* ── Секция (разделитель) ── */
+.dsect{padding:7px 12px 5px;font-size:9px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--gold);
+  background:var(--glt);border-top:1px solid var(--gbd);border-bottom:1px solid var(--gbd);
+  margin-top:2px}
+
+/* ── Addon строки (доп. услуги) ── */
+.drow.addon{background:rgba(184,137,44,.04);border-left:3px solid var(--gbd);
+  padding-left:9px;border-bottom:none;margin:1px 0}
+.drow.addon .dl{font-size:11.5px;color:var(--ink2)}
 .drow.addon .dr{color:var(--gold)}
+
+/* ── Минимум заказа ── */
+.dmin{display:inline-flex;align-items:center;gap:5px;margin:8px 12px 0;
+  padding:5px 11px;border-radius:999px;background:var(--glt);border:1px solid var(--gbd);
+  font-size:10.5px;font-weight:700;color:var(--gold)}
+
+/* ── Что предоставляет клиент ── */
+.dprov{display:flex;align-items:flex-start;gap:6px;margin:10px 12px 0;
+  padding:9px 11px;border-radius:10px;background:rgba(42,31,20,.04);
+  border:1px solid var(--st);font-size:11px;line-height:1.5;color:var(--ink2)}
+.dprov strong{color:var(--ink);font-weight:700}
+
+/* ── Нотатка / дисклеймер ── */
+.dnote{margin:8px 12px 0;padding:8px 11px;border-radius:8px;
+  background:rgba(42,31,20,.03);border-left:2px solid var(--st);
+  font-size:10.5px;font-weight:400;color:var(--ink3);line-height:1.55;font-style:italic}
 
 /* CALC */
 .rc{margin:13px 0 0}
@@ -1130,14 +1152,28 @@ function buildDrawer(id){
   const el=document.getElementById('dri_'+id);
   if(!el)return;
   const l=L(),d=l.dr;
-  // Row renderer: [label, price, time?]  addon=true → gold accent
-  const R=(arr,addon)=>arr.map(([a,b,t])=>`<div class="drow${addon?' addon':''}">
-    <span class="dl">${a}</span>
-    <div class="drr"><span class="dr">${b}</span>${t?`<span class="dt">⏱ ${t}</span>`:''}</div>
-  </div>`).join('');
+  // ── Заголовки колонок ──
+  const lmap={en:['Service','Price','Time'],es:['Servicio','Precio','Tiempo'],ru:['Услуга','Цена','Время'],ua:['Послуга','Ціна','Час']};
+  const lh=lmap[lang]||lmap.en;
+  // ── Row renderer: [label, price, time?] — разделяем name / subtitle по ' — ' ──
+  const R=(arr,addon)=>arr.map(([a,b,t])=>{
+    const di=a.indexOf(' — ');
+    const nm=di>0?a.slice(0,di):a;
+    const sb=di>0?a.slice(di+3):'';
+    return `<div class="drow${addon?' addon':''}">
+      <div class="dlw"><span class="dl">${nm}</span>${sb?`<span class="dlsub">${sb}</span>`:''}</div>
+      <div class="drr"><span class="dr">${b}</span>${t?`<span class="dt">${t}</span>`:''}</div>
+    </div>`;
+  }).join('');
+  // ── Секция-разделитель ──
   const S=t=>`<div class="dsect">${t}</div>`;
-  const N=t=>`<div class="dnote">${t}</div>`;
-  const H=(scope,desc)=>`<div class="dhead"><span class="dscope">${scope}</span><span class="dclaim">${desc}</span></div>`;
+  // ── Заголовок колонок ──
+  const TH=`<div class="dthead"><span>${lh[0]}</span><span>${lh[1]}</span><span>${lh[2]}</span></div>`;
+  // ── Нотатка ──
+  const N=t=>`<div class="dnote">ℹ️ ${t}</div>`;
+  // ── Scope header ──
+  const H=(scope,desc)=>`<div class="dhead"><span class="dscope">${scope}</span><span class="dclaim">${desc}</span></div>${TH}`;
+  // ── Что предоставляет клиент ──
   const C=(label,items)=>`<div class="dprov">📦 <div><strong>${label}:</strong> ${items}</div></div>`;
   let h='';
   if(id==='tv'){
