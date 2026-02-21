@@ -212,11 +212,8 @@ input:focus,select:focus{border-color:var(--gold)}
 .pb{height:14px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
-/* SEO skeleton */
-.seo-skeleton{margin:0 0 12px}
-.seo-h2{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin:0 0 6px}
-.seo-services{margin:0 0 0 18px;padding:0;color:var(--ink2);font-size:12px;font-weight:500}
-.seo-services li{margin:2px 0}
+/* SEO skeleton — visually hidden, readable by search engines */
+.seo-skeleton{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 /* Calculator mode toggle */
 .mode{display:flex;gap:8px}
@@ -1119,7 +1116,11 @@ function renderGrid(){
       <div class="drawer" id="dr_${svc.id}">
         <div class="dri" id="dri_${svc.id}"></div>
       </div>`;
-    card.addEventListener('click',()=>toggle(svc.id));
+    card.addEventListener('click',(e)=>{
+      // prevent clicks inside the open drawer from re-triggering toggle
+      if(e.target.closest('.drawer'))return;
+      toggle(svc.id);
+    });
     g.appendChild(card);
     buildDrawer(svc.id);
   });
@@ -1220,7 +1221,7 @@ function updateAddons(){
 }
 
 document.getElementById('svcSel').addEventListener('change',updateAddons);
-['dimLen','dimWid'].forEach(id=>document.getElementById(id).addEventListener('input',updateArea));
+['dimLen','dimWid','totalSF'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateArea);});
 
 document.getElementById('calcBtn').addEventListener('click',()=>{
   const v=document.getElementById('svcSel').value;
