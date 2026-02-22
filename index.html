@@ -282,6 +282,16 @@ input:focus,select:focus{border-color:var(--gold)}
   background:rgba(255,255,255,.82);color:var(--ink2);font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
 .mode button[aria-pressed="true"]{background:var(--glt);border-color:var(--gbd);color:var(--ink)}
 #sfWrap{display:none}
+/* Mobile-only anchor to calculator */
+.calc-anchor{display:none}
+@media(max-width:899px){
+  .calc-anchor{display:flex;align-items:center;justify-content:center;gap:8px;
+    margin:18px 0 4px;height:46px;border-radius:14px;
+    background:var(--ink);color:rgba(255,255,255,.94);
+    font-size:14px;font-weight:700;letter-spacing:.02em;
+    box-shadow:0 4px 16px rgba(42,31,20,.18);transition:opacity 120ms}
+  .calc-anchor:active{opacity:.82}
+}
 </style>
 <meta name="description" content="Premium handyman in Los Angeles (90038, 90046, 90048, 90069, 90210). TV Mounting, Furniture Assembly, Painting, Flooring. Labor only, upfront pricing. Call or WhatsApp.">
 <meta name="robots" content="index,follow">
@@ -357,9 +367,10 @@ input:focus,select:focus{border-color:var(--gold)}
       </ul>
     </section>
     <div class="grid" id="servGrid"></div>
+    <a class="calc-anchor" href="#calcBox" id="calcAnchorBtn">📐 <span id="calcAnchorTxt">Get Estimate</span></a>
   </div>
 
-  <div class="rc">
+  <div class="rc" id="calcBox">
     <div class="cb">
       <div class="ch">
         <div class="ci">📐</div>
@@ -409,6 +420,11 @@ input:focus,select:focus{border-color:var(--gold)}
             </div>
           </div>
         </div>
+        <div class="iblk" id="hrWrap" style="display:none">
+          <span class="ilbl" id="lHrs"></span>
+          <input type="number" id="hoursInput" min="1" max="24" step="0.5" placeholder="2" inputmode="decimal">
+        </div>
+        <div class="abadge" id="hrBadge" style="display:none"></div>
         <button class="ccbtn" id="calcBtn"></button>
         <div class="cres" id="calcRes">
           <div class="rlbl" id="resLbl"></div>
@@ -603,7 +619,14 @@ const T={
     calcSub:"Enter room size → instant price",
     lSvc:"Service",lLen:"Length (ft)",lWid:"Width (ft)",
     lBase:"Baseboards (lin ft)",lTrans:"Transitions (qty)",lDoorU:"Door undercuts (qty)",
+    lHrs:"Estimated hours",anchorBtn:"Get Free Estimate",
+    calcSubHr:"Service call $150 · +$70/hr after 2h",
     opts:[
+      {v:"tv", l:"TV Mounting ($150 service call)"},
+      {v:"fur",l:"Furniture Assembly ($150 service call)"},
+      {v:"art",l:"Art & Mirrors Hanging ($150 service call)"},
+      {v:"plumb",l:"Plumbing ($150 service call)"},
+      {v:"elec",l:"Electrical ($150 service call)"},
       {v:"p1",l:"Painting — 1 coat (same color)"},
       {v:"p2",l:"Painting — 2 coats (color change)"},
       {v:"fl",l:"Flooring — Laminate ($4.25/sf)"},
@@ -733,7 +756,14 @@ const T={
     calcSub:"Dimensiones del cuarto → precio",
     lSvc:"Servicio",lLen:"Largo (pies)",lWid:"Ancho (pies)",
     lBase:"Zócalos (pie lineal)",lTrans:"Transiciones (cant.)",lDoorU:"Recortes de puerta (cant.)",
+    lHrs:"Horas estimadas",anchorBtn:"Obtener estimado",
+    calcSubHr:"Llamada $150 · +$70/hr después de 2h",
     opts:[
+      {v:"tv", l:"Montaje de TV ($150 llamada de servicio)"},
+      {v:"fur",l:"Ensamblaje de muebles ($150 llamada)"},
+      {v:"art",l:"Cuadros & Espejos ($150 llamada)"},
+      {v:"plumb",l:"Plomería ($150 llamada de servicio)"},
+      {v:"elec",l:"Eléctrico ($150 llamada de servicio)"},
       {v:"p1",l:"Pintura — 1 capa (mismo color)"},
       {v:"p2",l:"Pintura — 2 capas (cambio de color)"},
       {v:"fl",l:"Pisos — Laminado ($4.25/ft²)"},
@@ -862,7 +892,14 @@ const T={
     calcSub:"Введите размеры комнаты → получите цену",
     lSvc:"Услуга",lLen:"Длина (футов)",lWid:"Ширина (футов)",
     lBase:"Плинтуса (пог.фут)",lTrans:"Порожки (шт.)",lDoorU:"Подрезка дверей (шт.)",
+    lHrs:"Ориентировочное кол-во часов",anchorBtn:"Рассчитать стоимость",
+    calcSubHr:"Вызов $150 · +$70/час после 2ч",
     opts:[
+      {v:"tv", l:"Монтаж ТВ ($150 вызов мастера)"},
+      {v:"fur",l:"Сборка мебели ($150 вызов мастера)"},
+      {v:"art",l:"Картины & Зеркала ($150 вызов)"},
+      {v:"plumb",l:"Сантехника ($150 вызов мастера)"},
+      {v:"elec",l:"Электрика ($150 вызов мастера)"},
       {v:"p1",l:"Покраска — 1 слой (тот же цвет)"},
       {v:"p2",l:"Покраска — 2 слоя (смена цвета)"},
       {v:"fl",l:"Ламинат ($4.25/кв.фут)"},
@@ -991,7 +1028,14 @@ const T={
     calcSub:"Введіть розміри кімнати → отримайте ціну",
     lSvc:"Послуга",lLen:"Довжина (фут)",lWid:"Ширина (фут)",
     lBase:"Плінтуси (пог.фут)",lTrans:"Поріжки (шт.)",lDoorU:"Підрізання дверей (шт.)",
+    lHrs:"Орієнтовна кількість годин",anchorBtn:"Розрахувати вартість",
+    calcSubHr:"Виклик $150 · +$70/год після 2год",
     opts:[
+      {v:"tv", l:"Монтаж ТВ ($150 виклик майстра)"},
+      {v:"fur",l:"Складання меблів ($150 виклик)"},
+      {v:"art",l:"Картини & Дзеркала ($150 виклик)"},
+      {v:"plumb",l:"Сантехніка ($150 виклик майстра)"},
+      {v:"elec",l:"Електрика ($150 виклик майстра)"},
       {v:"p1",l:"Фарбування — 1 шар (той самий колір)"},
       {v:"p2",l:"Фарбування — 2 шари (зміна кольору)"},
       {v:"fl",l:"Ламінат ($4.25/кв.фут)"},
@@ -1133,6 +1177,9 @@ function applyLang(){
   document.getElementById('lLen').textContent=l.lLen;
   document.getElementById('lWid').textContent=l.lWid;
   document.getElementById('lBase').textContent=l.lBase;
+  document.getElementById('lHrs').textContent=l.lHrs;
+  const calcAnchorEl=document.getElementById('calcAnchorTxt');
+  if(calcAnchorEl)calcAnchorEl.textContent=l.anchorBtn;
   document.getElementById('lTrans').textContent=l.lTrans;
   document.getElementById('lDoorU').textContent=l.lDoorU;
   document.getElementById('calcBtn').textContent=l.calcBtn;
@@ -1283,9 +1330,13 @@ function updateArea(){
   }
 }
 
+const HOURLY_SVCS=['tv','fur','art','plumb','elec'];
+function isHourly(v){return HOURLY_SVCS.includes(v);}
+
 function updateAddons(){
   const v=document.getElementById('svcSel').value;
   const ip=v==='p1'||v==='p2',ifl=v==='fl'||v==='fv';
+  const hourly=isHourly(v);
   const l=L();
   const list=ip?l.ap:ifl?l.af:[];
   document.getElementById('addonGroup').innerHTML=list.map(a=>
@@ -1293,46 +1344,99 @@ function updateAddons(){
   ).join('');
   document.getElementById('bpWrap').style.display=ip?'flex':'none';
   document.getElementById('flWrap').style.display=ifl?'block':'none';
+  /* Toggle area-based vs hourly UI */
+  const modeDiv=document.querySelector('.mode');
+  const roomWrap=document.getElementById('roomWrap');
+  const sfWrap=document.getElementById('sfWrap');
+  const areaBadge=document.getElementById('areaBadge');
+  const hrWrap=document.getElementById('hrWrap');
+  const hrBadge=document.getElementById('hrBadge');
+  const calcSubEl=document.getElementById('calcSub');
+  if(hourly){
+    modeDiv.style.display='none';
+    roomWrap.style.display='none';
+    sfWrap.style.display='none';
+    areaBadge.style.display='none';
+    hrWrap.style.display='flex';
+    hrBadge.style.display='block';
+    if(calcSubEl)calcSubEl.textContent=L().calcSubHr;
+    updateHrBadge();
+  } else {
+    modeDiv.style.display='flex';
+    areaBadge.style.display='block';
+    hrWrap.style.display='none';
+    hrBadge.style.display='none';
+    if(calcSubEl)calcSubEl.textContent=L().calcSub;
+    /* Restore area mode UI */
+    roomWrap.style.display=calcMode==='room'?'grid':'none';
+    sfWrap.style.display=calcMode==='total'?'flex':'none';
+    updateArea();
+  }
+}
+
+function updateHrBadge(){
+  const h=+document.getElementById('hoursInput').value||0;
+  const badge=document.getElementById('hrBadge');
+  if(!h){badge.innerHTML='Enter estimated hours above';return;}
+  const extra=Math.max(0,h-2);
+  const tot=Math.round(150+extra*70);
+  badge.innerHTML=`$150 call${extra>0?` + ${extra}h × $70 = <strong>$${tot}</strong>`:'<br><strong>Included in service call</strong>'}`;
 }
 
 document.getElementById('svcSel').addEventListener('change',updateAddons);
 ['dimLen','dimWid','totalSF'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateArea);});
+document.getElementById('hoursInput').addEventListener('input',updateHrBadge);
 
 document.getElementById('calcBtn').addEventListener('click',()=>{
   const v=document.getElementById('svcSel').value;
-  const len=+document.getElementById('dimLen').value||0;
-  const wid=+document.getElementById('dimWid').value||0;
-  const tsf=+document.getElementById('totalSF')?.value||0;
-  if(calcMode==='room'){
-    if(!len||!wid){document.getElementById('dimLen').focus();return;}
-  } else {
-    if(!tsf){document.getElementById('totalSF').focus();return;}
-  }
-  const sf=(calcMode==='total')?tsf:(len*wid);
-  const ip=v==='p1'||v==='p2',ifl=v==='fl'||v==='fv';
-  let tot=0,min=500;
   const name=L().opts.find(o=>o.v===v)?.l||'';
-  if(v==='p1')tot=sf*P.paint.w1;
-  if(v==='p2')tot=sf*P.paint.w2;
-  if(v==='fl')tot=sf*P.floor.lam;
-  if(v==='fv')tot=sf*P.floor.lvp;
-  if(ip){
-    if(document.getElementById('ao_prep')?.checked)  tot+=sf*P.paint.prep;
-    if(document.getElementById('ao_wallp')?.checked) tot+=sf*P.paint.wp;
-    if(document.getElementById('ao_mold')?.checked)  tot+=sf*P.paint.mold;
-    if(document.getElementById('ao_strip')?.checked) tot+=sf*P.paint.ps;
-    tot+=(+document.getElementById('baseLF')?.value||0)*P.paint.base;
+  let tot=0, min=150, sf=0, len=0, wid=0, hours=0;
+
+  if(isHourly(v)){
+    /* ── Hourly / flat-fee services ── */
+    hours=+document.getElementById('hoursInput').value||0;
+    if(!hours){document.getElementById('hoursInput').focus();return;}
+    const extra=Math.max(0,hours-2);
+    tot=Math.round(150+extra*70);
+    min=150;
+    lastEst={tot,name,sf:0,len:0,wid:0,min,hours};
+  } else {
+    /* ── Area-based services (paint / floor) ── */
+    const ip=v==='p1'||v==='p2',ifl=v==='fl'||v==='fv';
+    len=+document.getElementById('dimLen').value||0;
+    wid=+document.getElementById('dimWid').value||0;
+    const tsf=+document.getElementById('totalSF')?.value||0;
+    if(calcMode==='room'){
+      if(!len||!wid){document.getElementById('dimLen').focus();return;}
+    } else {
+      if(!tsf){document.getElementById('totalSF').focus();return;}
+    }
+    sf=(calcMode==='total')?tsf:(len*wid);
+    min=500;
+    if(v==='p1')tot=sf*P.paint.w1;
+    if(v==='p2')tot=sf*P.paint.w2;
+    if(v==='fl')tot=sf*P.floor.lam;
+    if(v==='fv')tot=sf*P.floor.lvp;
+    if(ip){
+      if(document.getElementById('ao_prep')?.checked)  tot+=sf*P.paint.prep;
+      if(document.getElementById('ao_wallp')?.checked) tot+=sf*P.paint.wp;
+      if(document.getElementById('ao_mold')?.checked)  tot+=sf*P.paint.mold;
+      if(document.getElementById('ao_strip')?.checked) tot+=sf*P.paint.ps;
+      tot+=(+document.getElementById('baseLF')?.value||0)*P.paint.base;
+    }
+    if(ifl){
+      if(document.getElementById('ao_demo')?.checked)  tot+=sf*P.floor.demo;
+      if(document.getElementById('ao_under')?.checked) tot+=sf*P.floor.under;
+      tot+=(+document.getElementById('transQty')?.value||0)*P.floor.trans;
+      tot+=(+document.getElementById('doorQty')?.value||0)*P.floor.door;
+    }
+    tot=Math.round(tot);
+    lastEst={tot,name,sf:Math.round(sf),len,wid,min};
   }
-  if(ifl){
-    if(document.getElementById('ao_demo')?.checked)  tot+=sf*P.floor.demo;
-    if(document.getElementById('ao_under')?.checked) tot+=sf*P.floor.under;
-    tot+=(+document.getElementById('transQty')?.value||0)*P.floor.trans;
-    tot+=(+document.getElementById('doorQty')?.value||0)*P.floor.door;
-  }
-  tot=Math.round(tot);
+
   const minApplied=tot<min;
   if(minApplied)tot=min;
-  lastEst={tot,name,sf:Math.round(sf),len,wid,min};
+  if(lastEst)lastEst.tot=tot;
   document.getElementById('resAmt').textContent='$'+tot.toLocaleString('en-US');
   const rm=document.getElementById('resMin');
   if(minApplied){rm.style.display='inline-flex';
@@ -1340,19 +1444,23 @@ document.getElementById('calcBtn').addEventListener('click',()=>{
   else rm.style.display='none';
   document.getElementById('calcRes').classList.add('show');
   document.getElementById('calcRes').scrollIntoView({behavior:'smooth',block:'nearest'});
-  track('calc_calculate',{service:v,area_sqft:Math.round(sf),total:tot,min_applied:minApplied?1:0});
+  track('calc_calculate',{service:v,area_sqft:Math.round(sf),total:tot,hours});
 });
 
 document.getElementById('resWa').addEventListener('click',()=>{
   if(!lastEst)return;
-  const m=`Hi Handy & Fiend! 👋\nEstimate: ${lastEst.name}\nRoom: ${lastEst.len}ft × ${lastEst.wid}ft = ${lastEst.sf} sq ft\nTotal: $${lastEst.tot.toLocaleString()}\nPlease confirm availability.`;
+  const detail=lastEst.hours
+    ?`Hours: ~${lastEst.hours}h`
+    :`Room: ${lastEst.len}ft × ${lastEst.wid}ft = ${lastEst.sf} sq ft`;
+  const m=`Hi Handy & Fiend! 👋\nEstimate: ${lastEst.name}\n${detail}\nTotal: $${lastEst.tot.toLocaleString()}\nPlease confirm availability.`;
   track('calc_share_whatsapp',{service:lastEst.name,area_sqft:lastEst.sf,total:lastEst.tot});
   window.open('https://wa.me/16266008780?text='+encodeURIComponent(m),'_blank','noopener');
 });
 
 document.getElementById('resCopy').addEventListener('click',async()=>{
   if(!lastEst)return;
-  const txt=`${lastEst.name}: $${lastEst.tot.toLocaleString()} (${lastEst.sf} sq ft)\nHandy & Fiend · (626) 600-8780`;
+  const detail=lastEst.hours?`~${lastEst.hours}h`:`${lastEst.sf} sq ft`;
+  const txt=`${lastEst.name}: $${lastEst.tot.toLocaleString()} (${detail})\nHandy & Fiend · (626) 600-8780`;
   try{await navigator.clipboard.writeText(txt);}catch(e){}
   const btn=document.getElementById('resCopy'),old=btn.textContent;
   btn.textContent='✓ Copied!';setTimeout(()=>{btn.textContent=old;},1800);
