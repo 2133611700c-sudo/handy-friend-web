@@ -316,7 +316,7 @@ input:focus,select:focus{border-color:var(--gold)}
   "@context": "https://schema.org",
   "@type": "HomeAndConstructionBusiness",
   "name": "Handy & Fiend",
-  "telephone": "+16266008780",
+  "telephone": "+12133611700",
   "url": "https://messenginfo.com/",
   "areaServed": ["90038","90046","90048","90069","90210"],
   "address": {
@@ -385,8 +385,8 @@ input:focus,select:focus{border-color:var(--gold)}
           <select id="svcSel"></select>
         </div>
         <div class="mode" role="group" aria-label="Calculator mode">
-          <button type="button" id="modeRoom" aria-pressed="true">Room (L×W)</button>
-          <button type="button" id="modeTotal" aria-pressed="false">Total sq ft</button>
+          <button type="button" id="modeRoom" aria-pressed="true"></button>
+          <button type="button" id="modeTotal" aria-pressed="false"></button>
         </div>
         <div class="irow" id="roomWrap">
           <div class="iblk">
@@ -399,7 +399,7 @@ input:focus,select:focus{border-color:var(--gold)}
           </div>
         </div>
         <div class="iblk" id="sfWrap">
-          <span class="ilbl" id="lSf">Total sq ft</span>
+          <span class="ilbl" id="lSf"></span>
           <input type="number" id="totalSF" min="1" placeholder="300" inputmode="decimal">
         </div>
         <div class="abadge" id="areaBadge"></div>
@@ -449,13 +449,13 @@ input:focus,select:focus{border-color:var(--gold)}
 
 <div class="bar">
   <div class="barin">
-    <a class="bcall" href="tel:+16266008780">
+    <a class="bcall" href="tel:+12133611700">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
         <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="rgba(255,255,255,0.75)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      626-600-8780
+      213-361-1700
     </a>
-    <a class="bwa" href="https://wa.me/16266008780?text=Hi%20Handy%20%26%20Fiend!" target="_blank" rel="noopener" aria-label="WhatsApp">
+    <a class="bwa" href="https://wa.me/12133611700?text=Hi%20Handy%20%26%20Fiend!" target="_blank" rel="noopener" aria-label="WhatsApp">
       <svg viewBox="0 0 24 24" fill="none">
         <path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1.5-4.2A8 8 0 1 1 20 12z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
         <path d="M9 10.5c.2-.5.4-.5.6-.5h.5c.1 0 .3 0 .4.3l.7 1.8c.1.2 0 .4-.1.5l-.4.4c.6 1.2 1.5 2 2.7 2.6l.4-.5c.1-.2.3-.2.5-.1l1.8.8c.2.1.3.3.2.5-.2.7-.8 1.5-1.6 1.7-.9.2-2-.1-3.5-.8-1.7-1-3.1-2.8-3.5-3.6-.4-.8-.3-1.8.1-2.6z" fill="#fff"/>
@@ -620,6 +620,17 @@ const T={
     lSvc:"Service",lLen:"Length (ft)",lWid:"Width (ft)",
     lBase:"Baseboards (lin ft)",lTrans:"Transitions (qty)",lDoorU:"Door undercuts (qty)",
     lHrs:"Estimated hours",anchorBtn:"Get Free Estimate",
+    lModeRoom:"Room (L×W)",lModeTotal:"Total sq ft",lSfTotal:"Total sq ft",
+    hrBadgeHint:"Enter estimated hours above",
+    hrBadgeIncl:"Included in service call",
+    hrBadgeFmt:(extra,tot)=>`$150 call + ${extra}h × $70 = <strong>$${tot}</strong>`,
+    areaTotalHint:"Enter total sq ft",
+    areaTotalFmt:(sf)=>`Total area = <strong>${sf} sq ft</strong>`,
+    waGreet:"Hi Handy & Fiend! 👋",
+    waEstLabel:"Estimate",waTotalLabel:"Total",
+    waHoursDetail:(h)=>`Hours: ~${h}h`,
+    waRoomDetail:(len,wid,sf)=>`Room: ${len}ft × ${wid}ft = ${sf} sq ft`,
+    waConfirm:"Please confirm availability.",
     calcSubHr:"Service call $150 · +$70/hr after 2h",
     opts:[
       {v:"tv", l:"TV Mounting ($150 service call)"},
@@ -757,6 +768,17 @@ const T={
     lSvc:"Servicio",lLen:"Largo (pies)",lWid:"Ancho (pies)",
     lBase:"Zócalos (pie lineal)",lTrans:"Transiciones (cant.)",lDoorU:"Recortes de puerta (cant.)",
     lHrs:"Horas estimadas",anchorBtn:"Obtener estimado",
+    lModeRoom:"Habitación (L×A)",lModeTotal:"Total ft²",lSfTotal:"Total ft²",
+    hrBadgeHint:"Ingresa las horas estimadas arriba",
+    hrBadgeIncl:"Incluido en la llamada de servicio",
+    hrBadgeFmt:(extra,tot)=>`$150 llamada + ${extra}h × $70 = <strong>$${tot}</strong>`,
+    areaTotalHint:"Ingresa el total de ft²",
+    areaTotalFmt:(sf)=>`Área total = <strong>${sf} ft²</strong>`,
+    waGreet:"¡Hola Handy & Fiend! 👋",
+    waEstLabel:"Cotización",waTotalLabel:"Total",
+    waHoursDetail:(h)=>`Horas: ~${h}h`,
+    waRoomDetail:(len,wid,sf)=>`Habitación: ${len}ft × ${wid}ft = ${sf} ft²`,
+    waConfirm:"Por favor confirme disponibilidad.",
     calcSubHr:"Llamada $150 · +$70/hr después de 2h",
     opts:[
       {v:"tv", l:"Montaje de TV ($150 llamada de servicio)"},
@@ -893,6 +915,17 @@ const T={
     lSvc:"Услуга",lLen:"Длина (футов)",lWid:"Ширина (футов)",
     lBase:"Плинтуса (пог.фут)",lTrans:"Порожки (шт.)",lDoorU:"Подрезка дверей (шт.)",
     lHrs:"Ориентировочное кол-во часов",anchorBtn:"Рассчитать стоимость",
+    lModeRoom:"Комната (Д×Ш)",lModeTotal:"Общая площадь",lSfTotal:"Кв.футов всего",
+    hrBadgeHint:"Введите кол-во часов выше",
+    hrBadgeIncl:"Входит в стоимость вызова",
+    hrBadgeFmt:(extra,tot)=>`Вызов $150 + ${extra}ч × $70 = <strong>$${tot}</strong>`,
+    areaTotalHint:"Введите кв.футов",
+    areaTotalFmt:(sf)=>`Общая площадь = <strong>${sf} кв.фут</strong>`,
+    waGreet:"Привет, Handy & Fiend! 👋",
+    waEstLabel:"Смета",waTotalLabel:"Итого",
+    waHoursDetail:(h)=>`Часов: ~${h}ч`,
+    waRoomDetail:(len,wid,sf)=>`Комната: ${len}фт × ${wid}фт = ${sf} кв.фут`,
+    waConfirm:"Пожалуйста, подтвердите наличие.",
     calcSubHr:"Вызов $150 · +$70/час после 2ч",
     opts:[
       {v:"tv", l:"Монтаж ТВ ($150 вызов мастера)"},
@@ -1029,6 +1062,17 @@ const T={
     lSvc:"Послуга",lLen:"Довжина (фут)",lWid:"Ширина (фут)",
     lBase:"Плінтуси (пог.фут)",lTrans:"Поріжки (шт.)",lDoorU:"Підрізання дверей (шт.)",
     lHrs:"Орієнтовна кількість годин",anchorBtn:"Розрахувати вартість",
+    lModeRoom:"Кімната (Д×Ш)",lModeTotal:"Загальна площа",lSfTotal:"Кв.фут загалом",
+    hrBadgeHint:"Введіть кількість годин вище",
+    hrBadgeIncl:"Входить у вартість виклику",
+    hrBadgeFmt:(extra,tot)=>`Виклик $150 + ${extra}год × $70 = <strong>$${tot}</strong>`,
+    areaTotalHint:"Введіть кв.фут",
+    areaTotalFmt:(sf)=>`Загальна площа = <strong>${sf} кв.фут</strong>`,
+    waGreet:"Привіт, Handy & Fiend! 👋",
+    waEstLabel:"Кошторис",waTotalLabel:"Всього",
+    waHoursDetail:(h)=>`Годин: ~${h}год`,
+    waRoomDetail:(len,wid,sf)=>`Кімната: ${len}фт × ${wid}фт = ${sf} кв.фут`,
+    waConfirm:"Просимо підтвердити наявність.",
     calcSubHr:"Виклик $150 · +$70/год після 2год",
     opts:[
       {v:"tv", l:"Монтаж ТВ ($150 виклик майстра)"},
@@ -1178,6 +1222,11 @@ function applyLang(){
   document.getElementById('lWid').textContent=l.lWid;
   document.getElementById('lBase').textContent=l.lBase;
   document.getElementById('lHrs').textContent=l.lHrs;
+  document.getElementById('modeRoom').textContent=l.lModeRoom;
+  document.getElementById('modeTotal').textContent=l.lModeTotal;
+  document.getElementById('lSf').textContent=l.lSfTotal;
+  const bwaEl=document.querySelector('.bar .bwa');
+  if(bwaEl)bwaEl.href='https://wa.me/12133611700?text='+encodeURIComponent(l.waGreet);
   const calcAnchorEl=document.getElementById('calcAnchorTxt');
   if(calcAnchorEl)calcAnchorEl.textContent=l.anchorBtn;
   document.getElementById('lTrans').textContent=l.lTrans;
@@ -1324,7 +1373,7 @@ function updateArea(){
   const tsf=+document.getElementById('totalSF')?.value||0;
   const sf=(calcMode==='total'&&tsf)?Math.round(tsf):(l&&w?Math.round(l*w):0);
   if(calcMode==='total'){
-    document.getElementById('areaBadge').innerHTML=sf?`Total area = <strong>${sf} sq ft</strong>`:'Enter total sq ft';
+    document.getElementById('areaBadge').innerHTML=sf?L().areaTotalFmt(sf):L().areaTotalHint;
   } else {
     document.getElementById('areaBadge').innerHTML=L().areaHint(l||'',w||'',sf);
   }
@@ -1377,10 +1426,13 @@ function updateAddons(){
 function updateHrBadge(){
   const h=+document.getElementById('hoursInput').value||0;
   const badge=document.getElementById('hrBadge');
-  if(!h){badge.innerHTML='Enter estimated hours above';return;}
+  const l=L();
+  if(!h){badge.innerHTML=l.hrBadgeHint;return;}
   const extra=Math.max(0,h-2);
   const tot=Math.round(150+extra*70);
-  badge.innerHTML=`$150 call${extra>0?` + ${extra}h × $70 = <strong>$${tot}</strong>`:'<br><strong>Included in service call</strong>'}`;
+  badge.innerHTML=extra>0
+    ?l.hrBadgeFmt(extra,tot)
+    :`$150 call<br><strong>${l.hrBadgeIncl}</strong>`;
 }
 
 document.getElementById('svcSel').addEventListener('change',updateAddons);
@@ -1449,18 +1501,19 @@ document.getElementById('calcBtn').addEventListener('click',()=>{
 
 document.getElementById('resWa').addEventListener('click',()=>{
   if(!lastEst)return;
+  const l=L();
   const detail=lastEst.hours
-    ?`Hours: ~${lastEst.hours}h`
-    :`Room: ${lastEst.len}ft × ${lastEst.wid}ft = ${lastEst.sf} sq ft`;
-  const m=`Hi Handy & Fiend! 👋\nEstimate: ${lastEst.name}\n${detail}\nTotal: $${lastEst.tot.toLocaleString()}\nPlease confirm availability.`;
+    ?l.waHoursDetail(lastEst.hours)
+    :l.waRoomDetail(lastEst.len,lastEst.wid,lastEst.sf);
+  const m=`${l.waGreet}\n${l.waEstLabel}: ${lastEst.name}\n${detail}\n${l.waTotalLabel}: $${lastEst.tot.toLocaleString()}\n${l.waConfirm}`;
   track('calc_share_whatsapp',{service:lastEst.name,area_sqft:lastEst.sf,total:lastEst.tot});
-  window.open('https://wa.me/16266008780?text='+encodeURIComponent(m),'_blank','noopener');
+  window.open('https://wa.me/12133611700?text='+encodeURIComponent(m),'_blank','noopener');
 });
 
 document.getElementById('resCopy').addEventListener('click',async()=>{
   if(!lastEst)return;
   const detail=lastEst.hours?`~${lastEst.hours}h`:`${lastEst.sf} sq ft`;
-  const txt=`${lastEst.name}: $${lastEst.tot.toLocaleString()} (${detail})\nHandy & Fiend · (626) 600-8780`;
+  const txt=`${lastEst.name}: $${lastEst.tot.toLocaleString()} (${detail})\nHandy & Fiend · (213) 361-1700`;
   try{await navigator.clipboard.writeText(txt);}catch(e){}
   const btn=document.getElementById('resCopy'),old=btn.textContent;
   btn.textContent='✓ Copied!';setTimeout(()=>{btn.textContent=old;},1800);
@@ -1497,10 +1550,10 @@ applyLang();updateAddons();updateArea();
 
 // ─── CTA Click Tracking ───
 document.querySelector('.bcall')?.addEventListener('click',()=>{
-  track('click_call',{method:'tel',phone:'+16266008780'});
+  track('click_call',{method:'tel',phone:'+12133611700'});
 });
 document.querySelector('.bwa')?.addEventListener('click',()=>{
-  track('click_whatsapp',{method:'wa.me',phone:'+16266008780'});
+  track('click_whatsapp',{method:'wa.me',phone:'+12133611700'});
 });
 </script>
 </body>
