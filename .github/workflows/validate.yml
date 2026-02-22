@@ -1,0 +1,50 @@
+name: Validate Site
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required files exist
+        run: |
+          for f in index.html robots.txt sitemap.xml manifest.webmanifest favicon.svg CNAME assets/css/main.css assets/js/main.js; do
+            [ -f "$f" ] && echo "✅ $f exists" || (echo "❌ MISSING: $f" && exit 1)
+          done
+
+      - name: Check file sizes (must be lean)
+        run: |
+          echo "=== File sizes ==="
+          wc -c index.html assets/css/main.css assets/js/main.js
+          INDEX_SIZE=$(wc -c < index.html)
+          JS_SIZE=$(wc -c < assets/js/main.js)
+          echo "index.html: ${INDEX_SIZE} bytes"
+          echo "main.js:    ${JS_SIZE} bytes"
+          [ "$INDEX_SIZE" -lt 100000 ] || (echo "ERROR: index.html > 100 KB — check for embedded base64!" && exit 1)
+          [ "$JS_SIZE"    -lt 500000 ] || (echo "ERROR: main.js > 500 KB — check for embedded base64!" && exit 1)
+          echo "✅ File sizes OK"
+
+      - name: Check no base64 images in HTML/JS
+        run: |
+          if grep -q "data:image/png;base64" index.html; then
+            echo "ERROR: base64 image found in index.html!" && exit 1
+          fi
+          if grep -q "data:image/png;base64" assets/js/main.js; then
+            echo "ERROR: base64 image found in main.js!" && exit 1
+          fi
+          echo "✅ No base64 images in HTML/JS"
+
+      - name: Check SEO meta tags present
+        run: |
+          grep -q 'rel="canonical"' index.html          && echo "✅ canonical" || echo "⚠️  canonical missing"
+          grep -q 'og:image'        index.html          && echo "✅ og:image"  || echo "⚠️  og:image missing"
+          grep -q 'robots.txt'      robots.txt          && echo "✅ robots.txt" || echo "⚠️  robots.txt empty"
+          grep -q 'sitemap'         sitemap.xml         && echo "✅ sitemap"   || echo "⚠️  sitemap empty"
+          echo "✅ SEO checks done"
