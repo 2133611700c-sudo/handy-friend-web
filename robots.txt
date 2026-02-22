@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://handyandfiend.com/sitemap.xml
+Sitemap: https://2133611700c-sudo.github.io/handy-fiend-web/sitemap.xml
