@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://handyandfiend.com/sitemap.xml
+Sitemap: https://handyandfriend.com/sitemap.xml
