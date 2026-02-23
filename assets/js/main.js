@@ -100,11 +100,11 @@ const TV_SVG = `<svg viewBox="0 0 300 96" xmlns="http://www.w3.org/2000/svg" pre
   <circle cx="140" cy="79" r="1" fill="rgba(255,255,255,0.06)"/>
 </g>
 
-<!-- SCREEN CONTENT: Handy & Fiend branding -->
+<!-- SCREEN CONTENT: Handy & Friend branding -->
 <text x="150" y="53" text-anchor="middle"
   font-family="Georgia,'Times New Roman',serif"
   font-size="11.5" font-weight="700" letter-spacing="0.8"
-  fill="rgba(255,255,255,0.93)">Handy &amp; Fiend</text>
+  fill="rgba(255,255,255,0.93)">Handy &amp; Friend</text>
 <!-- Tagline -->
 <text x="150" y="62" text-anchor="middle"
   font-family="'Arial',sans-serif"
@@ -160,7 +160,7 @@ const T={
     hrBadgeFmt:(extra,tot)=>`$150 call + ${extra}h × $70 = <strong>$${tot}</strong>`,
     areaTotalHint:"Enter total sq ft",
     areaTotalFmt:(sf)=>`Total area = <strong>${sf} sq ft</strong>`,
-    waGreet:"Hi Handy & Fiend! 👋",
+    waGreet:"Hi Handy & Friend! 👋",
     waEstLabel:"Estimate",waTotalLabel:"Total",
     waHoursDetail:(h)=>`Hours: ~${h}h`,
     waRoomDetail:(len,wid,sf)=>`Room: ${len}ft × ${wid}ft = ${sf} sq ft`,
@@ -308,7 +308,7 @@ const T={
     hrBadgeFmt:(extra,tot)=>`$150 llamada + ${extra}h × $70 = <strong>$${tot}</strong>`,
     areaTotalHint:"Ingresa el total de ft²",
     areaTotalFmt:(sf)=>`Área total = <strong>${sf} ft²</strong>`,
-    waGreet:"¡Hola Handy & Fiend! 👋",
+    waGreet:"¡Hola Handy & Friend! 👋",
     waEstLabel:"Cotización",waTotalLabel:"Total",
     waHoursDetail:(h)=>`Horas: ~${h}h`,
     waRoomDetail:(len,wid,sf)=>`Habitación: ${len}ft × ${wid}ft = ${sf} ft²`,
@@ -455,7 +455,7 @@ const T={
     hrBadgeFmt:(extra,tot)=>`Вызов $150 + ${extra}ч × $70 = <strong>$${tot}</strong>`,
     areaTotalHint:"Введите кв.футов",
     areaTotalFmt:(sf)=>`Общая площадь = <strong>${sf} кв.фут</strong>`,
-    waGreet:"Привет, Handy & Fiend! 👋",
+    waGreet:"Привет, Handy & Friend! 👋",
     waEstLabel:"Смета",waTotalLabel:"Итого",
     waHoursDetail:(h)=>`Часов: ~${h}ч`,
     waRoomDetail:(len,wid,sf)=>`Комната: ${len}фт × ${wid}фт = ${sf} кв.фут`,
@@ -602,7 +602,7 @@ const T={
     hrBadgeFmt:(extra,tot)=>`Виклик $150 + ${extra}год × $70 = <strong>$${tot}</strong>`,
     areaTotalHint:"Введіть кв.фут",
     areaTotalFmt:(sf)=>`Загальна площа = <strong>${sf} кв.фут</strong>`,
-    waGreet:"Привіт, Handy & Fiend! 👋",
+    waGreet:"Привіт, Handy & Friend! 👋",
     waEstLabel:"Кошторис",waTotalLabel:"Всього",
     waHoursDetail:(h)=>`Годин: ~${h}год`,
     waRoomDetail:(len,wid,sf)=>`Кімната: ${len}фт × ${wid}фт = ${sf} кв.фут`,
@@ -1047,7 +1047,7 @@ document.getElementById('resWa').addEventListener('click',()=>{
 document.getElementById('resCopy').addEventListener('click',async()=>{
   if(!lastEst)return;
   const detail=lastEst.hours?`~${lastEst.hours}h`:`${lastEst.sf} sq ft`;
-  const txt=`${lastEst.name}: $${lastEst.tot.toLocaleString()} (${detail})\nHandy & Fiend · (213) 361-1700`;
+  const txt=`${lastEst.name}: $${lastEst.tot.toLocaleString()} (${detail})\nHandy & Friend · (213) 361-1700`;
   try{await navigator.clipboard.writeText(txt);}catch(e){}
   const btn=document.getElementById('resCopy'),old=btn.textContent;
   btn.textContent='✓ Copied!';setTimeout(()=>{btn.textContent=old;},1800);
