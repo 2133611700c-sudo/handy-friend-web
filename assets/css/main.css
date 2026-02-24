@@ -83,6 +83,21 @@ img{display:block;width:100%;height:100%;object-fit:cover}
   transition:background 200ms ease,border-color 200ms ease}
 .hero-cta-ghost:hover{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.70)}
 
+/* New Hero Elements: Trust Badge & Secondary CTA */
+.hero-trust-badge{display:none;color:rgba(255,255,255,.80);font-size:11px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;
+  background:rgba(255,255,255,.08);padding:6px 12px;border-radius:999px;
+  width:fit-content;backdrop-filter:blur(10px)}
+@media(min-width:900px){.hero-trust-badge{display:inline-flex}}
+
+.hero-cta-secondary{display:inline-flex;align-items:center;height:52px;padding:0 28px;
+  border-radius:999px;background:#25D366;color:#fff;
+  font-family:var(--fb);font-size:14px;font-weight:700;letter-spacing:.04em;
+  box-shadow:0 8px 32px rgba(37,211,102,.45);
+  transition:transform 200ms ease,box-shadow 200ms ease,opacity 200ms}
+.hero-cta-secondary:hover{transform:translateY(-2px);box-shadow:0 14px 44px rgba(37,211,102,.55)}
+.hero-cta-secondary:active{opacity:.88;transform:scale(.98)}
+
 /* ═══════════════════════════════════════
    LAYOUT
 ═══════════════════════════════════════ */
