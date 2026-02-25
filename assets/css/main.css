@@ -355,13 +355,15 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,
   box-shadow:0 0 18px rgba(255,180,50,.12)}}
 @media(min-width:900px){.bcall{font-size:24px}}
 .bcall svg{opacity:.70;flex-shrink:0}
-.bwa{width:50px;height:50px;border-radius:50%;flex-shrink:0;background:#25D366;
-  display:flex;align-items:center;justify-content:center;
+.bwa{display:flex;align-items:center;justify-content:center;gap:8px;background:#25D366;
+  color:#fff;font-weight:700;font-size:14px;flex-shrink:0;
+  border-radius:12px;padding:10px 16px;
   box-shadow:0 4px 20px rgba(37,211,102,.50);transition:transform 140ms,box-shadow 140ms}
-@media(min-width:900px){.bwa{width:54px;height:54px}}
-.bwa:hover{transform:scale(1.06);box-shadow:0 8px 32px rgba(37,211,102,.60)}
-.bwa:active{transform:scale(.93)}
-.bwa svg{width:24px;height:24px}
+@media(max-width:767px){.bwa{border-radius:10px;padding:10px 14px;font-size:13px}}
+@media(min-width:900px){.bwa{padding:12px 20px;font-size:15px;border-radius:14px}}
+.bwa:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(37,211,102,.70)}
+.bwa:active{transform:scale(.96)}
+.bwa svg{width:20px;height:20px;flex-shrink:0}
 .bemail{width:50px;height:50px;border-radius:50%;flex-shrink:0;background:#4285F4;
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 4px 20px rgba(66,133,244,.50);transition:transform 140ms,box-shadow 140ms}
