@@ -306,6 +306,9 @@ const T={
 
     tvBadge:"Most popular",paintBadge:"Same-day possible",
 
+    comboTitle:"Book 2+ services — get 20% OFF",
+    comboSub:"Mention the combo deal when you call or message us",
+
     /* SMS CAPTURE */
     smsCaptureTitle:"Get This Estimate via SMS",
     smsPhonePlaceholder:"Your phone number",
@@ -489,6 +492,9 @@ const T={
     elecBenefit:"Cableado seguro. Conforme a códigos.",
 
     tvBadge:"Más popular",paintBadge:"Posible mismo día",
+
+    comboTitle:"Reserva 2+ servicios — obtén 20% de descuento",
+    comboSub:"Menciona la oferta combinada cuando llames o nos escribas",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Recibe este estimado por SMS",
@@ -674,6 +680,9 @@ const T={
 
     tvBadge:"Самый популярный",paintBadge:"Возможно в тот же день",
 
+    comboTitle:"Закажи 2+ услуги — скидка 20%",
+    comboSub:"Упомяни комбо-скидку при звонке или сообщении",
+
     /* SMS CAPTURE */
     smsCaptureTitle:"Получить смету по СМС",
     smsPhonePlaceholder:"Ваш номер телефона",
@@ -857,6 +866,9 @@ const T={
     elecBenefit:"Безпечна проводка. За кодексом.",
 
     tvBadge:"Найпопулярніший",paintBadge:"Можна в той же день",
+
+    comboTitle:"Замов 2+ послуги — знижка 20%",
+    comboSub:"Згадай комбо-знижку при дзвінку або повідомленні",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Отримати смету по СМС",

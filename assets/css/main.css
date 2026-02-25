@@ -590,3 +590,30 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,
 .rev-stars{font-size:15px;letter-spacing:1px}
 .rev-text{font-size:14px;color:var(--ink);line-height:1.6;font-weight:500;flex:1}
 .rev-date{font-size:12px;color:var(--ink3)}
+
+/* ─── COMBO DISCOUNT BANNER ─── */
+.combo-banner{
+  display:flex;align-items:center;gap:14px;
+  background:linear-gradient(135deg,#2A1F14 0%,#3d2c18 100%);
+  border-radius:16px;padding:16px 18px;margin-bottom:16px;
+  border:1px solid rgba(184,137,44,0.35);
+  position:relative;overflow:hidden;
+}
+.combo-banner::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse at top right,rgba(184,137,44,0.18) 0%,transparent 65%);
+  pointer-events:none;
+}
+.combo-icon{font-size:28px;flex-shrink:0;line-height:1}
+.combo-text{flex:1;min-width:0}
+.combo-title{font-size:15px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:3px}
+@media(min-width:900px){.combo-title{font-size:17px}}
+.combo-sub{font-size:12px;color:rgba(255,255,255,0.60);line-height:1.4}
+.combo-badge{
+  flex-shrink:0;
+  background:linear-gradient(135deg,#B8892C,#d4a240);
+  color:#fff;font-size:18px;font-weight:800;
+  padding:8px 12px;border-radius:12px;
+  letter-spacing:-0.5px;line-height:1;
+  box-shadow:0 4px 16px rgba(184,137,44,0.45);
+}
