@@ -141,10 +141,10 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 /* ═══════════════════════════════════════
    IMAGE
 ═══════════════════════════════════════ */
-.sph{height:120px;position:relative;overflow:hidden}
-@media(min-width:580px){.sph{height:105px}}
-@media(min-width:900px){.sph{height:200px}}
-@media(min-width:1100px){.sph{height:220px}}
+.sph{height:220px;position:relative;overflow:hidden}
+@media(min-width:580px){.sph{height:240px}}
+@media(min-width:900px){.sph{height:260px}}
+@media(min-width:1100px){.sph{height:280px}}
 .sph img{transition:transform 500ms ease}
 .scard:hover .sph img{transform:scale(1.07)}
 .scard:active .sph img{transform:scale(1.04)}
