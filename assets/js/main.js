@@ -994,7 +994,9 @@ function applyLang(){
   document.getElementById('baseBanner').innerHTML=
     l.base.map(s=>`<div class="bp"><strong>·</strong> ${s}</div>`).join('');
   const sel=document.getElementById('svcSel'),cv=sel.value;
-  sel.innerHTML=l.opts.map(o=>`<option value="${o.v}">${o.l}</option>`).join('');
+  // OPTION A: Filter out painting, flooring, plumbing, electrical (no CSLB license)
+  const allowedOpts = ['tv','fur','art'];
+  sel.innerHTML=l.opts.filter(o=>allowedOpts.includes(o.v)).map(o=>`<option value="${o.v}">${o.l}</option>`).join('');
   if(cv)sel.value=cv;
 
   /* NEW: SMS Capture translations */
@@ -1055,7 +1057,10 @@ function renderGrid(){
   const g=document.getElementById('servGrid');
   g.innerHTML='';
   const l = L();
+  // OPTION A: Skip painting, flooring, plumbing, electrical (no CSLB license)
+  const allowedServices = ['tv', 'fur', 'art'];
   l.svcs.forEach(svc=>{
+    if(!allowedServices.includes(svc.id))return; // Skip unlicensed services
     const card=document.createElement('div');
     card.className='scard';
     const phHTML=`<div class="sph"><img src="${SVC_IMG[svc.id]||''}" alt="${svc.name}" loading="lazy" width="320" height="190" decoding="async"></div>`;
