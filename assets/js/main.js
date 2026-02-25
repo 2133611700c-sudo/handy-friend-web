@@ -1551,29 +1551,24 @@ function renderGrid(){
     const badgeKey = detail && detail.badge ? detail.badge : null;
     const badgeText = badgeKey ? l[badgeKey] : '';
 
-    // Build extra details HTML
-    let extraHTML = '';
-    if(timeText) {
-      extraHTML += `<div class="card-time"><strong>${l.cardTimeLabel}</strong> ${timeText}</div>`;
-    }
-    if(benefitText) {
-      extraHTML += `<div class="card-benefit">${benefitText}</div>`;
-    }
-    if(badgeText) {
-      extraHTML += `<div class="card-badge">${badgeText}</div>`;
-    }
+    // Build card content with strict hierarchy
+    const chevSVG = `<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M2 3.5L4.5 6L7 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    const timeRow = timeText
+      ? `<div class="card-divider"></div><div class="card-time-row"><div class="card-time"><strong>${l.cardTimeLabel}</strong> ${timeText}</div><div class="schev">${chevSVG}</div></div>`
+      : `<div class="schev schev-alone">${chevSVG}</div>`;
+
+    const benefitRow = benefitText ? `<div class="card-benefit">${benefitText}</div>` : '';
+    const badgeRow   = badgeText   ? `<div class="card-badge">${badgeText}</div>`    : '';
 
     card.innerHTML=`${phHTML}
       <div class="scb">
         <div class="scbd">
           <div class="scn">${svc.name}</div>
           <div class="scp"><b>${svc.from}</b></div>
-          ${extraHTML}
-        </div>
-        <div class="schev">
-          <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
-            <path d="M2 3.5L4.5 6L7 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          ${timeRow}
+          ${benefitRow}
+          ${badgeRow}
         </div>
       </div>
       <div class="drawer" id="dr_${svc.id}">

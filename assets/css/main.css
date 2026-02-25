@@ -164,14 +164,18 @@ img{display:block;width:100%;height:100%;object-fit:cover}
    CARD BODY
 ═══════════════════════════════════════ */
 .scb{padding:9px 11px 10px;background:rgba(255,255,255,.90);
-  display:flex;align-items:center;gap:7px;flex:1}
-@media(min-width:900px){.scb{padding:15px 18px 16px;gap:10px}}
+  display:flex;flex-direction:column;flex:1}
+@media(min-width:900px){.scb{padding:15px 18px 16px}}
 .scbd{flex:1;min-width:0}
 .scn{font-family:var(--fs);font-size:14px;font-weight:700;color:var(--ink);line-height:1.2}
 @media(min-width:900px){.scn{font-size:17px}}
 .scp{margin-top:3px;font-size:11px;font-weight:600;color:var(--ink2)}
 @media(min-width:900px){.scp{margin-top:5px;font-size:13px}}
 .scp b{color:var(--ink);font-weight:700}
+.card-divider{border:none;border-top:1px solid #e5dfd5;margin:7px 0}
+@media(min-width:900px){.card-divider{margin:10px 0}}
+.card-time-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.schev-alone{align-self:flex-end;margin-top:6px}
 .schev{width:18px;height:18px;border-radius:50%;background:var(--glt);border:1px solid var(--gbd);
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
   transition:transform 300ms ease,background 200ms;color:var(--gold)}
@@ -192,6 +196,10 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 .scard.open .scp,.scard.open .scp b{color:rgba(255,255,255,.7)}
 .scard.open .schev{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2)}
 .scard.open .schev svg path{stroke:#fff}
+.scard.open .card-divider{border-color:rgba(255,255,255,.18)}
+.scard.open .card-time{color:rgba(255,255,255,.75)}
+.scard.open .card-benefit{color:rgba(255,255,255,.65)}
+.scard.open .card-badge{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.20);color:#f0c04a}
 .scard.open .sph,.scard.open .tvw{
   height:0!important;overflow:hidden;padding:0;transition:height 200ms ease}
 .drawer{max-height:0;overflow:hidden;
@@ -533,14 +541,8 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,
 }
 
 /* SERVICE CARD DETAILS */
-.card-time{
-  font-size:12px;
-  color:#666;
-  font-weight:600;
-  margin-top:8px;
-  padding-top:8px;
-  border-top:1px solid #e5dfd5;
-}
+.card-time{font-size:12px;color:#666;font-weight:600;flex:1}
+@media(min-width:900px){.card-time{font-size:13px}}
 
 .card-benefit{
   font-size:13px;
