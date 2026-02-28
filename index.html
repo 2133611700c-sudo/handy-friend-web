@@ -156,26 +156,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <div class="hero">
   <div class="hbg"></div>
+  <!-- Hero offer headline -->
+  <div class="hero-headline">
+    <p class="hero-offer-eyebrow">Los Angeles · Licensed &amp; Insured</p>
+    <h1 class="hero-offer-title" id="heroOfferTitle">BUNDLE &amp; SAVE 15%</h1>
+    <p class="hero-offer-sub" id="heroOfferSub">Book 2+ Services Today</p>
+  </div>
   <div class="ai-search-floating-wrapper">
     <div class="ai-search-bar-wrapper-large" id="searchBarWrapper">
       <div class="search-bar-row">
-        <div class="search-icon">🔍</div>
+        <div class="search-icon lightning-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+            <path d="M13 2L4.5 13.5H11L10 22L20.5 10H14L13 2Z"/>
+          </svg>
+        </div>
         <input
           type="text"
           class="ai-search-input-large"
           id="aiSearchInput"
-          placeholder="Ask AI about pricing, project ideas, timelines, and next steps — in seconds"
+          placeholder="Ask AI: price my project"
           aria-label="Ask AI about home services"
           data-i18n-placeholder="aiSearchPlaceholder"
         >
         <button class="photo-btn" id="photoBtn" type="button" aria-label="Add photos" title="Add photos">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
             <circle cx="12" cy="13" r="4"/>
           </svg>
         </button>
         <input type="file" id="photoInput" accept="image/*" multiple style="display:none">
-        <button class="search-submit-btn-large" id="submitBtn" aria-label="Ask AI" data-i18n="aiSubmit">Ask</button>
+        <button class="search-submit-btn-large est-btn" id="submitBtn" aria-label="Get Estimate" data-i18n="aiSubmit">Get Estimate</button>
       </div>
       <div class="photo-preview-row" id="photoPreviewRow"></div>
     </div>

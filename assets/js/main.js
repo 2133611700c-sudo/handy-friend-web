@@ -141,9 +141,11 @@ const T={
     heroAccent:"Instant Help",
     heroSub:"Describe your project and get AI-powered guidance on pricing, timeline, and next steps—instantly.",
     aiPowered:"AI Powered",
-    aiSearchPlaceholder:"Ask AI about pricing, project ideas, timelines, and next steps — in seconds",
+    heroOfferTitle:"BUNDLE & SAVE 15%",
+    heroOfferSub:"Book 2+ Services Today",
+    aiSearchPlaceholder:"Ask AI: price my project",
     aiBadge:"Smart",
-    aiSubmit:"Ask",
+    aiSubmit:"Get Estimate",
     chipPricing:"Pricing",
     chipCabinet:"Cabinet Paint",
     chipRepairs:"Repairs",
@@ -533,9 +535,11 @@ const T={
     heroAccent:"мгновенную помощь",
     heroSub:"Опишите свой проект и получите помощь ИИ по ценам, срокам и следующим шагам — мгновенно.",
     aiPowered:"Работает ИИ",
-    aiSearchPlaceholder:"Спросите о ценах, ремонте, покраске, кухне, смете...",
+    heroOfferTitle:"СКИДКА 15% НА 2+ УСЛУГИ",
+    heroOfferSub:"Закажите 2+ услуги сегодня",
+    aiSearchPlaceholder:"ИИ: оцените мой проект",
     aiBadge:"Умный",
-    aiSubmit:"Спросить",
+    aiSubmit:"Считать смету",
     chipPricing:"Цены",
     chipCabinet:"Покраска шкафов",
     chipRepairs:"Ремонт",
@@ -737,9 +741,11 @@ const T={
     heroAccent:"миттєву допомогу",
     heroSub:"Опишіть свій проект і отримайте допомогу ШІ щодо цін, термінів та наступних кроків — миттєво.",
     aiPowered:"Працює ШІ",
-    aiSearchPlaceholder:"Запитайте про ціни, ремонт, фарбування, кухню, кошторис...",
+    heroOfferTitle:"ЗНИЖКА 15% НА 2+ ПОСЛУГИ",
+    heroOfferSub:"Замовте 2+ послуги сьогодні",
+    aiSearchPlaceholder:"ШІ: оцініть мій проект",
     aiBadge:"Розумна",
-    aiSubmit:"Запитати",
+    aiSubmit:"Розрахувати",
     chipPricing:"Ціни",
     chipCabinet:"Фарбування шаф",
     chipRepairs:"Ремонт",
@@ -1536,7 +1542,10 @@ function applyLang(){
   const nextL=T[LANG_ORDER[(LANG_ORDER.indexOf(lang)+1)%LANG_ORDER.length]].lang;
   document.getElementById('langTxt').textContent=l.lang;
   document.getElementById('langNext').textContent=`→ ${nextL}`;
-  document.getElementById('heroH').innerHTML=l.heroH.replace('\n','<br>');
+  const heroOfferTitleEl=document.getElementById('heroOfferTitle');
+  if(heroOfferTitleEl) heroOfferTitleEl.textContent=l.heroOfferTitle||'BUNDLE & SAVE 15%';
+  const heroOfferSubEl=document.getElementById('heroOfferSub');
+  if(heroOfferSubEl) heroOfferSubEl.textContent=l.heroOfferSub||'Book 2+ Services Today';
   const heroSubEl=document.getElementById('heroSub');
   if(heroSubEl)heroSubEl.textContent=l.heroSub;
   document.getElementById('gridLbl').textContent=l.gridLbl;
