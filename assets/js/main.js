@@ -136,8 +136,25 @@ const TV_SVG = `<svg viewBox="0 0 300 96" xmlns="http://www.w3.org/2000/svg" pre
 const T={
   en:{
     lang:"EN",
-    heroH:"Premium Handyman\nLos Angeles",
-    heroSub:"Labor only · No markup on materials · Same-week availability",
+    heroEyebrow:"Handyman Services in Los Angeles",
+    heroH:"Get Instant Help For Any Home Project",
+    heroAccent:"Instant Help",
+    heroSub:"Describe your project and get AI-powered guidance on pricing, timeline, and next steps—instantly.",
+    aiPowered:"AI Powered",
+    aiSearchPlaceholder:"Ask about pricing, repairs, painting, cabinets, estimates...",
+    aiBadge:"Smart",
+    aiSubmit:"Ask",
+    chipPricing:"Pricing",
+    chipCabinet:"Cabinet Paint",
+    chipRepairs:"Repairs",
+    chipKitchen:"Kitchen Update",
+    trustInstant:"Instant Response",
+    trustAccurate:"Accurate Estimates",
+    trustSteps:"Clear Next Steps",
+    secondaryCta:"Prefer to speak directly?",
+    callNow:"Call Now",
+    whatsApp:"WhatsApp",
+    viewPricing:"View Pricing",
     gridLbl:"Tap any service for full pricing",
     base:["$150 service call","$70/hr after 2h","$500 min · paint & floors"],
     svcs:[
@@ -511,8 +528,25 @@ const T={
 
   ru:{
     lang:"RU",
-    heroH:"Мастер на дом\nЛос-Анджелес",
-    heroSub:"Только работа · Без наценки на материалы · Запись на эту неделю",
+    heroEyebrow:"Услуги мастера в Лос-Анджелесе",
+    heroH:"Получите мгновенную помощь для любого проекта",
+    heroAccent:"мгновенную помощь",
+    heroSub:"Опишите свой проект и получите помощь ИИ по ценам, срокам и следующим шагам — мгновенно.",
+    aiPowered:"Работает ИИ",
+    aiSearchPlaceholder:"Спросите о ценах, ремонте, покраске, кухне, смете...",
+    aiBadge:"Умный",
+    aiSubmit:"Спросить",
+    chipPricing:"Цены",
+    chipCabinet:"Покраска шкафов",
+    chipRepairs:"Ремонт",
+    chipKitchen:"Обновление кухни",
+    trustInstant:"Мгновенный ответ",
+    trustAccurate:"Точные сметы",
+    trustSteps:"Ясные шаги",
+    secondaryCta:"Предпочитаете прямой контакт?",
+    callNow:"Позвонить",
+    whatsApp:"WhatsApp",
+    viewPricing:"Прайс",
     gridLbl:"Нажмите на услугу — откроется полный прайс",
     base:["Выезд от $150","$70/час после 2ч","Минимум $500 покраска/полы"],
     svcs:[
@@ -698,8 +732,25 @@ const T={
 
   ua:{
     lang:"UA",
-    heroH:"Майстер на дому\nЛос-Анджелес",
-    heroSub:"Тільки робота · Без націнки на матеріали · Запис на цей тиждень",
+    heroEyebrow:"Послуги майстра у Лос-Анджелесі",
+    heroH:"Отримайте миттєву допомогу для будь-якого проекту",
+    heroAccent:"миттєву допомогу",
+    heroSub:"Опишіть свій проект і отримайте допомогу ШІ щодо цін, термінів та наступних кроків — миттєво.",
+    aiPowered:"Працює ШІ",
+    aiSearchPlaceholder:"Запитайте про ціни, ремонт, фарбування, кухню, кошторис...",
+    aiBadge:"Розумна",
+    aiSubmit:"Запитати",
+    chipPricing:"Ціни",
+    chipCabinet:"Фарбування шаф",
+    chipRepairs:"Ремонт",
+    chipKitchen:"Оновлення кухні",
+    trustInstant:"Миттєва відповідь",
+    trustAccurate:"Точні кошториси",
+    trustSteps:"Чіткі кроки",
+    secondaryCta:"Бажаєте прямого контакту?",
+    callNow:"Позвонити",
+    whatsApp:"WhatsApp",
+    viewPricing:"Прайс",
     gridLbl:"Натисніть на послугу — відкриється повний прайс",
     base:["Виїзд від $150","$70/год після 2год","Мінімум $500 фарбування/підлоги"],
     svcs:[
@@ -1929,6 +1980,65 @@ document.getElementById('langBtn').addEventListener('click',()=>{
   track('language_change',{language:lang});
   applyLang();
 });
+
+/* ─── AI SEARCH BAR HANDLERS ─── */
+(function(){
+  const searchBar=document.getElementById('searchBarWrapper');
+  const searchInput=document.getElementById('aiSearchInput');
+  const submitBtn=document.getElementById('submitBtn');
+
+  if(!searchInput||!submitBtn||!searchBar) return;
+
+  // Focus state
+  searchInput.addEventListener('focus',()=>{
+    searchBar.classList.add('active');
+  });
+
+  // Blur state
+  searchInput.addEventListener('blur',()=>{
+    if(!searchInput.value){
+      searchBar.classList.remove('active');
+    }
+  });
+
+  // Input state
+  searchInput.addEventListener('input',()=>{
+    if(searchInput.value){
+      searchBar.classList.add('active');
+    }else{
+      searchBar.classList.remove('active');
+    }
+  });
+
+  // Submit handler
+  function handleSubmit(){
+    const query=searchInput.value.trim();
+    if(query){
+      track('ai_search_submit',{query:query,language:lang});
+      // Route to AI intake (to be implemented)
+      // window.location.href=`/api/ai-intake?q=${encodeURIComponent(query)}&lang=${lang}`;
+      console.log('AI Search Query:',query,'Language:',lang);
+    }
+  }
+
+  submitBtn.addEventListener('click',handleSubmit);
+  searchInput.addEventListener('keydown',(e)=>{
+    if(e.key==='Enter'){
+      e.preventDefault();
+      handleSubmit();
+    }
+  });
+
+  // Promo chip interaction
+  document.querySelectorAll('.promo-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      const value=chip.dataset.value||chip.textContent.trim();
+      searchInput.value=`Tell me about ${chip.textContent.trim()}`;
+      searchInput.focus();
+      track('promo_chip_click',{chip:value,language:lang});
+    });
+  });
+})();
 
 // mode toggle
 (function(){
