@@ -1379,17 +1379,11 @@ function bootstrapLang(){
   const saved=normalizeLang(localStorage.getItem('hf_lang')||'');
   if(saved&&LANG_ORDER.includes(saved))return saved;
 
-  const detected=browserPreferredLang();
+  // Always default to English for first-time visitors (not browser language)
+  const detected='en';
   localStorage.setItem('hf_lang',detected);
 
-  // First visit: redirect once to URL with explicit lang for consistency/shareability.
-  if(!urlLang&&detected!=='en'){
-    try{
-      const url=new URL(window.location.href);
-      url.searchParams.set('lang',detected);
-      window.location.replace(url.toString());
-    }catch(e){}
-  }
+  // No auto-redirect - always start with English
   return detected;
 }
 
