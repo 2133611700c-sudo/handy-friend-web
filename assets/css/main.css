@@ -32,7 +32,6 @@ img{display:block;width:100%;height:100%;object-fit:cover}
   --navH:68px;
   .ti{padding:0 56px;height:68px}
   body{padding-top:68px}
-  .rc{top:calc(68px + 18px)}
 }
 .brand{font-family:var(--fs);font-size:20px;font-weight:700;color:var(--ink);
   display:flex;align-items:center;gap:9px;letter-spacing:-.01em}
@@ -104,11 +103,8 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 /* ═══════════════════════════════════════
    LAYOUT
 ═══════════════════════════════════════ */
-.mw{max-width:var(--page);margin:0 auto;padding:0 14px;width:100%}
-@media(min-width:900px){.mw{padding:48px 56px;display:grid;
-  grid-template-columns:1fr var(--colr);gap:40px;align-items:start}}
-.lc{padding-top:16px}
-@media(min-width:900px){.lc{padding-top:0}}
+.mw{max-width:var(--page);margin:0 auto;padding:16px 14px 0;width:100%}
+@media(min-width:900px){.mw{padding:48px 56px 0}}
 .slbl{font-size:10px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;
   color:var(--ink3);margin-bottom:10px}
 @media(min-width:900px){.slbl{font-size:11px;letter-spacing:.13em;margin-bottom:14px}}
@@ -120,12 +116,24 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 @media(min-width:900px){.bp{font-size:12px;padding:8px 16px}}
 .bp strong{color:var(--gold)}
 
+/* ─── TWO EQUAL TOP BLOCKS (combo + price calc) ─── */
+.top-blocks{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:20px}
+@media(min-width:768px){.top-blocks{grid-template-columns:1fr 1fr;gap:24px;align-items:stretch;margin-bottom:28px}}
+@media(min-width:900px){.top-blocks{gap:32px;margin-bottom:36px}}
+/* combo fills height evenly so both blocks = same height */
+@media(min-width:768px){
+  .top-blocks .combo-calc{margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box}
+  .top-blocks .rc{display:flex;flex-direction:column}
+  .top-blocks .cb{flex:1;display:flex;flex-direction:column}
+  .top-blocks .cbody{flex:1}
+}
+
 /* ═══════════════════════════════════════
-   GRID
+   SERVICE PHOTO GRID
 ═══════════════════════════════════════ */
-.grid{display:grid;grid-template-columns:1fr;gap:12px}
-@media(min-width:768px){.grid{grid-template-columns:1fr 1fr}}
-@media(min-width:900px){.grid{gap:16px}}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:600px){.grid{grid-template-columns:1fr 1fr;gap:20px}}
+@media(min-width:900px){.grid{gap:24px}}
 
 /* ═══════════════════════════════════════
    CARD
@@ -145,10 +153,10 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 /* ═══════════════════════════════════════
    IMAGE
 ═══════════════════════════════════════ */
-.sph{height:220px;position:relative;overflow:hidden}
-@media(min-width:580px){.sph{height:240px}}
-@media(min-width:900px){.sph{height:260px}}
-@media(min-width:1100px){.sph{height:280px}}
+.sph{height:200px;position:relative;overflow:hidden}
+@media(min-width:600px){.sph{height:220px}}
+@media(min-width:900px){.sph{height:240px}}
+@media(min-width:1200px){.sph{height:260px}}
 .sph img{transition:transform 500ms ease}
 .scard:hover .sph img{transform:scale(1.07)}
 .scard:active .sph img{transform:scale(1.04)}
@@ -282,13 +290,11 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 /* ═══════════════════════════════════════
    CALCULATOR
 ═══════════════════════════════════════ */
-.rc{margin:16px 0 0}
-@media(min-width:900px){.rc{margin:0;position:sticky;top:calc(68px + 18px)}}
+.rc{margin:0}
 .cb{border-radius:24px;overflow:hidden;background:rgba(255,255,255,.85);
   border:1px solid var(--st);box-shadow:var(--sh2)}
 @media(min-width:900px){.cb{border-radius:28px}}
-.ch{padding:16px 18px 14px;border-bottom:1px solid var(--st2);display:flex;align-items:center;gap:12px}
-@media(min-width:900px){.ch{padding:22px 26px 18px;gap:14px}}
+.ch{padding:14px 18px 12px;border-bottom:1px solid var(--st2);display:flex;align-items:center;gap:12px}
 .ci{width:38px;height:38px;border-radius:12px;background:var(--glt);border:1px solid var(--gbd);
   display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 @media(min-width:900px){.ci{width:44px;height:44px;border-radius:14px;font-size:20px}}
@@ -296,8 +302,7 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 @media(min-width:900px){.chd h3{font-size:18px}}
 .chd p{font-size:11px;font-weight:500;color:var(--ink3)}
 @media(min-width:900px){.chd p{font-size:12.5px}}
-.cbody{padding:14px 18px 18px;display:flex;flex-direction:column;gap:12px}
-@media(min-width:900px){.cbody{padding:22px 26px 26px;gap:16px}}
+.cbody{padding:14px 18px 16px;display:flex;flex-direction:column;gap:10px}
 .irow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .iblk{display:flex;flex-direction:column;gap:5px}
 .ilbl{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
@@ -325,11 +330,10 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,
 @media(min-width:900px){.ccbtn{height:54px;font-size:16px;border-radius:16px}}
 .ccbtn:hover{box-shadow:0 8px 28px rgba(42,31,20,.24)}
 .ccbtn:active{opacity:.82;transform:scale(.99)}
-.cres{border-radius:16px;padding:16px 18px;background:var(--glt);border:1px solid var(--gbd);
+.cres{display:none;border-radius:16px;padding:16px 18px;background:var(--glt);border:1px solid var(--gbd);
   opacity:0;transform:translateY(6px);
   transition:opacity 280ms ease,transform 280ms ease;pointer-events:none}
-@media(min-width:900px){.cres{padding:20px 22px;border-radius:18px}}
-.cres.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.cres.show{display:block;opacity:1;transform:translateY(0);pointer-events:auto}
 .rlbl{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
   color:var(--ink3);margin-bottom:3px}
 .ramt{font-family:var(--fs);font-size:38px;font-weight:700;color:var(--ink);
@@ -410,16 +414,14 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,
 .mode button[aria-pressed="true"]{background:var(--glt);border-color:var(--gbd);color:var(--ink)}
 #sfWrap{display:none}
 
-/* Mobile-only anchor to calculator */
-.calc-anchor{display:none}
-@media(max-width:899px){
-  .calc-anchor{display:flex;align-items:center;justify-content:center;gap:8px;
-    margin:18px 0 4px;height:52px;border-radius:14px;
-    background:var(--gold);color:#fff;
-    font-size:15px;font-weight:700;letter-spacing:.02em;
-    box-shadow:0 6px 24px rgba(184,137,44,.45);transition:opacity 120ms,transform 120ms}
-  .calc-anchor:active{opacity:.82;transform:scale(.97)}
-}
+/* Anchor below service grid — scroll back to calculator */
+.calc-anchor{display:flex;align-items:center;justify-content:center;gap:8px;
+  margin:24px 0 8px;height:52px;border-radius:14px;
+  background:var(--gold);color:#fff;
+  font-size:15px;font-weight:700;letter-spacing:.02em;
+  box-shadow:0 6px 24px rgba(184,137,44,.45);transition:opacity 120ms,transform 120ms}
+.calc-anchor:active{opacity:.82;transform:scale(.97)}
+@media(min-width:900px){.calc-anchor{height:56px;font-size:16px;border-radius:16px}}
 
 /* ─── MOBILE FAB ─── */
 .calc-fab{
