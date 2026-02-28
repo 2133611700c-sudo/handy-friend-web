@@ -306,8 +306,8 @@ const T={
 
     tvBadge:"Most popular",paintBadge:"Same-day possible",
 
-    comboTitle:"Book 2+ services — get 20% OFF",
-    comboSub:"Mention the combo deal when you call or message us",
+    comboTitle:"Pick 2 Services — Save 20%",
+    comboSub:"Book any combo, get instant discount",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Get This Estimate via SMS",
@@ -493,8 +493,8 @@ const T={
 
     tvBadge:"Más popular",paintBadge:"Posible mismo día",
 
-    comboTitle:"Reserva 2+ servicios — obtén 20% de descuento",
-    comboSub:"Menciona la oferta combinada cuando llames o nos escribas",
+    comboTitle:"Elige 2 Servicios — Ahorra 20%",
+    comboSub:"Reserva cualquier combo, obtén descuento instantáneo",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Recibe este estimado por SMS",
@@ -680,8 +680,8 @@ const T={
 
     tvBadge:"Самый популярный",paintBadge:"Возможно в тот же день",
 
-    comboTitle:"Закажи 2+ услуги — скидка 20%",
-    comboSub:"Упомяни комбо-скидку при звонке или сообщении",
+    comboTitle:"Выбери 2 услуги — сэкономь 20%",
+    comboSub:"Закажи комбо — скидка сразу",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Получить смету по СМС",
@@ -867,8 +867,8 @@ const T={
 
     tvBadge:"Найпопулярніший",paintBadge:"Можна в той же день",
 
-    comboTitle:"Замов 2+ послуги — знижка 20%",
-    comboSub:"Згадай комбо-знижку при дзвінку або повідомленні",
+    comboTitle:"Обери 2 послуги — зекономь 20%",
+    comboSub:"Замов комбо — знижка одразу",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Отримати смету по СМС",
@@ -897,6 +897,9 @@ const UI_I18N={
     langBtnTitle:'Change language',
     heroCallNow:'Call Now',
     heroWhatsApp:'WhatsApp',
+    heroFullPricing:'💲 Full Pricing',
+    barCall:'Call',
+    barMessage:'Message',
     heroResponseNote:'⏰ Most calls answered within 10 minutes | 📱 Available 8am-8pm Daily',
     urgencyChip:'⚡ LIMITED: Only 3 booking slots available this week',
     urgencyTitle:'🎯 Book Your Service Today',
@@ -950,7 +953,13 @@ const UI_I18N={
     leadFormNote:'No spam. We only contact you to confirm the job.',
     formSuccessTitle:'Quote Request Received!',
     formSuccessSub:"We'll call you within 10 minutes to confirm your booking.",
+    formSuccessReviewBtn:'⭐ Leave a Google Review',
+    formSuccessFbBtn:'👍 Recommend on Facebook',
+    formSuccessReviewHint:'If everything looks great, a quick review helps us grow.',
     formSuccessEmail:'Check your email for confirmation details.',
+    reviewCtaBtn:'⭐ Leave a Google Review',
+    reviewCtaFbBtn:'👍 Recommend on Facebook',
+    reviewCtaHint:'Your honest feedback helps local families choose trusted help faster.',
     faqTitle:'Common Questions',
     faqSub:'Everything you need to know',
     faqQ1:'How quickly can you respond to my service request?',
@@ -986,6 +995,9 @@ const UI_I18N={
     langBtnTitle:'Cambiar idioma',
     heroCallNow:'Llamar ahora',
     heroWhatsApp:'WhatsApp',
+    heroFullPricing:'💲 Precios completos',
+    barCall:'Llamar',
+    barMessage:'Mensaje',
     heroResponseNote:'⏰ La mayoria de llamadas se responden en 10 minutos | 📱 Disponible 8am-8pm diario',
     urgencyChip:'⚡ LIMITADO: Solo 3 espacios disponibles esta semana',
     urgencyTitle:'🎯 Reserva tu servicio hoy',
@@ -1039,7 +1051,13 @@ const UI_I18N={
     leadFormNote:'Sin spam. Solo te contactamos para confirmar el trabajo.',
     formSuccessTitle:'Solicitud de cotizacion recibida',
     formSuccessSub:'Te llamaremos en 10 minutos para confirmar tu reserva.',
+    formSuccessReviewBtn:'⭐ Dejar reseña en Google',
+    formSuccessFbBtn:'👍 Recomendar en Facebook',
+    formSuccessReviewHint:'Si todo salio bien, una reseña rapida nos ayuda a crecer.',
     formSuccessEmail:'Revisa tu correo para los detalles de confirmacion.',
+    reviewCtaBtn:'⭐ Dejar reseña en Google',
+    reviewCtaFbBtn:'👍 Recomendar en Facebook',
+    reviewCtaHint:'Tu opinion honesta ayuda a otras familias de LA a elegir un servicio confiable.',
     faqTitle:'Preguntas frecuentes',
     faqSub:'Todo lo que necesitas saber',
     faqQ1:'Que tan rapido responden a mi solicitud?',
@@ -1075,6 +1093,9 @@ const UI_I18N={
     langBtnTitle:'Сменить язык',
     heroCallNow:'Позвонить',
     heroWhatsApp:'WhatsApp',
+    heroFullPricing:'💲 Полный прайс',
+    barCall:'Звонок',
+    barMessage:'Сообщение',
     heroResponseNote:'⏰ Обычно отвечаем в течение 10 минут | 📱 Доступны 8am-8pm ежедневно',
     urgencyChip:'⚡ ОГРАНИЧЕНО: На этой неделе осталось только 3 слота',
     urgencyTitle:'🎯 Забронируйте услугу сегодня',
@@ -1128,7 +1149,13 @@ const UI_I18N={
     leadFormNote:'Без спама. Свяжемся только для подтверждения заказа.',
     formSuccessTitle:'Заявка на смету получена',
     formSuccessSub:'Мы перезвоним в течение 10 минут для подтверждения.',
+    formSuccessReviewBtn:'⭐ Оставить отзыв в Google',
+    formSuccessFbBtn:'👍 Рекомендовать в Facebook',
+    formSuccessReviewHint:'Если всё понравилось, короткий отзыв очень поможет нам расти.',
     formSuccessEmail:'Проверьте email для деталей подтверждения.',
+    reviewCtaBtn:'⭐ Оставить отзыв в Google',
+    reviewCtaFbBtn:'👍 Рекомендовать в Facebook',
+    reviewCtaHint:'Ваш честный отзыв помогает другим семьям в LA выбрать надёжного мастера.',
     faqTitle:'Частые вопросы',
     faqSub:'Все, что важно знать',
     faqQ1:'Как быстро вы отвечаете на запрос?',
@@ -1164,6 +1191,9 @@ const UI_I18N={
     langBtnTitle:'Змінити мову',
     heroCallNow:'Подзвонити',
     heroWhatsApp:'WhatsApp',
+    heroFullPricing:'💲 Повний прайс',
+    barCall:'Дзвінок',
+    barMessage:'Повідомлення',
     heroResponseNote:'⏰ Зазвичай відповідаємо протягом 10 хвилин | 📱 Доступні 8am-8pm щодня',
     urgencyChip:'⚡ ОБМЕЖЕНО: Цього тижня залишилось лише 3 слоти',
     urgencyTitle:'🎯 Забронюйте послугу сьогодні',
@@ -1217,7 +1247,13 @@ const UI_I18N={
     leadFormNote:'Без спаму. Зв’яжемось лише для підтвердження замовлення.',
     formSuccessTitle:'Запит на кошторис отримано',
     formSuccessSub:'Ми передзвонимо протягом 10 хвилин для підтвердження.',
+    formSuccessReviewBtn:'⭐ Залишити відгук у Google',
+    formSuccessFbBtn:'👍 Рекомендувати у Facebook',
+    formSuccessReviewHint:'Якщо все сподобалось, короткий відгук дуже допоможе нам зростати.',
     formSuccessEmail:'Перевірте email для деталей підтвердження.',
+    reviewCtaBtn:'⭐ Залишити відгук у Google',
+    reviewCtaFbBtn:'👍 Рекомендувати у Facebook',
+    reviewCtaHint:'Ваш чесний відгук допомагає іншим сім’ям у LA швидше обрати надійного майстра.',
     faqTitle:'Поширені запитання',
     faqSub:'Усе, що потрібно знати',
     faqQ1:'Як швидко ви відповідаєте на запит?',
@@ -1505,6 +1541,7 @@ function applyLang(){
   applySeoMetadata();
   applyStaticI18n();
   renderGrid();
+  if(typeof reInitComboCalcLang==='function') reInitComboCalcLang();
   updateAddons();
   updateArea();
 }
@@ -1555,6 +1592,7 @@ function renderGrid(){
   l.svcs.forEach(svc=>{
     const card=document.createElement('div');
     card.className='scard';
+    card.dataset.id = svc.id;
     const phHTML=`<div class="sph"><img src="${SVC_IMG[svc.id]||''}" alt="${svc.name}" loading="lazy" width="320" height="190" decoding="async"></div>`;
 
     // Get service details (time, benefit, badge)
@@ -1594,6 +1632,20 @@ function renderGrid(){
     });
     g.appendChild(card);
     buildDrawer(svc.id);
+  });
+
+  // --- Combo promos ---
+  document.querySelectorAll('.scard').forEach(card => {
+    const id = card.dataset.id;
+    if (!id || !COMBO_PAIRS[id]) return;
+    const p = COMBO_PAIRS[id];
+    const div = document.createElement('div');
+    div.className = 'cpromo';
+    div.innerHTML =
+      '<span class="cpromo-tag">COMBO</span>' +
+      '<span class="cpromo-pair">' + p.label + '</span>' +
+      '<span class="cpromo-save">Save $' + p.save + '</span>';
+    card.appendChild(div);
   });
 }
 
@@ -1889,8 +1941,6 @@ document.getElementById('langBtn').addEventListener('click',()=>{
   setMode('room');
 })();
 
-applyLang();updateAddons();updateArea();
-
 /* ─── INITIALIZE SMS CAPTURE ─── */
 document.addEventListener('DOMContentLoaded',()=>{
   const smsSendBtn=document.getElementById('smsSendBtn');
@@ -1905,4 +1955,193 @@ document.querySelector('.bcall')?.addEventListener('click',()=>{
 });
 document.querySelector('.bwa')?.addEventListener('click',()=>{
   track('click_whatsapp',{method:'wa.me',phone:'+12133611700'});
+});
+
+/* ═══════════════════════════════════════════════
+   COMBO PROMO — mini block under each service card
+═══════════════════════════════════════════════ */
+const COMBO_PAIRS = {
+  tv:    { partner: 'fur',   label: 'TV Mount + Furniture',    save: 30  },
+  fur:   { partner: 'tv',    label: 'Furniture + TV Mount',    save: 30  },
+  art:   { partner: 'tv',    label: 'Art Hanging + TV Mount',  save: 30  },
+  paint: { partner: 'floor', label: 'Painting + Flooring',     save: 200 },
+  floor: { partner: 'paint', label: 'Flooring + Painting',     save: 200 },
+  plumb: { partner: 'elec',  label: 'Plumbing + Electrical',   save: 30  },
+  elec:  { partner: 'plumb', label: 'Electrical + Plumbing',   save: 30  }
+};
+
+function buildComboPromo(svcId){
+  const pair=COMBO_PAIRS[svcId];
+  if(!pair)return '';
+  const l=L();
+  const withSvc=l.svcs.find(s=>s.id===pair.partner);
+  if(!withSvc)return '';
+  const save=pair.save;
+  const waMsg=encodeURIComponent(
+    `${l.waGreet}\nCombo: ${l.svcs.find(s=>s.id===svcId)?.name} + ${withSvc.name}\nSave $${save}\n${l.waConfirm}`
+  );
+  return `<a class="cpromo" href="https://wa.me/12133611700?text=${waMsg}" target="_blank" rel="noopener" onclick="event.stopPropagation();track('combo_promo_click',{from:'${svcId}',to:'${pair.partner}'})">
+    <span class="cpromo-tag">COMBO</span>
+    <span class="cpromo-pair">${pair.label}</span>
+    <span class="cpromo-save">Save $${save}</span>
+    <span class="cpromo-wa">WhatsApp →</span>
+  </a>`;
+}
+
+// Inject combo promos after renderGrid (called in applyLang)
+function injectComboPromos(){
+  document.querySelectorAll('.scard').forEach(card=>{
+    const drEl=card.querySelector('.drawer');
+    if(!drEl)return;
+    const id=drEl.id.replace('dr_','');
+    // Remove stale promos first
+    card.querySelectorAll('.cpromo').forEach(el=>el.remove());
+    const promo=buildComboPromo(id);
+    if(!promo)return;
+    const scb=card.querySelector('.scb .scbd');
+    if(scb) scb.insertAdjacentHTML('beforeend',promo);
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   INTERACTIVE COMBO CALCULATOR
+═══════════════════════════════════════════════ */
+function initComboCalc() {
+  const BASE = { tv:150, fur:150, art:150, paint:500, floor:500, plumb:150, elec:175 };
+  const LABELS = { tv:'TV Mounting', fur:'Furniture Assembly', art:'Art Hanging',
+                   paint:'Cabinet Painting', floor:'Flooring', plumb:'Plumbing', elec:'Electrical' };
+  const IDS = Object.keys(BASE);
+
+  function populate(sel, excludeId) {
+    sel.innerHTML = '<option value="">Pick a service…</option>';
+    IDS.forEach(id => {
+      if (id === excludeId) return;
+      const o = document.createElement('option');
+      o.value = id; o.textContent = LABELS[id] + ' (from $' + BASE[id] + ')';
+      sel.appendChild(o);
+    });
+  }
+
+  const s1 = document.getElementById('ccSel1');
+  const s2 = document.getElementById('ccSel2');
+  const res = document.getElementById('ccResult');
+  const err = document.getElementById('ccErr');
+  if (!s1 || !s2) return;
+
+  populate(s1, ''); populate(s2, '');
+
+  function calc() {
+    const a = s1.value, b = s2.value;
+    err.style.display = 'none'; res.style.display = 'none';
+    if (!a || !b) return;
+    if (a === b) { err.style.display = 'block'; return; }
+    populate(s1, b); populate(s2, a);
+    s1.value = a; s2.value = b;
+    const total = BASE[a] + BASE[b];
+    const disc  = Math.round(total * 0.8);
+    const saved = total - disc;
+    document.getElementById('ccOriginal').textContent   = '$' + total;
+    document.getElementById('ccDiscounted').textContent = '$' + disc;
+    document.getElementById('ccSave').textContent       = 'Save $' + saved;
+    const msg = encodeURIComponent('Hi! I want to book a COMBO: ' + LABELS[a] + ' + ' + LABELS[b] + '. Combo price $' + disc + ' (save $' + saved + ')');
+    document.getElementById('ccWa').href = 'https://wa.me/12133611700?text=' + msg;
+    res.style.display = 'block';
+    track('combo_calc_view', {svc_a:a, svc_b:b, total:disc, save:saved});
+  }
+
+  s1.addEventListener('change', calc);
+  s2.addEventListener('change', calc);
+  window.reInitComboCalcLang = function() { populate(s1, s2.value||''); populate(s2, s1.value||''); };
+  window._comboCalcInit = true;
+}
+
+// Init after DOM ready
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>{initComboCalc();initMobileCalc();});
+}else{
+  initComboCalc();
+  initMobileCalc();
+}
+
+/* ═══════════════════════════════════════════════
+   TASK 4: Mobile FAB + Bottom Sheet Calculator
+═══════════════════════════════════════════════ */
+function initMobileCalc(){
+  if(window.innerWidth>=900) return; // desktop — skip
+
+  const fab=document.getElementById('calcFab');
+  const overlay=document.getElementById('calcSheetOverlay');
+  const sheetClose=document.getElementById('calcSheetClose');
+  const sheetBody=document.getElementById('calcSheetBody');
+  const calcBox=document.getElementById('calcBox');
+  const fabTxt=document.getElementById('calcFabTxt');
+  const anchorBtn=document.getElementById('calcAnchorBtn');
+  if(!fab||!overlay||!calcBox) return;
+
+  // Update FAB text on lang change
+  window.updateMobileCalcLang=()=>{
+    if(fabTxt) fabTxt.textContent=L().anchorBtn;
+  };
+
+  // Show FAB after scrolling 300px
+  let fabShown=false;
+  function onScroll(){
+    const y=window.scrollY||window.pageYOffset;
+    if(y>300&&!fabShown){fab.classList.add('fab-visible');fabShown=true;}
+    else if(y<=300&&fabShown){fab.classList.remove('fab-visible');fabShown=false;}
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+
+  // Clone calculator into sheet
+  function populateSheet(){
+    if(sheetBody.childElementCount>0) return; // already populated
+    const clone=calcBox.cloneNode(true);
+    // Give cloned elements unique IDs to avoid conflicts
+    clone.querySelectorAll('[id]').forEach(el=>{
+      el.id='sh_'+el.id;
+    });
+    clone.id='sheetCalcBox';
+    sheetBody.appendChild(clone);
+    // Note: cloned calc is display-only. We keep original #calcBox as source of truth.
+    // For simplicity, clicking open sheet scrolls to original calc.
+    // Actually: just scroll to original calc on mobile via anchor
+  }
+
+  function openSheet(){
+    // On mobile: scroll to in-page calc instead of opening sheet
+    // (sheet would duplicate event handlers; scroll is simpler & reliable)
+    if(calcBox){
+      const top=calcBox.getBoundingClientRect().top+window.scrollY-80;
+      window.scrollTo({top,behavior:'smooth'});
+    }
+    track('mobile_fab_click',{});
+  }
+
+  fab.addEventListener('click',openSheet);
+  // Also hook anchor btn
+  if(anchorBtn){
+    anchorBtn.addEventListener('click',(e)=>{
+      e.preventDefault();
+      openSheet();
+    });
+  }
+
+  // Resize: hide FAB on desktop
+  window.addEventListener('resize',()=>{
+    if(window.innerWidth>=900) fab.classList.remove('fab-visible');
+  });
+}
+
+// Initial UI render (must run after combo declarations)
+applyLang();updateAddons();updateArea();
+
+// --- Combo promo WhatsApp click handler ---
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.cpromo-wa');
+  if (!btn) return;
+  const cardId = btn.closest('.scard')?.dataset.id;
+  if (!cardId || !COMBO_PAIRS[cardId]) return;
+  const p = COMBO_PAIRS[cardId];
+  const msg = encodeURIComponent('Hi! Interested in COMBO: ' + p.label + ' (Save $' + p.save + ')');
+  window.open('https://wa.me/12133611700?text=' + msg, '_blank');
 });

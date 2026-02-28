@@ -1,4 +1,22 @@
 {
+  "rewrites": [
+    {
+      "source": "/pricing/",
+      "destination": "/pricing/index.html"
+    },
+    {
+      "source": "/pricing",
+      "destination": "/pricing/index.html"
+    },
+    {
+      "source": "/review",
+      "destination": "/api/review-redirect"
+    },
+    {
+      "source": "/fb",
+      "destination": "/api/fb-redirect"
+    }
+  ],
   "redirects": [
     {
       "source": "/(.*)",

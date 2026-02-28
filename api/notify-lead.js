@@ -1,9 +1,6 @@
 /**
- * Owner Notification Endpoint - Vercel Serverless Function
- * Called after main lead form submission as secondary notification
- *
- * Previously returned 404 (file didn't exist)
- * Now: accepts data, logs it, optionally sends SMS to owner
+ * Owner Notification Endpoint - compatibility wrapper.
+ * Primary notification channel is Telegram.
  */
 
 export default async function handler(req, res) {
@@ -19,9 +16,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { name, email, phone, service, message } = req.body || {};
+  const { name, email, phone, service, message, leadId } = req.body || {};
 
-  // Log the notification
+  if (!name || !phone) {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing required fields: name, phone'
+    });
+  }
+
   const notifId = `notif_${Date.now()}`;
   console.log('[OWNER_NOTIFICATION]', {
     notifId,
@@ -32,12 +35,53 @@ export default async function handler(req, res) {
     timestamp: new Date().toISOString()
   });
 
-  // Optional: Send SMS to owner via Twilio
-  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.OWNER_PHONE) {
+  // Primary: Telegram notification
+  let telegramSent = false;
+  if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+    try {
+      const telegramMessage = `🔧 <b>NEW LEAD!</b>
+
+<b>Name:</b> ${escapeHtml(name)}
+<b>Phone:</b> <code>${escapeHtml(phone)}</code>
+<b>Email:</b> ${escapeHtml(email || 'Not provided')}
+<b>Service:</b> ${escapeHtml(service || 'General')}
+
+<b>Message:</b>
+${escapeHtml(message || '—')}
+
+<b>Lead ID:</b> <code>${escapeHtml(leadId || notifId)}</code>
+<b>Time:</b> ${new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })} PT`;
+
+      const telegramRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          chat_id: process.env.TELEGRAM_CHAT_ID,
+          text: telegramMessage,
+          parse_mode: 'HTML',
+          disable_web_page_preview: true
+        })
+      });
+
+      if (telegramRes.ok) {
+        const data = await telegramRes.json();
+        telegramSent = Boolean(data?.ok);
+        if (telegramSent) {
+          console.log('[OWNER_TELEGRAM_SENT]', data.result?.message_id);
+        }
+      }
+    } catch (err) {
+      console.error('[OWNER_TELEGRAM_ERROR]', err.message);
+    }
+  }
+
+  // Optional fallback: owner SMS via Twilio if configured
+  if (!telegramSent && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.OWNER_PHONE) {
     try {
       const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Messages.json`;
-      const smsBody = `🔧 NEW LEAD!\nName: ${name}\nPhone: ${phone}\nService: ${service || 'General'}\nReply: ${phone}`;
-
+      const smsBody = `NEW LEAD: ${name}, ${phone}, ${service || 'General'}`;
       const twilioRes = await fetch(twilioUrl, {
         method: 'POST',
         headers: {
@@ -61,11 +105,21 @@ export default async function handler(req, res) {
     }
   }
 
-  // Default: just acknowledge (no SMS without Twilio config)
   return res.status(200).json({
     success: true,
-    mode: 'log_only',
+    mode: telegramSent ? 'telegram' : 'log_only',
     notifId,
-    note: 'Lead logged. Add TWILIO_* and OWNER_PHONE to env vars for SMS owner alerts.'
+    note: telegramSent
+      ? 'Lead sent to Telegram.'
+      : 'Lead logged. Configure TELEGRAM_* (preferred) or TWILIO_* + OWNER_PHONE.'
   });
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
