@@ -414,6 +414,14 @@ function notifyViaTelegram(leadData) {
 
   const { leadId, name, phone, email, zip, preferredContact, service, message, attachments, attribution } = leadData;
   const safePhoneDigits = String(phone || '').replace(/\D/g, '');
+  const displayName = String(name || 'there').trim() || 'there';
+  const quickReplyEn = `Hi ${displayName}, thanks for your request. We can help with ${String(service || 'your project')}. What time works best today for a quick confirmation call?`;
+  const quickReplyRu = `Здравствуйте, ${displayName}! Спасибо за заявку. Поможем с работой: ${String(service || 'ваш проект')}. Подскажите, когда вам удобно коротко созвониться сегодня?`;
+
+  const waText = encodeURIComponent(quickReplyEn);
+  const panelBase = `https://handyandfriend.com/r/one-tap/?leadId=${encodeURIComponent(String(leadId || ''))}&phone=${encodeURIComponent(safePhoneDigits)}`;
+  const panelEn = `${panelBase}&lang=en&action=reply_en&text=${encodeURIComponent(quickReplyEn)}`;
+  const panelRu = `${panelBase}&lang=ru&action=reply_ru&text=${encodeURIComponent(quickReplyRu)}`;
 
   const telegramMessage = `🔧 <b>NEW LEAD!</b>
 
@@ -434,27 +442,26 @@ ${escapeHtml(message || '—')}
 <b>CTX:</b> <code>CTX:${leadId}:${phone}</code>
 <b>Time:</b> ${new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })} PT
 
+<b>Quick Reply EN:</b>
+<code>${escapeHtml(quickReplyEn)}</code>
+
+<b>Quick Reply RU:</b>
+<code>${escapeHtml(quickReplyRu)}</code>
+
 ${email ? `<a href="tel:${phone}">📞 Call</a> • <a href="https://wa.me/${safePhoneDigits}">💬 WhatsApp</a> • <a href="mailto:${email}">📧 Email</a>` : `<a href="tel:${phone}">📞 Call</a> • <a href="https://wa.me/${safePhoneDigits}">💬 WhatsApp</a>`}`;
 
-  // Create interactive buttons
-  const replyMarkup = {
-    inline_keyboard: [
-      [
-        { text: '💬 Ответ RU', callback_data: `reply:ru:greeting:${leadId}` },
-        { text: '💬 Reply EN', callback_data: `reply:en:greeting:${leadId}` }
-      ],
-      [{ text: '✅ Взял в работу', callback_data: `taken_${leadId}` }],
-      [
-        { text: '📍 Нужен адрес', callback_data: `askaddr_${leadId}` },
-        { text: '📸 Нужны фото', callback_data: `askphoto_${leadId}` }
-      ],
-      [
-        { text: '⏱ Связь через 15 мин', callback_data: `cb15_${leadId}` },
-        { text: '❌ Отказ', callback_data: `decline_${leadId}` }
-      ],
-      [{ text: '📍 WhatsApp', url: `https://wa.me/${safePhoneDigits}` }]
-    ]
-  };
+  // URL-only buttons work without Telegram webhook handling.
+  const keyboardRows = [];
+  keyboardRows.push([
+    { text: '📝 Reply EN', url: panelEn },
+    { text: '📝 Reply RU', url: panelRu }
+  ]);
+  if (safePhoneDigits) {
+    keyboardRows.push([{ text: '💬 WhatsApp', url: `https://wa.me/${safePhoneDigits}?text=${waText}` }]);
+  }
+  keyboardRows.push([{ text: '🧩 One-Tap Panel', url: panelEn }]);
+
+  const replyMarkup = { inline_keyboard: keyboardRows };
 
   // Non-blocking fetch to Telegram API
   fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {

@@ -30,6 +30,7 @@ export default async function handler(req, res) {
   const lead = req.body && typeof req.body === 'object' ? req.body : {};
   const leadId = String(lead.leadId || lead.id || 'unknown');
   const message = buildTelegramMessage(lead);
+  const replyMarkup = buildTelegramMarkup(lead);
 
   try {
     const telegramRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -39,7 +40,8 @@ export default async function handler(req, res) {
         chat_id: chatId,
         text: message,
         parse_mode: 'HTML',
-        disable_web_page_preview: true
+        disable_web_page_preview: true,
+        reply_markup: replyMarkup
       })
     });
 
@@ -64,6 +66,8 @@ export default async function handler(req, res) {
 
 function buildTelegramMessage(lead) {
   const fullName = escapeHtml(lead.fullName || lead.name || 'Not provided');
+  const rawName = String(lead.fullName || lead.name || 'there');
+  const rawService = String(lead.serviceType || lead.service || 'your project');
   const phone = escapeHtml(lead.phone || 'N/A');
   const email = escapeHtml(lead.email || 'N/A');
   const city = escapeHtml(lead.city || 'N/A');
@@ -73,8 +77,38 @@ function buildTelegramMessage(lead) {
   const budget = escapeHtml(lead.budgetRange || 'N/A');
   const photos = Number(lead.photosCount || 0);
   const leadId = escapeHtml(lead.leadId || lead.id || 'unknown');
+  const quickReplyEn = escapeHtml(`Hi ${rawName}, thanks for your request. We can help with ${rawService}. What time works best today for a quick confirmation call?`);
+  const quickReplyRu = escapeHtml(`Здравствуйте, ${rawName}! Спасибо за заявку. Поможем с работой: ${rawService}. Подскажите, когда вам удобно коротко созвониться сегодня?`);
 
-  return `🚨 <b>New Lead</b>\nName: ${fullName}\nContact: <code>${phone}</code> / ${email}\nArea: ${city} / ${zip}\nService: ${service}\nSummary: ${summary}\nBudget: ${budget}\nPhotos: ${photos}\nLead ID: <code>${leadId}</code>`;
+  return `🚨 <b>New Lead</b>\nName: ${fullName}\nContact: <code>${phone}</code> / ${email}\nArea: ${city} / ${zip}\nService: ${service}\nSummary: ${summary}\nBudget: ${budget}\nPhotos: ${photos}\nLead ID: <code>${leadId}</code>\n\n<b>Quick Reply EN:</b>\n<code>${quickReplyEn}</code>\n\n<b>Quick Reply RU:</b>\n<code>${quickReplyRu}</code>`;
+}
+
+function buildTelegramMarkup(lead) {
+  const rawName = String(lead.fullName || lead.name || 'there').trim() || 'there';
+  const rawService = String(lead.serviceType || lead.service || 'your project');
+  const leadId = String(lead.leadId || lead.id || 'unknown');
+  const phoneDigits = String(lead.phone || '').replace(/\D/g, '');
+  const email = String(lead.email || '').trim();
+  const quickReplyEn = `Hi ${rawName}, thanks for your request. We can help with ${rawService}. What time works best today for a quick confirmation call?`;
+  const quickReplyRu = `Здравствуйте, ${rawName}! Спасибо за заявку. Поможем с работой: ${rawService}. Подскажите, когда вам удобно коротко созвониться сегодня?`;
+  const waText = encodeURIComponent(quickReplyEn);
+  const panelBase = `https://handyandfriend.com/r/one-tap/?leadId=${encodeURIComponent(leadId)}&phone=${encodeURIComponent(phoneDigits)}`;
+  const panelEn = `${panelBase}&lang=en&action=reply_en&text=${encodeURIComponent(quickReplyEn)}`;
+  const panelRu = `${panelBase}&lang=ru&action=reply_ru&text=${encodeURIComponent(quickReplyRu)}`;
+
+  if (!phoneDigits && !email) return undefined;
+
+  const rows = [];
+  rows.push([
+    { text: '📝 Reply EN', url: panelEn },
+    { text: '📝 Reply RU', url: panelRu }
+  ]);
+  if (phoneDigits) {
+    rows.push([{ text: '💬 WhatsApp', url: `https://wa.me/${phoneDigits}?text=${waText}` }]);
+  }
+  rows.push([{ text: '🧩 One-Tap Panel', url: panelEn }]);
+
+  return { inline_keyboard: rows };
 }
 
 function escapeHtml(text) {
