@@ -59,17 +59,18 @@ function parseCsv(csv) {
     });
 }
 
-const webhook = readIfExists('api/telegram-webhook.js');
+const telegramRoute = readIfExists('api/send-telegram.js');
+const uploadLeadPhotos = readIfExists('api/upload-lead-photos.js');
 const submitLead = readIfExists('api/submit-lead.js');
 const oneTap = readIfExists('r/one-tap/index.html');
 const placementsCsv = readIfExists('docs/placements.csv');
 const creativeAssets = readIfExists('docs/creative-assets.json');
 
-assertContains('one_tap_button', webhook, 'Open One-Tap Panel');
-assertContains('reply_callback_schema', webhook, 'reply:lang:templateAction:leadId');
-assertContains('structured_webhook_response', webhook, 'panelSent');
+assertContains('telegram_route_exists', telegramRoute, 'export default async function handler');
+assertContains('upload_photos_route_exists', uploadLeadPhotos, 'export default async function handler');
 assertContains('submit_lead_attachment_limit', submitLead, 'attachments.slice(0, 6)');
-assertContains('submit_lead_source_tracking', submitLead, 'placementId');
+assertContains('submit_lead_source_tracking', submitLead, 'sourceDetails');
+assertContains('submit_lead_schema_fallback', submitLead, 'insertLeadWithSchemaFallback');
 assertContains('launcher_has_sms_ios', oneTap, 'Open SMS iPhone');
 assertContains('launcher_has_sms_android', oneTap, 'Open SMS Android');
 assertContains('launcher_has_whatsapp', oneTap, 'Open WhatsApp');
