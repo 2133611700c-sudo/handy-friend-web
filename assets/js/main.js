@@ -2548,7 +2548,11 @@ document.getElementById('langBtn').addEventListener('click',()=>{
     photoPreviewRow.appendChild(wrap);
   }
 
-  // ── Submit: send query + photos to /api/ai-intake ──
+  // ── AI Chat Integration: Send query + photos to /api/ai-chat ──
+  let chatHistory=[];
+  let chatSessionId=localStorage.getItem('ai_search_session_id')||'search_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  localStorage.setItem('ai_search_session_id',chatSessionId);
+
   async function handleSubmit(){
     const query=searchInput.value.trim();
     if(!query&&!selectedPhotos.length) return;
@@ -2558,20 +2562,36 @@ document.getElementById('langBtn').addEventListener('click',()=>{
     const origText=submitBtn.textContent;
     submitBtn.textContent='...';
 
-    track('ai_search_submit',{query:query,language:lang,photos:selectedPhotos.length});
+    track('ai_chat_submit',{query:query,language:lang,photos:selectedPhotos.length});
 
     try{
-      const resp=await fetch('/api/ai-intake',{
+      // Add user message to history
+      chatHistory.push({role:'user',content:query});
+
+      // Build messages array for API
+      const messages=chatHistory.map(m=>({
+        role:m.role,
+        content:typeof m.content==='string'?m.content:m.content.text||''
+      }));
+
+      const resp=await fetch('/api/ai-chat',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({query:query,photos:selectedPhotos,lang:lang})
+        body:JSON.stringify({
+          sessionId:chatSessionId,
+          messages:messages,
+          lang:lang
+        })
       });
+
       const data=await resp.json().catch(()=>({}));
-      if(data.success!==false){
-        // Success: show AI response if available
-        if(data.aiResponse){
-          showAIResponse(data.aiResponse);
-        }
+      if(data.reply){
+        // Add bot response to history
+        chatHistory.push({role:'assistant',content:data.reply});
+
+        // Show AI response in modal with conversation
+        showAIChatModal(data.reply,data.leadCaptured);
+
         // Clear the search bar
         searchInput.value='';
         selectedPhotos=[];
@@ -2585,14 +2605,14 @@ document.getElementById('langBtn').addEventListener('click',()=>{
         submitBtn.disabled=false;
       }
     }catch(err){
-      console.error('[AI_INTAKE]',err);
+      console.error('[AI_CHAT]',err);
       submitBtn.textContent=origText;
       submitBtn.disabled=false;
     }
   }
 
-  // Show AI response in modal
-  function showAIResponse(response){
+  // Show AI Chat Response in modal (conversation-aware)
+  function showAIChatModal(response,leadCaptured){
     const modal=document.createElement('div');
     modal.style.cssText=`position:fixed;inset:0;background:rgba(42,31,20,.55);z-index:999;
       display:flex;align-items:flex-end;justify-content:center;padding:20px;backdrop-filter:blur(4px)`;
@@ -2600,26 +2620,36 @@ document.getElementById('langBtn').addEventListener('click',()=>{
     const card=document.createElement('div');
     card.style.cssText=`background:#fff;border-radius:20px;padding:28px;max-width:580px;
       width:100%;max-height:70vh;overflow-y:auto;box-shadow:0 20px 60px rgba(42,31,20,.30);
-      animation:slideUp 300ms ease`;
+      animation:slideUp 300ms ease;font-family:var(--fb)`;
+
+    let leadMsg='';
+    if(leadCaptured){
+      leadMsg=`<div style="background:rgba(184,137,44,.10);border:1px solid rgba(184,137,44,.30);
+        padding:12px 16px;border-radius:12px;margin-bottom:16px;font-size:13px;color:#7a6010;font-weight:600">
+        ✅ Your request has been saved! Our team will call you within 1 hour (Mon–Sat 8am–8pm PT).
+      </div>`;
+    }
 
     card.innerHTML=`
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3 style="font-size:18px;font-weight:700;color:#1B2B4B;font-family:var(--fs);margin:0">
-          🤖 AI Estimate
+          💬 Alex — Your Personal Assistant
         </h3>
         <button style="background:rgba(42,31,20,.07);border:none;width:32px;height:32px;
           border-radius:50%;cursor:pointer;font-size:16px;color:#666" onclick="this.closest('[role=dialog]').remove()">✕</button>
       </div>
-      <div style="font-size:15px;line-height:1.65;color:#2A1F14;white-space:pre-wrap">
+      ${leadMsg}
+      <div style="font-size:15px;line-height:1.65;color:#2A1F14;white-space:pre-wrap;
+        background:rgba(42,31,20,.02);padding:16px;border-radius:12px;margin-bottom:16px">
         ${escapeHtml(response)}
       </div>
-      <div style="margin-top:24px;display:flex;gap:12px">
-        <button style="flex:1;padding:14px;background:linear-gradient(135deg,#1B2B4B 0%,#2B4A8C 100%);
+      <div style="display:flex;gap:12px;flex-direction:column">
+        <button style="width:100%;padding:14px;background:linear-gradient(135deg,#1B2B4B 0%,#2B4A8C 100%);
           color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-size:14px"
-          onclick="location.href='#calcBox';this.closest('[role=dialog]').remove()">
-          Get Full Quote
+          onclick="this.closest('[role=dialog]').remove();document.getElementById('hf-chat-btn')?.click()">
+          💬 Continue Chat with Alex
         </button>
-        <button style="flex:1;padding:14px;background:rgba(184,137,44,.15);
+        <button style="width:100%;padding:14px;background:rgba(184,137,44,.15);
           color:#B8892C;border:1px solid rgba(184,137,44,.30);border-radius:12px;
           font-weight:700;cursor:pointer;font-size:14px"
           onclick="this.closest('[role=dialog]').remove()">
