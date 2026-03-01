@@ -9,6 +9,11 @@
 
 const { restInsert, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
+const { createHash } = require('node:crypto');
+
+const PHOTO_DEDUP_WINDOW_MS = Number(process.env.TELEGRAM_PHOTO_DEDUP_MS || 10 * 60 * 1000);
+const PHOTO_DEDUP_CACHE = globalThis.__HF_CHAT_PHOTO_DEDUP || new Map();
+globalThis.__HF_CHAT_PHOTO_DEDUP = PHOTO_DEDUP_CACHE;
 
 const SYSTEM_PROMPTS = {
   en: `You are Alex, sales assistant for Handy & Friend — professional handyman & home improvement, Los Angeles/SoCal. handyandfriend.com
@@ -517,35 +522,100 @@ async function sendChatToTelegram({ sessionId, leadId, lang, userText, aiReply, 
 
   if (!photoCount) return;
 
-  let sentPhotos = 0;
-  for (let i = 0; i < photos.length; i += 1) {
-    const ok = await sendTelegramPhoto(token, chatId, photos[i], {
+  const dedup = filterDedupedPhotos(safeSession, photos);
+  const photoQueue = dedup.photos;
+  const dedupSkippedCount = dedup.skipped;
+  const sentIds = [];
+  const failedPhotos = [];
+
+  for (let i = 0; i < photoQueue.length; i += 1) {
+    const result = await sendTelegramPhotoWithRetry(token, chatId, photoQueue[i], {
       caption: i === 0 ? `📸 Chat photos\nLead: ${safeLead}\nSession: ${safeSession}` : ''
     });
-    if (ok) sentPhotos += 1;
+
+    if (result.ok) {
+      if (result.messageId) sentIds.push(result.messageId);
+    } else {
+      failedPhotos.push({
+        idx: i,
+        file: sanitizeName(photoQueue[i]?.name || `photo_${i + 1}.jpg`),
+        error: result.error || 'telegram_send_photo_failed',
+        attempts: result.attempts || 1
+      });
+    }
   }
 
+  const photosForwardedCount = sentIds.length;
+  console.log('[AI_CHAT_PHOTO_FORWARD]', JSON.stringify({
+    session_id: safeSession,
+    lead_id: leadId || null,
+    photos_total: photoCount,
+    photos_after_dedup: photoQueue.length,
+    photos_forwarded_count: photosForwardedCount,
+    telegram_photo_sent_ids: sentIds,
+    dedup_skipped_count: dedupSkippedCount,
+    failed_count: failedPhotos.length
+  }));
+
   if (leadId) {
-    await logLeadEvent(safeLead, sentPhotos ? 'telegram_sent' : 'telegram_failed', {
+    await logLeadEvent(safeLead, failedPhotos.length ? 'telegram_failed' : 'telegram_sent', {
       stage: 'ai_chat_forward',
       session_id: safeSession,
       photos_total: photoCount,
-      photos_sent: sentPhotos
+      photos_after_dedup: photoQueue.length,
+      photos_forwarded_count: photosForwardedCount,
+      telegram_photo_sent_ids: sentIds,
+      dedup_skipped_count: dedupSkippedCount
+    });
+  }
+
+  if (failedPhotos.length) {
+    await logLeadEvent(leadId || null, 'chat_photo_telegram_failed', {
+      stage: 'ai_chat_forward',
+      session_id: safeSession,
+      lead_id: leadId || null,
+      photos_total: photoCount,
+      photos_after_dedup: photoQueue.length,
+      failed_count: failedPhotos.length,
+      failed: failedPhotos
     });
   }
 }
 
+async function sendTelegramPhotoWithRetry(token, chatId, photo, { caption = '' } = {}) {
+  const first = await sendTelegramPhoto(token, chatId, photo, { caption });
+  if (first.ok) return { ...first, attempts: 1 };
+
+  const retryMs = randomInt(2000, 5000);
+  await sleep(retryMs);
+  const second = await sendTelegramPhoto(token, chatId, photo, { caption });
+  if (second.ok) return { ...second, attempts: 2 };
+  return {
+    ok: false,
+    attempts: 2,
+    error: second.error || first.error || 'telegram_send_photo_failed'
+  };
+}
+
 async function sendTelegramPhoto(token, chatId, photo, { caption = '' } = {}) {
-  if (!photo || typeof photo.dataUrl !== 'string') return false;
+  if (!photo || typeof photo.dataUrl !== 'string') {
+    return { ok: false, error: 'invalid_photo_payload' };
+  }
   const parts = photo.dataUrl.split(',');
-  if (parts.length !== 2) return false;
+  if (parts.length !== 2) {
+    return { ok: false, error: 'invalid_data_url' };
+  }
   const [meta, b64] = parts;
   const mimeMatch = /^data:(image\/[a-zA-Z0-9.+-]+);base64$/i.exec(meta);
   const mimeType = mimeMatch ? mimeMatch[1].toLowerCase() : 'image/jpeg';
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) return false;
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) {
+    return { ok: false, error: 'unsupported_mime_type' };
+  }
 
   const buffer = Buffer.from(b64, 'base64');
-  if (!buffer.length || buffer.length > 8 * 1024 * 1024) return false;
+  if (!buffer.length || buffer.length > 8 * 1024 * 1024) {
+    return { ok: false, error: 'invalid_or_large_buffer' };
+  }
 
   const form = new FormData();
   form.append('chat_id', chatId);
@@ -557,7 +627,70 @@ async function sendTelegramPhoto(token, chatId, photo, { caption = '' } = {}) {
     body: form
   });
   const data = await response.json().catch(() => ({}));
-  return Boolean(response.ok && data?.ok);
+  if (!response.ok || !data?.ok) {
+    return {
+      ok: false,
+      error: String(data?.description || `sendPhoto_${response.status}`).slice(0, 300)
+    };
+  }
+  return {
+    ok: true,
+    messageId: data?.result?.message_id || null
+  };
+}
+
+function filterDedupedPhotos(sessionId, photos) {
+  const now = Date.now();
+  cleanupPhotoDedup(now);
+  const keyPrefix = String(sessionId || 'unknown');
+  const deduped = [];
+  let skipped = 0;
+
+  for (const photo of photos) {
+    const hash = hashPhotoDataUrl(photo?.dataUrl || '');
+    if (!hash) {
+      deduped.push(photo);
+      continue;
+    }
+    const key = `${keyPrefix}:${hash}`;
+    const expiresAt = PHOTO_DEDUP_CACHE.get(key);
+    if (expiresAt && expiresAt > now) {
+      skipped += 1;
+      continue;
+    }
+    PHOTO_DEDUP_CACHE.set(key, now + PHOTO_DEDUP_WINDOW_MS);
+    deduped.push(photo);
+  }
+
+  return { photos: deduped, skipped };
+}
+
+function hashPhotoDataUrl(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) return '';
+  try {
+    return createHash('sha256').update(dataUrl).digest('hex').slice(0, 24);
+  } catch (_) {
+    return '';
+  }
+}
+
+function cleanupPhotoDedup(now) {
+  if (PHOTO_DEDUP_CACHE.size < 250) return;
+  for (const [key, expiresAt] of PHOTO_DEDUP_CACHE.entries()) {
+    if (!expiresAt || expiresAt <= now) {
+      PHOTO_DEDUP_CACHE.delete(key);
+    }
+  }
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function randomInt(min, max) {
+  const a = Math.ceil(min);
+  const b = Math.floor(max);
+  return Math.floor(Math.random() * (b - a + 1)) + a;
 }
 
 function sanitizeName(name) {
