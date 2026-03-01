@@ -7,8 +7,8 @@ const P={
 
   /* CATEGORY 1: KITCHEN CABINET PAINTING */
   kitchen:{
-    doorRoller:45,door1side:95,door2side:125,doorFull:155,
-    drawerSmall:65,drawerLarge:75,endPanel:125,island:460,
+    doorRoller:35,door1side:85,door2side:115,doorFull:145,
+    drawerSmall:55,drawerLarge:65,endPanel:115,island:450,
     interiorBox:65,degreasing:20,oakFill:45,twoTone:300,
     topCoat:20,glassMasking:20,hwHoles:20,deepRepair:25,
     caulking:3.50,removeContactPaper:75
@@ -21,8 +21,8 @@ const P={
 
   /* CATEGORY 3: INTERIOR PAINTING */
   paint:{
-    wall1coat:3.00,wall2coat:4.00,ceiling:4.00,ceilingTexture:4.50,
-    baseboard:4.50,baseboardInstall:3.50,crown:5.00,doorCasing:45,doorSlab:95,
+    wall1coat:1.50,wall2coat:2.25,ceiling:1.75,ceilingTexture:2.50,
+    baseboard:2.50,baseboardInstall:3.50,crown:5.00,doorCasing:45,doorSlab:95,
     prep:0.80,wallpaper:1.60,mold:2.00
   },
 
@@ -265,7 +265,7 @@ const T={
     lDrawerS:"Small Drawers",lDrawerL:"Large Drawers",lEndPanels:"End Panels",
     lPieceType:"Piece Type",lPieceQty:"Quantity",
     kitchenDoorOpts:[
-      {v:"doorRoller",l:"Roller Finish — $45/door",p:45},
+      {v:"doorRoller",l:"Roller Finish — $35/door",p:35},
       {v:"door1side",l:"1-Side Spray — $85/door",p:85},
       {v:"door2side",l:"2-Side Spray — $115/door",p:115},
       {v:"doorFull",l:"Full Spray + Box — $145/door",p:145}
