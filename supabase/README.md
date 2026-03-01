@@ -36,6 +36,7 @@ Run in Supabase SQL editor:
 - No service-role key in frontend code.
 - Private Storage bucket only.
 - Event logging for lead creation, photo upload, telegram result, and validation failures.
+- Basic server-side rate limits on `ai-chat`, `submit-lead`, `upload-lead-photos`, and `send-telegram`.
 
 ## Rollback
 

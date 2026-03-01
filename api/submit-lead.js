@@ -11,6 +11,7 @@
 
 const { saveLeadContext } = require('./_lib/lead-context-store.js');
 const { restInsert, logLeadEvent } = require('./_lib/supabase-admin.js');
+const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
 
 export default async function handler(req, res) {
   // CORS headers
@@ -24,6 +25,20 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const submitIp = getClientIp(req);
+  const submitRate = checkRateLimit({
+    key: `submit-lead:${submitIp}`,
+    limit: 8,
+    windowMs: 60 * 1000
+  });
+  if (!submitRate.ok) {
+    res.setHeader('Retry-After', String(submitRate.retryAfterSec));
+    return res.status(429).json({
+      success: false,
+      error: 'Too many lead submissions. Please try again shortly.'
+    });
   }
 
   const {

@@ -8,6 +8,7 @@
  */
 
 const { restInsert } = require('./_lib/supabase-admin.js');
+const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
 
 const SYSTEM_PROMPTS = {
   en: `You are Alex, sales assistant for Handy & Friend — professional handyman & home improvement, Los Angeles/SoCal. handyandfriend.com
@@ -278,6 +279,17 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+  const ip = getClientIp(req);
+  const rate = checkRateLimit({
+    key: `ai-chat:${ip}`,
+    limit: 30,
+    windowMs: 60 * 1000
+  });
+  if (!rate.ok) {
+    res.setHeader('Retry-After', String(rate.retryAfterSec));
+    return res.status(429).json({ error: 'Too many chat messages. Please wait a moment.' });
+  }
 
   const { sessionId, messages, lang = 'en' } = req.body || {};
 
