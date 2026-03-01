@@ -1182,7 +1182,12 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
     var history = msgs.slice(0,-1); // last message already added
     var userMsg = {role:'user', content:userText||''};
     if(photos && photos.length > 0){
-      userMsg.photos = photos.map(function(p){return p.dataUrl;});
+      userMsg.photos = photos.map(function(p, idx){
+        return {
+          dataUrl: p.dataUrl,
+          name: p.name || ('chat_photo_' + (idx + 1) + '.jpg')
+        };
+      });
     }
     history.push(userMsg);
 

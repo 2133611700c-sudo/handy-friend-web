@@ -7,7 +7,7 @@
  * Requires: DEEPSEEK_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  */
 
-const { restInsert } = require('./_lib/supabase-admin.js');
+const { restInsert, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
 
 const SYSTEM_PROMPTS = {
@@ -302,6 +302,7 @@ export default async function handler(req, res) {
 
   const safeLang = ['en', 'ru', 'uk', 'es'].includes(lang) ? lang : 'en';
   const systemPrompt = SYSTEM_PROMPTS[safeLang];
+  const latestUserPhotos = extractLatestUserPhotos(messages);
 
   // Sanitize and limit messages
   const safeMessages = messages
@@ -361,6 +362,16 @@ export default async function handler(req, res) {
   saveTurns(sessionId, leadId, lastUser?.content, reply).catch(err =>
     console.error('[AI_CHAT] saveTurns error:', err.message)
   );
+
+  // Forward chat intake to Telegram (including user photos).
+  sendChatToTelegram({
+    sessionId,
+    leadId,
+    lang: safeLang,
+    userText: lastUser?.content || '',
+    aiReply: reply,
+    photos: latestUserPhotos
+  }).catch((err) => console.error('[AI_CHAT] Telegram forward error:', err.message));
 
   return res.status(200).json({ reply, leadCaptured, leadId });
 }
@@ -455,4 +466,108 @@ function buildSummary(messages, lang) {
     `${m.role === 'user' ? 'Client' : 'Alex'}: ${m.content}`
   );
   return `[AI Chat | ${lang.toUpperCase()}]\n` + turns.join('\n');
+}
+
+function extractLatestUserPhotos(rawMessages) {
+  if (!Array.isArray(rawMessages) || rawMessages.length === 0) return [];
+  for (let i = rawMessages.length - 1; i >= 0; i -= 1) {
+    const msg = rawMessages[i];
+    if (!msg || msg.role !== 'user') continue;
+    const list = Array.isArray(msg.photos) ? msg.photos : [];
+    return list.slice(0, 6).map((item, idx) => {
+      if (typeof item === 'string') {
+        return {
+          dataUrl: item,
+          name: `chat_photo_${idx + 1}.jpg`
+        };
+      }
+      return {
+        dataUrl: String(item?.dataUrl || ''),
+        name: String(item?.name || `chat_photo_${idx + 1}.jpg`)
+      };
+    }).filter((p) => p.dataUrl.startsWith('data:image/'));
+  }
+  return [];
+}
+
+async function sendChatToTelegram({ sessionId, leadId, lang, userText, aiReply, photos }) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+
+  const safeLead = String(leadId || 'pending');
+  const safeSession = String(sessionId || 'unknown');
+  const photoCount = Array.isArray(photos) ? photos.length : 0;
+  const text = `🤖 <b>AI Chat Message</b>\nSession: <code>${escapeHtml(safeSession)}</code>\nLead: <code>${escapeHtml(safeLead)}</code>\nLang: ${escapeHtml(String(lang || 'en').toUpperCase())}\nPhotos: ${photoCount}\n\n<b>User:</b> ${escapeHtml(String(userText || '—').slice(0, 700))}\n\n<b>Alex:</b> ${escapeHtml(String(aiReply || '—').slice(0, 700))}`;
+
+  const msgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    })
+  });
+  const msgData = await msgRes.json().catch(() => ({}));
+  if (!msgRes.ok || !msgData.ok) {
+    throw new Error(msgData?.description || `sendMessage failed (${msgRes.status})`);
+  }
+
+  if (!photoCount) return;
+
+  let sentPhotos = 0;
+  for (let i = 0; i < photos.length; i += 1) {
+    const ok = await sendTelegramPhoto(token, chatId, photos[i], {
+      caption: i === 0 ? `📸 Chat photos\nLead: ${safeLead}\nSession: ${safeSession}` : ''
+    });
+    if (ok) sentPhotos += 1;
+  }
+
+  if (leadId) {
+    await logLeadEvent(safeLead, sentPhotos ? 'telegram_sent' : 'telegram_failed', {
+      stage: 'ai_chat_forward',
+      session_id: safeSession,
+      photos_total: photoCount,
+      photos_sent: sentPhotos
+    });
+  }
+}
+
+async function sendTelegramPhoto(token, chatId, photo, { caption = '' } = {}) {
+  if (!photo || typeof photo.dataUrl !== 'string') return false;
+  const parts = photo.dataUrl.split(',');
+  if (parts.length !== 2) return false;
+  const [meta, b64] = parts;
+  const mimeMatch = /^data:(image\/[a-zA-Z0-9.+-]+);base64$/i.exec(meta);
+  const mimeType = mimeMatch ? mimeMatch[1].toLowerCase() : 'image/jpeg';
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) return false;
+
+  const buffer = Buffer.from(b64, 'base64');
+  if (!buffer.length || buffer.length > 8 * 1024 * 1024) return false;
+
+  const form = new FormData();
+  form.append('chat_id', chatId);
+  if (caption) form.append('caption', caption.slice(0, 900));
+  form.append('photo', new Blob([buffer], { type: mimeType }), sanitizeName(photo.name));
+
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+    method: 'POST',
+    body: form
+  });
+  const data = await response.json().catch(() => ({}));
+  return Boolean(response.ok && data?.ok);
+}
+
+function sanitizeName(name) {
+  return String(name || 'photo.jpg').replace(/[^a-zA-Z0-9._-]/g, '_') || 'photo.jpg';
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
