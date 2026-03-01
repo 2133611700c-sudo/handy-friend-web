@@ -170,11 +170,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p class="hero-offer-sub" id="heroOfferSub">Book 2+ Services Today</p>
   </div>
   <div class="ai-search-floating-wrapper">
-    <div class="ai-helper-text" id="aiHelperText" data-i18n="aiHelperText">AI assistant — answers questions and calculates prices instantly</div>
+    <div class="ai-header-section">
+      <h2 class="ai-title">💬 Chat with Alex</h2>
+      <div class="ai-helper-text" id="aiHelperText" data-i18n="aiHelperText">Get instant quotes & pricing answers</div>
+    </div>
     <div class="ai-search-bar-wrapper-large" id="searchBarWrapper">
       <div class="search-bar-row">
         <div class="search-icon lightning-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
             <path d="M13 2L4.5 13.5H11L10 22L20.5 10H14L13 2Z"/>
           </svg>
         </div>
@@ -182,8 +185,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           type="text"
           class="ai-search-input-large"
           id="aiSearchInput"
-          placeholder="Ask AI: price my project"
-          aria-label="Ask AI about home services"
+          placeholder="What project do you need help with?"
+          aria-label="Chat with Alex - Ask about pricing and services"
           data-i18n-placeholder="aiSearchPlaceholder"
         >
         <button class="photo-btn" id="photoBtn" type="button" aria-label="Add photos" title="Add photos">
@@ -193,7 +196,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </svg>
         </button>
         <input type="file" id="photoInput" accept="image/*" multiple style="display:none">
-        <button class="search-submit-btn-large est-btn" id="submitBtn" aria-label="Get Estimate" data-i18n="aiSubmit">Get Estimate</button>
+        <button class="search-submit-btn-large est-btn" id="submitBtn" aria-label="Ask Alex" data-i18n="aiSubmit">Ask Alex</button>
       </div>
       <div class="photo-preview-row" id="photoPreviewRow"></div>
     </div>
@@ -981,9 +984,9 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
      AI CHAT WIDGET — BLOCK 2 (DeepSeek Sales Bot)
      ══════════════════════════════════════════════ -->
 <style>
-#hf-chat-btn{position:fixed;bottom:24px;right:24px;z-index:9000;width:58px;height:58px;border-radius:50%;background:#1e2a3b;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,.35);transition:transform .2s,box-shadow .2s}
-#hf-chat-btn:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(0,0,0,.45)}
-#hf-chat-btn svg{width:26px;height:26px;fill:#fff}
+#hf-chat-btn{position:fixed;bottom:24px;right:24px;z-index:9000;width:140px;height:50px;border-radius:50px;background:linear-gradient(135deg,#1B2B4B 0%,#2B4A8C 100%);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 24px rgba(27,43,75,.4);transition:transform .2s,box-shadow .2s;font-weight:700;color:#fff;font-size:14px;font-family:inherit;padding:0 14px}
+#hf-chat-btn:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(27,43,75,.5)}
+#hf-chat-btn svg{width:20px;height:20px;fill:#fff;flex-shrink:0}
 #hf-chat-badge{position:absolute;top:-4px;right:-4px;background:#e04040;color:#fff;font-size:11px;font-weight:700;border-radius:50%;width:19px;height:19px;display:none;align-items:center;justify-content:center;border:2px solid #fff}
 #hf-chat-badge.show{display:flex}
 #hf-chat-panel{position:fixed;bottom:94px;right:24px;z-index:9000;width:360px;max-width:calc(100vw - 32px);background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.22);display:none;flex-direction:column;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-height:520px}
@@ -1015,8 +1018,9 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
 </style>
 
 <!-- Chat button -->
-<button id="hf-chat-btn" aria-label="Chat with us" onclick="hfChatToggle()">
+<button id="hf-chat-btn" aria-label="Chat with Alex" onclick="hfChatToggle()">
   <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+  <span style="display:inline">Chat</span>
   <span id="hf-chat-badge">1</span>
 </button>
 
