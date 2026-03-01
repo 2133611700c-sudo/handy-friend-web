@@ -9,7 +9,7 @@ const P={
   kitchen:{
     doorRoller:45,door1side:95,door2side:125,doorFull:155,
     drawerSmall:65,drawerLarge:75,endPanel:125,island:460,
-    interiorBox:65,degreasing:20,oakFill:45,twoTone:300,
+    interiorBox:75,degreasing:20,oakFill:45,twoTone:300,
     topCoat:20,glassMasking:20,hwHoles:20,deepRepair:25,
     caulking:3.50,removeContactPaper:75
   },
@@ -22,7 +22,7 @@ const P={
   /* CATEGORY 3: INTERIOR PAINTING */
   paint:{
     wall1coat:3.00,wall2coat:4.00,ceiling:4.00,ceilingTexture:4.50,
-    baseboard:2.50,baseboardInstall:3.50,crown:5.00,doorCasing:45,doorSlab:95,
+    baseboard:4.50,baseboardInstall:3.50,crown:5.00,doorCasing:45,doorSlab:95,
     prep:0.80,wallpaper:1.60,mold:2.00
   },
 
@@ -354,7 +354,7 @@ const T={
         ["Drawer Front — large (over 6\")","$75/ea"],
         ["End Panel / Fridge Panel","$125/ea"],
         ["Kitchen Island Accent (full refinish)","$460/island"],
-        ["Interior Cabinet Box","$65/box"],
+        ["Interior Cabinet Box","$75/section"],
         ["Heavy Degreasing (soiled kitchen)","$20/door"],
         ["Oak Grain Filling","$45/door"],
         ["Two-Tone Color Surcharge","$300/project"],
@@ -402,7 +402,7 @@ const T={
         ["Ceiling — smooth (2 coats)","$4.00/sf"],
         ["Ceiling — textured (2 coats)","$4.50/sf"],
         ["Interior Door Slab","$95/door"],
-        ["Baseboard Paint","$2.50/lf"],
+        ["Baseboard Paint","$4.50/lf"],
         ["Baseboard Install (new)","$3.50/lf"],
         ["Crown Molding Paint","$5.00/lf"],
         ["Door Casing / Trim","$45/side"]
@@ -623,7 +623,7 @@ const T={
         ["Frente de cajón — grande (más de 6\")","$75/ea"],
         ["Panel lateral / Panel refrigerador","$125/ea"],
         ["Isla de cocina (restauración completa)","$460/isla"],
-        ["Interior de gabinete","$65/caja"],
+        ["Interior de gabinete","$75/sección"],
         ["Desengrasado profundo","$20/puerta"],
         ["Relleno de veta de roble","$45/puerta"],
         ["Cargo por dos tonos","$300/proyecto"],
@@ -695,7 +695,7 @@ const T={
         ["Techo — liso (2 capas)","$4.00/ft²"],
         ["Techo — texturizado (2 capas)","$4.50/ft²"],
         ["Puerta interior / hoja","$95/puerta"],
-        ["Zócalo — pintura","$2.50/lf"],
+        ["Zócalo — pintura","$4.50/lf"],
         ["Zócalo — instalación (nuevo)","$3.50/lf"],
         ["Moldura corona","$5.00/lf"],
         ["Marco de puerta / moldura","$45/lado"]
@@ -916,7 +916,7 @@ const T={
         ["Фасад ящика — большой (более 6\")","$75/шт"],
         ["Боковая панель / панель холодильника","$125/шт"],
         ["Кухонный остров (полная реставрация)","$460/остров"],
-        ["Внутренний короб шкафа","$65/короб"],
+        ["Внутренний короб шкафа","$75/секция"],
         ["Глубокое обезжиривание","$20/дверь"],
         ["Заполнение текстуры дуба","$45/дверь"],
         ["Доплата за два тона","$300/проект"],
@@ -988,7 +988,7 @@ const T={
         ["Потолок — гладкий (2 слоя)","$4.00/кф"],
         ["Потолок — текстурный (2 слоя)","$4.50/кф"],
         ["Межкомнатная дверь / полотно","$95/дверь"],
-        ["Плинтус — покраска","$2.50/пф"],
+        ["Плинтус — покраска","$4.50/пф"],
         ["Плинтус — установка (новый)","$3.50/пф"],
         ["Молдинг корона","$5.00/пф"],
         ["Дверная коробка / наличник","$45/сторона"]
@@ -1209,7 +1209,7 @@ const T={
         ["Фасад шухляди — великий (понад 6\")","$75/шт"],
         ["Бічна панель / панель холодильника","$125/шт"],
         ["Кухонний острів (повна реставрація)","$460/острів"],
-        ["Внутрішній короб шафи","$65/короб"],
+        ["Внутрішній короб шафи","$75/секція"],
         ["Глибоке знежирення","$20/дверця"],
         ["Заповнення текстури дуба","$45/дверця"],
         ["Доплата за два тони","$300/проект"],
@@ -1281,7 +1281,7 @@ const T={
         ["Стеля — гладка (2 шари)","$4.00/кф"],
         ["Стеля — текстурна (2 шари)","$4.50/кф"],
         ["Міжкімнатні двері / полотно","$95/двері"],
-        ["Плінтус — фарбування","$2.50/пф"],
+        ["Плінтус — фарбування","$4.50/пф"],
         ["Плінтус — встановлення (новий)","$3.50/пф"],
         ["Молдинг корона","$5.00/пф"],
         ["Дверна коробка / лиштва","$45/сторона"]
