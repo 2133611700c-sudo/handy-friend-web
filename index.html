@@ -991,12 +991,12 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
 #hf-chat-send{width:38px;height:38px;border-radius:50%;background:#b88924;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;transition:background .15s}
 #hf-chat-send:hover{background:#9a7318}
 #hf-chat-send svg{width:17px;height:17px;fill:#fff}
-@media(max-width:400px){#hf-chat-panel{width:calc(100vw - 16px);right:8px;bottom:86px}#hf-chat-btn{right:16px;bottom:16px;width:64px;height:64px}#hf-char-wave{font-size:36px}}
+@media(max-width:400px){#hf-chat-panel{width:calc(100vw - 16px);right:8px;bottom:86px}#hf-chat-btn{right:16px;bottom:16px;width:64px;height:64px}}
 </style>
 
 <!-- Chat button -->
 <button id="hf-chat-btn" aria-label="Chat with Alex" onclick="hfChatToggle()" title="Chat with Alex! 👋">
-  <span id="hf-char-wave" style="font-size:42px;display:inline-block;animation:wave 0.6s ease-in-out infinite;transform-origin:70% 70%;cursor:grab">👧</span>
+  <img id="hf-char-wave" src="assets/img/alex-avatar.png" alt="Alex" style="width:100%;height:100%;border-radius:50%;object-fit:cover;animation:wave 0.6s ease-in-out infinite;display:block;cursor:grab">
   <span id="hf-chat-badge">1</span>
 </button>
 
