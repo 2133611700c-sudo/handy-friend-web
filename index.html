@@ -952,10 +952,13 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
      AI CHAT WIDGET — BLOCK 2 (DeepSeek Sales Bot)
      ══════════════════════════════════════════════ -->
 <style>
-#hf-chat-btn{position:fixed;bottom:24px;right:24px;z-index:9000;width:140px;height:50px;border-radius:50px;background:linear-gradient(135deg,#1B2B4B 0%,#2B4A8C 100%);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 24px rgba(27,43,75,.4);transition:transform .2s,box-shadow .2s;font-weight:700;color:#fff;font-size:14px;font-family:inherit;padding:0 14px}
-#hf-chat-btn:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(27,43,75,.5)}
+@keyframes wave{0%{transform:rotate(0deg)}10%{transform:rotate(14deg)}20%{transform:rotate(-8deg)}30%{transform:rotate(14deg)}40%{transform:rotate(-4deg)}50%{transform:rotate(10deg)}60%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
+@keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-8px)}}
+#hf-chat-btn{position:fixed;bottom:24px;right:24px;z-index:9000;width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#FF6B9D 0%,#FF85C0 50%,#FFB3D9 100%);border:3px solid #fff;cursor:grab;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(255,107,157,.5);transition:transform .2s,box-shadow .2s;font-weight:700;color:#fff;font-size:14px;font-family:inherit;padding:0;animation:float 3s ease-in-out infinite;user-select:none;-webkit-user-select:none}
+#hf-chat-btn:hover{transform:scale(1.1);box-shadow:0 12px 48px rgba(255,107,157,.7)}
+#hf-chat-btn:active{cursor:grabbing}
 #hf-chat-btn svg{width:20px;height:20px;fill:#fff;flex-shrink:0}
-#hf-chat-badge{position:absolute;top:-4px;right:-4px;background:#e04040;color:#fff;font-size:11px;font-weight:700;border-radius:50%;width:19px;height:19px;display:none;align-items:center;justify-content:center;border:2px solid #fff}
+#hf-chat-badge{position:absolute;top:-8px;right:-8px;background:#FF2D55;color:#fff;font-size:12px;font-weight:800;border-radius:50%;width:24px;height:24px;display:none;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 2px 8px rgba(255,45,85,.6)}
 #hf-chat-badge.show{display:flex}
 #hf-chat-panel{position:fixed;bottom:94px;right:24px;z-index:9000;width:360px;max-width:calc(100vw - 32px);background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.22);display:none;flex-direction:column;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-height:520px}
 #hf-chat-panel.open{display:flex}
@@ -988,13 +991,12 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
 #hf-chat-send{width:38px;height:38px;border-radius:50%;background:#b88924;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end;transition:background .15s}
 #hf-chat-send:hover{background:#9a7318}
 #hf-chat-send svg{width:17px;height:17px;fill:#fff}
-@media(max-width:400px){#hf-chat-panel{width:calc(100vw - 16px);right:8px;bottom:86px}#hf-chat-btn{right:16px;bottom:16px}}
+@media(max-width:400px){#hf-chat-panel{width:calc(100vw - 16px);right:8px;bottom:86px}#hf-chat-btn{right:16px;bottom:16px;width:64px;height:64px}#hf-char-wave{font-size:36px}}
 </style>
 
 <!-- Chat button -->
-<button id="hf-chat-btn" aria-label="Chat with Alex" onclick="hfChatToggle()">
-  <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
-  <span style="display:inline">Chat</span>
+<button id="hf-chat-btn" aria-label="Chat with Alex" onclick="hfChatToggle()" title="Chat with Alex! 👋">
+  <span id="hf-char-wave" style="font-size:42px;display:inline-block;animation:wave 0.6s ease-in-out infinite;transform-origin:70% 70%;cursor:grab">👧</span>
   <span id="hf-chat-badge">1</span>
 </button>
 
@@ -1222,6 +1224,53 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
   document.getElementById('hf-chat-input').addEventListener('keydown', function(e){
     if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();hfSend();}
   });
+
+  /* ─── DRAGGABLE CHAT BUTTON ─── */
+  (function(){
+    var btn = document.getElementById('hf-chat-btn');
+    var isDragging = false;
+    var offsetX = 0, offsetY = 0;
+
+    function startDrag(e){
+      isDragging = true;
+      var rect = btn.getBoundingClientRect();
+      var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      offsetX = clientX - rect.left;
+      offsetY = clientY - rect.top;
+      btn.style.cursor = 'grabbing';
+    }
+
+    function drag(e){
+      if(!isDragging) return;
+      e.preventDefault();
+      var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      var newLeft = clientX - offsetX;
+      var newTop = clientY - offsetY;
+      var maxLeft = window.innerWidth - btn.offsetWidth;
+      var maxTop = window.innerHeight - btn.offsetHeight;
+      newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+      newTop = Math.max(0, Math.min(newTop, maxTop));
+      btn.style.position = 'fixed';
+      btn.style.left = newLeft + 'px';
+      btn.style.right = 'auto';
+      btn.style.top = newTop + 'px';
+      btn.style.bottom = 'auto';
+    }
+
+    function stopDrag(){
+      isDragging = false;
+      btn.style.cursor = 'grab';
+    }
+
+    btn.addEventListener('mousedown', startDrag);
+    btn.addEventListener('touchstart', startDrag);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag, {passive:false});
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchend', stopDrag);
+  })();
 
   // Auto-grow textarea
   document.getElementById('hf-chat-input').addEventListener('input', function(){
