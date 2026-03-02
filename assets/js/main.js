@@ -2518,6 +2518,43 @@ document.getElementById('hoursInput').addEventListener('input',updateHrBadge);
 
 ['customPricePerSqft','customDimLen','customDimWid','customTotalSF'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateCustomSqft);});
 
+// Hero calculator listeners
+['heroSqftPrice','heroSqftArea','heroLinearPrice','heroLinearLength'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('input',updateHeroCalcs);
+});
+
+// Hero calculator - Square Feet and Linear
+function updateHeroCalcs(){
+  const sqftPrice=+document.getElementById('heroSqftPrice').value||0;
+  const sqftArea=+document.getElementById('heroSqftArea').value||0;
+  const linearPrice=+document.getElementById('heroLinearPrice').value||0;
+  const linearLen=+document.getElementById('heroLinearLength').value||0;
+
+  const sqftResult=document.getElementById('heroSqftResult');
+  const linearResult=document.getElementById('heroLinearResult');
+
+  // Calculate sqft
+  if(sqftPrice&&sqftArea){
+    const sqftTot=Math.round(sqftArea*sqftPrice*100)/100;
+    sqftResult.classList.remove('empty');
+    sqftResult.innerHTML=`<strong>$${sqftTot}</strong>`;
+  }else{
+    sqftResult.classList.add('empty');
+    sqftResult.textContent='Enter price & area';
+  }
+
+  // Calculate linear
+  if(linearPrice&&linearLen){
+    const linearTot=Math.round(linearLen*linearPrice*100)/100;
+    linearResult.classList.remove('empty');
+    linearResult.innerHTML=`<strong>$${linearTot}</strong>`;
+  }else{
+    linearResult.classList.add('empty');
+    linearResult.textContent='Enter price & length';
+  }
+}
+
 // Custom sqft mode toggle
 (function(){
   const customModeRoom=document.getElementById('customModeRoom');
