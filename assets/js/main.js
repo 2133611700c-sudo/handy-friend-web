@@ -230,6 +230,8 @@ const T={
     lBase:"Baseboards (lin ft)",lTrans:"Transitions (qty)",lDoorU:"Door undercuts (qty)",
     lHrs:"Estimated hours",anchorBtn:"Get Free Instant Quote",
     lModeRoom:"Room (L×W)",lModeTotal:"Total sq ft",lSfTotal:"Total sq ft",
+    lCustomPrice:"Price per sq ft ($)",lCustomLen:"Length (ft)",lCustomWid:"Width (ft)",lCustomSf:"Total sq ft",
+    calcSubCustom:"Custom price per square foot",
     hrBadgeHint:"Enter estimated hours above",
     hrBadgeIncl:"Included in service call",
     hrBadgeFmt:(extra,tot)=>`$150 call + ${extra}h × $75 = <strong>$${tot}</strong>`,
@@ -247,6 +249,7 @@ const T={
       {v:"p2",l:"🖌️ Interior Painting — 2 coats ($4.00/sf)"},
       {v:"fl",l:"🏠 Flooring — Laminate ($3.50/sf)"},
       {v:"fv",l:"🏠 Flooring — LVP ($3.75/sf)"},
+      {v:"custom",l:"💰 Custom Price per Sq Ft"},
       {v:"trim",l:"📏 Trim & Moldings (per linear ft)"},
       {v:"tv",l:"📺 TV Mounting"},
       {v:"art",l:"🖼️ Art & Mirrors"},
@@ -537,6 +540,8 @@ const T={
     lBase:"Zócalos (pie lineal)",lTrans:"Transiciones (cant.)",lDoorU:"Recortes de puerta (cant.)",
     lHrs:"Horas estimadas",anchorBtn:"Obtener estimado",
     lModeRoom:"Habitación (L×A)",lModeTotal:"Total ft²",lSfTotal:"Total ft²",
+    lCustomPrice:"Precio por ft² ($)",lCustomLen:"Largo (pies)",lCustomWid:"Ancho (pies)",lCustomSf:"Total ft²",
+    calcSubCustom:"Precio personalizado por pie cuadrado",
     hrBadgeHint:"Ingresa las horas estimadas arriba",
     hrBadgeIncl:"Incluido en la llamada de servicio",
     hrBadgeFmt:(extra,tot)=>`$150 llamada + ${extra}h × $75 = <strong>$${tot}</strong>`,
@@ -554,6 +559,7 @@ const T={
       {v:"p2",l:"🖌️ Pintura Interior — 2 capas ($4.00/ft²)"},
       {v:"fl",l:"🏠 Pisos — Laminado ($3.50/ft²)"},
       {v:"fv",l:"🏠 Pisos — LVP ($3.75/ft²)"},
+      {v:"custom",l:"💰 Precio personalizado por ft²"},
       {v:"trim",l:"📏 Molduras y Cenefas (por pie lineal)"},
       {v:"tv",l:"📺 Montaje de TV"},
       {v:"art",l:"🖼️ Cuadros & Espejos"},
@@ -842,6 +848,8 @@ const T={
     lBase:"Плинтуса (пог.фут)",lTrans:"Порожки (шт.)",lDoorU:"Подрезка дверей (шт.)",
     lHrs:"Ориентировочное кол-во часов",anchorBtn:"Рассчитать стоимость",
     lModeRoom:"Комната (Д×Ш)",lModeTotal:"Общая площадь",lSfTotal:"Кв.футов всего",
+    lCustomPrice:"Цена за кв.фут ($)",lCustomLen:"Длина (фут)",lCustomWid:"Ширина (фут)",lCustomSf:"Общая площадь",
+    calcSubCustom:"Пользовательская цена за квадратный фут",
     hrBadgeHint:"Введите кол-во часов выше",
     hrBadgeIncl:"Входит в стоимость вызова",
     hrBadgeFmt:(extra,tot)=>`Вызов $150 + ${extra}ч × $75 = <strong>$${tot}</strong>`,
@@ -859,6 +867,7 @@ const T={
       {v:"p2",l:"🖌️ Интерьер — 2 слоя ($4.00/кф)"},
       {v:"fl",l:"🏠 Ламинат ($3.50/кф)"},
       {v:"fv",l:"🏠 LVP ($3.75/кф)"},
+      {v:"custom",l:"💰 Своя цена за кв.фут"},
       {v:"trim",l:"📏 Отделка и Молдинги (за линейный фут)"},
       {v:"tv",l:"📺 Монтаж ТВ"},
       {v:"art",l:"🖼️ Картины & Зеркала"},
@@ -1147,6 +1156,8 @@ const T={
     lBase:"Плінтуси (пог.фут)",lTrans:"Поріжки (шт.)",lDoorU:"Підрізання дверей (шт.)",
     lHrs:"Орієнтовна кількість годин",anchorBtn:"Розрахувати вартість",
     lModeRoom:"Кімната (Д×Ш)",lModeTotal:"Загальна площа",lSfTotal:"Кв.фут загалом",
+    lCustomPrice:"Ціна за кв.фут ($)",lCustomLen:"Довжина (фут)",lCustomWid:"Ширина (фут)",lCustomSf:"Загальна площа",
+    calcSubCustom:"Користувацька ціна за квадратний фут",
     hrBadgeHint:"Введіть кількість годин вище",
     hrBadgeIncl:"Входить у вартість виклику",
     hrBadgeFmt:(extra,tot)=>`Виклик $150 + ${extra}год × $75 = <strong>$${tot}</strong>`,
@@ -1164,6 +1175,7 @@ const T={
       {v:"p2",l:"🖌️ Інтер'єр — 2 шари ($4.00/кф)"},
       {v:"fl",l:"🏠 Ламінат ($3.50/кф)"},
       {v:"fv",l:"🏠 LVP ($3.75/кф)"},
+      {v:"custom",l:"💰 Своя ціна за кв.фут"},
       {v:"trim",l:"📏 Обладнання та Молдинги (за лінійний фут)"},
       {v:"tv",l:"📺 Монтаж ТВ"},
       {v:"art",l:"🖼️ Картини & Дзеркала"},
@@ -2297,7 +2309,7 @@ function updateArea(){
 
 const SVC_MODE={
   kitch:'kitchen',furnp:'furniture',
-  p1:'sqft',p2:'sqft',fl:'sqft',fv:'sqft',
+  p1:'sqft',p2:'sqft',fl:'sqft',fv:'sqft',custom:'custom-sqft',
   trim:'linear',
   tv:'fixed',art:'fixed',fur:'fixed',plumb:'fixed',elec:'fixed'
 };
@@ -2311,7 +2323,7 @@ function renderCalculatorUI(){
   const l=L();
   /* hide all mode containers */
   ['roomWrap','sfWrap','areaBadge','bpWrap','flWrap','hrWrap','hrBadge',
-   'kitchenWrap','furnWrap','fixedWrap','linearWrap'].forEach(id=>{
+   'kitchenWrap','furnWrap','fixedWrap','linearWrap','customSqftWrap','customSqftBadge'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='none';
   });
   document.querySelector('.mode').style.display='none';
@@ -2353,6 +2365,15 @@ function renderCalculatorUI(){
     document.getElementById('linearWrap').style.display='block';
     if(sub) sub.textContent=l.calcSubLinear||'';
     renderLinearOpts(v);
+  }
+  else if(mode==='custom-sqft'){
+    document.getElementById('customSqftWrap').style.display='block';
+    document.querySelector('#customModeGroup').style.display='flex';
+    document.getElementById('customRoomWrap').style.display='grid';
+    document.getElementById('customSfWrap').style.display='none';
+    document.getElementById('customSqftBadge').style.display='block';
+    if(sub) sub.textContent=l.calcSubCustom||'';
+    initCustomSqftMode();
   }
 }
 
@@ -2451,10 +2472,70 @@ function updateHrBadge(){
     :`$150 call<br><strong>${l.hrBadgeIncl}</strong>`;
 }
 
+function updateCustomSqft(){
+  const price=+document.getElementById('customPricePerSqft').value||0;
+  const badge=document.getElementById('customSqftBadge');
+  const l=L();
+  let sf=0;
+
+  const customCalcMode=document.getElementById('customModeRoom').getAttribute('aria-pressed')==='true'?'room':'total';
+
+  if(customCalcMode==='room'){
+    const len=+document.getElementById('customDimLen').value||0;
+    const wid=+document.getElementById('customDimWid').value||0;
+    sf=Math.round(len*wid);
+    if(!len||!wid){badge.innerHTML='Enter dimensions';badge.style.display='block';return;}
+  }else{
+    sf=+document.getElementById('customTotalSF').value||0;
+    if(!sf){badge.innerHTML='Enter total area';badge.style.display='block';return;}
+  }
+
+  if(!price){badge.innerHTML='Enter price per sq ft';badge.style.display='block';return;}
+
+  const tot=Math.round(sf*price*100)/100;
+  const priceStr=price.toFixed(2);
+  badge.innerHTML=`${sf} sq ft × $${priceStr}/sf = <strong>$${tot}</strong>`;
+  badge.style.display='block';
+}
+
+function initCustomSqftMode(){
+  const l=L();
+  document.getElementById('lCustomPrice').textContent=l.lCustomPrice||'Price per sq ft';
+  document.getElementById('lCustomLen').textContent=l.lCustomLen||'Length';
+  document.getElementById('lCustomWid').textContent=l.lCustomWid||'Width';
+  document.getElementById('lCustomSf').textContent=l.lCustomSf||'Total sq ft';
+
+  document.getElementById('customModeRoom').textContent=l.lModeRoom||'Room';
+  document.getElementById('customModeTotal').textContent=l.lModeTotal||'Total';
+
+  updateCustomSqft();
+}
+
 document.getElementById('svcSel').addEventListener('change',renderCalculatorUI);
 ['dimLen','dimWid','totalSF'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateArea);});
 document.getElementById('hoursInput').addEventListener('input',updateHrBadge);
 ['linearLength','linearServiceSel','linearUnitSel'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateLinearLength);el?.addEventListener('change',updateLinearLength);});
+
+['customPricePerSqft','customDimLen','customDimWid','customTotalSF'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateCustomSqft);});
+
+// Custom sqft mode toggle
+(function(){
+  const customModeRoom=document.getElementById('customModeRoom');
+  const customModeTotal=document.getElementById('customModeTotal');
+  const customRoomWrap=document.getElementById('customRoomWrap');
+  const customSfWrap=document.getElementById('customSfWrap');
+  if(!customModeRoom||!customModeTotal)return;
+  function setCustomMode(m){
+    customModeRoom.setAttribute('aria-pressed', m==='room'?'true':'false');
+    customModeTotal.setAttribute('aria-pressed', m==='total'?'true':'false');
+    if(customRoomWrap) customRoomWrap.style.display=(m==='room')?'grid':'none';
+    if(customSfWrap) customSfWrap.style.display=(m==='total')?'flex':'none';
+    updateCustomSqft();
+  }
+  customModeRoom.addEventListener('click',()=>setCustomMode('room'));
+  customModeTotal.addEventListener('click',()=>setCustomMode('total'));
+  setCustomMode('room');
+})();
 
 document.getElementById('calcBtn').addEventListener('click',()=>{
   const v=document.getElementById('svcSel').value;
@@ -2506,6 +2587,24 @@ document.getElementById('calcBtn').addEventListener('click',()=>{
     tot+=extraQty*extraPrice;
     const lbl=radio.closest('.fcard')?.querySelector('.fcard-name')?.textContent||'';
     detail=lbl+(extraQty>0?' + '+extraQty+' extra':'');
+  }
+  else if(mode==='custom-sqft'){
+    const price=+document.getElementById('customPricePerSqft').value||0;
+    const customMode=document.getElementById('customModeRoom').getAttribute('aria-pressed')==='true'?'room':'total';
+    let sf=0;
+    if(customMode==='room'){
+      const len=+document.getElementById('customDimLen').value||0;
+      const wid=+document.getElementById('customDimWid').value||0;
+      if(!len||!wid){document.getElementById('customDimLen').focus();return;}
+      sf=Math.round(len*wid);
+    }else{
+      sf=+document.getElementById('customTotalSF').value||0;
+      if(!sf){document.getElementById('customTotalSF').focus();return;}
+    }
+    if(!price){document.getElementById('customPricePerSqft').focus();return;}
+    tot=Math.round(sf*price*100)/100;
+    detail=sf+' sq ft @ $'+price.toFixed(2)+'/sf';
+    lastEst={tot:Math.round(tot),name,sf,detail,mode:'custom-sqft'};
   }
   else{ /* sqft mode */
     const ip=v==='p1'||v==='p2',ifl=v==='fl'||v==='fv';
