@@ -285,6 +285,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         </div>
 
+        <!-- LINEAR/TRIM SERVICES -->
+        <div id="linearWrap" style="display:none">
+          <div class="iblk">
+            <span class="ilbl" id="lLinearService"></span>
+            <select id="linearServiceSel"></select>
+          </div>
+          <div class="iblk">
+            <span class="ilbl" id="lLinearLength"></span>
+            <input type="number" id="linearLength" min="1" placeholder="20" inputmode="decimal">
+          </div>
+          <div class="iblk">
+            <span class="ilbl" id="lLinearUnit"></span>
+            <select id="linearUnitSel">
+              <option value="ft" id="linUnitFt">Feet</option>
+              <option value="m" id="linUnitM">Meters</option>
+            </select>
+          </div>
+          <div class="abadge" id="linearBadge"></div>
+          <div class="agroup" id="linearAddonGroup"></div>
+        </div>
+
         <!-- FIXED-PRICE SERVICES -->
         <div id="fixedWrap" style="display:none">
           <div id="fixedCards"></div>

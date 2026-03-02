@@ -51,6 +51,12 @@ const P={
   /* CATEGORY 8: ELECTRICAL */
   electrical:{
     lightFixture:185,outletSwitch:150,outletEach:45,smartDevice:195
+  },
+
+  /* CATEGORY 9: LINEAR/TRIM SERVICES */
+  linear:{
+    baseboard:4.50,baseboardInstall:3.50,baseboardRemove:3.50,
+    crown:5.00,doorCasing:45,caulking:3.50,builtIn:125
   }
 };
 
@@ -241,6 +247,7 @@ const T={
       {v:"p2",l:"🖌️ Interior Painting — 2 coats ($4.00/sf)"},
       {v:"fl",l:"🏠 Flooring — Laminate ($3.50/sf)"},
       {v:"fv",l:"🏠 Flooring — LVP ($3.75/sf)"},
+      {v:"trim",l:"📏 Trim & Moldings (per linear ft)"},
       {v:"tv",l:"📺 TV Mounting"},
       {v:"art",l:"🖼️ Art & Mirrors"},
       {v:"fur",l:"🛋️ Furniture Assembly"},
@@ -310,6 +317,17 @@ const T={
         {id:"elSmart",l:"Smart Doorbell / Lock Install",p:195}
       ]
     },
+    calcSubLinear:"Select trim type & enter length (ft)",
+    lLinearService:"Service Type",lLinearLength:"Length",lLinearUnit:"Unit",
+    linearOpts:[
+      {v:"baseboard",l:"Baseboard Paint — $4.50/lin ft",p:4.50},
+      {v:"baseboardInstall",l:"Baseboard Install (new) — $3.50/lin ft",p:3.50},
+      {v:"baseboardRemove",l:"Baseboard Remove & Reinstall — $3.50/lin ft",p:3.50},
+      {v:"crown",l:"Crown Molding Paint — $5.00/lin ft",p:5.00},
+      {v:"doorCasing",l:"Door Casing / Trim — $45/side",p:45},
+      {v:"caulking",l:"Caulking / Sealing — $3.50/lin ft",p:3.50},
+      {v:"builtIn",l:"Built-in Cabinetry — $125/lin ft",p:125}
+    ],
     calcBtn:"Calculate",
     resLbl:"Estimated labor cost",
     resSub:"Estimate only · Final price after photos or site visit",
@@ -555,6 +573,17 @@ const T={
     calcSubKitchen:"Elige acabado y cantidad",
     calcSubFurn:"Elige tipo de pieza y cantidad",
     calcSubFixed:"Selecciona tu opción de servicio",
+    calcSubLinear:"Elige tipo de moldura e ingresa longitud (pies)",
+    lLinearService:"Tipo de servicio",lLinearLength:"Longitud",lLinearUnit:"Unidad",
+    linearOpts:[
+      {v:"baseboard",l:"Pintura de zócalo — $4.50/pie lin",p:4.50},
+      {v:"baseboardInstall",l:"Instalación zócalo (nuevo) — $3.50/pie lin",p:3.50},
+      {v:"baseboardRemove",l:"Remover & reinstalar zócalo — $3.50/pie lin",p:3.50},
+      {v:"crown",l:"Pintura moldura corona — $5.00/pie lin",p:5.00},
+      {v:"doorCasing",l:"Marco / moldura puerta — $45/lado",p:45},
+      {v:"caulking",l:"Sellado / caulk — $3.50/pie lin",p:3.50},
+      {v:"builtIn",l:"Gabinete empotrado — $125/pie lin",p:125}
+    ],
     lDoorType:"Acabado de puerta",lDoorQty:"Cantidad de puertas",
     lDrawerS:"Cajones pequeños",lDrawerL:"Cajones grandes",lEndPanels:"Paneles laterales",
     lPieceType:"Tipo de pieza",lPieceQty:"Cantidad",
@@ -848,6 +877,17 @@ const T={
     calcSubKitchen:"Выберите покрытие и количество дверей",
     calcSubFurn:"Выберите тип предмета и количество",
     calcSubFixed:"Выберите вариант услуги",
+    calcSubLinear:"Выберите тип отделки и введите длину (фут)",
+    lLinearService:"Тип отделки",lLinearLength:"Длина",lLinearUnit:"Единица",
+    linearOpts:[
+      {v:"baseboard",l:"Покраска плинтуса — $4.50/пог.фут",p:4.50},
+      {v:"baseboardInstall",l:"Установка плинтуса (новый) — $3.50/пог.фут",p:3.50},
+      {v:"baseboardRemove",l:"Снять & переустановить плинтус — $3.50/пог.фут",p:3.50},
+      {v:"crown",l:"Покраска молдинга — $5.00/пог.фут",p:5.00},
+      {v:"doorCasing",l:"Отделка дверного проёма — $45/сторона",p:45},
+      {v:"caulking",l:"Герметизация / герметик — $3.50/пог.фут",p:3.50},
+      {v:"builtIn",l:"Встроенная мебель — $125/пог.фут",p:125}
+    ],
     lDoorType:"Покрытие двери",lDoorQty:"Кол-во дверей",
     lDrawerS:"Маленькие ящики",lDrawerL:"Большие ящики",lEndPanels:"Торцевые панели",
     lPieceType:"Тип предмета",lPieceQty:"Количество",
@@ -1141,6 +1181,17 @@ const T={
     calcSubKitchen:"Оберіть покриття та кількість дверей",
     calcSubFurn:"Оберіть тип предмета та кількість",
     calcSubFixed:"Оберіть варіант послуги",
+    calcSubLinear:"Оберіть тип молдингу та введіть довжину (фут)",
+    lLinearService:"Тип роботи",lLinearLength:"Довжина",lLinearUnit:"Одиниця",
+    linearOpts:[
+      {v:"baseboard",l:"Фарбування плінтуса — $4.50/пог.фут",p:4.50},
+      {v:"baseboardInstall",l:"Установка плінтуса (новий) — $3.50/пог.фут",p:3.50},
+      {v:"baseboardRemove",l:"Зняти & переустановити плінтус — $3.50/пог.фут",p:3.50},
+      {v:"crown",l:"Фарбування молдингу — $5.00/пог.фут",p:5.00},
+      {v:"doorCasing",l:"Обрамлення дверей — $45/сторона",p:45},
+      {v:"caulking",l:"Герметизація / герметик — $3.50/пог.фут",p:3.50},
+      {v:"builtIn",l:"Вбудована меблі — $125/пог.фут",p:125}
+    ],
     lDoorType:"Покриття дверей",lDoorQty:"Кількість дверей",
     lDrawerS:"Маленькі ящики",lDrawerL:"Великі ящики",lEndPanels:"Торцеві панелі",
     lPieceType:"Тип предмета",lPieceQty:"Кількість",
@@ -2244,6 +2295,7 @@ function updateArea(){
 const SVC_MODE={
   kitch:'kitchen',furnp:'furniture',
   p1:'sqft',p2:'sqft',fl:'sqft',fv:'sqft',
+  trim:'linear',
   tv:'fixed',art:'fixed',fur:'fixed',plumb:'fixed',elec:'fixed'
 };
 function getMode(v){return SVC_MODE[v]||'sqft';}
@@ -2256,7 +2308,7 @@ function renderCalculatorUI(){
   const l=L();
   /* hide all mode containers */
   ['roomWrap','sfWrap','areaBadge','bpWrap','flWrap','hrWrap','hrBadge',
-   'kitchenWrap','furnWrap','fixedWrap'].forEach(id=>{
+   'kitchenWrap','furnWrap','fixedWrap','linearWrap','linearBadge'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='none';
   });
   document.querySelector('.mode').style.display='none';
@@ -2293,6 +2345,11 @@ function renderCalculatorUI(){
     document.getElementById('fixedWrap').style.display='block';
     if(sub) sub.textContent=l.calcSubFixed||'';
     renderFixedOpts(v);
+  }
+  else if(mode==='linear'){
+    document.getElementById('linearWrap').style.display='block';
+    if(sub) sub.textContent=l.calcSubLinear||'';
+    renderLinearOpts(v);
   }
 }
 
@@ -2353,6 +2410,31 @@ function renderFixedOpts(svc){
   }
 }
 
+function renderLinearOpts(svc){
+  const l=L();
+  const sel=document.getElementById('linearServiceSel');
+  sel.innerHTML=l.linearOpts.map(o=>
+    `<option value="${o.v}" data-price="${o.p}">${o.l}</option>`
+  ).join('');
+  document.getElementById('lLinearService').textContent=l.lLinearService||'Service Type';
+  document.getElementById('lLinearLength').textContent=l.lLinearLength||'Length';
+  document.getElementById('lLinearUnit').textContent=l.lLinearUnit||'Unit';
+  updateLinearLength();
+}
+
+function updateLinearLength(){
+  const l=+document.getElementById('linearLength').value||0;
+  const badge=document.getElementById('linearBadge');
+  const sel=document.getElementById('linearServiceSel');
+  const svcPrice=+sel.options[sel.selectedIndex].dataset.price||0;
+  const unit=document.getElementById('linearUnitSel').value;
+  const unitL=L().lLinearUnit||'Unit';
+  if(!l){badge.innerHTML='Enter length';return;}
+  const convLength=unit==='m'?Math.round(l*3.28084*100)/100:l;
+  const tot=Math.round(convLength*svcPrice*100)/100;
+  badge.innerHTML=`${convLength} ft × $${svcPrice}/ft = <strong>$${tot}</strong>`;
+}
+
 function updateHrBadge(){
   const h=+document.getElementById('hoursInput').value||0;
   const badge=document.getElementById('hrBadge');
@@ -2368,6 +2450,7 @@ function updateHrBadge(){
 document.getElementById('svcSel').addEventListener('change',renderCalculatorUI);
 ['dimLen','dimWid','totalSF'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateArea);});
 document.getElementById('hoursInput').addEventListener('input',updateHrBadge);
+['linearLength','linearServiceSel','linearUnitSel'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateLinearLength);el?.addEventListener('change',updateLinearLength);});
 
 document.getElementById('calcBtn').addEventListener('click',()=>{
   const v=document.getElementById('svcSel').value;
@@ -2397,6 +2480,18 @@ document.getElementById('calcBtn').addEventListener('click',()=>{
     if(!qty){document.getElementById('pieceQty').focus();return;}
     tot=qty*piecePrice;
     detail=qty+' × '+sel.options[sel.selectedIndex].text.split('—')[0].trim();
+  }
+  else if(mode==='linear'){
+    const sel=document.getElementById('linearServiceSel');
+    const svcPrice=+sel.options[sel.selectedIndex].dataset.price||0;
+    const len=+document.getElementById('linearLength').value||0;
+    const unit=document.getElementById('linearUnitSel').value;
+    if(!len){document.getElementById('linearLength').focus();return;}
+    const convLen=unit==='m'?Math.round(len*3.28084*100)/100:len;
+    tot=Math.round(convLen*svcPrice*100)/100;
+    const svcName=sel.options[sel.selectedIndex].textContent||'';
+    detail=Math.round(convLen*100)/100+' ft - '+svcName;
+    lastEst={tot:Math.round(tot),name,len:convLen,detail,mode:'linear'};
   }
   else if(mode==='fixed'){
     const radio=document.querySelector('input[name="fixedOpt"]:checked');
