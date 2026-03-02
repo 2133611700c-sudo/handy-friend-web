@@ -383,8 +383,8 @@ const T={
         ["Caulking / Sealing","$3.50/lf"],
         ["Remove Contact Paper","$75/hour"]
       ],
-      kitchProv:"All paint, primer & degreasing materials",
-      kitchN:"Standard LA kitchen: 20 doors × $155 = $3,100 + 8 drawer fronts × $65 = $520 + 1 island = $460. Materials provided separately.",
+      kitchProv:"Premium paint, primer, degreasing, and prep are included in the price",
+      kitchN:"Standard LA kitchen: 20 doors × $155 = $3,100 + 8 drawer fronts × $65 = $520 + 1 island = $460. Smooth spray finish included.",
       furnpScope:"Per piece · Professional refinish",furnpDesc:"Full preparation, sanding, primer & paint included.",
       furnp:[
         ["Dining Chair","$95/piece"],
@@ -663,8 +663,8 @@ const T={
         ["Sellado / Calafateo","$3.50/lf"],
         ["Retiro de papel adhesivo","$75/hora"]
       ],
-      kitchProv:"Toda la pintura, imprimación y materiales de desengrasado",
-      kitchN:"Cocina estándar de LA: 20 puertas × $155 = $3,100 + 8 frentes × $65 = $520 + 1 isla = $460. Materiales por separado.",
+      kitchProv:"La pintura premium, imprimacion, desengrasado y preparacion estan incluidos en el precio",
+      kitchN:"Cocina estandar de LA: 20 puertas × $155 = $3,100 + 8 frentes × $65 = $520 + 1 isla = $460. Acabado liso en spray incluido.",
       furnpScope:"Por pieza · Restauración profesional",furnpDesc:"Preparación completa, lijado, imprimación y pintura incluidos.",
       furnp:[
         ["Silla de comedor","$95/pieza"],
@@ -967,8 +967,8 @@ const T={
         ["Герметизация / конопатка","$3.50/пф"],
         ["Удаление контактной плёнки","$75/час"]
       ],
-      kitchProv:"Вся краска, грунт и материалы для обезжиривания",
-      kitchN:"Стандартная кухня LA: 20 дверей × $155 = $3,100 + 8 фасадов × $65 = $520 + 1 остров = $460. Материалы отдельно.",
+      kitchProv:"Премиальная краска, грунт, обезжиривание и подготовка уже включены в стоимость",
+      kitchN:"Стандартная кухня LA: 20 дверей × $155 = $3,100 + 8 фасадов × $65 = $520 + 1 остров = $460. Гладкое распылительное покрытие включено.",
       furnpScope:"За единицу · Профессиональная реставрация",furnpDesc:"Полная подготовка, шлифовка, грунт и покраска включены.",
       furnp:[
         ["Обеденный стул","$95/шт"],
@@ -1271,8 +1271,8 @@ const T={
         ["Герметизація / конопатка","$3.50/пф"],
         ["Видалення контактної плівки","$75/год"]
       ],
-      kitchProv:"Вся фарба, ґрунт та матеріали для знежирення",
-      kitchN:"Стандартна кухня LA: 20 дверцят × $155 = $3,100 + 8 фасадів × $65 = $520 + 1 острів = $460. Матеріали окремо.",
+      kitchProv:"Преміальна фарба, ґрунт, знежирення та підготовка вже входять у вартість",
+      kitchN:"Стандартна кухня LA: 20 дверцят × $155 = $3,100 + 8 фасадів × $65 = $520 + 1 острів = $460. Гладке розпилювальне покриття включено.",
       furnpScope:"За одиницю · Професійна реставрація",furnpDesc:"Повна підготовка, шліфування, ґрунт та фарбування включені.",
       furnp:[
         ["Обідній стілець","$95/шт"],
