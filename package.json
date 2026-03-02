@@ -1,0 +1,10 @@
+{
+  "name": "handy-friend-landing-v6",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Handy & Friend landing and serverless functions",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4"
+  }
+}
