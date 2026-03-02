@@ -2223,9 +2223,7 @@ function toggle(id){
     const card=dr.closest('.scard');
     if(card){
       card.classList.add('open');
-      if(window.innerWidth<900){
-        setTimeout(()=>{card.scrollIntoView({behavior:'smooth',block:'nearest'});},120);
-      }
+      /* Removed scrollIntoView — card expands in place without jumping */
     }
     track('service_open',{service_id:id});
   } else {
