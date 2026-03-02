@@ -101,11 +101,22 @@ img{display:block;width:100%;height:100%;object-fit:cover}
   margin-top:10px;
   font-size:clamp(15px,2.2vw,26px);
   font-weight:500;
+  line-height:1.35;
   color:#2C3E6B;
   text-shadow:0 1px 12px rgba(255,255,255,.45);
   letter-spacing:.01em;
 }
 @media(min-width:900px){.hero-offer-sub{margin-top:14px}}
+
+.hero-included-accent{
+  color:#2B4A8C;
+  font-weight:800;
+  background:linear-gradient(180deg,rgba(43,74,140,.14),rgba(43,74,140,.06));
+  border-radius:8px;
+  padding:2px 8px;
+  box-decoration-break:clone;
+  -webkit-box-decoration-break:clone;
+}
 
 /* Lightning icon circle */
 .lightning-icon{
