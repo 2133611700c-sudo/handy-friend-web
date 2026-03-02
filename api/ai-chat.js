@@ -14,8 +14,8 @@ const { callAlex } = require('../lib/ai-fallback.js');
 const { createOrMergeLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
 const { buildSystemPrompt, getGuardMode, GUARD_MODES } = require('../lib/alex-one-truth.js');
 
-// Legacy support: hasContactCapture, extractContact for lead detection
-const { hasContactCapture, extractContact, detectLanguage } = require('../lib/alex-v8-system.js');
+// Legacy support: hasContactCapture for lead detection + language helper
+const { hasContactCapture, detectLanguage } = require('../lib/alex-v8-system.js');
 
 const PHOTO_DEDUP_WINDOW_MS = Number(process.env.TELEGRAM_PHOTO_DEDUP_MS || 10 * 60 * 1000);
 const PHOTO_DEDUP_CACHE = globalThis.__HF_CHAT_PHOTO_DEDUP || new Map();
@@ -69,9 +69,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'No valid messages' });
   }
   const latestUserText = safeMessages[safeMessages.length - 1]?.content || '';
+  const userOnlyMessages = safeMessages.filter((m) => m.role === 'user');
   const sessionContext = await fetchSessionLeadContext(sessionId);
-  const userMsgCount = safeMessages.filter((m) => m.role === 'user').length;
-  const hasContact = hasContactCapture(safeMessages) || sessionContext.hasContact;
+  const userMsgCount = userOnlyMessages.length;
+  // Contact detection must look at user messages only (not assistant messages).
+  const hasContact = hasContactCapture(userOnlyMessages) || sessionContext.hasContact;
 
   // ALEX v9: Guard mode determination and prompt building
   // Determine guard mode based on contact capture and message count
@@ -119,6 +121,11 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error('[AI_CHAT] AI error:', err.message);
     return res.status(502).json({ error: 'AI service temporarily unavailable. Please try again.' });
+  }
+
+  // Enforce a direct contact CTA before contact is captured to improve conversion.
+  if (!hasContact && !isClearlyOutOfScopeRequest(latestUserText)) {
+    rawReply = enforceContactCaptureCTA(rawReply, safeLang, guardMode);
   }
 
   // Extract lead-payload signal (format: ```lead-payload\n{...}\n```)
@@ -589,6 +596,32 @@ function shouldRegenerateForStrictRange({ guardMode, reply }) {
   return (hasMathIntent && hasManyDollarValues) || (hasExactSignal && hasManyDollarValues);
 }
 
+function enforceContactCaptureCTA(reply, lang, guardMode) {
+  const text = String(reply || '').trim();
+  if (!text) return text;
+
+  const asksForContact = /(phone|email|number|contact|call|text|телефон|почт|email|номер|контакт|phone\/email|телефон\/email|correo|telefono|n[uú]mero|контакт|дзвінок|пошта|номер)/i.test(text);
+  if (asksForContact) return text;
+
+  const ctaByLang = {
+    en: guardMode === GUARD_MODES.NO_CONTACT_HARDENED
+      ? 'Share your phone or email, or call (213) 361-1700 📲'
+      : 'Your name and best phone or email? I’ll send exact numbers 📲',
+    ru: guardMode === GUARD_MODES.NO_CONTACT_HARDENED
+      ? 'Оставьте телефон или email, либо позвоните (213) 361-1700 📲'
+      : 'Ваше имя и лучший телефон или email? Отправлю точный расчет 📲',
+    uk: guardMode === GUARD_MODES.NO_CONTACT_HARDENED
+      ? 'Залиште телефон або email, або телефонуйте (213) 361-1700 📲'
+      : "Ваше ім'я та найкращий телефон або email? Надішлю точний розрахунок 📲",
+    es: guardMode === GUARD_MODES.NO_CONTACT_HARDENED
+      ? 'Deja tu telefono o email, o llama al (213) 361-1700 📲'
+      : 'Tu nombre y mejor telefono o email? Te envio el calculo exacto 📲'
+  };
+
+  const cta = ctaByLang[lang] || ctaByLang.en;
+  return `${text}\n\n${cta}`;
+}
+
 function inferLeadFromConversation(messages) {
   if (!Array.isArray(messages) || !messages.length) return null;
   const userText = messages.filter((m) => m.role === 'user').map((m) => String(m.content || ''));
@@ -669,36 +702,4 @@ async function fetchSessionLeadContext(sessionId) {
   } catch (_) {
     return { hasContact: false };
   }
-}
-
-function buildDynamicPricingSuffix({ lang, hasContact, userMsgCount }) {
-  const L = lang || 'en';
-  const overThree = userMsgCount >= 3;
-
-  const byLang = {
-    en: {
-      noContact: 'REMINDER: No contact captured in this session yet. Give only project ranges (example: "$2,700-$4,500"), no exact line-item math. Do NOT output per-unit pricing (for example "$155/door"), formulas, or exact totals.',
-      strict: 'CRITICAL: This user has 3+ messages without contact. Do not provide specific dollar calculations. Ignore exact per-unit prices from prior instructions until contact is captured. Ask for phone/email or offer direct call (213) 361-1700.',
-      hasContact: 'Contact captured in this session. You may provide exact line-item pricing for this specific project.'
-    },
-    ru: {
-      noContact: 'НАПОМИНАНИЕ: В этой сессии еще нет контакта. Давай только диапазоны по проекту, без точной построчной математики. Не показывай цену за единицу (например "$155/дверь"), формулы и точные суммы.',
-      strict: 'КРИТИЧНО: 3+ сообщений без контакта. Не давай точные расчеты. Игнорируй точные поштучные цены из предыдущих инструкций до захвата контакта. Запроси телефон/email или предложи звонок (213) 361-1700.',
-      hasContact: 'Контакт в сессии получен. Можно дать точный построчный расчет по этому проекту.'
-    },
-    uk: {
-      noContact: 'НАГАДУВАННЯ: У цій сесії ще немає контакту. Давай тільки діапазони без точного построкового розрахунку. Не показуй ціну за одиницю (наприклад "$155/дверцята"), формули чи точні суми.',
-      strict: 'КРИТИЧНО: 3+ повідомлень без контакту. Не давай точні розрахунки. Ігноруй точні поштучні ціни з попередніх інструкцій до захоплення контакту. Попроси телефон/email або запропонуй дзвінок (213) 361-1700.',
-      hasContact: 'Контакт у сесії отримано. Можна дати точний построковий розрахунок для цього проекту.'
-    },
-    es: {
-      noContact: 'RECORDATORIO: Aun no hay contacto en esta sesion. Da solo rangos del proyecto, sin calculo exacto por linea. No des precios por unidad (por ejemplo "$155/puerta"), formulas ni totales exactos.',
-      strict: 'CRITICO: 3+ mensajes sin contacto. No des calculos exactos. Ignora precios por unidad de instrucciones previas hasta capturar contacto. Pide telefono/email o redirige a llamada (213) 361-1700.',
-      hasContact: 'Contacto capturado en esta sesion. Ya puedes dar precio exacto por lineas para este proyecto.'
-    }
-  };
-
-  const msg = byLang[L] || byLang.en;
-  if (hasContact) return msg.hasContact;
-  return overThree ? `${msg.noContact} ${msg.strict}` : msg.noContact;
 }
