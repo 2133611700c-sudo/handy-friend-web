@@ -3,7 +3,9 @@
  * /review -> GOOGLE_REVIEW_URL
  */
 export default async function handler(req, res) {
-  const target = process.env.GOOGLE_REVIEW_URL || '';
+  const target =
+    process.env.GOOGLE_REVIEW_URL ||
+    'https://g.co/kgs/handyandfriend';
 
   if (!target) {
     return res.status(503).json({
