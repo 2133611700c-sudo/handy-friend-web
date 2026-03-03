@@ -1073,6 +1073,30 @@ footer > div > div:first-of-type{display:grid;grid-template-columns:1fr;gap:40px
 
 
 /* ═══════════════════════════════════════
+   KITCHEN EXTRA CALCS (sqft + linear)
+═══════════════════════════════════════ */
+.kitchen-extra-calcs{margin-top:14px}
+.kec-divider{text-align:center;margin-bottom:10px;position:relative}
+.kec-divider::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(42,31,20,.12)}
+.kec-divider span{position:relative;background:#fff;padding:0 10px;font-size:11px;font-weight:600;
+  color:rgba(42,31,20,.45);text-transform:uppercase;letter-spacing:.04em}
+.kec-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.kec-row{grid-template-columns:1fr}}
+.kec-block{background:rgba(42,31,20,.03);border:1px solid rgba(42,31,20,.08);
+  border-radius:10px;padding:10px}
+.kec-title{display:block;font-size:10px;font-weight:700;color:rgba(42,31,20,.45);
+  text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.kec-inputs{display:flex;gap:6px;margin-bottom:8px}
+.kec-inputs input{flex:1;min-width:0;padding:7px 8px;border:1px solid rgba(42,31,20,.12);
+  border-radius:6px;font-size:13px;background:#fff;color:#2a1f14;outline:none;
+  transition:border-color 150ms}
+.kec-inputs input:focus{border-color:rgba(42,31,20,.3)}
+.kec-inputs input::placeholder{color:rgba(42,31,20,.3)}
+.kec-result{font-size:13px;font-weight:600;color:#2a1f14;text-align:center;
+  background:rgba(102,187,106,.1);border:1px solid rgba(102,187,106,.2);
+  border-radius:6px;padding:6px;min-height:20px}
+
+/* ═══════════════════════════════════════
    LIGHTBOX
 ═══════════════════════════════════════ */
 .lightbox-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;

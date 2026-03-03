@@ -285,6 +285,9 @@ const T={
       {id:"oakFill",l:"Oak Grain Fill",p:"+$45/door"},
       {id:"twoTone",l:"Two-Tone Color",p:"+$300 flat"}
     ],
+    kecDivider:"Also calculate by area",
+    kecSqftTitle:"Price per Sq Ft",
+    kecLinearTitle:"Price per Linear Ft",
     furnPieceOpts:[
       {v:"chair",l:"Dining Chair — $95/pc",p:95},
       {v:"nightstand",l:"Nightstand — $145/pc",p:145},
@@ -605,6 +608,9 @@ const T={
       {id:"oakFill",l:"Relleno grano de roble",p:"+$45/puerta"},
       {id:"twoTone",l:"Dos tonos",p:"+$300 fijo"}
     ],
+    kecDivider:"También calcular por área",
+    kecSqftTitle:"Precio por pie²",
+    kecLinearTitle:"Precio por pie lineal",
     furnPieceOpts:[
       {v:"chair",l:"Silla — $95/pieza",p:95},
       {v:"nightstand",l:"Mesita de noche — $145/pieza",p:145},
@@ -913,6 +919,9 @@ const T={
       {id:"oakFill",l:"Заполнение текстуры дуба",p:"+$45/дверь"},
       {id:"twoTone",l:"Двухцветная покраска",p:"+$300 фикс"}
     ],
+    kecDivider:"Также рассчитать по площади",
+    kecSqftTitle:"Цена за кв.фут",
+    kecLinearTitle:"Цена за пог.фут",
     furnPieceOpts:[
       {v:"chair",l:"Стул — $95/шт",p:95},
       {v:"nightstand",l:"Тумба — $145/шт",p:145},
@@ -1221,6 +1230,9 @@ const T={
       {id:"oakFill",l:"Заповнення текстури дуба",p:"+$45/двері"},
       {id:"twoTone",l:"Двоколірне фарбування",p:"+$300 фікс"}
     ],
+    kecDivider:"Також розрахувати за площею",
+    kecSqftTitle:"Ціна за кв.фут",
+    kecLinearTitle:"Ціна за пог.фут",
     furnPieceOpts:[
       {v:"chair",l:"Стілець — $95/шт",p:95},
       {v:"nightstand",l:"Тумба — $145/шт",p:145},
@@ -2393,6 +2405,13 @@ function renderKitchenOpts(){
     `<label class="arow"><input type="checkbox" id="ao_${a.id}">`+
     `<span>${a.l}</span><span class="ap">${a.p}</span></label>`
   ).join('');
+  /* kitchen extra calcs labels */
+  const kd=document.getElementById('kecDividerLabel');
+  if(kd) kd.textContent=l.kecDivider||'Also calculate by area';
+  const kst=document.getElementById('kecSqftTitle');
+  if(kst) kst.textContent=l.kecSqftTitle||'Price per Sq Ft';
+  const klt=document.getElementById('kecLinearTitle');
+  if(klt) klt.textContent=l.kecLinearTitle||'Price per Linear Ft';
 }
 
 function renderFurnOpts(){
@@ -2517,6 +2536,27 @@ document.getElementById('hoursInput').addEventListener('input',updateHrBadge);
 ['linearLength','linearServiceSel','linearUnitSel'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateLinearLength);el?.addEventListener('change',updateLinearLength);});
 
 ['customPricePerSqft','customDimLen','customDimWid','customTotalSF'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateCustomSqft);});
+
+// Kitchen extra calcs (sqft + linear ft inside kitchen mode)
+function updateKitchenExtraCalcs(){
+  const sp=+document.getElementById('kecSqftPrice')?.value||0;
+  const sa=+document.getElementById('kecSqftArea')?.value||0;
+  const sr=document.getElementById('kecSqftResult');
+  if(sr){
+    if(sp&&sa){sr.innerHTML=sa+' sf × $'+sp.toFixed(2)+' = <strong>$'+Math.round(sa*sp*100)/100+'</strong>';}
+    else{sr.textContent='—';}
+  }
+  const lp=+document.getElementById('kecLinearPrice')?.value||0;
+  const ll=+document.getElementById('kecLinearLen')?.value||0;
+  const lr=document.getElementById('kecLinearResult');
+  if(lr){
+    if(lp&&ll){lr.innerHTML=ll+' lf × $'+lp.toFixed(2)+' = <strong>$'+Math.round(ll*lp*100)/100+'</strong>';}
+    else{lr.textContent='—';}
+  }
+}
+['kecSqftPrice','kecSqftArea','kecLinearPrice','kecLinearLen'].forEach(id=>{
+  const el=document.getElementById(id);if(el)el.addEventListener('input',updateKitchenExtraCalcs);
+});
 
 // Custom sqft mode toggle
 (function(){
