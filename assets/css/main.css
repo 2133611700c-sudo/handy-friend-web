@@ -625,7 +625,63 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,
   .fcard-name{font-size:14px}
   .fcard-price{font-size:20px}
 }
-#kitchenWrap,#furnWrap,#fixedWrap{display:flex;flex-direction:column;gap:12px}
+#kitchenWrap,#furnWrap,#fixedWrap,#linearWrap,#sqftModeWrap{display:flex;flex-direction:column;gap:12px}
+
+/* Tab-based service selector */
+.calc-tabs{display:flex;overflow-x:auto;gap:6px;padding:4px 0 8px;margin-bottom:4px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory}
+.calc-tabs::-webkit-scrollbar{display:none}
+.calc-tab{flex:0 0 auto;scroll-snap-align:start;padding:8px 12px;border:1.5px solid var(--st);
+  border-radius:10px;background:#fff;font-size:16px;line-height:1;display:flex;flex-direction:column;
+  align-items:center;gap:4px;cursor:pointer;transition:all .2s;white-space:nowrap;min-width:64px}
+.calc-tab span{font-family:var(--fb);font-size:10.5px;font-weight:600;color:var(--ink2);
+  letter-spacing:.02em;transition:color .2s}
+.calc-tab.active{border-color:var(--gold);background:var(--glt)}
+.calc-tab.active span{color:var(--gold)}
+@media(min-width:900px){.calc-tab{padding:10px 16px;min-width:72px;font-size:18px}
+  .calc-tab span{font-size:11.5px}}
+
+/* Editable price input (compact inline) */
+.price-row{flex-direction:row!important;align-items:center;gap:10px}
+.price-row .ilbl{flex:1;min-width:0}
+.price-edit{width:90px!important;height:40px!important;border-radius:10px!important;
+  border:1.5px solid var(--gbd)!important;background:var(--glt)!important;
+  text-align:center;font:700 15px var(--fb)!important;color:var(--gold)!important;
+  padding:0 8px!important;transition:border-color .2s,box-shadow .2s}
+.price-edit:focus{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(184,137,44,.15)!important;outline:none}
+
+/* Sub-toggles for grouped services */
+.sub-toggle{display:flex;gap:6px;flex-wrap:wrap}
+.sub-btn{flex:1;height:38px;border-radius:10px;border:1.5px solid var(--st);
+  background:rgba(255,255,255,.82);color:var(--ink2);font-weight:700;
+  font-size:11px;letter-spacing:.04em;cursor:pointer;
+  transition:background 150ms,border-color 150ms,color 150ms;min-width:0;padding:0 8px}
+.sub-btn.active{background:var(--glt);border-color:var(--gbd);color:var(--ink)}
+
+/* Universal quick calculators */
+.univ-calcs{border-top:1px solid var(--st2);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.univ-section{border:1px solid var(--st2);border-radius:12px;overflow:hidden}
+.univ-toggle{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--ink2);transition:background 150ms}
+.univ-toggle:hover{background:rgba(42,31,20,.03)}
+.univ-toggle input[type=checkbox]{width:20px;height:20px;accent-color:var(--gold);flex-shrink:0}
+.univ-body{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px}
+.univ-row{display:flex;align-items:flex-end;gap:8px}
+.univ-field{flex:1;display:flex;flex-direction:column;gap:4px}
+.univ-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3)}
+.univ-x{font-size:18px;font-weight:700;color:var(--ink3);padding-bottom:8px}
+.univ-calcs input[type=number]{height:40px;border-radius:10px;font-size:14px}
+.univ-result{text-align:center;padding:8px;border-radius:8px;
+  background:rgba(102,187,106,.08);border:1px solid rgba(102,187,106,.18);
+  font-size:14px;font-weight:700;color:var(--ink)}
+.univ-result strong{color:var(--gold);font-size:16px}
+
+/* Live preview badge */
+.live-badge{text-align:center;padding:8px 14px;font:700 16px var(--fb);color:var(--gold);
+  border-radius:10px;background:var(--glt);border:1px solid var(--gbd);
+  opacity:0;transition:opacity .3s;min-height:0}
+.live-badge.visible{opacity:1}
+.live-badge:empty{display:none}
 
 /* ═══════════════════════════════════════
    BOTTOM BAR
@@ -1072,33 +1128,7 @@ footer > div > div:first-of-type{display:grid;grid-template-columns:1fr;gap:40px
 }
 
 
-/* ═══════════════════════════════════════
-   KITCHEN EXTRA CALCS (sqft + linear)
-═══════════════════════════════════════ */
-.kitchen-extra-calcs{margin-top:14px}
-.kec-divider{text-align:center;margin-bottom:10px;position:relative}
-.kec-divider::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(42,31,20,.12)}
-.kec-divider span{position:relative;background:#fff;padding:0 10px;font-size:11px;font-weight:600;
-  color:rgba(42,31,20,.45);text-transform:uppercase;letter-spacing:.04em}
-.kec-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;overflow:hidden}
-@media(max-width:480px){.kec-row{grid-template-columns:1fr}}
-.kec-block{background:rgba(42,31,20,.03);border:1px solid rgba(42,31,20,.08);
-  border-radius:10px;padding:10px;min-width:0;overflow:hidden}
-.kec-title{display:block;font-size:10px;font-weight:700;color:rgba(42,31,20,.45);
-  text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
-.kec-inputs{display:flex;gap:6px;margin-bottom:8px}
-.kec-inputs input[type=number]{flex:1 1 0%;min-width:0;width:auto;height:36px;
-  padding:6px 8px;border:1px solid rgba(42,31,20,.12);
-  border-radius:6px;font-size:13px;font-weight:500;background:#fff;color:#2a1f14;outline:none;
-  transition:border-color 150ms;-webkit-appearance:none;appearance:none;
-  -moz-appearance:textfield;box-sizing:border-box}
-.kec-inputs input[type=number]::-webkit-inner-spin-button,
-.kec-inputs input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-.kec-inputs input[type=number]:focus{border-color:rgba(42,31,20,.3)}
-.kec-inputs input[type=number]::placeholder{color:rgba(42,31,20,.3);font-weight:400}
-.kec-result{font-size:13px;font-weight:600;color:#2a1f14;text-align:center;
-  background:rgba(102,187,106,.1);border:1px solid rgba(102,187,106,.2);
-  border-radius:6px;padding:6px;min-height:20px}
+/* (old kitchen-extra-calcs styles removed — replaced by .univ-calcs) */
 
 /* ═══════════════════════════════════════
    LIGHTBOX

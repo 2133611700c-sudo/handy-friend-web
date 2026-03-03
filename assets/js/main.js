@@ -230,11 +230,14 @@ const T={
     lBase:"Baseboards (lin ft)",lTrans:"Transitions (qty)",lDoorU:"Door undercuts (qty)",
     lHrs:"Estimated hours",anchorBtn:"Get Free Instant Quote",
     lModeRoom:"Room (L×W)",lModeTotal:"Total sq ft",lSfTotal:"Total sq ft",
-    lCustomPrice:"Price per sq ft ($)",lCustomLen:"Length (ft)",lCustomWid:"Width (ft)",lCustomSf:"Total sq ft",
-    calcSubCustom:"Custom price per square foot",
-    hrBadgeHint:"Enter estimated hours above",
-    hrBadgeIncl:"Included in service call",
-    hrBadgeFmt:(extra,tot)=>`$150 call + ${extra}h × $75 = <strong>$${tot}</strong>`,
+    lSqftPrice:"Price per sq ft",
+    lDoorPriceEdit:"Price per door ($)",lPiecePriceEdit:"Price per piece ($)",lLinearPriceEdit:"Price per ft ($)",
+    univSqftLabel:"Quick Sq Ft Calculator",univLinLabel:"Quick Linear Ft Calculator",
+    univSqftPriceLbl:"$/sf",univSqftAreaLbl:"Area (sf)",univLinPriceLbl:"$/lf",univLinLenLbl:"Length (ft)",
+    subFlLam:"Laminate",subFlLvp:"LVP",
+    subTv:"TV",subArt:"Art & Mirrors",subCurtain:"Curtains",
+    subPlumb:"Plumbing",subElec:"Electrical",
+    tabKitch:"Kitchen",tabFurnp:"Furniture",tabP1:"Paint 1ct",tabP2:"Paint 2ct",tabFl:"Flooring",tabTrim:"Trim",tabTv:"TV & Decor",tabFur:"Assembly",tabPlumb:"Plumb & Elec",
     areaTotalHint:"Enter total sq ft",
     areaTotalFmt:(sf)=>`Total area = <strong>${sf} sq ft</strong>`,
     waGreet:"Hi Handy & Friend! 👋",
@@ -248,8 +251,6 @@ const T={
       {v:"p1",l:"🖌️ Interior Painting — 1 coat ($3.00/sf)"},
       {v:"p2",l:"🖌️ Interior Painting — 2 coats ($4.00/sf)"},
       {v:"fl",l:"🏠 Flooring — Laminate ($3.50/sf)"},
-      {v:"fv",l:"🏠 Flooring — LVP ($3.75/sf)"},
-      {v:"custom",l:"💰 Custom Price per Sq Ft"},
       {v:"trim",l:"📏 Trim & Moldings (per linear ft)"},
       {v:"tv",l:"📺 TV Mounting"},
       {v:"art",l:"🖼️ Art & Mirrors"},
@@ -285,9 +286,6 @@ const T={
       {id:"oakFill",l:"Oak Grain Fill",p:"+$45/door"},
       {id:"twoTone",l:"Two-Tone Color",p:"+$300 flat"}
     ],
-    kecDivider:"Also calculate by area",
-    kecSqftTitle:"Price per Sq Ft",
-    kecLinearTitle:"Price per Linear Ft",
     furnPieceOpts:[
       {v:"chair",l:"Dining Chair — $95/pc",p:95},
       {v:"nightstand",l:"Nightstand — $145/pc",p:145},
@@ -543,11 +541,14 @@ const T={
     lBase:"Zócalos (pie lineal)",lTrans:"Transiciones (cant.)",lDoorU:"Recortes de puerta (cant.)",
     lHrs:"Horas estimadas",anchorBtn:"Obtener estimado",
     lModeRoom:"Habitación (L×A)",lModeTotal:"Total ft²",lSfTotal:"Total ft²",
-    lCustomPrice:"Precio por ft² ($)",lCustomLen:"Largo (pies)",lCustomWid:"Ancho (pies)",lCustomSf:"Total ft²",
-    calcSubCustom:"Precio personalizado por pie cuadrado",
-    hrBadgeHint:"Ingresa las horas estimadas arriba",
-    hrBadgeIncl:"Incluido en la llamada de servicio",
-    hrBadgeFmt:(extra,tot)=>`$150 llamada + ${extra}h × $75 = <strong>$${tot}</strong>`,
+    lSqftPrice:"Precio por ft²",
+    lDoorPriceEdit:"Precio por puerta ($)",lPiecePriceEdit:"Precio por pieza ($)",lLinearPriceEdit:"Precio por pie ($)",
+    univSqftLabel:"Calculadora rápida ft²",univLinLabel:"Calculadora rápida pie lineal",
+    univSqftPriceLbl:"$/ft²",univSqftAreaLbl:"Área (ft²)",univLinPriceLbl:"$/pl",univLinLenLbl:"Largo (pies)",
+    subFlLam:"Laminado",subFlLvp:"LVP",
+    subTv:"TV",subArt:"Cuadros & Espejos",subCurtain:"Cortinas",
+    subPlumb:"Plomería",subElec:"Eléctrico",
+    tabKitch:"Cocina",tabFurnp:"Muebles",tabP1:"Pintura 1c",tabP2:"Pintura 2c",tabFl:"Pisos",tabTrim:"Molduras",tabTv:"TV & Decor",tabFur:"Ensamblaje",tabPlumb:"Plom & Elec",
     areaTotalHint:"Ingresa el total de ft²",
     areaTotalFmt:(sf)=>`Área total = <strong>${sf} ft²</strong>`,
     waGreet:"¡Hola Handy & Friend! 👋",
@@ -561,8 +562,6 @@ const T={
       {v:"p1",l:"🖌️ Pintura Interior — 1 capa ($3.00/ft²)"},
       {v:"p2",l:"🖌️ Pintura Interior — 2 capas ($4.00/ft²)"},
       {v:"fl",l:"🏠 Pisos — Laminado ($3.50/ft²)"},
-      {v:"fv",l:"🏠 Pisos — LVP ($3.75/ft²)"},
-      {v:"custom",l:"💰 Precio personalizado por ft²"},
       {v:"trim",l:"📏 Molduras y Cenefas (por pie lineal)"},
       {v:"tv",l:"📺 Montaje de TV"},
       {v:"art",l:"🖼️ Cuadros & Espejos"},
@@ -608,9 +607,6 @@ const T={
       {id:"oakFill",l:"Relleno grano de roble",p:"+$45/puerta"},
       {id:"twoTone",l:"Dos tonos",p:"+$300 fijo"}
     ],
-    kecDivider:"También calcular por área",
-    kecSqftTitle:"Precio por pie²",
-    kecLinearTitle:"Precio por pie lineal",
     furnPieceOpts:[
       {v:"chair",l:"Silla — $95/pieza",p:95},
       {v:"nightstand",l:"Mesita de noche — $145/pieza",p:145},
@@ -854,11 +850,14 @@ const T={
     lBase:"Плинтуса (пог.фут)",lTrans:"Порожки (шт.)",lDoorU:"Подрезка дверей (шт.)",
     lHrs:"Ориентировочное кол-во часов",anchorBtn:"Рассчитать стоимость",
     lModeRoom:"Комната (Д×Ш)",lModeTotal:"Общая площадь",lSfTotal:"Кв.футов всего",
-    lCustomPrice:"Цена за кв.фут ($)",lCustomLen:"Длина (фут)",lCustomWid:"Ширина (фут)",lCustomSf:"Общая площадь",
-    calcSubCustom:"Пользовательская цена за квадратный фут",
-    hrBadgeHint:"Введите кол-во часов выше",
-    hrBadgeIncl:"Входит в стоимость вызова",
-    hrBadgeFmt:(extra,tot)=>`Вызов $150 + ${extra}ч × $75 = <strong>$${tot}</strong>`,
+    lSqftPrice:"Цена за кв.фут",
+    lDoorPriceEdit:"Цена за дверь ($)",lPiecePriceEdit:"Цена за шт ($)",lLinearPriceEdit:"Цена за фут ($)",
+    univSqftLabel:"Быстрый калькулятор кв.фут",univLinLabel:"Быстрый калькулятор пог.фут",
+    univSqftPriceLbl:"$/кф",univSqftAreaLbl:"Площадь (кф)",univLinPriceLbl:"$/пф",univLinLenLbl:"Длина (фут)",
+    subFlLam:"Ламинат",subFlLvp:"LVP",
+    subTv:"ТВ",subArt:"Картины & Зеркала",subCurtain:"Карнизы",
+    subPlumb:"Сантехника",subElec:"Электрика",
+    tabKitch:"Кухня",tabFurnp:"Мебель",tabP1:"Краска 1сл",tabP2:"Краска 2сл",tabFl:"Пол",tabTrim:"Молдинги",tabTv:"ТВ & Декор",tabFur:"Сборка",tabPlumb:"Сантех & Эл",
     areaTotalHint:"Введите кв.футов",
     areaTotalFmt:(sf)=>`Общая площадь = <strong>${sf} кв.фут</strong>`,
     waGreet:"Привет, Handy & Friend! 👋",
@@ -872,8 +871,6 @@ const T={
       {v:"p1",l:"🖌️ Интерьер — 1 слой ($3.00/кф)"},
       {v:"p2",l:"🖌️ Интерьер — 2 слоя ($4.00/кф)"},
       {v:"fl",l:"🏠 Ламинат ($3.50/кф)"},
-      {v:"fv",l:"🏠 LVP ($3.75/кф)"},
-      {v:"custom",l:"💰 Своя цена за кв.фут"},
       {v:"trim",l:"📏 Отделка и Молдинги (за линейный фут)"},
       {v:"tv",l:"📺 Монтаж ТВ"},
       {v:"art",l:"🖼️ Картины & Зеркала"},
@@ -919,9 +916,6 @@ const T={
       {id:"oakFill",l:"Заполнение текстуры дуба",p:"+$45/дверь"},
       {id:"twoTone",l:"Двухцветная покраска",p:"+$300 фикс"}
     ],
-    kecDivider:"Также рассчитать по площади",
-    kecSqftTitle:"Цена за кв.фут",
-    kecLinearTitle:"Цена за пог.фут",
     furnPieceOpts:[
       {v:"chair",l:"Стул — $95/шт",p:95},
       {v:"nightstand",l:"Тумба — $145/шт",p:145},
@@ -1165,11 +1159,14 @@ const T={
     lBase:"Плінтуси (пог.фут)",lTrans:"Поріжки (шт.)",lDoorU:"Підрізання дверей (шт.)",
     lHrs:"Орієнтовна кількість годин",anchorBtn:"Розрахувати вартість",
     lModeRoom:"Кімната (Д×Ш)",lModeTotal:"Загальна площа",lSfTotal:"Кв.фут загалом",
-    lCustomPrice:"Ціна за кв.фут ($)",lCustomLen:"Довжина (фут)",lCustomWid:"Ширина (фут)",lCustomSf:"Загальна площа",
-    calcSubCustom:"Користувацька ціна за квадратний фут",
-    hrBadgeHint:"Введіть кількість годин вище",
-    hrBadgeIncl:"Входить у вартість виклику",
-    hrBadgeFmt:(extra,tot)=>`Виклик $150 + ${extra}год × $75 = <strong>$${tot}</strong>`,
+    lSqftPrice:"Ціна за кв.фут",
+    lDoorPriceEdit:"Ціна за дверцю ($)",lPiecePriceEdit:"Ціна за шт ($)",lLinearPriceEdit:"Ціна за фут ($)",
+    univSqftLabel:"Швидкий калькулятор кв.фут",univLinLabel:"Швидкий калькулятор пог.фут",
+    univSqftPriceLbl:"$/кф",univSqftAreaLbl:"Площа (кф)",univLinPriceLbl:"$/пф",univLinLenLbl:"Довжина (фут)",
+    subFlLam:"Ламінат",subFlLvp:"LVP",
+    subTv:"ТВ",subArt:"Картини & Дзеркала",subCurtain:"Карнизи",
+    subPlumb:"Сантехніка",subElec:"Електрика",
+    tabKitch:"Кухня",tabFurnp:"Меблі",tabP1:"Фарба 1ш",tabP2:"Фарба 2ш",tabFl:"Підлога",tabTrim:"Молдинги",tabTv:"ТВ & Декор",tabFur:"Збирання",tabPlumb:"Сантех & Ел",
     areaTotalHint:"Введіть кв.фут",
     areaTotalFmt:(sf)=>`Загальна площа = <strong>${sf} кв.фут</strong>`,
     waGreet:"Привіт, Handy & Friend! 👋",
@@ -1183,8 +1180,6 @@ const T={
       {v:"p1",l:"🖌️ Інтер'єр — 1 шар ($3.00/кф)"},
       {v:"p2",l:"🖌️ Інтер'єр — 2 шари ($4.00/кф)"},
       {v:"fl",l:"🏠 Ламінат ($3.50/кф)"},
-      {v:"fv",l:"🏠 LVP ($3.75/кф)"},
-      {v:"custom",l:"💰 Своя ціна за кв.фут"},
       {v:"trim",l:"📏 Обладнання та Молдинги (за лінійний фут)"},
       {v:"tv",l:"📺 Монтаж ТВ"},
       {v:"art",l:"🖼️ Картини & Дзеркала"},
@@ -1230,9 +1225,6 @@ const T={
       {id:"oakFill",l:"Заповнення текстури дуба",p:"+$45/двері"},
       {id:"twoTone",l:"Двоколірне фарбування",p:"+$300 фікс"}
     ],
-    kecDivider:"Також розрахувати за площею",
-    kecSqftTitle:"Ціна за кв.фут",
-    kecLinearTitle:"Ціна за пог.фут",
     furnPieceOpts:[
       {v:"chair",l:"Стілець — $95/шт",p:95},
       {v:"nightstand",l:"Тумба — $145/шт",p:145},
@@ -2038,37 +2030,59 @@ function applyLang(){
   document.getElementById('gridLbl').textContent=l.gridLbl;
   document.getElementById('calcTitle').textContent=l.calcTitle;
   document.getElementById('calcSub').textContent=l.calcSub;
-  document.getElementById('lSvc').textContent=l.lSvc;
-  document.getElementById('lLen').textContent=l.lLen;
-  document.getElementById('lWid').textContent=l.lWid;
-  document.getElementById('lBase').textContent=l.lBase;
-  document.getElementById('lHrs').textContent=l.lHrs;
-  document.getElementById('modeRoom').textContent=l.lModeRoom;
-  document.getElementById('modeTotal').textContent=l.lModeTotal;
-  document.getElementById('lSf').textContent=l.lSfTotal;
+  const lSvcEl=document.getElementById('lSvc');if(lSvcEl)lSvcEl.textContent=l.lSvc;
+  const lLenEl=document.getElementById('lLen');if(lLenEl)lLenEl.textContent=l.lLen;
+  const lWidEl=document.getElementById('lWid');if(lWidEl)lWidEl.textContent=l.lWid;
+  const lBaseEl=document.getElementById('lBase');if(lBaseEl)lBaseEl.textContent=l.lBase;
+  const modeRoomEl=document.getElementById('modeRoom');if(modeRoomEl)modeRoomEl.textContent=l.lModeRoom;
+  const modeTotalEl=document.getElementById('modeTotal');if(modeTotalEl)modeTotalEl.textContent=l.lModeTotal;
+  const lSfEl=document.getElementById('lSf');if(lSfEl)lSfEl.textContent=l.lSfTotal;
   const bwaEl=document.querySelector('.bar .bwa');
   if(bwaEl)bwaEl.href='https://wa.me/12133611700?text='+encodeURIComponent(l.waGreet);
   const calcAnchorEl=document.getElementById('calcAnchorTxt');
   if(calcAnchorEl)calcAnchorEl.textContent=l.anchorBtn;
-  document.getElementById('lTrans').textContent=l.lTrans;
-  document.getElementById('lDoorU').textContent=l.lDoorU;
+  const lTransEl=document.getElementById('lTrans');if(lTransEl)lTransEl.textContent=l.lTrans;
+  const lDoorUEl=document.getElementById('lDoorU');if(lDoorUEl)lDoorUEl.textContent=l.lDoorU;
   document.getElementById('calcBtn').textContent=l.calcBtn;
   document.getElementById('resLbl').textContent=l.resLbl;
   document.getElementById('resSub').textContent=l.resSub;
   document.getElementById('resWaTxt').textContent=l.waBtn;
   document.getElementById('resCopyTxt').textContent=l.copyBtn;
   // update min badge if result visible
-  if(lastEst&&document.getElementById('resMin').style.display!=='none'){
-    document.getElementById('resMinTxt').textContent=
-      l.minApplied+' (min $'+(lastEst.min||500)+')';
+  const resMinEl=document.getElementById('resMin');
+  if(lastEst&&resMinEl&&resMinEl.style.display!=='none'){
+    const resMinTxt=document.getElementById('resMinTxt');
+    if(resMinTxt)resMinTxt.textContent=l.minApplied+' (min $'+(lastEst.min||500)+')';
   }
-  document.getElementById('baseBanner').innerHTML=
-    l.base.map(s=>`<div class="bp"><strong>·</strong> ${s}</div>`).join('');
-  const sel=document.getElementById('svcSel'),cv=sel.value;
-  sel.innerHTML=l.opts.map(o=>`<option value="${o.v}">${o.l}</option>`).join('');
-  if(cv)sel.value=cv;
+  const baseBanner=document.getElementById('baseBanner');
+  if(baseBanner)baseBanner.innerHTML=l.base.map(s=>`<div class="bp"><strong>·</strong> ${s}</div>`).join('');
 
-  /* NEW: SMS Capture translations */
+  /* Tab labels */
+  const tabMap={kitch:'tabKitch',furnp:'tabFurnp',p1:'tabP1',p2:'tabP2',fl:'tabFl',trim:'tabTrim',tv:'tabTv',fur:'tabFur',plumb:'tabPlumb'};
+  document.querySelectorAll('.calc-tab').forEach(tab=>{
+    const key=tabMap[tab.dataset.svc];
+    if(key&&l[key]){
+      const span=tab.querySelector('span');
+      if(span) span.textContent=l[key];
+      else tab.textContent=l[key];
+    }
+  });
+
+  /* Universal calc labels */
+  const uSqLbl=document.getElementById('univSqftLabel');if(uSqLbl)uSqLbl.textContent=l.univSqftLabel||'';
+  const uLiLbl=document.getElementById('univLinLabel');if(uLiLbl)uLiLbl.textContent=l.univLinLabel||'';
+  const uSqPr=document.getElementById('univSqftPriceLbl');if(uSqPr)uSqPr.textContent=l.univSqftPriceLbl||'';
+  const uSqAr=document.getElementById('univSqftAreaLbl');if(uSqAr)uSqAr.textContent=l.univSqftAreaLbl||'';
+  const uLiPr=document.getElementById('univLinPriceLbl');if(uLiPr)uLiPr.textContent=l.univLinPriceLbl||'';
+  const uLiLn=document.getElementById('univLinLenLbl');if(uLiLn)uLiLn.textContent=l.univLinLenLbl||'';
+
+  /* Editable price labels */
+  const sqPrLbl=document.getElementById('lSqftPrice');if(sqPrLbl)sqPrLbl.textContent=l.lSqftPrice||'';
+  const dPrLbl=document.getElementById('lDoorPriceEdit');if(dPrLbl)dPrLbl.textContent=l.lDoorPriceEdit||'';
+  const pPrLbl=document.getElementById('lPiecePriceEdit');if(pPrLbl)pPrLbl.textContent=l.lPiecePriceEdit||'';
+  const lnPrLbl=document.getElementById('lLinearPriceEdit');if(lnPrLbl)lnPrLbl.textContent=l.lLinearPriceEdit||'';
+
+  /* SMS Capture translations */
   const smsTitleEl=document.getElementById('smsCaptureTitle');
   if(smsTitleEl)smsTitleEl.textContent=l.smsCaptureTitle;
   const smsPhoneEl=document.getElementById('smsPhone');
@@ -2191,11 +2205,18 @@ function renderGrid(){
       if(e.target.closest('.drawer'))return;
       // prevent lightbox from opening on service card clicks
       if(e.target.closest('.sph')) e.stopPropagation();
-      // Update calculator selection without scrolling
-      const sel = document.getElementById('svcSel');
-      if(sel){
-        sel.value = svc.id;
-        sel.dispatchEvent(new Event('change',{bubbles:true}));
+      // Update calculator tab selection without scrolling
+      const tabMap={kitch:'kitch',furnp:'furnp',paint:'p1',floor:'fl',tv:'tv',fur:'fur',art:'tv',plumb:'plumb',elec:'plumb'};
+      const tabSvc=tabMap[svc.id]||svc.id;
+      const tab=document.querySelector('.calc-tab[data-svc="'+tabSvc+'"]');
+      if(tab){
+        document.querySelectorAll('.calc-tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        currentSvc=tabSvc;
+        /* For art, set sub-toggle to art */
+        if(svc.id==='art'){activeFixedSub='art';}
+        else if(svc.id==='elec'){activeFixedSub='elec';}
+        renderCalculatorUI();
       }
       toggle(svc.id);
     });
@@ -2308,53 +2329,119 @@ function toggle(id){
 }
 
 function updateArea(){
-  const l=+document.getElementById('dimLen').value||0;
-  const w=+document.getElementById('dimWid').value||0;
+  const l=+document.getElementById('dimLen')?.value||0;
+  const w=+document.getElementById('dimWid')?.value||0;
   const tsf=+document.getElementById('totalSF')?.value||0;
   const sf=(calcMode==='total'&&tsf)?Math.round(tsf):(l&&w?Math.round(l*w):0);
+  const badge=document.getElementById('areaBadge');
+  if(!badge)return;
   if(calcMode==='total'){
-    document.getElementById('areaBadge').innerHTML=sf?L().areaTotalFmt(sf):L().areaTotalHint;
+    badge.innerHTML=sf?L().areaTotalFmt(sf):L().areaTotalHint;
   } else {
-    document.getElementById('areaBadge').innerHTML=L().areaHint(l||'',w||'',sf);
+    badge.innerHTML=L().areaHint(l||'',w||'',sf);
   }
 }
 
+/* ═══════════════════════════════════════════════
+   CALCULATOR — tab-based system
+═══════════════════════════════════════════════ */
+let currentSvc='kitch'; /* default active tab */
+
 const SVC_MODE={
   kitch:'kitchen',furnp:'furniture',
-  p1:'sqft',p2:'sqft',fl:'sqft',fv:'sqft',custom:'custom-sqft',
+  p1:'sqft',p2:'sqft',fl:'sqft',fv:'sqft',
   trim:'linear',
   tv:'fixed',art:'fixed',fur:'fixed',plumb:'fixed',elec:'fixed'
 };
 function getMode(v){return SVC_MODE[v]||'sqft';}
-function isHourly(v){return false;} /* deprecated — kept for safety */
 
+/* Price defaults for sqft mode services */
+const SQFT_PRICES={p1:3.00,p2:4.00,fl:3.50,fv:3.75};
+
+/* Track user price overrides (null = use default) */
+let sqftPriceOverride=null;
+let kitchenPriceOverride=null;
+let furnPriceOverride=null;
+let linearPriceOverride=null;
+
+/* Active fixed sub-service for grouped tabs */
+let activeFixedSub=null;
+
+/* ── Tab click handler ── */
+document.getElementById('calcTabs')?.addEventListener('click',e=>{
+  const tab=e.target.closest('.calc-tab');
+  if(!tab)return;
+  document.querySelectorAll('.calc-tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  currentSvc=tab.dataset.svc;
+  /* Reset price overrides when switching services */
+  sqftPriceOverride=null;
+  kitchenPriceOverride=null;
+  furnPriceOverride=null;
+  linearPriceOverride=null;
+  activeFixedSub=null;
+  renderCalculatorUI();
+});
+
+/* ── Main render ── */
 function renderCalculatorUI(){
-  const v=document.getElementById('svcSel').value;
+  const v=currentSvc;
   if(!v)return;
   const mode=getMode(v);
   const l=L();
-  /* hide all mode containers */
-  ['roomWrap','sfWrap','areaBadge','bpWrap','flWrap','hrWrap','hrBadge',
-   'kitchenWrap','furnWrap','fixedWrap','linearWrap','customSqftWrap','customSqftBadge'].forEach(id=>{
+
+  /* hide all mode wrappers */
+  ['sqftModeWrap','kitchenWrap','furnWrap','fixedWrap','linearWrap'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display='none';
   });
-  document.querySelector('.mode').style.display='none';
-  document.getElementById('addonGroup').innerHTML='';
+  /* hide sub-toggles */
+  const flSub=document.getElementById('floorSubToggle');if(flSub)flSub.style.display='none';
+  const fxSub=document.getElementById('fixedSubToggle');if(fxSub)fxSub.style.display='none';
+
+  /* hide old inner wrappers that still exist */
+  ['roomWrap','sfWrap','areaBadge','bpWrap','flWrap'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  const modeEl=document.querySelector('.mode');
+  if(modeEl)modeEl.style.display='none';
+  const addonGroup=document.getElementById('addonGroup');
+  if(addonGroup)addonGroup.innerHTML='';
+
   const sub=document.getElementById('calcSub');
 
   if(mode==='sqft'){
+    document.getElementById('sqftModeWrap').style.display='block';
     const ip=v==='p1'||v==='p2',ifl=v==='fl'||v==='fv';
-    document.querySelector('.mode').style.display='flex';
-    document.getElementById(calcMode==='room'?'roomWrap':'sfWrap').style.display=
-      calcMode==='room'?'grid':'flex';
-    document.getElementById('areaBadge').style.display='block';
+    if(modeEl)modeEl.style.display='flex';
+    const roomW=document.getElementById(calcMode==='room'?'roomWrap':'sfWrap');
+    if(roomW)roomW.style.display=calcMode==='room'?'grid':'flex';
+    const areaBadge=document.getElementById('areaBadge');
+    if(areaBadge)areaBadge.style.display='block';
+
+    /* Set price edit */
+    const priceEdit=document.getElementById('sqftPriceEdit');
+    if(priceEdit){
+      if(sqftPriceOverride===null){
+        priceEdit.value=(SQFT_PRICES[v]||3.00).toFixed(2);
+      }
+    }
+
+    /* Show floor sub-toggle for fl/fv */
+    if(ifl&&flSub){
+      flSub.style.display='flex';
+      renderFloorSubToggle();
+    }
+
+    /* Addons */
     const list=ip?l.ap:ifl?l.af:[];
-    document.getElementById('addonGroup').innerHTML=list.map(a=>
-      `<label class="arow"><input type="checkbox" id="ao_${a.id}">`+
-      `<span>${a.l}</span><span class="ap">${a.p}</span></label>`
-    ).join('');
-    if(ip) document.getElementById('bpWrap').style.display='flex';
-    if(ifl) document.getElementById('flWrap').style.display='block';
+    if(addonGroup){
+      addonGroup.innerHTML=list.map(a=>
+        `<label class="arow"><input type="checkbox" id="ao_${a.id}">`+
+        `<span>${a.l}</span><span class="ap">${a.p}</span></label>`
+      ).join('');
+    }
+    if(ip){const bpWrap=document.getElementById('bpWrap');if(bpWrap)bpWrap.style.display='flex';}
+    if(ifl){const flW=document.getElementById('flWrap');if(flW)flW.style.display='block';}
     if(sub) sub.textContent=l.calcSub||'';
     updateArea();
   }
@@ -2371,107 +2458,182 @@ function renderCalculatorUI(){
   else if(mode==='fixed'){
     document.getElementById('fixedWrap').style.display='block';
     if(sub) sub.textContent=l.calcSubFixed||'';
-    renderFixedOpts(v);
+    /* Determine which sub-service group to show */
+    if(v==='tv'){
+      if(!activeFixedSub)activeFixedSub='tv';
+      if(fxSub){fxSub.style.display='flex';renderFixedSubToggle('tv');}
+      renderFixedOpts(activeFixedSub);
+    }else if(v==='plumb'){
+      if(!activeFixedSub)activeFixedSub='plumb';
+      if(fxSub){fxSub.style.display='flex';renderFixedSubToggle('plumb');}
+      renderFixedOpts(activeFixedSub);
+    }else{
+      renderFixedOpts(v);
+    }
   }
   else if(mode==='linear'){
     document.getElementById('linearWrap').style.display='block';
     if(sub) sub.textContent=l.calcSubLinear||'';
     renderLinearOpts(v);
   }
-  else if(mode==='custom-sqft'){
-    document.getElementById('customSqftWrap').style.display='block';
-    document.querySelector('#customModeGroup').style.display='flex';
-    document.getElementById('customRoomWrap').style.display='grid';
-    document.getElementById('customSfWrap').style.display='none';
-    document.getElementById('customSqftBadge').style.display='block';
-    if(sub) sub.textContent=l.calcSubCustom||'';
-    initCustomSqftMode();
-  }
+  updateLivePreview();
 }
 
+/* ── Floor sub-toggle (Laminate / LVP) ── */
+function renderFloorSubToggle(){
+  const wrap=document.getElementById('floorSubToggle');
+  if(!wrap)return;
+  const l=L();
+  wrap.innerHTML=
+    `<button class="sub-btn${currentSvc==='fl'?' active':''}" data-fsub="fl">${l.subFlLam||'Laminate'} ($3.50)</button>`+
+    `<button class="sub-btn${currentSvc==='fv'?' active':''}" data-fsub="fv">${l.subFlLvp||'LVP'} ($3.75)</button>`;
+  wrap.querySelectorAll('.sub-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      currentSvc=btn.dataset.fsub;
+      sqftPriceOverride=null;
+      /* Update tab active state */
+      document.querySelectorAll('.calc-tab').forEach(t=>t.classList.remove('active'));
+      const flTab=document.querySelector('.calc-tab[data-svc="fl"]');
+      if(flTab)flTab.classList.add('active');
+      renderCalculatorUI();
+    });
+  });
+}
+
+/* ── Fixed sub-toggle (TV group / Plumb group) ── */
+function renderFixedSubToggle(group){
+  const wrap=document.getElementById('fixedSubToggle');
+  if(!wrap)return;
+  const l=L();
+  let btns='';
+  if(group==='tv'){
+    btns=
+      `<button class="sub-btn${activeFixedSub==='tv'?' active':''}" data-fxsub="tv">${l.subTv||'TV'}</button>`+
+      `<button class="sub-btn${activeFixedSub==='art'?' active':''}" data-fxsub="art">${l.subArt||'Art & Mirrors'}</button>`+
+      `<button class="sub-btn${activeFixedSub==='curtain'?' active':''}" data-fxsub="curtain">${l.subCurtain||'Curtains'}</button>`;
+  }else if(group==='plumb'){
+    btns=
+      `<button class="sub-btn${activeFixedSub==='plumb'?' active':''}" data-fxsub="plumb">${l.subPlumb||'Plumbing'}</button>`+
+      `<button class="sub-btn${activeFixedSub==='elec'?' active':''}" data-fxsub="elec">${l.subElec||'Electrical'}</button>`;
+  }
+  wrap.innerHTML=btns;
+  wrap.querySelectorAll('.sub-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      activeFixedSub=btn.dataset.fxsub;
+      /* For curtain sub, use art opts */
+      renderFixedOpts(activeFixedSub==='curtain'?'art':activeFixedSub);
+      wrap.querySelectorAll('.sub-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      updateLivePreview();
+    });
+  });
+}
+
+/* ── Render helpers ── */
 function renderKitchenOpts(){
   const l=L();
   const sel=document.getElementById('doorTypeSel');
-  sel.innerHTML=l.kitchenDoorOpts.map(o=>
-    `<option value="${o.v}" data-price="${o.p}">${o.l}</option>`
-  ).join('');
-  document.getElementById('lDoorType').textContent=l.lDoorType;
-  document.getElementById('lDoorQtyK').textContent=l.lDoorQty;
-  document.getElementById('lDrawerS').textContent=l.lDrawerS;
-  document.getElementById('lDrawerL').textContent=l.lDrawerL;
-  document.getElementById('lEndPanels').textContent=l.lEndPanels;
+  if(sel){
+    sel.innerHTML=l.kitchenDoorOpts.map(o=>
+      `<option value="${o.v}" data-price="${o.p}">${o.l}</option>`
+    ).join('');
+  }
+  const lDT=document.getElementById('lDoorType');if(lDT)lDT.textContent=l.lDoorType;
+  const lDQ=document.getElementById('lDoorQtyK');if(lDQ)lDQ.textContent=l.lDoorQty;
+  const lDS=document.getElementById('lDrawerS');if(lDS)lDS.textContent=l.lDrawerS;
+  const lDL=document.getElementById('lDrawerL');if(lDL)lDL.textContent=l.lDrawerL;
+  const lEP=document.getElementById('lEndPanels');if(lEP)lEP.textContent=l.lEndPanels;
   const ag=document.getElementById('kitchenAddonGroup');
-  ag.innerHTML=(l.kitchenAddons||[]).map(a=>
-    `<label class="arow"><input type="checkbox" id="ao_${a.id}">`+
-    `<span>${a.l}</span><span class="ap">${a.p}</span></label>`
-  ).join('');
-  /* kitchen extra calcs labels */
-  const kd=document.getElementById('kecDividerLabel');
-  if(kd) kd.textContent=l.kecDivider||'Also calculate by area';
-  const kst=document.getElementById('kecSqftTitle');
-  if(kst) kst.textContent=l.kecSqftTitle||'Price per Sq Ft';
-  const klt=document.getElementById('kecLinearTitle');
-  if(klt) klt.textContent=l.kecLinearTitle||'Price per Linear Ft';
+  if(ag){
+    ag.innerHTML=(l.kitchenAddons||[]).map(a=>
+      `<label class="arow"><input type="checkbox" id="ao_${a.id}">`+
+      `<span>${a.l}</span><span class="ap">${a.p}</span></label>`
+    ).join('');
+  }
+  /* Set kitchen price edit from selected door type */
+  const kpe=document.getElementById('kitchenPriceEdit');
+  if(kpe&&sel&&kitchenPriceOverride===null){
+    kpe.value=(+sel.options[sel.selectedIndex]?.dataset.price||155).toFixed(0);
+  }
 }
 
 function renderFurnOpts(){
   const l=L();
   const sel=document.getElementById('pieceTypeSel');
-  sel.innerHTML=l.furnPieceOpts.map(o=>
-    `<option value="${o.v}" data-price="${o.p}">${o.l}</option>`
-  ).join('');
-  document.getElementById('lPieceType').textContent=l.lPieceType;
-  document.getElementById('lPieceQty').textContent=l.lPieceQty;
+  if(sel){
+    sel.innerHTML=l.furnPieceOpts.map(o=>
+      `<option value="${o.v}" data-price="${o.p}">${o.l}</option>`
+    ).join('');
+  }
+  const lPT=document.getElementById('lPieceType');if(lPT)lPT.textContent=l.lPieceType;
+  const lPQ=document.getElementById('lPieceQty');if(lPQ)lPQ.textContent=l.lPieceQty;
+  /* Set furniture price edit from selected piece type */
+  const fpe=document.getElementById('furnPriceEdit');
+  if(fpe&&sel&&furnPriceOverride===null){
+    fpe.value=(+sel.options[sel.selectedIndex]?.dataset.price||95).toFixed(0);
+  }
 }
 
 function renderFixedOpts(svc){
   const l=L();
   const opts=l.fixedOpts[svc]||[];
   const wrap=document.getElementById('fixedCards');
+  if(!wrap)return;
   wrap.innerHTML=opts.map((o,i)=>{
-    if(o.addon) return ''; /* addon items shown as extras, not radio cards */
+    if(o.addon) return '';
     return `<label class="fcard"><input type="radio" name="fixedOpt" value="${o.id}" data-price="${o.p}" ${i===0?'checked':''}>`+
       `<div class="fcard-inner"><span class="fcard-name">${o.l}</span>`+
       `<span class="fcard-price">$${o.p}</span></div></label>`;
   }).join('');
-  /* handle addon/extra qty */
   const extraWrap=document.getElementById('fixedExtraWrap');
   const addonOpt=opts.find(o=>o.addon);
   const extraOpt=opts.find(o=>o.extra);
-  if(addonOpt){
+  if(addonOpt&&extraWrap){
     extraWrap.style.display='flex';
     document.getElementById('lFixedExtra').textContent=addonOpt.l+' ($'+addonOpt.p+'/ea)';
     document.getElementById('fixedExtraQty').value='';
     document.getElementById('fixedExtraQty').dataset.price=addonOpt.p;
-  } else if(extraOpt){
+  } else if(extraOpt&&extraWrap){
     extraWrap.style.display='flex';
     document.getElementById('lFixedExtra').textContent=extraOpt.extra.l+' ($'+extraOpt.extra.ep+'/ea)';
     document.getElementById('fixedExtraQty').value='';
     document.getElementById('fixedExtraQty').dataset.price=extraOpt.extra.ep;
-  } else {
+  } else if(extraWrap){
     extraWrap.style.display='none';
   }
+  /* Bind radio changes to live preview */
+  wrap.querySelectorAll('input[name="fixedOpt"]').forEach(r=>{
+    r.addEventListener('change',updateLivePreview);
+  });
 }
 
 function renderLinearOpts(svc){
   const l=L();
   const sel=document.getElementById('linearServiceSel');
-  sel.innerHTML=l.linearOpts.map(o=>
-    `<option value="${o.v}" data-price="${o.p}">${o.l}</option>`
-  ).join('');
-  document.getElementById('lLinearService').textContent=l.lLinearService||'Service Type';
-  document.getElementById('lLinearLength').textContent=l.lLinearLength||'Length';
-  document.getElementById('lLinearUnit').textContent=l.lLinearUnit||'Unit';
+  if(sel){
+    sel.innerHTML=l.linearOpts.map(o=>
+      `<option value="${o.v}" data-price="${o.p}">${o.l}</option>`
+    ).join('');
+  }
+  const lLS=document.getElementById('lLinearService');if(lLS)lLS.textContent=l.lLinearService||'Service Type';
+  const lLL=document.getElementById('lLinearLength');if(lLL)lLL.textContent=l.lLinearLength||'Length';
+  const lLU=document.getElementById('lLinearUnit');if(lLU)lLU.textContent=l.lLinearUnit||'Unit';
+  /* Set linear price edit from selected service */
+  const lpe=document.getElementById('linearPriceEdit');
+  if(lpe&&sel&&linearPriceOverride===null){
+    lpe.value=(+sel.options[sel.selectedIndex]?.dataset.price||4.50).toFixed(2);
+  }
   updateLinearLength();
 }
 
 function updateLinearLength(){
-  const l=+document.getElementById('linearLength').value||0;
+  const l=+document.getElementById('linearLength')?.value||0;
   const badge=document.getElementById('linearBadge');
   const sel=document.getElementById('linearServiceSel');
-  const svcPrice=+sel.options[sel.selectedIndex].dataset.price||0;
-  const unit=document.getElementById('linearUnitSel').value;
-  const unitL=L().lLinearUnit||'Unit';
+  if(!badge||!sel)return;
+  const lpe=document.getElementById('linearPriceEdit');
+  const svcPrice=linearPriceOverride!==null?linearPriceOverride:(+sel.options[sel.selectedIndex]?.dataset.price||0);
+  const unit=document.getElementById('linearUnitSel')?.value||'ft';
   if(!l){badge.innerHTML='Enter length';badge.style.display='block';return;}
   const convLength=unit==='m'?Math.round(l*3.28084*100)/100:l;
   const tot=Math.round(convLength*svcPrice*100)/100;
@@ -2479,190 +2641,171 @@ function updateLinearLength(){
   badge.style.display='block';
 }
 
-function updateHrBadge(){
-  const h=+document.getElementById('hoursInput').value||0;
-  const badge=document.getElementById('hrBadge');
-  const l=L();
-  if(!h){badge.innerHTML=l.hrBadgeHint;return;}
-  const extra=Math.max(0,h-2);
-  const tot=Math.round(150+extra*75);
-  badge.innerHTML=extra>0
-    ?l.hrBadgeFmt(extra,tot)
-    :`$150 call<br><strong>${l.hrBadgeIncl}</strong>`;
-}
-
-function updateCustomSqft(){
-  const price=+document.getElementById('customPricePerSqft').value||0;
-  const badge=document.getElementById('customSqftBadge');
-  const l=L();
-  let sf=0;
-
-  const customCalcMode=document.getElementById('customModeRoom').getAttribute('aria-pressed')==='true'?'room':'total';
-
-  if(customCalcMode==='room'){
-    const len=+document.getElementById('customDimLen').value||0;
-    const wid=+document.getElementById('customDimWid').value||0;
-    sf=Math.round(len*wid);
-    if(!len||!wid){badge.innerHTML='Enter dimensions';badge.style.display='block';return;}
-  }else{
-    sf=+document.getElementById('customTotalSF').value||0;
-    if(!sf){badge.innerHTML='Enter total area';badge.style.display='block';return;}
-  }
-
-  if(!price){badge.innerHTML='Enter price per sq ft';badge.style.display='block';return;}
-
-  const tot=Math.round(sf*price*100)/100;
-  const priceStr=price.toFixed(2);
-  badge.innerHTML=`${sf} sq ft × $${priceStr}/sf = <strong>$${tot}</strong>`;
-  badge.style.display='block';
-}
-
-function initCustomSqftMode(){
-  const l=L();
-  document.getElementById('lCustomPrice').textContent=l.lCustomPrice||'Price per sq ft';
-  document.getElementById('lCustomLen').textContent=l.lCustomLen||'Length';
-  document.getElementById('lCustomWid').textContent=l.lCustomWid||'Width';
-  document.getElementById('lCustomSf').textContent=l.lCustomSf||'Total sq ft';
-
-  document.getElementById('customModeRoom').textContent=l.lModeRoom||'Room';
-  document.getElementById('customModeTotal').textContent=l.lModeTotal||'Total';
-
-  updateCustomSqft();
-}
-
-document.getElementById('svcSel').addEventListener('change',renderCalculatorUI);
-['dimLen','dimWid','totalSF'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateArea);});
-document.getElementById('hoursInput').addEventListener('input',updateHrBadge);
-['linearLength','linearServiceSel','linearUnitSel'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateLinearLength);el?.addEventListener('change',updateLinearLength);});
-
-['customPricePerSqft','customDimLen','customDimWid','customTotalSF'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',updateCustomSqft);});
-
-// Kitchen extra calcs (sqft + linear ft inside kitchen mode)
-function updateKitchenExtraCalcs(){
-  const sp=+document.getElementById('kecSqftPrice')?.value||0;
-  const sa=+document.getElementById('kecSqftArea')?.value||0;
-  const sr=document.getElementById('kecSqftResult');
-  if(sr){
-    if(sp&&sa){sr.innerHTML=sa+' sf × $'+sp.toFixed(2)+' = <strong>$'+Math.round(sa*sp*100)/100+'</strong>';}
-    else{sr.textContent='—';}
-  }
-  const lp=+document.getElementById('kecLinearPrice')?.value||0;
-  const ll=+document.getElementById('kecLinearLen')?.value||0;
-  const lr=document.getElementById('kecLinearResult');
-  if(lr){
-    if(lp&&ll){lr.innerHTML=ll+' lf × $'+lp.toFixed(2)+' = <strong>$'+Math.round(ll*lp*100)/100+'</strong>';}
-    else{lr.textContent='—';}
-  }
-}
-['kecSqftPrice','kecSqftArea','kecLinearPrice','kecLinearLen'].forEach(id=>{
-  const el=document.getElementById(id);if(el)el.addEventListener('input',updateKitchenExtraCalcs);
+/* ── Editable price input handlers ── */
+document.getElementById('sqftPriceEdit')?.addEventListener('input',e=>{
+  sqftPriceOverride=+e.target.value||null;
+  updateLivePreview();
+});
+document.getElementById('kitchenPriceEdit')?.addEventListener('input',e=>{
+  kitchenPriceOverride=+e.target.value||null;
+  updateLivePreview();
+});
+document.getElementById('furnPriceEdit')?.addEventListener('input',e=>{
+  furnPriceOverride=+e.target.value||null;
+  updateLivePreview();
+});
+document.getElementById('linearPriceEdit')?.addEventListener('input',e=>{
+  linearPriceOverride=+e.target.value||null;
+  updateLinearLength();
+  updateLivePreview();
 });
 
-// Custom sqft mode toggle
-(function(){
-  const customModeRoom=document.getElementById('customModeRoom');
-  const customModeTotal=document.getElementById('customModeTotal');
-  const customRoomWrap=document.getElementById('customRoomWrap');
-  const customSfWrap=document.getElementById('customSfWrap');
-  if(!customModeRoom||!customModeTotal)return;
-  function setCustomMode(m){
-    customModeRoom.setAttribute('aria-pressed', m==='room'?'true':'false');
-    customModeTotal.setAttribute('aria-pressed', m==='total'?'true':'false');
-    if(customRoomWrap) customRoomWrap.style.display=(m==='room')?'grid':'none';
-    if(customSfWrap) customSfWrap.style.display=(m==='total')?'flex':'none';
-    updateCustomSqft();
-  }
-  customModeRoom.addEventListener('click',()=>setCustomMode('room'));
-  customModeTotal.addEventListener('click',()=>setCustomMode('total'));
-  setCustomMode('room');
-})();
+/* When door type changes, update kitchen price edit */
+document.getElementById('doorTypeSel')?.addEventListener('change',()=>{
+  kitchenPriceOverride=null;
+  const sel=document.getElementById('doorTypeSel');
+  const kpe=document.getElementById('kitchenPriceEdit');
+  if(kpe&&sel)kpe.value=(+sel.options[sel.selectedIndex]?.dataset.price||155).toFixed(0);
+  updateLivePreview();
+});
 
-document.getElementById('calcBtn').addEventListener('click',()=>{
-  const v=document.getElementById('svcSel').value;
-  if(!v)return;
+/* When piece type changes, update furniture price edit */
+document.getElementById('pieceTypeSel')?.addEventListener('change',()=>{
+  furnPriceOverride=null;
+  const sel=document.getElementById('pieceTypeSel');
+  const fpe=document.getElementById('furnPriceEdit');
+  if(fpe&&sel)fpe.value=(+sel.options[sel.selectedIndex]?.dataset.price||95).toFixed(0);
+  updateLivePreview();
+});
+
+/* When linear service changes, update linear price edit */
+document.getElementById('linearServiceSel')?.addEventListener('change',()=>{
+  linearPriceOverride=null;
+  const sel=document.getElementById('linearServiceSel');
+  const lpe=document.getElementById('linearPriceEdit');
+  if(lpe&&sel)lpe.value=(+sel.options[sel.selectedIndex]?.dataset.price||4.50).toFixed(2);
+  updateLinearLength();
+  updateLivePreview();
+});
+
+/* ── Area / dimension input listeners ── */
+['dimLen','dimWid','totalSF'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el){el.addEventListener('input',()=>{updateArea();updateLivePreview();});}
+});
+['linearLength','linearUnitSel'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el){el.addEventListener('input',()=>{updateLinearLength();updateLivePreview();});
+    el.addEventListener('change',()=>{updateLinearLength();updateLivePreview();});}
+});
+['doorQtyK','drawerSmallQty','drawerLargeQty','endPanelQty','pieceQty','fixedExtraQty',
+ 'baseLF','transQty','doorQty'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('input',updateLivePreview);
+});
+
+/* ── Universal quick calculators ── */
+function updateUniversalCalcs(){
+  const sp=+document.getElementById('univSqftPrice')?.value||0;
+  const sa=+document.getElementById('univSqftArea')?.value||0;
+  const sr=document.getElementById('univSqftResult');
+  if(sr){
+    if(sp&&sa){sr.innerHTML=sa+' sf × $'+sp.toFixed(2)+' = <strong>$'+Math.round(sa*sp*100)/100+'</strong>';}
+    else{sr.textContent='\u2014';}
+  }
+  const lp=+document.getElementById('univLinPrice')?.value||0;
+  const ll=+document.getElementById('univLinLen')?.value||0;
+  const lr=document.getElementById('univLinResult');
+  if(lr){
+    if(lp&&ll){lr.innerHTML=ll+' lf × $'+lp.toFixed(2)+' = <strong>$'+Math.round(ll*lp*100)/100+'</strong>';}
+    else{lr.textContent='\u2014';}
+  }
+}
+document.getElementById('univSqftToggle')?.addEventListener('change',e=>{
+  const body=document.getElementById('univSqftBody');
+  if(body)body.style.display=e.target.checked?'flex':'none';
+});
+document.getElementById('univLinToggle')?.addEventListener('change',e=>{
+  const body=document.getElementById('univLinBody');
+  if(body)body.style.display=e.target.checked?'flex':'none';
+});
+['univSqftPrice','univSqftArea','univLinPrice','univLinLen'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('input',updateUniversalCalcs);
+});
+
+/* ── Live preview badge ── */
+let liveDebounce;
+function updateLivePreview(){
+  clearTimeout(liveDebounce);
+  liveDebounce=setTimeout(()=>{
+    const badge=document.getElementById('liveBadge');
+    if(!badge)return;
+    const tot=computeTotal();
+    if(tot>0){
+      badge.textContent='\u2248 $'+tot.toLocaleString('en-US');
+      badge.classList.add('visible');
+    }else{
+      badge.classList.remove('visible');
+      badge.textContent='';
+    }
+  },150);
+}
+
+/* ── computeTotal — pure calculation, no side effects ── */
+function computeTotal(){
+  const v=currentSvc;
+  if(!v)return 0;
   const mode=getMode(v);
-  const name=L().opts.find(o=>o.v===v)?.l||'';
-  let tot=0,detail='';
+  let tot=0;
 
   if(mode==='kitchen'){
     const sel=document.getElementById('doorTypeSel');
-    const doorPrice=+sel.options[sel.selectedIndex].dataset.price||0;
-    const doorQty=+document.getElementById('doorQtyK').value||0;
-    if(!doorQty){document.getElementById('doorQtyK').focus();return;}
-    const ds=+document.getElementById('drawerSmallQty').value||0;
-    const dl=+document.getElementById('drawerLargeQty').value||0;
-    const ep=+document.getElementById('endPanelQty').value||0;
+    const defaultPrice=+(sel?.options[sel.selectedIndex]?.dataset.price)||0;
+    const doorPrice=kitchenPriceOverride!==null?kitchenPriceOverride:defaultPrice;
+    const doorQty=+document.getElementById('doorQtyK')?.value||0;
+    const ds=+document.getElementById('drawerSmallQty')?.value||0;
+    const dl=+document.getElementById('drawerLargeQty')?.value||0;
+    const ep=+document.getElementById('endPanelQty')?.value||0;
     tot=doorQty*doorPrice + ds*P.kitchen.drawerSmall + dl*P.kitchen.drawerLarge + ep*P.kitchen.endPanel;
     if(document.getElementById('ao_degreasing')?.checked) tot+=doorQty*P.kitchen.degreasing;
     if(document.getElementById('ao_oakFill')?.checked) tot+=doorQty*P.kitchen.oakFill;
     if(document.getElementById('ao_twoTone')?.checked) tot+=P.kitchen.twoTone;
-    detail=doorQty+' doors'+(ds+dl>0?' + '+(ds+dl)+' drawers':'')+(ep>0?' + '+ep+' panels':'');
   }
   else if(mode==='furniture'){
     const sel=document.getElementById('pieceTypeSel');
-    const piecePrice=+sel.options[sel.selectedIndex].dataset.price||0;
-    const qty=+document.getElementById('pieceQty').value||0;
-    if(!qty){document.getElementById('pieceQty').focus();return;}
+    const defaultPrice=+(sel?.options[sel.selectedIndex]?.dataset.price)||0;
+    const piecePrice=furnPriceOverride!==null?furnPriceOverride:defaultPrice;
+    const qty=+document.getElementById('pieceQty')?.value||0;
     tot=qty*piecePrice;
-    detail=qty+' × '+sel.options[sel.selectedIndex].text.split('—')[0].trim();
   }
   else if(mode==='linear'){
     const sel=document.getElementById('linearServiceSel');
-    const svcPrice=+sel.options[sel.selectedIndex].dataset.price||0;
-    const len=+document.getElementById('linearLength').value||0;
-    const unit=document.getElementById('linearUnitSel').value;
-    if(!len){document.getElementById('linearLength').focus();return;}
+    const defaultPrice=+(sel?.options[sel.selectedIndex]?.dataset.price)||0;
+    const svcPrice=linearPriceOverride!==null?linearPriceOverride:defaultPrice;
+    const len=+document.getElementById('linearLength')?.value||0;
+    const unit=document.getElementById('linearUnitSel')?.value||'ft';
     const convLen=unit==='m'?Math.round(len*3.28084*100)/100:len;
     tot=Math.round(convLen*svcPrice*100)/100;
-    const svcName=sel.options[sel.selectedIndex].textContent||'';
-    detail=Math.round(convLen*100)/100+' ft - '+svcName;
-    lastEst={tot:Math.round(tot),name,len:convLen,detail,mode:'linear'};
   }
   else if(mode==='fixed'){
     const radio=document.querySelector('input[name="fixedOpt"]:checked');
-    if(!radio)return;
+    if(!radio)return 0;
     tot=+radio.dataset.price||0;
     const extraQty=+document.getElementById('fixedExtraQty')?.value||0;
     const extraPrice=+document.getElementById('fixedExtraQty')?.dataset.price||0;
     tot+=extraQty*extraPrice;
-    const lbl=radio.closest('.fcard')?.querySelector('.fcard-name')?.textContent||'';
-    detail=lbl+(extraQty>0?' + '+extraQty+' extra':'');
   }
-  else if(mode==='custom-sqft'){
-    const price=+document.getElementById('customPricePerSqft').value||0;
-    const customMode=document.getElementById('customModeRoom').getAttribute('aria-pressed')==='true'?'room':'total';
-    let sf=0;
-    if(customMode==='room'){
-      const len=+document.getElementById('customDimLen').value||0;
-      const wid=+document.getElementById('customDimWid').value||0;
-      if(!len||!wid){document.getElementById('customDimLen').focus();return;}
-      sf=Math.round(len*wid);
-    }else{
-      sf=+document.getElementById('customTotalSF').value||0;
-      if(!sf){document.getElementById('customTotalSF').focus();return;}
-    }
-    if(!price){document.getElementById('customPricePerSqft').focus();return;}
-    tot=Math.round(sf*price*100)/100;
-    detail=sf+' sq ft @ $'+price.toFixed(2)+'/sf';
-    lastEst={tot:Math.round(tot),name,sf,detail,mode:'custom-sqft'};
-  }
-  else{ /* sqft mode */
+  else{ /* sqft */
     const ip=v==='p1'||v==='p2',ifl=v==='fl'||v==='fv';
-    const len=+document.getElementById('dimLen').value||0;
-    const wid=+document.getElementById('dimWid').value||0;
+    const len=+document.getElementById('dimLen')?.value||0;
+    const wid=+document.getElementById('dimWid')?.value||0;
     const tsf=+document.getElementById('totalSF')?.value||0;
     let sf;
-    if(calcMode==='room'){
-      if(!len||!wid){document.getElementById('dimLen').focus();return;}
-      sf=len*wid;
-    }else{
-      if(!tsf){document.getElementById('totalSF').focus();return;}
-      sf=tsf;
-    }
-    if(v==='p1') tot=sf*P.paint.wall1coat;
-    if(v==='p2') tot=sf*P.paint.wall2coat;
-    if(v==='fl') tot=sf*P.floor.laminateLabor;
-    if(v==='fv') tot=sf*P.floor.lvpLabor;
+    if(calcMode==='room'){sf=len*wid;}else{sf=tsf;}
+    if(!sf)return 0;
+    const defaultRate=SQFT_PRICES[v]||3.00;
+    const rate=sqftPriceOverride!==null?sqftPriceOverride:defaultRate;
+    tot=sf*rate;
     if(ip){
       if(document.getElementById('ao_prep')?.checked) tot+=sf*P.paint.prep;
       if(document.getElementById('ao_wallp')?.checked) tot+=sf*P.paint.wallpaper;
@@ -2676,7 +2819,94 @@ document.getElementById('calcBtn').addEventListener('click',()=>{
       tot+=(+document.getElementById('transQty')?.value||0)*P.floor.transition;
       tot+=(+document.getElementById('doorQty')?.value||0)*P.floor.doorUndercut;
     }
-    detail=Math.round(sf)+' sq ft';
+  }
+  return Math.round(tot);
+}
+
+/* ── calcBtn click handler ── */
+document.getElementById('calcBtn').addEventListener('click',()=>{
+  const v=currentSvc;
+  if(!v)return;
+  const mode=getMode(v);
+  const name=L().opts.find(o=>o.v===v)?.l||'';
+  let tot=0,detail='';
+
+  if(mode==='kitchen'){
+    const sel=document.getElementById('doorTypeSel');
+    const defaultPrice=+(sel?.options[sel.selectedIndex]?.dataset.price)||0;
+    const doorPrice=kitchenPriceOverride!==null?kitchenPriceOverride:defaultPrice;
+    const doorQty=+document.getElementById('doorQtyK')?.value||0;
+    if(!doorQty){document.getElementById('doorQtyK')?.focus();return;}
+    const ds=+document.getElementById('drawerSmallQty')?.value||0;
+    const dl=+document.getElementById('drawerLargeQty')?.value||0;
+    const ep=+document.getElementById('endPanelQty')?.value||0;
+    tot=doorQty*doorPrice + ds*P.kitchen.drawerSmall + dl*P.kitchen.drawerLarge + ep*P.kitchen.endPanel;
+    if(document.getElementById('ao_degreasing')?.checked) tot+=doorQty*P.kitchen.degreasing;
+    if(document.getElementById('ao_oakFill')?.checked) tot+=doorQty*P.kitchen.oakFill;
+    if(document.getElementById('ao_twoTone')?.checked) tot+=P.kitchen.twoTone;
+    detail=doorQty+' doors @ $'+doorPrice+(ds+dl>0?' + '+(ds+dl)+' drawers':'')+(ep>0?' + '+ep+' panels':'');
+  }
+  else if(mode==='furniture'){
+    const sel=document.getElementById('pieceTypeSel');
+    const defaultPrice=+(sel?.options[sel.selectedIndex]?.dataset.price)||0;
+    const piecePrice=furnPriceOverride!==null?furnPriceOverride:defaultPrice;
+    const qty=+document.getElementById('pieceQty')?.value||0;
+    if(!qty){document.getElementById('pieceQty')?.focus();return;}
+    tot=qty*piecePrice;
+    detail=qty+' × '+(sel?.options[sel.selectedIndex]?.text.split('\u2014')[0].trim()||'')+' @ $'+piecePrice;
+  }
+  else if(mode==='linear'){
+    const sel=document.getElementById('linearServiceSel');
+    const defaultPrice=+(sel?.options[sel.selectedIndex]?.dataset.price)||0;
+    const svcPrice=linearPriceOverride!==null?linearPriceOverride:defaultPrice;
+    const len=+document.getElementById('linearLength')?.value||0;
+    const unit=document.getElementById('linearUnitSel')?.value||'ft';
+    if(!len){document.getElementById('linearLength')?.focus();return;}
+    const convLen=unit==='m'?Math.round(len*3.28084*100)/100:len;
+    tot=Math.round(convLen*svcPrice*100)/100;
+    const svcName=sel?.options[sel.selectedIndex]?.textContent||'';
+    detail=Math.round(convLen*100)/100+' ft × $'+svcPrice.toFixed(2)+' - '+svcName;
+  }
+  else if(mode==='fixed'){
+    const radio=document.querySelector('input[name="fixedOpt"]:checked');
+    if(!radio)return;
+    tot=+radio.dataset.price||0;
+    const extraQty=+document.getElementById('fixedExtraQty')?.value||0;
+    const extraPrice=+document.getElementById('fixedExtraQty')?.dataset.price||0;
+    tot+=extraQty*extraPrice;
+    const lbl=radio.closest('.fcard')?.querySelector('.fcard-name')?.textContent||'';
+    detail=lbl+(extraQty>0?' + '+extraQty+' extra':'');
+  }
+  else{ /* sqft */
+    const ip=v==='p1'||v==='p2',ifl=v==='fl'||v==='fv';
+    const len=+document.getElementById('dimLen')?.value||0;
+    const wid=+document.getElementById('dimWid')?.value||0;
+    const tsf=+document.getElementById('totalSF')?.value||0;
+    let sf;
+    if(calcMode==='room'){
+      if(!len||!wid){document.getElementById('dimLen')?.focus();return;}
+      sf=len*wid;
+    }else{
+      if(!tsf){document.getElementById('totalSF')?.focus();return;}
+      sf=tsf;
+    }
+    const defaultRate=SQFT_PRICES[v]||3.00;
+    const rate=sqftPriceOverride!==null?sqftPriceOverride:defaultRate;
+    tot=sf*rate;
+    if(ip){
+      if(document.getElementById('ao_prep')?.checked) tot+=sf*P.paint.prep;
+      if(document.getElementById('ao_wallp')?.checked) tot+=sf*P.paint.wallpaper;
+      if(document.getElementById('ao_mold')?.checked) tot+=sf*P.paint.mold;
+      if(document.getElementById('ao_strip')?.checked) tot+=sf*1.20;
+      tot+=(+document.getElementById('baseLF')?.value||0)*P.paint.baseboard;
+    }
+    if(ifl){
+      if(document.getElementById('ao_demo')?.checked) tot+=sf*P.floor.demo;
+      if(document.getElementById('ao_under')?.checked) tot+=sf*P.floor.underlayment;
+      tot+=(+document.getElementById('transQty')?.value||0)*P.floor.transition;
+      tot+=(+document.getElementById('doorQty')?.value||0)*P.floor.doorUndercut;
+    }
+    detail=Math.round(sf)+' sq ft @ $'+rate.toFixed(2)+'/sf';
     lastEst={tot:Math.round(tot),name,sf:Math.round(sf),len,wid,detail,mode:'sqft'};
   }
 
@@ -2685,28 +2915,25 @@ document.getElementById('calcBtn').addEventListener('click',()=>{
 
   /* show result */
   document.getElementById('resAmt').textContent='$'+tot.toLocaleString('en-US');
-  document.getElementById('resMin').style.display='none';
+  const resMin=document.getElementById('resMin');if(resMin)resMin.style.display='none';
   document.getElementById('calcRes').style.display='block';
   setTimeout(()=>document.getElementById('calcRes').classList.add('show'),10);
   document.getElementById('calcRes').scrollIntoView({behavior:'smooth',block:'nearest'});
   track('calc_calculate',{service:v,total:tot,mode,detail});
 });
 
+/* ── WhatsApp & Copy handlers ── */
 document.getElementById('resWa').addEventListener('click',()=>{
   if(!lastEst)return;
   const l=L();
-  const detail=lastEst.hours
-    ?l.waHoursDetail(lastEst.hours)
-    :l.waRoomDetail(lastEst.len,lastEst.wid,lastEst.sf);
-  const m=`${l.waGreet}\n${l.waEstLabel}: ${lastEst.name}\n${detail}\n${l.waTotalLabel}: $${lastEst.tot.toLocaleString()}\n${l.waConfirm}`;
-  track('calc_share_whatsapp',{service:lastEst.name,area_sqft:lastEst.sf,total:lastEst.tot});
+  const m=`${l.waGreet}\n${l.waEstLabel}: ${lastEst.name}\n${lastEst.detail}\n${l.waTotalLabel}: $${lastEst.tot.toLocaleString()}\n${l.waConfirm}`;
+  track('calc_share_whatsapp',{service:lastEst.name,total:lastEst.tot});
   window.open('https://wa.me/12133611700?text='+encodeURIComponent(m),'_blank','noopener');
 });
 
 document.getElementById('resCopy').addEventListener('click',async()=>{
   if(!lastEst)return;
-  const detail=lastEst.hours?`~${lastEst.hours}h`:`${lastEst.sf} sq ft`;
-  const txt=`${lastEst.name}: $${lastEst.tot.toLocaleString()} (${detail})\nHandy & Friend · (213) 361-1700`;
+  const txt=`${lastEst.name}: $${lastEst.tot.toLocaleString()} (${lastEst.detail||''})\nHandy & Friend \u00b7 (213) 361-1700`;
   const ui=U();
   try{await navigator.clipboard.writeText(txt);}catch(e){}
   const btn=document.getElementById('resCopy'),old=btn.textContent;
@@ -3225,6 +3452,8 @@ function initSpinners(){
   document.querySelectorAll('#calcBox input[type=number]').forEach(function(inp){
     if(inp.parentElement.classList.contains('num-row')) return;
     if(inp.closest('.kitchen-extra-calcs')) return;
+    if(inp.classList.contains('price-edit')) return;
+    if(inp.closest('.univ-calcs')) return;
     var row=document.createElement('div');
     row.className='num-row';
     inp.parentElement.insertBefore(row,inp);
