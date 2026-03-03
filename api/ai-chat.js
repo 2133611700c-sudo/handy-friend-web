@@ -804,7 +804,7 @@ function enforceMaterialPolicyHint(reply, userText, lang) {
   if (!asksMaterials) return r;
 
   const service = inferServiceType(u);
-  const alreadyMentions = /(labor-only|materials.*separate|материалы.*отдель|solo mano de obra|materiales.*separ|premium paint.*included|краска.*включ|pintura.*incluid)/i.test(r);
+  const alreadyMentions = /(labor-only|materials.*separate|you purchase.*materials|материалы.*отдель|материалы.*самостоятель|только работа|solo mano de obra|materiales.*separ|cliente.*compra.*material|premium paint.*included|краска.*включ|pintura.*incluid)/i.test(r);
   if (alreadyMentions) return r;
 
   const byLang = {
