@@ -207,8 +207,8 @@ export default async function handler(req, res) {
 async function createLead(leadData, sessionId, lang, messages) {
   const { name, phone, email, service, description } = normalizeLeadPreview(leadData);
 
-  if (!service || (!phone && !email)) {
-    return { ok: false, error: 'missing_service_or_contact' };
+  if (!service || !phone) {
+    return { ok: false, error: 'missing_service_or_phone' };
   }
 
   try {
@@ -234,7 +234,7 @@ async function createLead(leadData, sessionId, lang, messages) {
       conversation_summary: buildSummary(messages, lang).slice(0, 500)
     }).catch(err => console.error('[PIPELINE_LOG]', err.message));
 
-    console.log('[AI_CHAT] Lead captured:', leadId, service, phone || email, pipelineResult.isNew ? '(new)' : '(merged)');
+    console.log('[AI_CHAT] Lead captured:', leadId, service, phone, pipelineResult.isNew ? '(new)' : '(merged)');
     return { ok: true, leadId, lead: { name, phone, email, service, description } };
 
   } catch (err) {
@@ -327,7 +327,7 @@ async function sendLeadCapturedToTelegram({ sessionId, leadId, lang, userText, a
   const safeSession = String(sessionId || 'unknown');
   const photoCount = Array.isArray(photos) ? photos.length : 0;
   const safeLeadData = normalizeLeadPreview(lead);
-  const contactLine = safeLeadData.phone || safeLeadData.email || '—';
+  const contactLine = safeLeadData.phone || '—';
   const locationLine = safeLeadData.city || safeLeadData.zip || '—';
   const text = `🔔 <b>LEAD_CAPTURED</b>\nName: <b>${escapeHtml(safeLeadData.name || 'Unknown')}</b>\nContact: <code>${escapeHtml(contactLine)}</code>\nService: ${escapeHtml(safeLeadData.service || '—')}\nArea: ${escapeHtml(locationLine)}\nSession: <code>${escapeHtml(safeSession)}</code>\nLead: <code>${escapeHtml(safeLead)}</code>\nLang: ${escapeHtml(String(lang || 'en').toUpperCase())}\nPhotos: ${photoCount}\n\n<b>User intent:</b> ${escapeHtml(String(userText || '—').slice(0, 320))}\n<b>Alex reply:</b> ${escapeHtml(String(aiReply || '—').slice(0, 320))}`;
 
@@ -697,6 +697,10 @@ function appendCrossSellNudge(reply, lang, service) {
 function hasCrossSellNudge(text) {
   const t = String(text || '').toLowerCase();
   return (
+    t.includes('also') ||
+    t.includes('также') ||
+    t.includes('також') ||
+    t.includes('tambien') ||
     t.includes('bundle') ||
     t.includes('same visit') ||
     t.includes('same trip') ||
@@ -716,11 +720,9 @@ function inferLeadFromConversation(messages) {
   const joined = userText.join('\n');
   const latest = userText[userText.length - 1] || '';
 
-  const emailMatch = joined.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i);
   const phoneMatch = joined.match(/(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/);
-  const email = emailMatch ? emailMatch[0].trim() : '';
   const phone = phoneMatch ? phoneMatch[0].trim() : '';
-  if (!email && !phone) return null;
+  if (!phone) return null;
 
   const serviceType = inferServiceType(joined);
   if (!serviceType) return null;
@@ -734,7 +736,7 @@ function inferLeadFromConversation(messages) {
   return {
     name,
     phone,
-    email,
+    email: '',
     service: serviceType,
     description: latest.slice(0, 500),
     zip: zipMatch ? zipMatch[0] : '',
