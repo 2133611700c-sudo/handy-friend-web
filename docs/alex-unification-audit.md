@@ -57,3 +57,26 @@ Project: /Users/sergiikuropiatnyk/handy-friend-landing-v6
 - [ ] Give phone -> pricing appears.
 - [ ] Response has no repeated cross-sell sentence.
 - [ ] RU/ES flows keep same policy semantics.
+
+## Phase 4 — Runtime Validation (API + Web + Mobile)
+
+### API checks (EN/RU/ES)
+- Pre-phone: no dollar amounts in reply, asks for phone.
+- Post-phone: pricing allowed.
+- Flooring materials policy: labor-only, client provides materials.
+- Cabinet materials policy: premium paint/primer/degreasing/prep included.
+
+### Web widget checks
+- Desktop (1366px):
+  - Cabinet question before phone -> confirms cabinet materials included + requests phone before exact estimate.
+- Mobile (375px):
+  - Flooring + materials question (RU text) -> states labor-only + requests phone before pricing.
+
+### Final policy status
+- Single scenario active in runtime:
+  1) Need discovery
+  2) Value framing
+  3) Phone mandatory for pricing
+  4) Pricing and next-step only after phone
+- Non-cabinet services never claim included materials.
+- Cross-sell duplication reduced by response dedupe guard.
