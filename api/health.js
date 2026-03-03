@@ -19,6 +19,7 @@ export default async function handler(req, res) {
   const type = String(req.query?.type || 'basic').toLowerCase();
 
   if (type === 'funnel') return funnelHealth(req, res);
+  if (type === 'fb') return fbHealth(req, res);
   return basicHealth(req, res);
 }
 
@@ -48,6 +49,43 @@ function basicHealth(_req, res) {
     },
     checks
   });
+}
+
+/* ── FB diagnostic ── */
+async function fbHealth(_req, res) {
+  const pageToken = process.env.FB_PAGE_ACCESS_TOKEN || '';
+  const pageId = '1039840475873352';
+  const appId = '26599892572930046';
+  const v = 'v19.0';
+
+  if (!pageToken) return res.status(200).json({ ok: false, error: 'no_page_token' });
+
+  const out = { pageId, appId };
+
+  try {
+    const r = await fetch(`https://graph.facebook.com/${v}/me?fields=id,name&access_token=${pageToken}`);
+    out.page_me = await r.json();
+    out.token_valid = !out.page_me.error;
+  } catch (e) { out.page_me_error = e.message; out.token_valid = false; }
+
+  try {
+    const r = await fetch(`https://graph.facebook.com/${v}/${pageId}/subscribed_apps?access_token=${pageToken}`);
+    out.subscribed_apps = await r.json();
+  } catch (e) { out.subscribed_apps_error = e.message; }
+
+  // Check recent FB sessions in Supabase
+  try {
+    const config = getConfig();
+    if (config) {
+      const q = new URLSearchParams({ select: 'session_id,created_at', 'session_id': 'like.fb_%', order: 'created_at.desc', limit: '5' }).toString();
+      const r = await fetch(`${config.projectUrl}/rest/v1/ai_conversations?${q}`, {
+        headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}`, Accept: 'application/json' }
+      });
+      out.recent_fb_sessions = r.ok ? await r.json() : { error: r.status };
+    }
+  } catch (e) { out.recent_fb_sessions_error = e.message; }
+
+  return res.status(200).json(out);
 }
 
 /* ── funnel analytics (ex funnel-health) ── */
