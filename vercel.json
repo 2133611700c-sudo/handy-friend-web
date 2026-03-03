@@ -15,6 +15,14 @@
     {
       "source": "/fb",
       "destination": "/api/fb-redirect"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
     }
   ],
   "redirects": [

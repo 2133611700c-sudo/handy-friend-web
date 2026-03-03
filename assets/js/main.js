@@ -1440,9 +1440,12 @@ const UI_I18N={
     heroCallNow:'Call Now',
     heroWhatsApp:'WhatsApp',
     heroFullPricing:'💲 Full Pricing',
+    heroBtnCall:'📞 Call Now — Free Quote',
+    heroBtnWA:'💬 WhatsApp',
+    heroBtnQuote:'📋 Get Quote in 2 Min',
     barCall:'Call',
     barMessage:'Message',
-    heroResponseNote:'⏰ We respond within 1 hour during business hours (8am-7pm PT)',
+    heroResponseNote:'⏰ We respond within 1 hour during business hours (8am-8pm PT)',
     urgencyChip:'⚡ Trusted by homeowners across Los Angeles',
     urgencyTitle:'🎯 Book Your Service Today',
     urgencySub:'100% Satisfaction Guarantee • Money-Back Guarantee if Not Happy • Insured • Same-Day Response',
@@ -1494,7 +1497,7 @@ const UI_I18N={
     leadFormBtn:'Get Your Quote in 2 Min',
     leadFormNote:'No spam. We only contact you to confirm the job.',
     formSuccessTitle:'Quote Request Received!',
-    formSuccessSub:'We respond within 1 hour during business hours (8am-7pm PT).',
+    formSuccessSub:'We respond within 1 hour during business hours (8am-8pm PT).',
     formSuccessReviewBtn:'⭐ Leave a Google Review',
     formSuccessFbBtn:'👍 Recommend on Facebook',
     formSuccessReviewHint:'If everything looks great, a quick review helps us grow.',
@@ -1505,7 +1508,7 @@ const UI_I18N={
     faqTitle:'Common Questions',
     faqSub:'Everything you need to know',
     faqQ1:'How quickly can you respond to my service request?',
-    faqA1:'We respond within 1 hour during business hours (8am-7pm PT). For urgent same-day service, call 213-361-1700 directly.',
+    faqA1:'We respond within 1 hour during business hours (8am-8pm PT). For urgent same-day service, call 213-361-1700 directly.',
     faqQ2:'Do you charge for estimates/quotes?',
     faqA2:'Phone and chat quotes are free. On-site estimates: $75, credited toward your project when you book.',
     faqQ3:'Are you insured?',
@@ -1538,9 +1541,12 @@ const UI_I18N={
     heroCallNow:'Llamar ahora',
     heroWhatsApp:'WhatsApp',
     heroFullPricing:'💲 Precios completos',
+    heroBtnCall:'📞 Llamar — Cotización gratis',
+    heroBtnWA:'💬 WhatsApp',
+    heroBtnQuote:'📋 Cotización en 2 min',
     barCall:'Llamar',
     barMessage:'Mensaje',
-    heroResponseNote:'⏰ Respondemos en 1 hora durante horario laboral (8am-7pm PT)',
+    heroResponseNote:'⏰ Respondemos en 1 hora durante horario laboral (8am-8pm PT)',
     urgencyChip:'⚡ Con la confianza de hogares en Los Angeles',
     urgencyTitle:'🎯 Reserva tu servicio hoy',
     urgencySub:'Garantia de satisfaccion 100% • Reembolso si no quedas conforme • Asegurado • Respuesta el mismo dia',
@@ -1592,7 +1598,7 @@ const UI_I18N={
     leadFormBtn:'Obtén tu cotizacion en 2 min',
     leadFormNote:'Sin spam. Solo te contactamos para confirmar el trabajo.',
     formSuccessTitle:'Solicitud de cotizacion recibida',
-    formSuccessSub:'Respondemos en 1 hora durante horario laboral (8am-7pm PT).',
+    formSuccessSub:'Respondemos en 1 hora durante horario laboral (8am-8pm PT).',
     formSuccessReviewBtn:'⭐ Dejar reseña en Google',
     formSuccessFbBtn:'👍 Recomendar en Facebook',
     formSuccessReviewHint:'Si todo salio bien, una reseña rapida nos ayuda a crecer.',
@@ -1603,7 +1609,7 @@ const UI_I18N={
     faqTitle:'Preguntas frecuentes',
     faqSub:'Todo lo que necesitas saber',
     faqQ1:'Que tan rapido responden a mi solicitud?',
-    faqA1:'Respondemos en 1 hora durante horario laboral (8am-7pm PT). Para servicio urgente el mismo dia, llama al 213-361-1700.',
+    faqA1:'Respondemos en 1 hora durante horario laboral (8am-8pm PT). Para servicio urgente el mismo dia, llama al 213-361-1700.',
     faqQ2:'Cobran por estimados o cotizaciones?',
     faqA2:'Las cotizaciones por telefono y chat son gratis. Estimado en sitio: $75, acreditado al contratar.',
     faqQ3:'Estan asegurados?',
@@ -1636,9 +1642,12 @@ const UI_I18N={
     heroCallNow:'Позвонить',
     heroWhatsApp:'WhatsApp',
     heroFullPricing:'💲 Полный прайс',
+    heroBtnCall:'📞 Позвонить — бесплатно',
+    heroBtnWA:'💬 WhatsApp',
+    heroBtnQuote:'📋 Расчёт за 2 мин',
     barCall:'Звонок',
     barMessage:'Сообщение',
-    heroResponseNote:'⏰ Отвечаем в течение 1 часа в рабочие часы (8am-7pm PT)',
+    heroResponseNote:'⏰ Отвечаем в течение 1 часа в рабочие часы (8am-8pm PT)',
     urgencyChip:'⚡ Нам доверяют клиенты по всему Лос-Анджелесу',
     urgencyTitle:'🎯 Забронируйте услугу сегодня',
     urgencySub:'100% гарантия удовлетворенности • Вернем деньги, если не довольны • Застрахованы • Ответ в тот же день',
@@ -1690,7 +1699,7 @@ const UI_I18N={
     leadFormBtn:'Получить смету за 2 мин',
     leadFormNote:'Без спама. Свяжемся только для подтверждения заказа.',
     formSuccessTitle:'Заявка на смету получена',
-    formSuccessSub:'Отвечаем в течение 1 часа в рабочие часы (8am-7pm PT).',
+    formSuccessSub:'Отвечаем в течение 1 часа в рабочие часы (8am-8pm PT).',
     formSuccessReviewBtn:'⭐ Оставить отзыв в Google',
     formSuccessFbBtn:'👍 Рекомендовать в Facebook',
     formSuccessReviewHint:'Если всё понравилось, короткий отзыв очень поможет нам расти.',
@@ -1701,7 +1710,7 @@ const UI_I18N={
     faqTitle:'Частые вопросы',
     faqSub:'Все, что важно знать',
     faqQ1:'Как быстро вы отвечаете на запрос?',
-    faqA1:'Отвечаем в течение 1 часа в рабочие часы (8am-7pm PT). Для срочных задач звоните 213-361-1700.',
+    faqA1:'Отвечаем в течение 1 часа в рабочие часы (8am-8pm PT). Для срочных задач звоните 213-361-1700.',
     faqQ2:'Вы берете плату за смету?',
     faqA2:'Нет. Все сметы бесплатные. Прозрачные цены без скрытых платежей.',
     faqQ3:'У вас есть страховка?',
@@ -1733,10 +1742,13 @@ const UI_I18N={
     langBtnTitle:'Змінити мову',
     heroCallNow:'Подзвонити',
     heroWhatsApp:'WhatsApp',
+    heroBtnCall:'📞 Подзвонити — безкоштовно',
+    heroBtnWA:'💬 WhatsApp',
+    heroBtnQuote:'📋 Розрахунок за 2 хв',
     heroFullPricing:'💲 Повний прайс',
     barCall:'Дзвінок',
     barMessage:'Повідомлення',
-    heroResponseNote:'⏰ Відповідаємо протягом 1 години в робочий час (8am-7pm PT)',
+    heroResponseNote:'⏰ Відповідаємо протягом 1 години в робочий час (8am-8pm PT)',
     urgencyChip:'⚡ Нам довіряють клієнти по всьому Лос-Анджелесу',
     urgencyTitle:'🎯 Забронюйте послугу сьогодні',
     urgencySub:'100% гарантія задоволення • Повернення коштів, якщо не задоволені • Застраховані • Відповідь того ж дня',
@@ -1788,7 +1800,7 @@ const UI_I18N={
     leadFormBtn:'Отримати кошторис за 2 хв',
     leadFormNote:'Без спаму. Зв’яжемось лише для підтвердження замовлення.',
     formSuccessTitle:'Запит на кошторис отримано',
-    formSuccessSub:'Відповідаємо протягом 1 години в робочий час (8am-7pm PT).',
+    formSuccessSub:'Відповідаємо протягом 1 години в робочий час (8am-8pm PT).',
     formSuccessReviewBtn:'⭐ Залишити відгук у Google',
     formSuccessFbBtn:'👍 Рекомендувати у Facebook',
     formSuccessReviewHint:'Якщо все сподобалось, короткий відгук дуже допоможе нам зростати.',
@@ -1799,7 +1811,7 @@ const UI_I18N={
     faqTitle:'Поширені запитання',
     faqSub:'Усе, що потрібно знати',
     faqQ1:'Як швидко ви відповідаєте на запит?',
-    faqA1:'Відповідаємо протягом 1 години в робочий час (8am-7pm PT). Для термінових робіт телефонуйте 213-361-1700.',
+    faqA1:'Відповідаємо протягом 1 години в робочий час (8am-8pm PT). Для термінових робіт телефонуйте 213-361-1700.',
     faqQ2:'Чи берете оплату за кошторис?',
     faqA2:'Ні. Усі кошториси безкоштовні. Прозорі ціни без прихованих платежів.',
     faqQ3:'Чи маєте страховку?',
@@ -2920,6 +2932,9 @@ document.getElementById('calcBtn').addEventListener('click',()=>{
   setTimeout(()=>document.getElementById('calcRes').classList.add('show'),10);
   document.getElementById('calcRes').scrollIntoView({behavior:'smooth',block:'nearest'});
   track('calc_calculate',{service:v,total:tot,mode,detail});
+
+  /* ── Cross-sell suggestion after calc result ── */
+  showCalcCrossSell(v, tot);
 });
 
 /* ── WhatsApp & Copy handlers ── */
@@ -3216,13 +3231,170 @@ document.querySelector('.bwa')?.addEventListener('click',()=>{
 });
 
 /* ═══════════════════════════════════════════════
+   CROSS-SELL ENGINE — every service has 2 best upsells
+═══════════════════════════════════════════════ */
+/*
+ * CROSS-SELL — 3 safe clusters (plumb/elec excluded from auto cross-sell)
+ * Cluster 1 (Wall & Install): tv, art, fur, curtain
+ * Cluster 2 (Paint & Refresh): kitch, furnp, paint
+ * Cluster 3 (Renovation):      paint, floor, trim/base
+ */
+const CROSS_SELL = {
+  /* Cluster 1: Wall & Install */
+  tv: [
+    { id:'art',  emoji:'🪞', price:'$175 (up to 5 pcs)' },
+    { id:'fur',  emoji:'🛋️', price:'from $150' }
+  ],
+  fur: [
+    { id:'tv',   emoji:'📺', price:'from $165' },
+    { id:'art',  emoji:'🪞', price:'$175' }
+  ],
+  /* Cluster 2: Paint & Refresh */
+  kitch: [
+    { id:'furnp', emoji:'🪑', price:'from $95/piece' },
+    { id:'paint', emoji:'🎨', price:'from $3/sq ft' }
+  ],
+  furnp: [
+    { id:'kitch', emoji:'🍳', price:'from $155/door' },
+    { id:'paint', emoji:'🎨', price:'from $3/sq ft' }
+  ],
+  /* Cluster 3: Renovation */
+  p1: [
+    { id:'floor', emoji:'🏠', price:'from $3.50/sq ft' },
+    { id:'kitch', emoji:'🍳', price:'from $155/door' }
+  ],
+  p2: [
+    { id:'floor', emoji:'🏠', price:'from $3.50/sq ft' },
+    { id:'kitch', emoji:'🍳', price:'from $155/door' }
+  ],
+  fl: [
+    { id:'paint', emoji:'🎨', price:'from $3/sq ft' },
+    { id:'trim',  emoji:'📏', price:'from $3.50/lf' }
+  ],
+  fv: [
+    { id:'paint', emoji:'🎨', price:'from $3/sq ft' },
+    { id:'trim',  emoji:'📏', price:'from $3.50/lf' }
+  ]
+  /* plumb, elec: intentionally excluded — standalone services, legal scope flag */
+};
+
+/* Map cross-sell IDs to tab IDs for calculator tab switching */
+const XSELL_TAB_MAP = {
+  kitch:'kitch', furnp:'furnp', paint:'p1', floor:'fl',
+  tv:'tv', fur:'fur', art:'tv', plumb:'plumb', elec:'plumb',
+  trim:'linear', smart:'plumb', base:'linear'
+};
+
+function getXsellName(id) {
+  const l = L();
+  const nameMap = {
+    kitch: l.svcs?.find(s=>s.id==='kitch')?.name || 'Kitchen Cabinets',
+    furnp: l.svcs?.find(s=>s.id==='furnp')?.name || 'Furniture Painting',
+    paint: l.svcs?.find(s=>s.id==='paint')?.name || 'Interior Painting',
+    floor: l.svcs?.find(s=>s.id==='floor')?.name || 'Flooring',
+    tv:    l.svcs?.find(s=>s.id==='tv')?.name || 'TV Mounting',
+    fur:   l.svcs?.find(s=>s.id==='fur')?.name || 'Furniture Assembly',
+    art:   l.svcs?.find(s=>s.id==='art')?.name || 'Art & Mirrors',
+    plumb: l.svcs?.find(s=>s.id==='plumb')?.name || 'Plumbing',
+    elec:  l.svcs?.find(s=>s.id==='elec')?.name || 'Electrical',
+    trim:  'Baseboard / Trim',
+    smart: 'Smart Doorbell / Lock',
+    base:  'Baseboard Install'
+  };
+  return nameMap[id] || id;
+}
+
+/* Show cross-sell suggestion under calculator result */
+function showCalcCrossSell(svcId, total) {
+  let box = document.getElementById('calcCrossSell');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'calcCrossSell';
+    const calcRes = document.getElementById('calcRes');
+    if (calcRes) calcRes.parentNode.insertBefore(box, calcRes.nextSibling);
+  }
+
+  const suggestions = CROSS_SELL[svcId];
+  if (!suggestions || suggestions.length === 0) {
+    box.style.display = 'none';
+    return;
+  }
+
+  const l = L();
+  const xsellTitle = {
+    en: 'Add to your project — Save 20%',
+    es: 'Agrega a tu proyecto — Ahorra 20%',
+    ru: 'Добавь к заказу — Скидка 20%',
+    ua: 'Додай до замовлення — Знижка 20%'
+  }[lang] || 'Add to your project — Save 20%';
+
+  const xsellCta = {
+    en: 'Add & Get Quote',
+    es: 'Agregar y Cotizar',
+    ru: 'Добавить и узнать цену',
+    ua: 'Додати й дізнатись ціну'
+  }[lang] || 'Add & Get Quote';
+
+  let html = `<div style="margin-top:14px;padding:14px 16px;background:linear-gradient(135deg,rgba(184,137,44,0.08),rgba(184,137,44,0.03));border:1px solid rgba(184,137,44,0.25);border-radius:12px">
+    <div style="font-size:13px;font-weight:700;color:#B8892C;margin-bottom:10px">🎁 ${xsellTitle}</div>`;
+
+  suggestions.forEach(s => {
+    const name = getXsellName(s.id);
+    const tabId = XSELL_TAB_MAP[s.id] || s.id;
+    html += `<div class="xsell-item" data-xsell-tab="${tabId}" data-xsell-sub="${s.id==='art'?'art':s.id==='elec'?'elec':''}" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;margin-bottom:6px;background:#fff;border-radius:10px;border:1px solid rgba(184,137,44,0.15);cursor:pointer;transition:all 200ms" onmouseover="this.style.borderColor='#B8892C'" onmouseout="this.style.borderColor='rgba(184,137,44,0.15)'">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">${s.emoji}</span>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#2a1f14">${name}</div>
+          <div style="font-size:12px;color:#8a7a6a">${s.price}</div>
+        </div>
+      </div>
+      <span style="font-size:12px;font-weight:700;color:#B8892C;white-space:nowrap">${xsellCta} →</span>
+    </div>`;
+  });
+
+  html += `<div style="text-align:center;margin-top:6px;font-size:11px;color:#8a7a6a">💡 ${
+    {en:'Book 2+ services in one visit',es:'Reserva 2+ servicios en una visita',ru:'Закажи 2+ услуги за один визит',ua:'Замов 2+ послуги за один візит'}[lang]||'Book 2+ services in one visit'
+  }</div></div>`;
+
+  box.innerHTML = html;
+  box.style.display = 'block';
+
+  /* Click handler: switch calculator to the cross-sell service tab */
+  box.querySelectorAll('.xsell-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const tabSvc = item.dataset.xsellTab;
+      const subType = item.dataset.xsellSub;
+      const tab = document.querySelector('.calc-tab[data-svc="' + tabSvc + '"]');
+      if (tab) {
+        document.querySelectorAll('.calc-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentSvc = tabSvc;
+        if (subType === 'art') activeFixedSub = 'art';
+        else if (subType === 'elec') activeFixedSub = 'elec';
+        renderCalculatorUI();
+        document.getElementById('calcBox')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        track('xsell_calc_click', { from: currentSvc, to: tabSvc });
+      }
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════
    COMBO PROMO — mini block under each service card
 ═══════════════════════════════════════════════ */
 const COMBO_PAIRS = {
+  /* Cluster 2: Paint & Refresh */
   kitch: { partner: 'furnp', label: 'Kitchen Cabinets + Furniture Painting', save: 143 },
   furnp: { partner: 'kitch', label: 'Furniture Painting + Kitchen Cabinets', save: 143 },
+  /* Cluster 3: Renovation */
   paint: { partner: 'floor', label: 'Painting + Flooring',                   save: 275 },
   floor: { partner: 'paint', label: 'Flooring + Painting',                   save: 275 },
+  /* Cluster 1: Wall & Install */
+  tv:    { partner: 'art',   label: 'TV Mounting + Art Hanging',             save: 68 },
+  art:   { partner: 'tv',    label: 'Art Hanging + TV Mounting',             save: 68 },
+  fur:   { partner: 'tv',    label: 'Furniture Assembly + TV Mounting',      save: 63 },
+  /* plumb/elec: standalone — no combo badge */
 };
 
 function buildComboPromo(svcId){
@@ -3262,9 +3434,10 @@ function injectComboPromos(){
    INTERACTIVE COMBO CALCULATOR
 ═══════════════════════════════════════════════ */
 function initComboCalc() {
-  const BASE = { tv:150, fur:150, art:150, paint:500, floor:500, plumb:150, elec:175 };
-  const LABELS = { tv:'TV Mounting', fur:'Furniture Assembly', art:'Art Hanging',
-                   paint:'Cabinet Painting', floor:'Flooring', plumb:'Plumbing', elec:'Electrical' };
+  const BASE = { tv:165, fur:150, art:175, paint:500, floor:500, kitch:500, furnp:200, curtain:165 };
+  const LABELS = { tv:'TV Mounting', fur:'Furniture Assembly', art:'Art & Mirror Hanging',
+                   paint:'Interior Painting', floor:'Flooring', kitch:'Kitchen Cabinet Painting',
+                   furnp:'Furniture Painting', curtain:'Curtain Rods' };
   const IDS = Object.keys(BASE);
 
   function populate(sel, excludeId) {
