@@ -153,6 +153,7 @@ async function handleMessagingEvent(event) {
   await saveTurns(sessionId, null, inboundText, reply);
 
   const inferredLead = inferLeadFromConversation(messages);
+  console.log('[ALEX_WEBHOOK] inferredLead:', inferredLead ? JSON.stringify({ phone: inferredLead.phone, service: inferredLead.service_type }) : 'null');
   if (inferredLead) {
     try {
       const created = await createOrMergeLead({
@@ -170,8 +171,18 @@ async function handleMessagingEvent(event) {
         sender_id: senderId,
         session_id: sessionId
       }).catch(() => {});
+
+      // Notify Telegram about new Facebook Messenger lead
+      notifyTelegramFbLead({
+        leadId: created.id,
+        sessionId,
+        phone: inferredLead.phone,
+        service: inferredLead.service_type,
+        userText: inboundText,
+        aiReply: reply
+      }).catch((e) => console.error('[ALEX_WEBHOOK] Telegram notify error:', e.message));
     } catch (err) {
-      console.error('[ALEX_WEBHOOK] Lead capture failed:', err.message);
+      console.error('[ALEX_WEBHOOK] Lead capture failed:', err.message, err.code || '', JSON.stringify(err.details || err.hint || ''));
     }
   }
 
@@ -352,14 +363,13 @@ function inferLeadFromConversation(messages) {
   if (!phone) return null;
 
   const serviceType = inferServiceType(joined);
-  if (!serviceType) return null;
 
   const nameMatch = joined.match(/\b(?:my name is|i am|this is|name[:\s])\s+([A-Za-z][A-Za-z' -]{1,40})/i);
   return {
     name: nameMatch ? String(nameMatch[1]).trim() : 'Unknown',
     phone,
     email: '',
-    service_type: serviceType,
+    service_type: serviceType || 'unknown',
     problem_description: userText[userText.length - 1]?.slice(0, 500) || ''
   };
 }
@@ -367,19 +377,54 @@ function inferLeadFromConversation(messages) {
 function inferServiceType(text) {
   const t = String(text || '').toLowerCase();
   const map = [
-    ['cabinet painting', ['cabinet', 'door', 'drawer', 'kitchen cabinet', 'facade']],
-    ['furniture assembly', ['furniture assembly', 'assemble', 'ikea', 'bed frame', 'dresser']],
-    ['interior painting', ['interior painting', 'paint walls', 'wall paint', 'ceiling paint', 'painting']],
-    ['flooring', ['flooring', 'laminate', 'lvp', 'vinyl floor', 'floor install']],
-    ['tv mounting', ['tv mount', 'tv mounting']],
-    ['art hanging', ['mirror', 'art hanging', 'picture hanging', 'curtain']],
-    ['plumbing', ['plumbing', 'faucet', 'toilet', 'shower head', 'caulk tub']],
-    ['electrical', ['electrical', 'light fixture', 'outlet', 'switch', 'smart lock', 'doorbell']]
+    ['cabinet painting', ['cabinet', 'door', 'drawer', 'kitchen cabinet', 'facade',
+      'шкаф', 'шкафчик', 'дверца', 'фасад', 'кухон', 'armario', 'gabinete', 'puerta']],
+    ['furniture assembly', ['furniture assembly', 'assemble', 'ikea', 'bed frame', 'dresser',
+      'сборка', 'мебел', 'кровать', 'комод', 'mueble', 'ensamblar', 'cama']],
+    ['interior painting', ['interior painting', 'paint walls', 'wall paint', 'ceiling paint', 'painting',
+      'покраска стен', 'стены', 'покраска', 'pintura', 'pared', 'pintar']],
+    ['flooring', ['flooring', 'laminate', 'lvp', 'vinyl floor', 'floor install',
+      'пол', 'укладка', 'ламинат', 'piso', 'suelo', 'piso laminado']],
+    ['tv mounting', ['tv mount', 'tv mounting',
+      'телевизор', 'монтаж тв', 'тв', 'televisor', 'instalar tv', 'montar tv']],
+    ['art hanging', ['mirror', 'art hanging', 'picture hanging', 'curtain',
+      'зеркало', 'картин', 'карниз', 'espejo', 'cuadro', 'cortina']],
+    ['plumbing', ['plumbing', 'faucet', 'toilet', 'shower head', 'caulk tub',
+      'сантехник', 'кран', 'унитаз', 'душ', 'plomería', 'grifo', 'sanitario']],
+    ['electrical', ['electrical', 'light fixture', 'outlet', 'switch', 'smart lock', 'doorbell',
+      'электрик', 'светильник', 'розетка', 'выключатель', 'eléctrico', 'tomacorriente']]
   ];
   for (const [service, keywords] of map) {
     if (keywords.some((k) => t.includes(k))) return service;
   }
   return '';
+}
+
+async function notifyTelegramFbLead({ leadId, sessionId, phone, service, userText, aiReply }) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+
+  const esc = (s) => String(s || '—').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+  const text = `🔔 <b>FB_MESSENGER_LEAD</b>\n` +
+    `📱 Contact: <code>${esc(phone)}</code>\n` +
+    `🔧 Service: ${esc(service)}\n` +
+    `Session: <code>${esc(sessionId)}</code>\n` +
+    `Lead: <code>${esc(leadId)}</code>\n\n` +
+    `<b>User:</b> ${esc(String(userText || '').slice(0, 300))}\n` +
+    `<b>Alex:</b> ${esc(String(aiReply || '').slice(0, 300))}`;
+
+  const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+  });
+  const tgData = await tgRes.json().catch(() => ({}));
+  if (tgRes.ok && tgData.ok) {
+    console.log('[ALEX_WEBHOOK] Telegram notified, msg_id:', tgData.result?.message_id);
+  } else {
+    console.error('[ALEX_WEBHOOK] Telegram error:', JSON.stringify(tgData));
+  }
 }
 
 function stripMarkdownArtifacts(text) {

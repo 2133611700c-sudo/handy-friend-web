@@ -65,7 +65,12 @@ async function fbHealth(_req, res) {
   try {
     const r = await fetch(`https://graph.facebook.com/${v}/me?fields=id,name&access_token=${pageToken}`);
     out.page_me = await r.json();
-    out.token_valid = !out.page_me.error;
+    // token_valid: false only if truly expired (code 190 / subcode 463)
+    // Permission errors (100, 200) mean token is valid but lacks that specific scope
+    const err = out.page_me?.error;
+    const isExpired = err?.code === 190 && err?.error_subcode === 463;
+    out.token_valid = !isExpired;
+    out.token_note = err ? (isExpired ? 'expired' : 'valid_limited_scope') : 'ok';
   } catch (e) { out.page_me_error = e.message; out.token_valid = false; }
 
   try {

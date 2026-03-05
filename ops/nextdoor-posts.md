@@ -16,10 +16,10 @@ We're Handy & Friend, your local LA handyman. TV mounting from $165, hidden wire
 
 Available same week. Insured.
 
-Text (213) 361-1700 for a free quote — usually respond within 1 hour.
-handyandfriend.com
+📲 Text (213) 361-1700 and mention "ND-20260303-01" for a free quote — usually respond within 1 hour.
+🌐 handyandfriend.com
 
-**Tag:** `ND-20260303-01`
+**Tag:** `ND-20260303-01` | **Tracking Code:** Ask about "Code 01" when you call
 **Photo:** attach TV mounting before/after if available
 
 ---
@@ -34,14 +34,15 @@ Doing a few things around the house? We cover TV mounting, furniture assembly, c
 Book 2 or more services together and save 20%.
 
 Popular combos:
-- TV mount + art hanging = $340 → $272
-- Furniture assembly + art hanging = $325 → $260
+• TV mount + art hanging = $340 → $272
+• Furniture assembly + art hanging = $325 → $260
 
 Insured. Upfront pricing. No hidden fees.
 
-Text (213) 361-1700 or visit handyandfriend.com
+📲 Text (213) 361-1700 — mention "COMBO20" code for your 20% discount
+🌐 handyandfriend.com
 
-**Tag:** `ND-20260303-02`
+**Tag:** `ND-20260304-02` | **Tracking Code:** "COMBO20" = combo offer discount
 
 ---
 
@@ -78,8 +79,10 @@ Took 4 days and the kitchen looks completely different — no replacement needed
 
 If your cabinets are looking dated, we can give them a factory-smooth spray finish starting at $155/door. Paint, primer, degreasing, and prep are all included.
 
-Free estimate by phone: (213) 361-1700
-See more before/afters: handyandfriend.com
+📲 Free estimate: (213) 361-1700 — mention "CABINET" code
+🌐 See more before/afters: handyandfriend.com
+
+**Tracking Code:** "CABINET" = Cabinet Painting inquiry
 
 ---
 
@@ -96,7 +99,7 @@ Got a new TV? Before you drill into the wall:
 
 If you'd rather have it done right the first time, we mount TVs daily. Standard mount $165, concealed wires $250.
 
-Text (213) 361-1700 — usually available same day.
+📲 Text (213) 361-1700 — mention "TVTIP" code, usually available same day.
 
 ---
 
@@ -113,7 +116,10 @@ Book both together and save 20% on the combo.
 
 No hidden fees. Labor pricing is upfront. You pick your paint and flooring — we do the work.
 
-Free estimate: (213) 361-1700 or handyandfriend.com
+📲 Free estimate: (213) 361-1700 — say "PAINTFLOOR" code for 20% combo discount
+🌐 handyandfriend.com
+
+**Tracking Code:** "PAINTFLOOR" = Paint + Flooring combo
 
 ---
 
