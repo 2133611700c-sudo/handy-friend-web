@@ -1,0 +1,67 @@
+name: Daily Report
+
+on:
+  schedule:
+    # 08:00 America/Los_Angeles = 16:00 UTC (PST) / 15:00 UTC (PDT)
+    # Use 15:00 UTC (PDT, Mar-Nov) — during PST it fires at 07:00 PT, close enough.
+    # GHA cron doesn't support TZ, so pick the summer offset.
+    - cron: '0 15 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run mode'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - dry-run
+          - smoke
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Daily Report
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REPORT_EMAIL_TO: ${{ secrets.REPORT_EMAIL_TO }}
+        run: |
+          MODE="${{ github.event.inputs.mode || 'full' }}"
+          if [ "$MODE" = "dry-run" ]; then
+            node scripts/daily-report.mjs --dry-run
+          elif [ "$MODE" = "smoke" ]; then
+            node scripts/daily-report.mjs --smoke
+          else
+            node scripts/daily-report.mjs
+          fi
+
+      - name: Upload archive
+        if: success() && (github.event.inputs.mode == 'full' || github.event.inputs.mode == '')
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-report
+          path: ops/reports/*.md
+          retention-days: 90
+
+      - name: Commit archive to repo
+        if: success() && (github.event.inputs.mode == 'full' || github.event.inputs.mode == '')
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ops/reports/*.md
+          git diff --staged --quiet && echo "No new reports to commit" || git commit -m "chore: daily report $(date -u +%Y-%m-%d)" && git push
