@@ -5,10 +5,10 @@
 - Average MTTR: **N/A**
 
 ## By Severity
-- SEV2: 1
+- SEV3: 1
 
 ## By Status
 - open: 1
 
 ## Incident List
-- INC-YYYYMMDD-01 | SEV2 | open | mttr=N/A min | ops/incidents/INCIDENT_TEMPLATE.md
+- INC-20260311-01 | SEV3 | open | mttr=N/A min | ops/incidents/INC-20260311-01.md

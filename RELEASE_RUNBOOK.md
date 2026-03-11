@@ -43,6 +43,7 @@ Rollback immediately if any of these occur:
 
 ## Incident Operations
 - Create incident docs from template: `ops/incidents/INCIDENT_TEMPLATE.md`.
+- Fast create incident file: `npm run incident:new -- --severity SEV2 --impact \"...\" --services website,api`
 - Generate dashboard + MTTR snapshot: `npm run incident:dashboard`.
 - Nightly monitor auto-builds incident dashboard artifact for trend visibility.
 

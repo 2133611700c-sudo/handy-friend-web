@@ -54,6 +54,7 @@ for (const file of files) {
   const text = fs.readFileSync(file, 'utf8');
   const fm = parseFrontmatter(text);
   if (!fm || !fm.id) continue;
+  if (!/^INC-\d{8}-\d{2}$/.test(String(fm.id).trim())) continue;
   const started = toDate(fm.started_at || '');
   const resolved = toDate(fm.resolved_at || '');
   const mttr = minutesBetween(started, resolved);
