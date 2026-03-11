@@ -14,14 +14,14 @@ Activate revenue operating system: assess true business state, fix data quality,
 ## COMPLETED TODAY
 
 ### 1. Data Quality — Migration 025 ✅
-**Problem:** 11 of 14 analytics views queried `leads` without `is_test = false` filter. `dashboard_stats()` was fixed in migration 022, but ALL views were still polluted.
+**Problem:** 10 analytics views queried `leads` without `is_test = false` filter. `dashboard_stats()` was fixed in migration 022, but key views were still polluted.
 
 **Impact before fix:**
 - `v_channel_roi` showed 4 fake "website_form" leads (all test)
 - `backfill_jobs` showed 85% win rate (was 100% — 3 test leads dragged it down)
 - Funnel, service, geo, and response time views all contaminated
 
-**Fix:** Migration 025 — DROP + CREATE 11 views with `WHERE is_test = false`.
+**Fix:** Migration 025 — DROP + CREATE 10 views with `WHERE is_test = false`.
 **File:** `supabase/migrations/20260311220000_025_views_exclude_test_leads.sql`
 **Status:** Applied to production ✅
 

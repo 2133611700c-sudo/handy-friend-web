@@ -1,5 +1,5 @@
--- Migration 025: Add is_test=false filter to ALL analytics views
--- Bug: 11 views query public.leads without filtering is_test
+-- Migration 025: Add is_test=false filter to analytics views
+-- Bug: 10 views query public.leads without filtering is_test
 -- Impact: test/E2E leads pollute channel ROI, service performance, funnel, trends
 -- dashboard_stats() was fixed in migration 022 but views were missed
 
@@ -206,5 +206,5 @@ where outcome = 'lost' and lost_reason is not null and is_test = false
 group by 1
 order by cnt desc;
 
--- 11. Repeat Customers (queries jobs, not leads — no change needed, but add safety)
+-- 11. Repeat Customers (queries jobs, not leads — no change needed)
 -- v_repeat_customers, v_reviews_summary, v_capacity, v_monthly_pl do not query leads — no change needed
