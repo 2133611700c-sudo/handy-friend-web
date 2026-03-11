@@ -18,7 +18,8 @@
     "test:pricing-policy": "node --test tests/pricing-policy.test.js",
     "test:ads-attribution": "node --test tests/ads-attribution.test.js",
     "validate:pricing": "npm run generate:pricing-browser && npm run test:pricing-policy",
-    "validate:ads": "npm run test:ads-attribution"
+    "validate:ads": "npm run test:ads-attribution",
+    "close:sheet": "node scripts/update-live-close-sheet.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
