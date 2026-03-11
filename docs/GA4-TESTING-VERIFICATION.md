@@ -34,10 +34,16 @@
 2. If not exist → click **"Create event"** → name it `sms_lead` → Save
 3. Mark as conversion ✅
 
-### Create "phone_call" Conversion (optional):
+### Create "phone_click" Conversion (optional):
 1. In Admin → Events → **"Create event"**
-2. Name: `phone_call`
+2. Name: `phone_click`
 3. Description: "User clicked phone number"
+4. Save → Mark as conversion ✅
+
+### Create "whatsapp_click" Conversion (optional):
+1. In Admin → Events → **"Create event"**
+2. Name: `whatsapp_click`
+3. Description: "User clicked WhatsApp button"
 4. Save → Mark as conversion ✅
 
 ---
@@ -91,11 +97,11 @@ LEFT window:
 
 RIGHT window (Real-time):
 1. Actually click phone number on LEFT
-2. Watch for "phone_call" event in Real-time
+2. Watch for "phone_click" event in Real-time
 3. Should appear within 2-3 seconds
 ```
 
-**Expected:** ✅ Real-time shows `phone_call` event
+**Expected:** ✅ Real-time shows `phone_click` event
 
 ---
 
@@ -114,7 +120,8 @@ You should see a row like:
 Event Name          | Event Count
 form_submit         | 3
 sms_lead            | 1
-phone_call          | 2
+phone_click         | 2
+whatsapp_click      | 2
 page_view           | 45
 ```
 
@@ -139,11 +146,14 @@ Now Google Ads will show which campaigns drive conversions.
 - [ ] GA4 property exists: G-Z05XJ8E281
 - [ ] form_submit event shows in Admin → Events
 - [ ] sms_lead event created (if using SMS)
+- [ ] phone_click event created (if tracking calls)
+- [ ] whatsapp_click event created (if tracking WhatsApp)
 - [ ] All events marked as conversions ✅
 - [ ] Real-time test passed (events appearing in 2-3 sec)
 - [ ] 24-hour data shows event count > 0
 - [ ] Google Ads linked to GA4
-- [ ] form_submit conversion selected in Google Ads
+- [ ] form_submit conversion selected in Google Ads as Primary
+- [ ] Duplicate counting disabled (no parallel GTM+gtag conversion tags for same event)
 
 **If ALL ✅ → You're ready for Google Ads launch**
 
@@ -181,5 +191,11 @@ Once events are tracking:
 - This helps you optimize ad spend
 
 ---
+
+## Measurement Contract (Locked)
+
+- Primary path for Google Ads measurement: **GA4 imported conversions**.
+- Canonical lead events in code: `form_submit`, `sms_lead`, `phone_click`, `whatsapp_click`.
+- Use GTM for transport only; do not duplicate Google Ads conversion tags for the same event.
 
 **NEXT:** Once you verify GA4 working, move to Meta Pixel testing.

@@ -9,6 +9,18 @@
 
 ---
 
+## SINGLE-SOURCE REFERENCES (MANDATORY BEFORE PUBLISH)
+
+- Canonical prices and service scope: `lib/price-registry.js`
+- Browser/UI pricing payload: `assets/js/price-registry.browser.js` (generated from canonical source)
+- Runtime lead attribution mapping: `lib/attribution.js`
+- Lead ingestion contract: `api/submit-lead.js`
+- Attribution diagnostics: `GET /api/health?type=attribution`
+
+Never publish ad copy with manually invented price anchors that conflict with the canonical registry.
+
+---
+
 ## WHEN TO USE SEARCH ADS (vs LSA)
 
 **Use LSA first (higher ROI):**
@@ -80,10 +92,10 @@ interior painting
 ### Ad 1: TV Mounting
 
 **Headline 1:** "Professional TV Mounting LA"  
-**Headline 2:** "$165 Standard • $250 Hidden Wires"  
+**Headline 2:** "$105 Standard • $185 Hidden Wires"  
 **Headline 3:** "Same Week Availability"
 
-**Description 1:** "Expert TV mounting for all sizes. Full-motion articulated arms, concealed wiring, wall conditioning. Fully insured. Free quote."
+**Description 1:** "Expert TV mounting for all sizes. Full-motion arms, concealed wiring options, wall-safe install. Professional and insured. Free quote."
 
 **Description 2:** "West Hollywood, Santa Monica, Downtown LA. Same-day or next-day appointments available."
 
@@ -96,7 +108,7 @@ interior painting
 ### Ad 2: Cabinet Painting
 
 **Headline 1:** "Professional Cabinet Painting LA"  
-**Headline 2:** "From $155/Door • 4-Day Project"  
+**Headline 2:** "From $75/Door • Spray Finish"  
 **Headline 3:** "Factory-Smooth Spray Finish"
 
 **Description 1:** "Transform your kitchen with professional cabinet painting. Spray finish, primer, degreasing included. All colors available."
@@ -113,7 +125,7 @@ interior painting
 **Headline 2:** "TV • Painting • Furniture • More"  
 **Headline 3:** "Fast Response • Upfront Pricing"
 
-**Description 1:** "Local LA handyman. TV mounting, furniture assembly, cabinet painting, art hanging, flooring, interior painting. All insured."
+**Description 1:** "Local LA handyman. TV mounting, furniture assembly, cabinet painting, art hanging, flooring, interior painting. Professional and insured."
 
 **Description 2:** "Free quote within 1 hour. Serving West LA, Santa Monica, Downtown, Venice, Beverly Hills."
 
