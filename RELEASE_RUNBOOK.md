@@ -41,6 +41,11 @@ Rollback immediately if any of these occur:
 4. Verify health + pricing + ai-chat contracts.
 5. Document incident in `ops/reports/YYYY-MM-DD-incident.md`.
 
+## Incident Operations
+- Create incident docs from template: `ops/incidents/INCIDENT_TEMPLATE.md`.
+- Generate dashboard + MTTR snapshot: `npm run incident:dashboard`.
+- Nightly monitor auto-builds incident dashboard artifact for trend visibility.
+
 ## Communication Template
 - Incident summary
 - User impact

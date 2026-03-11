@@ -29,23 +29,55 @@ jobs:
           mkdir -p ops/reports
           bash scripts/audit.sh --skip-stats | tee ops/reports/nightly-health-${{ github.run_id }}.log
 
+      - name: Setup Supabase CLI
+        if: ${{ secrets.SUPABASE_PROJECT_REF != '' && secrets.SUPABASE_DB_PASSWORD != '' }}
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Check migration drift
+        if: ${{ secrets.SUPABASE_PROJECT_REF != '' && secrets.SUPABASE_DB_PASSWORD != '' }}
+        id: migration
+        continue-on-error: true
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          bash scripts/check-migration-drift.sh | tee ops/reports/migration-drift-${{ github.run_id }}.log
+
+      - name: Build incident dashboard + MTTR snapshot
+        id: incidents
+        continue-on-error: true
+        run: |
+          node scripts/incident-dashboard.mjs
+
       - name: Upload audit artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: nightly-health-${{ github.run_id }}
-          path: ops/reports/nightly-health-${{ github.run_id }}.log
+          path: |
+            ops/reports/nightly-health-${{ github.run_id }}.log
+            ops/reports/migration-drift-${{ github.run_id }}.log
+            ops/reports/migration-drift-*.md
+            ops/reports/incident-dashboard-*.md
+            ops/reports/incident-mttr-*.csv
 
       - name: Create issue on failure
-        if: steps.audit.outcome == 'failure'
+        if: steps.audit.outcome == 'failure' || steps.migration.outcome == 'failure' || steps.incidents.outcome == 'failure'
         uses: actions/github-script@v7
         with:
           script: |
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const title = `Nightly health failed — ${new Date().toISOString().slice(0,10)}`;
+            const failures = [];
+            if ('${{ steps.audit.outcome }}' === 'failure') failures.push('readiness audit');
+            if ('${{ steps.migration.outcome }}' === 'failure') failures.push('migration drift check');
+            if ('${{ steps.incidents.outcome }}' === 'failure') failures.push('incident dashboard build');
             const body = [
               'Nightly health monitor detected a failure.',
               '',
+              `- Failed checks: ${failures.join(', ') || 'unknown'}`,
               `- Workflow run: ${runUrl}`,
               '- Artifact: nightly health log attached to workflow run',
               '',
@@ -63,5 +95,5 @@ jobs:
             });
 
       - name: Fail job if audit failed
-        if: steps.audit.outcome == 'failure'
+        if: steps.audit.outcome == 'failure' || steps.migration.outcome == 'failure' || steps.incidents.outcome == 'failure'
         run: exit 1

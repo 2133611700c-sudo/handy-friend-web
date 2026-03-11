@@ -1,0 +1,2 @@
+id,severity,status,owner,started_at,resolved_at,mttr_min,file
+"INC-YYYYMMDD-01","SEV2","open","operations","2026-03-11T09:00:00-07:00","","","ops/incidents/INCIDENT_TEMPLATE.md"

@@ -6,6 +6,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "audit:prod": "bash scripts/audit.sh",
+    "migration:drift": "bash scripts/check-migration-drift.sh",
+    "incident:dashboard": "node scripts/incident-dashboard.mjs",
     "workflow:bootstrap": "bash scripts/openai-workflow-bootstrap.sh",
     "workflow:validate": "bash scripts/validate-openai-workflow.sh",
     "workflow:start": "bash scripts/start-atlas-ops-session.sh",
