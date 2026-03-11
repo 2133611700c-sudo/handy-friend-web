@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Handy & Friend | Full Pricing</title>
-  <meta name="description" content="Transparent handyman pricing in Los Angeles. TV mounting, furniture assembly, painting and flooring calculator, plumbing and electrical." />
+  <meta name="description" content="Transparent handyman pricing in Los Angeles. TV mounting, furniture assembly, cabinet painting, flooring calculator, plumbing and electrical." />
+  <link rel="canonical" href="https://handyandfriend.com/pricing" />
   <style>
     html,body{margin:0;padding:0;background:#f9f6f1;color:#1a1410;font-family:Inter,Arial,sans-serif}
     *{box-sizing:border-box}
@@ -13,8 +14,28 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="/assets/js/price-registry.browser.js"></script>
+  <!-- Google Tag Manager (deferred to idle for CWV) -->
+  <script>
+  window.dataLayer=window.dataLayer||[];
+  function gtag(){dataLayer.push(arguments);}
+  (function(){
+    function idle(fn){if('requestIdleCallback' in window)requestIdleCallback(fn,{timeout:3500});else setTimeout(fn,3500);}
+    function loadScript(src,cb){var s=document.createElement('script');s.async=true;s.src=src;if(cb)s.onload=cb;document.head.appendChild(s);}
+    idle(function(){
+      dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+      loadScript('https://www.googletagmanager.com/gtm.js?id=GTM-NQTL3S6Q');
+      loadScript('https://www.googletagmanager.com/gtag/js?id=G-Z05XJ8E281',function(){
+        gtag('js',new Date());gtag('config','G-Z05XJ8E281');gtag('config','AW-17971094967');
+      });
+    });
+  })();
+  </script>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NQTL3S6Q" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
@@ -30,10 +51,14 @@ const C = {
 };
 
 /* ─── COMBOS (language-neutral) ───────────────────────────────── */
-const COMBOS = [
-  {svcs:["🎨 Paint 300sf","🏠 Floor 200sf"],  orig:1375, price:1100, save:275},
+const COMBOS_FALLBACK = [
+  {svcs:["🎨 Paint 300sf","🏠 Floor 200sf"],  orig:1500, price:1200, save:300},
   {svcs:["🍳 Kitchen 15 doors","🎨 Furniture Painting 2 pcs"], orig:715, price:572, save:143},
 ];
+const REG = (window.HF_PRICE_REGISTRY && typeof window.HF_PRICE_REGISTRY === 'object')
+  ? window.HF_PRICE_REGISTRY
+  : null;
+const COMBOS = Array.isArray(REG?.combos) && REG.combos.length ? REG.combos : COMBOS_FALLBACK;
 
 function wa(text){ return `https://wa.me/12133611700?text=${encodeURIComponent(text)}`; }
 function fmt(n){ return "$"+Math.round(n).toLocaleString(); }
@@ -48,11 +73,12 @@ en:{
   heroTitle:"Transparent Pricing.\nNo Surprises.",
   heroSub:"",
   trust:["✅ Professional & Insured","⭐ 5.0 Rated","📍 Los Angeles"],
-  svcOrder:["tv","furniture","art","painting","flooring","plumbing","electrical"],
-  svcIcon:{tv:"📺",furniture:"🛋️",art:"🖼️",painting:"🎨",flooring:"🏠",plumbing:"🚰",electrical:"⚡"},
-  svcBase:{tv:"$165",furniture:"$150",art:"$175",painting:"$3.00",flooring:"$3.50",plumbing:"$150",electrical:"$150"},
-  svcNote:{tv:"fixed",furniture:"from",art:"up to 5 pcs",painting:"per sq ft",flooring:"per sq ft",plumbing:"from",electrical:"from"},
-  svcType:{tv:"fixed",furniture:"fixed",art:"fixed_plus",painting:"sqft",flooring:"sqft",plumbing:"fixed",electrical:"fixed_plus"},
+  svcOrder:["tv","furniture","art","painting","flooring","cabinets","furnpaint","plumbing","electrical"],
+  svcIcon:{tv:"📺",furniture:"🛋️",art:"🖼️",painting:"🎨",flooring:"🏠",cabinets:"🎨",furnpaint:"🪑",plumbing:"🚰",electrical:"⚡"},
+  svcBase:{tv:"$105",furniture:"$75",art:"$95",painting:"$3.00",flooring:"$3.00",cabinets:"$75",furnpaint:"$40",plumbing:"$115",electrical:"$95"},
+  svcNote:{tv:"fixed",furniture:"from",art:"up to 5 pcs",painting:"per sq ft",flooring:"per sq ft",cabinets:"per door",furnpaint:"from",plumbing:"from",electrical:"from"},
+  svcType:{tv:"fixed",furniture:"fixed",art:"fixed_plus",painting:"sqft",flooring:"sqft",cabinets:"fixed_plus",furnpaint:"fixed",plumbing:"fixed",electrical:"fixed_plus"},
+  optAddons:"Optional Add-ons",
   svcPopular:{tv:true},
   svcs:{
     tv:{
@@ -60,10 +86,10 @@ en:{
       included:["Wall-safe mounting","Surface cable management included","All holes patched & painted","Level guarantee"],
       youProvide:["TV bracket / arm","In-wall wiring if fire blocks present"],
       options:[
-        {label:'Standard mount (up to 65")',sub:"Drywall / studs",price:165,time:"1–1.5h",popular:true},
-        {label:"Mount + concealed wires",sub:"In-wall or cable channel",price:250,time:"2–2.5h"},
+        {label:'Standard mount (up to 65")',sub:"Drywall / studs",price:105,time:"1–1.5h",popular:true},
+        {label:"Mount + concealed wires",sub:"In-wall or cable channel",price:185,time:"2–2.5h"},
       ],
-      example:{desc:'65" TV on drywall + surface cable mgmt',price:165},
+      example:{desc:'65" TV on drywall + surface cable mgmt',price:105},
       wa:"Hi! I need TV mounting.",
     },
     furniture:{
@@ -71,12 +97,12 @@ en:{
       included:["Full IKEA & flat-pack assembly","Hardware installation","Cleanup after job"],
       youProvide:["All parts, hardware & instructions","Missing parts billed $75/hr"],
       options:[
-        {label:"Small items (2–3 pcs)",sub:"Nightstand / chair / shelf",price:150,time:"1–1.5h"},
-        {label:"Dresser (3–6 drawers)",price:200,time:"2–3h"},
-        {label:"Bed frame",sub:"Storage/lift +$75/hr",price:275,time:"2.5–4h"},
-        {label:"PAX / large closet",sub:"$75/hr · min 4h",price:300,time:"≥4h",hourly:true},
+        {label:"Small items (shelf, desk, TV stand)",sub:"Nightstand / chair / shelf",price:75,time:"1–1.5h"},
+        {label:"Dresser or chest of drawers",price:95,time:"2–3h"},
+        {label:"Bed frame",sub:"Storage/lift +$50/hr",price:115,time:"2.5–4h"},
+        {label:"PAX / closet system",sub:"$50/hr · min 4h",price:50,time:"≥4h",hourly:true},
       ],
-      example:{desc:"HEMNES dresser + nightstand",price:200},
+      example:{desc:"HEMNES dresser + nightstand",price:95},
       wa:"Hi! I need furniture assembly.",
     },
     art:{
@@ -84,70 +110,113 @@ en:{
       included:["Level guarantee on all pieces","Up to 5 pieces per visit","Anchors & fasteners installed"],
       youProvide:["Hardware, anchors, brackets","Gallery >5 pcs billed $75/hr after 2h"],
       options:[
-        {label:"Art / Mirrors up to 5 pcs",sub:"Max 40 lbs per piece",price:175,time:"up to 2h"},
-        {label:"Curtain rods / Blinds (1st window)",price:175,time:"1.5–2.5h"},
+        {label:"Art / Mirrors up to 5 pcs",sub:"Max 40 lbs per piece",price:95,time:"up to 2h"},
+        {label:"Curtain rods / Blinds (1st window)",price:75,time:"1.5–2.5h"},
       ],
       addon:{label:"Each additional window",price:30,time:"~30 min"},
-      example:{desc:"3 artworks + 1 large mirror",price:175},
+      example:{desc:"3 artworks + 1 large mirror",price:95},
       wa:"Hi! I need art & mirror hanging.",
     },
     painting:{
       label:"Painting", tagline:"Professional finish. No spillage.", badge:"Same-day possible",
-      included:["Premium paint and primer included in price","Professional prep & drop cloths","No spillage guarantee","Clean edges & trim","Same-day for small jobs"],
-      youProvide:["Major wall repairs quoted separately"],
+      included:["Labor only — client provides paint","Professional prep & drop cloths","No spillage guarantee","Clean edges & trim","Same-day for small jobs"],
+      youProvide:["Paint, primer & supplies","Major wall repairs quoted separately"],
       surfaces:[
-        {id:"w1",label:"Walls — 1 coat (same color)",price:3.00},
-        {id:"w2",label:"Walls — 2 coats (color change)",price:4.00},
-        {id:"cs",label:"Ceiling smooth (2 coats)",price:4.00},
-        {id:"ct",label:"Ceiling textured (2 coats)",price:4.50},
-        {id:"cg",label:"Ceiling semi-gloss (2 coats)",price:4.50},
+        {id:"w1",label:"Walls/ceiling — 1 coat (refresh)",price:3.00},
+        {id:"w2",label:"Walls/ceiling — 2 coats (color change)",price:3.75},
+        {id:"cs",label:"Ceiling smooth",price:3.75},
+        {id:"ct",label:"Ceiling textured",price:4.25},
       ],
       addons:[
-        {id:"sand",label:"+ Sanding / prep",price:0.80},
-        {id:"wall",label:"+ Wallpaper removal",price:1.60},
-        {id:"mold",label:"+ Mold treatment",price:2.00},
+        {id:"sand",label:"+ Surface prep (sand, patch, prime)",price:0.65},
+        {id:"wall",label:"+ Wallpaper removal",price:1.25},
+        {id:"mold",label:"+ Mold treatment",price:1.50},
       ],
       trim:[
-        {label:"Baseboards",price:"$4.50/lf"},
-        {label:"Door casings simple",price:"$5.00/lf"},
-        {label:"Door casings profile",price:"$5.75/lf"},
-        {label:"Crown / cornice molding",price:"$6.75/lf"},
+        {label:"Baseboards or crown molding",price:"$3.00/lf"},
+        {label:"Crown molding (ornate)",price:"$3.75/lf"},
+        {label:"Door casing or trim",price:"$30/side"},
+        {label:"Interior door (slab)",price:"$65/door"},
+        {label:"Baseboard install (new)",price:"$2.50/lf"},
       ],
-      example:{desc:"Living room 300sf, 1 coat walls",price:900},
+      example:{desc:"Average room 12×14 ft",price:600},
       wa:"Hi! I need painting service.",
     },
     flooring:{
       label:"Flooring", tagline:"Clean install. Debris removed.",
-      included:["Clean installation","Debris & packaging removal","120–250 sqft/day","Straight and level finish"],
+      included:["Labor only — client provides materials","Debris & packaging removal","120–250 sqft/day","Straight and level finish"],
       youProvide:["Flooring, underlayment & transitions","Leveling compound quoted on-site"],
       surfaces:[
-        {id:"lam",label:"Laminate click-lock",price:3.50},
-        {id:"lvp",label:"LVP / Luxury Vinyl click",price:3.75},
+        {id:"lam",label:"Laminate click-lock",price:3.00},
+        {id:"lvp",label:"LVP / Luxury Vinyl click",price:3.00},
       ],
       addons:[
-        {id:"demo",label:"+ Demo existing floor",price:2.25},
-        {id:"under",label:"+ Underlayment install",price:0.75},
+        {id:"demo",label:"+ Demo existing floor",price:1.50},
+        {id:"under",label:"+ Underlayment install",price:0.50},
       ],
       extras:[
-        {label:"Transition strip",price:"$55/ea"},
-        {label:"Baseboard remove + reinstall",price:"$3.50/lf"},
-        {label:"Door undercut",price:"$55/door"},
-        {label:"Spot leveling (per bag)",price:"$65/bag"},
+        {label:"Transition strip",price:"$30/ea"},
+        {label:"Baseboard remove + reinstall",price:"$2.00/lf"},
+        {label:"Door undercut",price:"$30/door"},
+        {label:"Spot leveling (per bag)",price:"$60/bag"},
       ],
-      example:{desc:"300sf LVP + demo old floor",price:1950},
+      example:{desc:"200sf LVP + demo old floor",price:1000},
       wa:"Hi! I need flooring installation.",
+    },
+    cabinets:{
+      label:"Kitchen Cabinet Painting", tagline:"Paint included. Spray finish.", badge:"Paint Included",
+      included:["Benjamin Moore Advance® paint included","Primer & surface prep included","Professional spray finish","Degreasing & cleanup"],
+      youProvide:["Access to cabinets","Hardware removed (or we do it)"],
+      options:[
+        {label:"Full Package (spray both sides + frame)",sub:"Most popular",price:75,time:"per door",popular:true},
+        {label:"Spray both sides",price:70,time:"per door"},
+        {label:"Spray one side",price:40,time:"per door"},
+        {label:"Roller finish (budget)",price:7.25,time:"per door"},
+        {label:'Drawer front — small (6" or less)',price:25,time:"per front"},
+        {label:'Drawer front — large (over 6")',price:35,time:"per front"},
+        {label:"End panel / Fridge panel",price:50,time:"per panel"},
+        {label:"Kitchen island — full repaint",price:175,time:"per island"},
+        {label:"Interior cabinet (shelves & walls)",price:30,time:"per section"},
+      ],
+      extras:[
+        {label:"Heavy degreasing",price:"$10/door"},
+        {label:"Oak grain filling",price:"$35/door"},
+        {label:"Two-tone color",price:"$125 flat"},
+        {label:"Glass door masking",price:"$10/door"},
+        {label:"Hardware hole filling",price:"$10/door"},
+        {label:"Top coat upgrade",price:"$15/door"},
+        {label:"Deep damage repair",price:"$20/piece"},
+        {label:"Remove contact paper",price:"$50/hr"},
+        {label:"Caulking & sealing",price:"$1.25/lf"},
+      ],
+      example:{desc:"Average kitchen (15 doors + 6 drawers)",price:1275},
+      wa:"Hi! I need kitchen cabinet painting.",
+    },
+    furnpaint:{
+      label:"Furniture Painting", tagline:"Premium paint. Spray finish.", badge:"Paint Included",
+      included:["Benjamin Moore Advance® paint included","Sanding, primer & two finish coats","Professional spray application","Full cleanup"],
+      youProvide:["Access to furniture","Hardware removed preferred"],
+      options:[
+        {label:"Dining chair",price:40,time:"per piece"},
+        {label:"Nightstand or side table",price:65,time:"per piece"},
+        {label:"Dresser or chest",price:170,time:"per piece"},
+        {label:"Dining table",price:130,time:"per piece"},
+        {label:"Built-in cabinetry",sub:"per linear foot",price:60,time:"per lf"},
+      ],
+      example:{desc:"Dresser + 2 nightstands",price:300},
+      wa:"Hi! I need furniture painting.",
     },
     plumbing:{
       label:"Plumbing", tagline:"No leaks. Quality fixtures.", badge:"No permits needed",
       included:["Cosmetic replacements only","No permits required","Quality finish guaranteed"],
       youProvide:["Fixture, faucet, or parts","New supply lines → licensed C-36 referral"],
       options:[
-        {label:"Faucet replacement",sub:"Kitchen or bathroom",price:195,time:"1.5–2.5h"},
-        {label:"Shower head replacement",price:150,time:"< 1h"},
-        {label:"Toilet tank / flapper repair",price:150,time:"~1h"},
-        {label:"Re-caulk tub / shower",sub:"Old caulk removal included",price:215,time:"2–3h"},
+        {label:"Faucet installation",sub:"Kitchen or bathroom",price:115,time:"1.5–2.5h"},
+        {label:"Shower head replacement",price:60,time:"< 1h"},
+        {label:"Toilet tank repair",price:95,time:"~1h"},
+        {label:"Re-caulk tub / shower",sub:"Old caulk removal included",price:110,time:"2–3h"},
       ],
-      example:{desc:"Kitchen faucet replacement",price:195},
+      example:{desc:"Kitchen faucet installation",price:115},
       wa:"Hi! I need plumbing service.",
     },
     electrical:{
@@ -155,12 +224,12 @@ en:{
       included:["Like-for-like replacements only","Existing boxes only","App setup for smart devices"],
       youProvide:["Fixture, device, or switch","Panel work → licensed C-10 referral"],
       options:[
-        {label:"Light fixture swap",sub:"1 fixture (existing box)",price:175,time:"1–2h"},
-        {label:"Outlets / switches (first 3)",price:150,time:"1–2h"},
-        {label:"Smart doorbell / lock + app setup",price:195,time:"1.5–2.5h"},
+        {label:"Light fixture replacement",sub:"1 fixture (existing box)",price:95,time:"1–2h"},
+        {label:"Outlet/switch (first 1–2)",price:75,time:"1–2h"},
+        {label:"Smart doorbell / lock + app setup",price:85,time:"1.5–2.5h"},
       ],
-      addon:{label:"Each additional outlet/switch",price:20,time:"~15 min"},
-      example:{desc:"2 light fixtures + 3 outlets",price:325},
+      addon:{label:"Each additional outlet/switch",price:30,time:"~15 min"},
+      example:{desc:"2 light fixtures + 2 outlets",price:250},
       wa:"Hi! I need electrical service.",
     },
   },
@@ -182,7 +251,7 @@ en:{
   faqs:[
     {q:"How fast do you respond?",a:"Within 10 min. Available 8am–8pm daily. Urgent same-day: call 213-361-1700."},
     {q:"Free estimates?",a:"100% free quotes. Transparent pricing. No hidden fees."},
-    {q:"Licensed and insured?",a:"Yes. Fully licensed & insured. All work guaranteed."},
+    {q:"Insured and legal-safe scope?",a:"Yes. We are fully insured and operate under California minor work exemption limits."},
     {q:"Satisfaction guarantee?",a:"100%. Unhappy? We'll redo it free within 7 days."},
     {q:"Weekend service?",a:"Yes. Call 213-361-1700 for weekend/evening appointments."},
     {q:"Payment methods?",a:"Cash, Venmo, PayPal, all major credit cards. Pay after completion."},
@@ -198,12 +267,13 @@ es:{
   heroTag:"🔧 Handy & Friend · Los Ángeles",
   heroTitle:"Precios Transparentes.\nSin Sorpresas.",
   heroSub:"",
-  trust:["✅ Licencia y seguro","⭐ 4.9 · 500+ clientes","📍 Todo Los Ángeles"],
-  svcOrder:["tv","furniture","art","painting","flooring","plumbing","electrical"],
-  svcIcon:{tv:"📺",furniture:"🛋️",art:"🖼️",painting:"🎨",flooring:"🏠",plumbing:"🚰",electrical:"⚡"},
-  svcBase:{tv:"$165",furniture:"$150",art:"$175",painting:"$3.00",flooring:"$3.50",plumbing:"$150",electrical:"$150"},
-  svcNote:{tv:"fijo",furniture:"desde",art:"hasta 5 pcs",painting:"por ft²",flooring:"por ft²",plumbing:"desde",electrical:"desde"},
-  svcType:{tv:"fixed",furniture:"fixed",art:"fixed_plus",painting:"sqft",flooring:"sqft",plumbing:"fixed",electrical:"fixed_plus"},
+  trust:["✅ Profesional y asegurado","⭐ 5.0 valorado","📍 Todo Los Ángeles"],
+  svcOrder:["tv","furniture","art","painting","flooring","cabinets","furnpaint","plumbing","electrical"],
+  svcIcon:{tv:"📺",furniture:"🛋️",art:"🖼️",painting:"🎨",flooring:"🏠",cabinets:"🎨",furnpaint:"🪑",plumbing:"🚰",electrical:"⚡"},
+  svcBase:{tv:"$105",furniture:"$75",art:"$95",painting:"$3.00",flooring:"$3.00",cabinets:"$75",furnpaint:"$40",plumbing:"$115",electrical:"$95"},
+  svcNote:{tv:"fijo",furniture:"desde",art:"hasta 5 pcs",painting:"por ft²",flooring:"por ft²",cabinets:"por puerta",furnpaint:"desde",plumbing:"desde",electrical:"desde"},
+  svcType:{tv:"fixed",furniture:"fixed",art:"fixed_plus",painting:"sqft",flooring:"sqft",cabinets:"fixed_plus",furnpaint:"fixed",plumbing:"fixed",electrical:"fixed_plus"},
+  optAddons:"Complementos Opcionales",
   svcPopular:{tv:true},
   svcs:{
     tv:{
@@ -211,10 +281,10 @@ es:{
       included:["Montaje seguro en pared","Gestión de cables incluida","Todos los agujeros reparados y pintados","Garantía de nivel"],
       youProvide:["Soporte/brazo de TV","Cableado empotrado si hay bloques de fuego"],
       options:[
-        {label:'Montaje estándar (hasta 65")',sub:"Drywall / vigas",price:165,time:"1–1.5h",popular:true},
-        {label:"Montaje + cables ocultos",sub:"Empotrado o canaleta",price:250,time:"2–2.5h"},
+        {label:'Montaje estándar (hasta 65")',sub:"Drywall / vigas",price:105,time:"1–1.5h",popular:true},
+        {label:"Montaje + cables ocultos",sub:"Empotrado o canaleta",price:185,time:"2–2.5h"},
       ],
-      example:{desc:'TV 65" en drywall + gestión de cables',price:165},
+      example:{desc:'TV 65" en drywall + gestión de cables',price:105},
       wa:"¡Hola! Necesito montaje de TV.",
     },
     furniture:{
@@ -222,12 +292,12 @@ es:{
       included:["Armado completo IKEA y flat-pack","Instalación de herrajes","Limpieza después del trabajo"],
       youProvide:["Todas las piezas, herrajes e instrucciones","Piezas faltantes $75/hr"],
       options:[
-        {label:"Artículos pequeños (2–3 pcs)",sub:"Mesita / silla / estante",price:150,time:"1–1.5h"},
-        {label:"Cómoda (3–6 cajones)",price:200,time:"2–3h"},
-        {label:"Marco de cama",sub:"Almacenaje/elevador +$75/hr",price:275,time:"2.5–4h"},
-        {label:"PAX / closet grande",sub:"$75/hr · mín 4h",price:300,time:"≥4h",hourly:true},
+        {label:"Artículos pequeños (estante, escritorio, mueble TV)",sub:"Mesita / silla / estante",price:75,time:"1–1.5h"},
+        {label:"Cómoda o cajonera",price:95,time:"2–3h"},
+        {label:"Marco de cama",sub:"Almacenaje/elevador +$50/hr",price:115,time:"2.5–4h"},
+        {label:"PAX / sistema de closet",sub:"$50/hr · mín 4h",price:50,time:"≥4h",hourly:true},
       ],
-      example:{desc:"Cómoda HEMNES + mesita de noche",price:200},
+      example:{desc:"Cómoda HEMNES + mesita de noche",price:95},
       wa:"¡Hola! Necesito armado de muebles.",
     },
     art:{
@@ -235,70 +305,113 @@ es:{
       included:["Garantía de nivel en todas las piezas","Hasta 5 piezas por visita","Anclajes y herrajes instalados"],
       youProvide:["Herrajes, anclajes, soportes","Galería >5 pcs $75/hr después de 2h"],
       options:[
-        {label:"Cuadros / Espejos hasta 5 pcs",sub:"Máx 40 lbs por pieza",price:175,time:"hasta 2h"},
-        {label:"Barras de cortina / Persianas (1ra ventana)",price:175,time:"1.5–2.5h"},
+        {label:"Cuadros / Espejos hasta 5 pcs",sub:"Máx 40 lbs por pieza",price:95,time:"hasta 2h"},
+        {label:"Barras de cortina / Persianas (1ra ventana)",price:75,time:"1.5–2.5h"},
       ],
       addon:{label:"Cada ventana adicional",price:30,time:"~30 min"},
-      example:{desc:"3 cuadros + 1 espejo grande",price:175},
+      example:{desc:"3 cuadros + 1 espejo grande",price:95},
       wa:"¡Hola! Necesito colgar cuadros/espejos.",
     },
     painting:{
       label:"Pintura", tagline:"Acabado profesional. Sin derrames.", badge:"Posible mismo día",
-      included:["Pintura premium e imprimación incluidas en el precio","Preparación profesional y plásticos","Garantía sin derrames","Bordes y molduras limpios","Mismo día para trabajos pequeños"],
-      youProvide:["Reparaciones mayores de muros cotizadas aparte"],
+      included:["Solo mano de obra — cliente provee pintura","Preparación profesional y plásticos","Garantía sin derrames","Bordes y molduras limpios","Mismo día para trabajos pequeños"],
+      youProvide:["Pintura, imprimación y materiales","Reparaciones mayores de muros cotizadas aparte"],
       surfaces:[
-        {id:"w1",label:"Paredes — 1 capa (mismo color)",price:3.00},
-        {id:"w2",label:"Paredes — 2 capas (cambio de color)",price:4.00},
-        {id:"cs",label:"Techo liso (2 capas)",price:4.00},
-        {id:"ct",label:"Techo texturizado (2 capas)",price:4.50},
-        {id:"cg",label:"Techo semi-brillante (2 capas)",price:4.50},
+        {id:"w1",label:"Paredes/techo — 1 capa (refresco)",price:3.00},
+        {id:"w2",label:"Paredes/techo — 2 capas (cambio de color)",price:3.75},
+        {id:"cs",label:"Techo liso",price:3.75},
+        {id:"ct",label:"Techo texturizado",price:4.25},
       ],
       addons:[
-        {id:"sand",label:"+ Lijado / preparación",price:0.80},
-        {id:"wall",label:"+ Retirar papel tapiz",price:1.60},
-        {id:"mold",label:"+ Tratamiento de moho",price:2.00},
+        {id:"sand",label:"+ Prep. superficie (lijar, parchar, imprimar)",price:0.65},
+        {id:"wall",label:"+ Retirar papel tapiz",price:1.25},
+        {id:"mold",label:"+ Tratamiento de moho",price:1.50},
       ],
       trim:[
-        {label:"Zócalos",price:"$4.50/lf"},
-        {label:"Marcos de puerta simples",price:"$5.00/lf"},
-        {label:"Marcos de puerta con perfil",price:"$5.75/lf"},
-        {label:"Moldura corona / cornisa",price:"$6.75/lf"},
+        {label:"Zócalos o moldura corona",price:"$3.00/lf"},
+        {label:"Moldura corona (ornamentada)",price:"$3.75/lf"},
+        {label:"Marco de puerta o moldura",price:"$30/lado"},
+        {label:"Puerta interior (hoja)",price:"$65/puerta"},
+        {label:"Instalación de zócalo (nuevo)",price:"$2.50/lf"},
       ],
-      example:{desc:"Sala 300ft², 1 capa paredes",price:900},
+      example:{desc:"Habitación promedio 12×14 ft",price:600},
       wa:"¡Hola! Necesito servicio de pintura.",
     },
     flooring:{
       label:"Pisos", tagline:"Instalación limpia. Escombros retirados.",
-      included:["Instalación limpia","Retiro de escombros y empaques","120–250 ft²/día","Acabado recto y nivelado"],
+      included:["Solo mano de obra — cliente provee materiales","Retiro de escombros y empaques","120–250 ft²/día","Acabado recto y nivelado"],
       youProvide:["Piso, underlayment y transiciones","Nivelación cotizada en sitio"],
       surfaces:[
-        {id:"lam",label:"Laminado click-lock",price:3.50},
-        {id:"lvp",label:"LVP / Vinilo de lujo",price:3.75},
+        {id:"lam",label:"Laminado click-lock",price:3.00},
+        {id:"lvp",label:"LVP / Vinilo de lujo",price:3.00},
       ],
       addons:[
-        {id:"demo",label:"+ Demo piso existente",price:2.25},
-        {id:"under",label:"+ Instalación underlayment",price:0.75},
+        {id:"demo",label:"+ Demo piso existente",price:1.50},
+        {id:"under",label:"+ Instalación underlayment",price:0.50},
       ],
       extras:[
-        {label:"Tira de transición",price:"$55/ea"},
-        {label:"Zócalo retirar + reinstalar",price:"$3.50/lf"},
-        {label:"Recorte de puerta",price:"$55/puerta"},
-        {label:"Nivelación puntual (por saco)",price:"$65/saco"},
+        {label:"Tira de transición",price:"$30/ea"},
+        {label:"Zócalo retirar + reinstalar",price:"$2.00/lf"},
+        {label:"Recorte de puerta",price:"$30/puerta"},
+        {label:"Nivelación puntual (por saco)",price:"$60/saco"},
       ],
-      example:{desc:"300ft² LVP + demo piso viejo",price:1950},
+      example:{desc:"200ft² LVP + demo piso viejo",price:1000},
       wa:"¡Hola! Necesito instalación de piso.",
+    },
+    cabinets:{
+      label:"Pintura de Gabinetes de Cocina", tagline:"Pintura incluida. Acabado en spray.", badge:"Pintura Incluida",
+      included:["Pintura Benjamin Moore Advance® incluida","Imprimante y preparación de superficie incluidos","Acabado profesional en spray","Desengrase y limpieza"],
+      youProvide:["Acceso a gabinetes","Hardware removido (o lo hacemos nosotros)"],
+      options:[
+        {label:"Paquete Completo (spray ambos lados + marco)",sub:"Más popular",price:75,time:"por puerta",popular:true},
+        {label:"Spray ambos lados",price:70,time:"por puerta"},
+        {label:"Spray un lado",price:40,time:"por puerta"},
+        {label:"Acabado de rodillo (económico)",price:7.25,time:"por puerta"},
+        {label:'Frente de cajón — pequeño (6" o menos)',price:25,time:"por frente"},
+        {label:'Frente de cajón — grande (más de 6")',price:35,time:"por frente"},
+        {label:"Panel lateral / Panel refrigerador",price:50,time:"por panel"},
+        {label:"Isla de cocina — repintado completo",price:175,time:"por isla"},
+        {label:"Interior de gabinete (estantes y paredes)",price:30,time:"por sección"},
+      ],
+      extras:[
+        {label:"Desengrase profundo",price:"$10/puerta"},
+        {label:"Relleno de veta de roble",price:"$35/puerta"},
+        {label:"Color de dos tonos",price:"$125 fijo"},
+        {label:"Enmascaramiento de puerta de vidrio",price:"$10/puerta"},
+        {label:"Relleno de agujeros de hardware",price:"$10/puerta"},
+        {label:"Mejora de capa superior",price:"$15/puerta"},
+        {label:"Reparación de daños profundos",price:"$20/pieza"},
+        {label:"Retirar papel de contacto",price:"$50/hr"},
+        {label:"Calafateo y sellado",price:"$1.25/lf"},
+      ],
+      example:{desc:"Cocina promedio (15 puertas + 6 cajones)",price:1275},
+      wa:"¡Hola! Necesito pintura de gabinetes de cocina.",
+    },
+    furnpaint:{
+      label:"Pintura de Muebles", tagline:"Pintura premium. Acabado en spray.", badge:"Pintura Incluida",
+      included:["Pintura Benjamin Moore Advance® incluida","Lijado, imprimante y dos capas de acabado","Aplicación profesional en spray","Limpieza completa"],
+      youProvide:["Acceso a muebles","Hardware removido preferido"],
+      options:[
+        {label:"Silla de comedor",price:40,time:"por pieza"},
+        {label:"Mesa de noche o mesa lateral",price:65,time:"por pieza"},
+        {label:"Cómoda o cajonera",price:170,time:"por pieza"},
+        {label:"Mesa de comedor",price:130,time:"por pieza"},
+        {label:"Carpintería empotrada",sub:"por pie lineal",price:60,time:"por pl"},
+      ],
+      example:{desc:"Cómoda + 2 mesas de noche",price:300},
+      wa:"¡Hola! Necesito pintura de muebles.",
     },
     plumbing:{
       label:"Plomería", tagline:"Sin fugas. Accesorios de calidad.", badge:"Sin permisos",
       included:["Solo reemplazos cosméticos","Sin permisos requeridos","Garantía de calidad"],
       youProvide:["Grifo, accesorio o partes","Líneas nuevas → referencia C-36 licenciado"],
       options:[
-        {label:"Reemplazo de grifo",sub:"Cocina o baño",price:195,time:"1.5–2.5h"},
-        {label:"Reemplazo cabeza de ducha",price:150,time:"< 1h"},
-        {label:"Reparación tanque / válvula",price:150,time:"~1h"},
-        {label:"Re-sellar bañera / ducha",sub:"Retiro de sellador viejo incluido",price:215,time:"2–3h"},
+        {label:"Instalación de grifo",sub:"Cocina o baño",price:115,time:"1.5–2.5h"},
+        {label:"Reemplazo cabeza de ducha",price:60,time:"< 1h"},
+        {label:"Reparación tanque de inodoro",price:95,time:"~1h"},
+        {label:"Re-sellar bañera / ducha",sub:"Retiro de sellador viejo incluido",price:110,time:"2–3h"},
       ],
-      example:{desc:"Reemplazo de grifo de cocina",price:195},
+      example:{desc:"Instalación de grifo de cocina",price:115},
       wa:"¡Hola! Necesito servicio de plomería.",
     },
     electrical:{
@@ -306,12 +419,12 @@ es:{
       included:["Solo reemplazos equivalentes","Solo cajas existentes","Configuración de apps para dispositivos smart"],
       youProvide:["Luminaria, dispositivo o interruptor","Trabajo de panel → referencia C-10 licenciado"],
       options:[
-        {label:"Cambio de luminaria",sub:"1 luminaria (caja existente)",price:175,time:"1–2h"},
-        {label:"Enchufes / interruptores (primeros 3)",price:150,time:"1–2h"},
-        {label:"Timbre / cerradura smart + configuración",price:195,time:"1.5–2.5h"},
+        {label:"Cambio de luminaria",sub:"1 luminaria (caja existente)",price:95,time:"1–2h"},
+        {label:"Enchufe / interruptor (primeros 1–2)",price:75,time:"1–2h"},
+        {label:"Timbre / cerradura smart + configuración",price:85,time:"1.5–2.5h"},
       ],
-      addon:{label:"Cada enchufe/interruptor adicional",price:20,time:"~15 min"},
-      example:{desc:"2 luminarias + 3 enchufes",price:325},
+      addon:{label:"Cada enchufe/interruptor adicional",price:30,time:"~15 min"},
+      example:{desc:"2 luminarias + 2 enchufes",price:250},
       wa:"¡Hola! Necesito servicio eléctrico.",
     },
   },
@@ -333,7 +446,7 @@ es:{
   faqs:[
     {q:"¿Qué tan rápido responden?",a:"En menos de 10 min. Disponibles 8am–8pm todos los días. Urgente: llame al 213-361-1700."},
     {q:"¿Estimados gratis?",a:"100% gratis. Precios transparentes. Sin cargos ocultos."},
-    {q:"¿Licencia y seguro?",a:"Sí. Totalmente licenciados y asegurados. Todo trabajo garantizado."},
+    {q:"¿Seguro y alcance legal?",a:"Sí. Estamos totalmente asegurados y trabajamos dentro de los límites de trabajo menor en California."},
     {q:"¿Garantía de satisfacción?",a:"100%. ¿No está satisfecho? Lo rehacemos gratis en 7 días."},
     {q:"¿Servicio en fin de semana?",a:"Sí. Llame al 213-361-1700 para citas en fines de semana o noches."},
     {q:"¿Métodos de pago?",a:"Efectivo, Venmo, PayPal, todas las tarjetas. Paga después de completar."},
@@ -349,12 +462,13 @@ ru:{
   heroTag:"🔧 Handy & Friend · Лос-Анджелес",
   heroTitle:"Прозрачные цены.\nБез сюрпризов.",
   heroSub:"",
-  trust:["✅ Лицензия и страховка","⭐ 4.9 · 500+ клиентов","📍 Весь LA"],
-  svcOrder:["tv","furniture","art","painting","flooring","plumbing","electrical"],
-  svcIcon:{tv:"📺",furniture:"🛋️",art:"🖼️",painting:"🎨",flooring:"🏠",plumbing:"🚰",electrical:"⚡"},
-  svcBase:{tv:"$165",furniture:"$150",art:"$175",painting:"$3.00",flooring:"$3.50",plumbing:"$150",electrical:"$150"},
-  svcNote:{tv:"фикс.",furniture:"от",art:"до 5 шт.",painting:"за кв.ф.",flooring:"за кв.ф.",plumbing:"от",electrical:"от"},
-  svcType:{tv:"fixed",furniture:"fixed",art:"fixed_plus",painting:"sqft",flooring:"sqft",plumbing:"fixed",electrical:"fixed_plus"},
+  trust:["✅ Профессионально и застраховано","⭐ 5.0 рейтинг","📍 Весь LA"],
+  svcOrder:["tv","furniture","art","painting","flooring","cabinets","furnpaint","plumbing","electrical"],
+  svcIcon:{tv:"📺",furniture:"🛋️",art:"🖼️",painting:"🎨",flooring:"🏠",cabinets:"🎨",furnpaint:"🪑",plumbing:"🚰",electrical:"⚡"},
+  svcBase:{tv:"$105",furniture:"$75",art:"$95",painting:"$3.00",flooring:"$3.00",cabinets:"$75",furnpaint:"$40",plumbing:"$115",electrical:"$95"},
+  svcNote:{tv:"фикс.",furniture:"от",art:"до 5 шт.",painting:"за кв.ф.",flooring:"за кв.ф.",cabinets:"за дверцу",furnpaint:"от",plumbing:"от",electrical:"от"},
+  svcType:{tv:"fixed",furniture:"fixed",art:"fixed_plus",painting:"sqft",flooring:"sqft",cabinets:"fixed_plus",furnpaint:"fixed",plumbing:"fixed",electrical:"fixed_plus"},
+  optAddons:"Дополнительные опции",
   svcPopular:{tv:true},
   svcs:{
     tv:{
@@ -362,10 +476,10 @@ ru:{
       included:["Безопасный монтаж на стену","Управление кабелями включено","Все отверстия заделаны и покрашены","Гарантия уровня"],
       youProvide:["Кронштейн для ТВ","Прокладка в стене при огнезащитных блоках"],
       options:[
-        {label:'Стандартный монтаж (до 65")',sub:"Гипсокартон / стойки",price:165,time:"1–1.5ч",popular:true},
-        {label:"Монтаж + скрытые провода",sub:"Внутри стены или кабель-канал",price:250,time:"2–2.5ч"},
+        {label:'Стандартный монтаж (до 65")',sub:"Гипсокартон / стойки",price:105,time:"1–1.5ч",popular:true},
+        {label:"Монтаж + скрытые провода",sub:"Внутри стены или кабель-канал",price:185,time:"2–2.5ч"},
       ],
-      example:{desc:'65" ТВ на гипсокартоне + кабели',price:165},
+      example:{desc:'65" ТВ на гипсокартоне + кабели',price:105},
       wa:"Здравствуйте! Мне нужен монтаж ТВ.",
     },
     furniture:{
@@ -373,12 +487,12 @@ ru:{
       included:["Сборка IKEA и плоских упаковок","Установка фурнитуры","Уборка после работы"],
       youProvide:["Все детали, фурнитура и инструкции","Недостающие детали — $75/ч"],
       options:[
-        {label:"Небольшие предметы (2–3 шт.)",sub:"Тумбочка / стул / полка",price:150,time:"1–1.5ч"},
-        {label:"Комод (3–6 ящиков)",price:200,time:"2–3ч"},
-        {label:"Кроватный каркас",sub:"Хранение/подъём +$75/ч",price:275,time:"2.5–4ч"},
-        {label:"PAX / большой шкаф",sub:"$75/ч · мин. 4ч",price:300,time:"≥4ч",hourly:true},
+        {label:"Небольшие предметы (полка, стол, тумба ТВ)",sub:"Тумбочка / стул / полка",price:75,time:"1–1.5ч"},
+        {label:"Комод или ящики",price:95,time:"2–3ч"},
+        {label:"Кроватный каркас",sub:"Хранение/подъём +$50/ч",price:115,time:"2.5–4ч"},
+        {label:"PAX / гардеробная система",sub:"$50/ч · мин. 4ч",price:50,time:"≥4ч",hourly:true},
       ],
-      example:{desc:"Комод HEMNES + тумбочка",price:200},
+      example:{desc:"Комод HEMNES + тумбочка",price:95},
       wa:"Здравствуйте! Мне нужна сборка мебели.",
     },
     art:{
@@ -386,70 +500,113 @@ ru:{
       included:["Гарантия уровня на все предметы","До 5 предметов за один визит","Установка анкеров и крепежей"],
       youProvide:["Фурнитура, анкеры, кронштейны","Галерея >5 шт. — $75/ч после 2ч"],
       options:[
-        {label:"Картины / зеркала до 5 шт.",sub:"Макс. 18 кг на предмет",price:175,time:"до 2ч"},
-        {label:"Карнизы / жалюзи (1-е окно)",price:175,time:"1.5–2.5ч"},
+        {label:"Картины / зеркала до 5 шт.",sub:"Макс. 18 кг на предмет",price:95,time:"до 2ч"},
+        {label:"Карнизы / жалюзи (1-е окно)",price:75,time:"1.5–2.5ч"},
       ],
       addon:{label:"Каждое следующее окно",price:30,time:"~30 мин"},
-      example:{desc:"3 картины + 1 большое зеркало",price:175},
+      example:{desc:"3 картины + 1 большое зеркало",price:95},
       wa:"Здравствуйте! Нужно повесить картины/зеркала.",
     },
     painting:{
       label:"Покраска", tagline:"Профессиональная отделка. Без проливов.", badge:"Возможно в тот же день",
-      included:["Премиальная краска и грунтовка включены в стоимость","Профессиональная подготовка и плёнки","Гарантия без проливов","Чёткие края и отделка","В тот же день для небольших работ"],
-      youProvide:["Крупный ремонт стен — по отдельной смете"],
+      included:["Только работа — краску предоставляет клиент","Профессиональная подготовка и плёнки","Гарантия без проливов","Чёткие края и отделка","В тот же день для небольших работ"],
+      youProvide:["Краска, грунтовка и материалы","Крупный ремонт стен — по отдельной смете"],
       surfaces:[
-        {id:"w1",label:"Стены — 1 слой (тот же цвет)",price:3.00},
-        {id:"w2",label:"Стены — 2 слоя (смена цвета)",price:4.00},
-        {id:"cs",label:"Потолок гладкий (2 слоя)",price:4.00},
-        {id:"ct",label:"Потолок фактурный (2 слоя)",price:4.50},
-        {id:"cg",label:"Потолок полуглянцевый (2 слоя)",price:4.50},
+        {id:"w1",label:"Стены/потолок — 1 слой (освежить)",price:3.00},
+        {id:"w2",label:"Стены/потолок — 2 слоя (смена цвета)",price:3.75},
+        {id:"cs",label:"Потолок гладкий",price:3.75},
+        {id:"ct",label:"Потолок фактурный",price:4.25},
       ],
       addons:[
-        {id:"sand",label:"+ Шлифовка / подготовка",price:0.80},
-        {id:"wall",label:"+ Снятие обоев",price:1.60},
-        {id:"mold",label:"+ Обработка плесени",price:2.00},
+        {id:"sand",label:"+ Подготовка поверхности (шлифовка, шпатлёвка, грунт)",price:0.65},
+        {id:"wall",label:"+ Снятие обоев",price:1.25},
+        {id:"mold",label:"+ Обработка плесени",price:1.50},
       ],
       trim:[
-        {label:"Плинтуса",price:"$4.50/п.ф"},
-        {label:"Наличники простые",price:"$5.00/п.ф"},
-        {label:"Наличники профильные",price:"$5.75/п.ф"},
-        {label:"Карнизная лепнина",price:"$6.75/п.ф"},
+        {label:"Плинтуса или карниз",price:"$3.00/п.ф"},
+        {label:"Карниз (декоративный)",price:"$3.75/п.ф"},
+        {label:"Наличники / отделка",price:"$30/сторона"},
+        {label:"Дверь интерьерная (полотно)",price:"$65/дверь"},
+        {label:"Установка плинтуса (новый)",price:"$2.50/п.ф"},
       ],
-      example:{desc:"Гостиная 300 кв.ф, 1 слой стены",price:900},
+      example:{desc:"Средняя комната 12×14 фт",price:600},
       wa:"Здравствуйте! Мне нужна покраска.",
     },
     flooring:{
       label:"Напольные покрытия", tagline:"Чистая укладка. Мусор вывозим.",
-      included:["Чистая укладка","Вывоз мусора и упаковки","120–250 кв.ф/день","Ровная и горизонтальная укладка"],
+      included:["Только работа — материалы предоставляет клиент","Вывоз мусора и упаковки","120–250 кв.ф/день","Ровная и горизонтальная укладка"],
       youProvide:["Покрытие, подложка и порожки","Нивелировка — расчёт на месте"],
       surfaces:[
-        {id:"lam",label:"Ламинат click-lock",price:3.50},
-        {id:"lvp",label:"LVP / Виниловый клик",price:3.75},
+        {id:"lam",label:"Ламинат click-lock",price:3.00},
+        {id:"lvp",label:"LVP / Виниловый клик",price:3.00},
       ],
       addons:[
-        {id:"demo",label:"+ Демонтаж старого покрытия",price:2.25},
-        {id:"under",label:"+ Укладка подложки",price:0.75},
+        {id:"demo",label:"+ Демонтаж старого покрытия",price:1.50},
+        {id:"under",label:"+ Укладка подложки",price:0.50},
       ],
       extras:[
-        {label:"Порожек перехода",price:"$45/шт"},
-        {label:"Снятие и установка плинтуса",price:"$3.50/п.ф"},
-        {label:"Подрезка дверей",price:"$55/дверь"},
-        {label:"Локальная нивелировка (за мешок)",price:"$65/мешок"},
+        {label:"Порожек перехода",price:"$30/шт"},
+        {label:"Снятие и установка плинтуса",price:"$2.00/п.ф"},
+        {label:"Подрезка дверей",price:"$30/дверь"},
+        {label:"Локальная нивелировка (за мешок)",price:"$60/мешок"},
       ],
-      example:{desc:"300 кв.ф LVP + демонтаж старого",price:2100},
+      example:{desc:"200 кв.ф LVP + демонтаж старого",price:1000},
       wa:"Здравствуйте! Мне нужна укладка пола.",
+    },
+    cabinets:{
+      label:"Покраска кухонных шкафов", tagline:"Краска включена. Распылительное покрытие.", badge:"Краска включена",
+      included:["Краска Benjamin Moore Advance® включена","Грунтовка и подготовка поверхности включены","Профессиональное распыление","Обезжиривание и уборка"],
+      youProvide:["Доступ к шкафам","Фурнитура снята (или мы снимем)"],
+      options:[
+        {label:"Полный пакет (спрей обе стороны + рама)",sub:"Самый популярный",price:75,time:"за дверцу",popular:true},
+        {label:"Спрей обе стороны",price:70,time:"за дверцу"},
+        {label:"Спрей одна сторона",price:40,time:"за дверцу"},
+        {label:"Роликовое покрытие (бюджет)",price:7.25,time:"за дверцу"},
+        {label:"Фасад ящика — маленький (15 см или менее)",price:25,time:"за фасад"},
+        {label:"Фасад ящика — большой (более 15 см)",price:35,time:"за фасад"},
+        {label:"Торцевая панель / Панель холодильника",price:50,time:"за панель"},
+        {label:"Кухонный остров — полная покраска",price:175,time:"за остров"},
+        {label:"Внутренняя часть шкафа (полки и стены)",price:30,time:"за секцию"},
+      ],
+      extras:[
+        {label:"Сильное обезжиривание",price:"$10/дверца"},
+        {label:"Заполнение дубовой текстуры",price:"$35/дверца"},
+        {label:"Двухцветный окрас",price:"$125 фикс."},
+        {label:"Маскировка стеклянных дверей",price:"$10/дверца"},
+        {label:"Заполнение отверстий фурнитуры",price:"$10/дверца"},
+        {label:"Улучшенное верхнее покрытие",price:"$15/дверца"},
+        {label:"Глубокий ремонт повреждений",price:"$20/шт"},
+        {label:"Удаление контактной бумаги",price:"$50/ч"},
+        {label:"Герметизация и уплотнение",price:"$1.25/п.ф"},
+      ],
+      example:{desc:"Средняя кухня (15 дверей + 6 ящиков)",price:1275},
+      wa:"Здравствуйте! Мне нужна покраска кухонных шкафов.",
+    },
+    furnpaint:{
+      label:"Покраска мебели", tagline:"Премиальная краска. Распылительное покрытие.", badge:"Краска включена",
+      included:["Краска Benjamin Moore Advance® включена","Шлифовка, грунтовка и два финишных слоя","Профессиональное нанесение распылением","Полная уборка"],
+      youProvide:["Доступ к мебели","Фурнитура снята желательно"],
+      options:[
+        {label:"Обеденный стул",price:40,time:"за шт"},
+        {label:"Тумбочка или приставной стол",price:65,time:"за шт"},
+        {label:"Комод или шкаф",price:170,time:"за шт"},
+        {label:"Обеденный стол",price:130,time:"за шт"},
+        {label:"Встроенная мебель",sub:"за погонный фут",price:60,time:"за п.ф"},
+      ],
+      example:{desc:"Комод + 2 тумбочки",price:300},
+      wa:"Здравствуйте! Мне нужна покраска мебели.",
     },
     plumbing:{
       label:"Сантехника", tagline:"Без течей. Качественные материалы.", badge:"Без разрешений",
       included:["Только косметическая замена","Разрешения не требуются","Гарантия качества"],
       youProvide:["Прибор, смеситель или запчасти","Новые подводки → рефф. лицензированного C-36"],
       options:[
-        {label:"Замена смесителя",sub:"Кухня или ванная",price:195,time:"1.5–2.5ч"},
-        {label:"Замена лейки душа",price:150,time:"< 1ч"},
-        {label:"Ремонт бачка / клапана унитаза",price:150,time:"~1ч"},
-        {label:"Перегерметизация ванны / душа",sub:"Снятие старого герметика включено",price:215,time:"2–3ч"},
+        {label:"Установка смесителя",sub:"Кухня или ванная",price:115,time:"1.5–2.5ч"},
+        {label:"Замена лейки душа",price:60,time:"< 1ч"},
+        {label:"Ремонт бачка унитаза",price:95,time:"~1ч"},
+        {label:"Перегерметизация ванны / душа",sub:"Снятие старого герметика включено",price:110,time:"2–3ч"},
       ],
-      example:{desc:"Замена кухонного смесителя",price:195},
+      example:{desc:"Установка кухонного смесителя",price:115},
       wa:"Здравствуйте! Мне нужна сантехника.",
     },
     electrical:{
@@ -457,12 +614,12 @@ ru:{
       included:["Только аналогичная замена","Только существующие коробки","Настройка приложений для умных устройств"],
       youProvide:["Прибор, устройство или выключатель","Работы со щитком → рефф. лицензированного C-10"],
       options:[
-        {label:"Замена светильника",sub:"1 прибор (существующая коробка)",price:175,time:"1–2ч"},
-        {label:"Розетки / выключатели (первые 3)",price:150,time:"1–2ч"},
-        {label:"Умный звонок / замок + настройка",price:195,time:"1.5–2.5ч"},
+        {label:"Замена светильника",sub:"1 прибор (существующая коробка)",price:95,time:"1–2ч"},
+        {label:"Розетка / выключатель (первые 1–2)",price:75,time:"1–2ч"},
+        {label:"Умный звонок / замок + настройка",price:85,time:"1.5–2.5ч"},
       ],
-      addon:{label:"Каждая доп. розетка/выключатель",price:20,time:"~15 мин"},
-      example:{desc:"2 светильника + 3 розетки",price:325},
+      addon:{label:"Каждая доп. розетка/выключатель",price:30,time:"~15 мин"},
+      example:{desc:"2 светильника + 2 розетки",price:250},
       wa:"Здравствуйте! Мне нужна электрика.",
     },
   },
@@ -484,7 +641,7 @@ ru:{
   faqs:[
     {q:"Как быстро вы отвечаете?",a:"В течение 10 минут. Работаем 8:00–20:00 ежедневно. Срочный вызов: 213-361-1700."},
     {q:"Бесплатная оценка?",a:"Да, 100% бесплатно. Прозрачные цены без скрытых платежей."},
-    {q:"Есть лицензия и страховка?",a:"Да. Полная лицензия и страховка. Все работы гарантированы."},
+    {q:"Страховка и легальный объём работ?",a:"Да. Мы полностью застрахованы и работаем в рамках California minor work exemption."},
     {q:"Гарантия?",a:"100%. Если не устроит — переделаем бесплатно в течение 7 дней."},
     {q:"Работаете в выходные?",a:"Да. Звоните 213-361-1700 для записи в вечернее и выходное время."},
     {q:"Как оплатить?",a:"Наличные, Venmo, PayPal, все карты. Оплата после выполнения работы."},
@@ -500,12 +657,13 @@ ua:{
   heroTag:"🔧 Handy & Friend · Лос-Анджелес",
   heroTitle:"Прозорі ціни.\nБез сюрпризів.",
   heroSub:"",
-  trust:["✅ Ліцензія і страховка","⭐ 4.9 · 500+ клієнтів","📍 Весь LA"],
-  svcOrder:["tv","furniture","art","painting","flooring","plumbing","electrical"],
-  svcIcon:{tv:"📺",furniture:"🛋️",art:"🖼️",painting:"🎨",flooring:"🏠",plumbing:"🚰",electrical:"⚡"},
-  svcBase:{tv:"$165",furniture:"$150",art:"$175",painting:"$3.00",flooring:"$3.50",plumbing:"$150",electrical:"$150"},
-  svcNote:{tv:"фікс.",furniture:"від",art:"до 5 шт.",painting:"за кв.ф.",flooring:"за кв.ф.",plumbing:"від",electrical:"від"},
-  svcType:{tv:"fixed",furniture:"fixed",art:"fixed_plus",painting:"sqft",flooring:"sqft",plumbing:"fixed",electrical:"fixed_plus"},
+  trust:["✅ Професійно та застраховано","⭐ 5.0 рейтинг","📍 Весь LA"],
+  svcOrder:["tv","furniture","art","painting","flooring","cabinets","furnpaint","plumbing","electrical"],
+  svcIcon:{tv:"📺",furniture:"🛋️",art:"🖼️",painting:"🎨",flooring:"🏠",cabinets:"🎨",furnpaint:"🪑",plumbing:"🚰",electrical:"⚡"},
+  svcBase:{tv:"$105",furniture:"$75",art:"$95",painting:"$3.00",flooring:"$3.00",cabinets:"$75",furnpaint:"$40",plumbing:"$115",electrical:"$95"},
+  svcNote:{tv:"фікс.",furniture:"від",art:"до 5 шт.",painting:"за кв.ф.",flooring:"за кв.ф.",cabinets:"за дверцята",furnpaint:"від",plumbing:"від",electrical:"від"},
+  svcType:{tv:"fixed",furniture:"fixed",art:"fixed_plus",painting:"sqft",flooring:"sqft",cabinets:"fixed_plus",furnpaint:"fixed",plumbing:"fixed",electrical:"fixed_plus"},
+  optAddons:"Додаткові опції",
   svcPopular:{tv:true},
   svcs:{
     tv:{
@@ -513,10 +671,10 @@ ua:{
       included:["Безпечний монтаж на стіну","Управління кабелями включено","Всі отвори зашпакльовані і пофарбовані","Гарантія рівня"],
       youProvide:["Кронштейн для ТВ","Прокладка у стіні при вогнезахисних блоках"],
       options:[
-        {label:'Стандартний монтаж (до 65")',sub:"Гіпсокартон / стійки",price:165,time:"1–1.5год",popular:true},
-        {label:"Монтаж + приховані дроти",sub:"Всередині стіни або кабель-канал",price:250,time:"2–2.5год"},
+        {label:'Стандартний монтаж (до 65")',sub:"Гіпсокартон / стійки",price:105,time:"1–1.5год",popular:true},
+        {label:"Монтаж + приховані дроти",sub:"Всередині стіни або кабель-канал",price:185,time:"2–2.5год"},
       ],
-      example:{desc:'65" ТВ на гіпсокартоні + кабелі',price:165},
+      example:{desc:'65" ТВ на гіпсокартоні + кабелі',price:105},
       wa:"Добрий день! Мені потрібен монтаж ТВ.",
     },
     furniture:{
@@ -524,12 +682,12 @@ ua:{
       included:["Збірка IKEA і плоских упаковок","Встановлення фурнітури","Прибирання після роботи"],
       youProvide:["Всі деталі, фурнітура та інструкції","Відсутні деталі — $75/год"],
       options:[
-        {label:"Невеликі предмети (2–3 шт.)",sub:"Тумбочка / стілець / полиця",price:150,time:"1–1.5год"},
-        {label:"Комод (3–6 ящиків)",price:200,time:"2–3год"},
-        {label:"Каркас ліжка",sub:"Зберігання/підйом +$75/год",price:275,time:"2.5–4год"},
-        {label:"PAX / великий шаф",sub:"$75/год · мін. 4год",price:300,time:"≥4год",hourly:true},
+        {label:"Невеликі предмети (полиця, стіл, тумба ТВ)",sub:"Тумбочка / стілець / полиця",price:75,time:"1–1.5год"},
+        {label:"Комод або ящики",price:95,time:"2–3год"},
+        {label:"Каркас ліжка",sub:"Зберігання/підйом +$50/год",price:115,time:"2.5–4год"},
+        {label:"PAX / гардеробна система",sub:"$50/год · мін. 4год",price:50,time:"≥4год",hourly:true},
       ],
-      example:{desc:"Комод HEMNES + тумбочка",price:200},
+      example:{desc:"Комод HEMNES + тумбочка",price:95},
       wa:"Добрий день! Мені потрібна збірка меблів.",
     },
     art:{
@@ -537,70 +695,113 @@ ua:{
       included:["Гарантія рівня на всі предмети","До 5 предметів за один візит","Встановлення анкерів і кріплень"],
       youProvide:["Фурнітура, анкери, кронштейни","Галерея >5 шт. — $75/год після 2год"],
       options:[
-        {label:"Картини / дзеркала до 5 шт.",sub:"Макс. 18 кг на предмет",price:175,time:"до 2год"},
-        {label:"Карнизи / жалюзі (1-е вікно)",price:175,time:"1.5–2.5год"},
+        {label:"Картини / дзеркала до 5 шт.",sub:"Макс. 18 кг на предмет",price:95,time:"до 2год"},
+        {label:"Карнизи / жалюзі (1-е вікно)",price:75,time:"1.5–2.5год"},
       ],
       addon:{label:"Кожне наступне вікно",price:30,time:"~30 хв"},
-      example:{desc:"3 картини + 1 велике дзеркало",price:175},
+      example:{desc:"3 картини + 1 велике дзеркало",price:95},
       wa:"Добрий день! Потрібно повісити картини/дзеркала.",
     },
     painting:{
       label:"Фарбування", tagline:"Професійна обробка. Без проливів.", badge:"Можливо в той же день",
-      included:["Преміальна фарба і ґрунтовка входять у вартість","Професійна підготовка і плівки","Гарантія без проливів","Чіткі краї та обробка","В той же день для невеликих робіт"],
-      youProvide:["Великий ремонт стін — за окремим кошторисом"],
+      included:["Тільки робота — фарбу надає клієнт","Професійна підготовка і плівки","Гарантія без проливів","Чіткі краї та обробка","В той же день для невеликих робіт"],
+      youProvide:["Фарба, ґрунтовка та матеріали","Великий ремонт стін — за окремим кошторисом"],
       surfaces:[
-        {id:"w1",label:"Стіни — 1 шар (той же колір)",price:2.25},
-        {id:"w2",label:"Стіни — 2 шари (зміна кольору)",price:3.00},
-        {id:"cs",label:"Стеля гладка (2 шари)",price:2.50},
-        {id:"ct",label:"Стеля фактурна (2 шари)",price:3.25},
-        {id:"cg",label:"Стеля напівглянцева (2 шари)",price:4.00},
+        {id:"w1",label:"Стіни/стеля — 1 шар (освіжити)",price:2.25},
+        {id:"w2",label:"Стіни/стеля — 2 шари (зміна кольору)",price:2.80},
+        {id:"cs",label:"Стеля гладка",price:2.35},
+        {id:"ct",label:"Стеля фактурна",price:3.00},
       ],
       addons:[
-        {id:"sand",label:"+ Шліфування / підготовка",price:0.80},
-        {id:"wall",label:"+ Зняття шпалер",price:1.60},
-        {id:"mold",label:"+ Обробка плісняви",price:2.00},
+        {id:"sand",label:"+ Підготовка поверхні (шліфування, шпаклівка, ґрунт)",price:0.65},
+        {id:"wall",label:"+ Зняття шпалер",price:1.25},
+        {id:"mold",label:"+ Обробка плісняви",price:1.50},
       ],
       trim:[
-        {label:"Плінтуси",price:"$4.50/п.ф"},
-        {label:"Лиштви прості",price:"$5.00/п.ф"},
-        {label:"Лиштви профільні",price:"$5.75/п.ф"},
-        {label:"Карнизна ліпнина",price:"$6.75/п.ф"},
+        {label:"Плінтуси або карниз",price:"$3.00/п.ф"},
+        {label:"Карниз (декоративний)",price:"$3.75/п.ф"},
+        {label:"Лиштви / обрамлення",price:"$30/сторона"},
+        {label:"Двері інтер'єрні (полотно)",price:"$65/двері"},
+        {label:"Встановлення плінтуса (новий)",price:"$2.50/п.ф"},
       ],
-      example:{desc:"Вітальня 300 кв.ф, 1 шар стіни",price:1200},
+      example:{desc:"Середня кімната 12×14 фт",price:450},
       wa:"Добрий день! Мені потрібне фарбування.",
     },
     flooring:{
       label:"Підлогові покриття", tagline:"Чиста укладка. Сміття вивозимо.",
-      included:["Чиста укладка","Вивіз сміття та упаковки","120–250 кв.ф/день","Рівна і горизонтальна укладка"],
+      included:["Тільки робота — матеріали надає клієнт","Вивіз сміття та упаковки","120–250 кв.ф/день","Рівна і горизонтальна укладка"],
       youProvide:["Покриття, підкладка і пороги","Нівелювання — розрахунок на місці"],
       surfaces:[
-        {id:"lam",label:"Ламінат click-lock",price:3.50},
-        {id:"lvp",label:"LVP / Вініловий клік",price:3.75},
+        {id:"lam",label:"Ламінат click-lock",price:3.00},
+        {id:"lvp",label:"LVP / Вініловий клік",price:3.00},
       ],
       addons:[
-        {id:"demo",label:"+ Демонтаж старого покриття",price:2.25},
-        {id:"under",label:"+ Укладка підкладки",price:0.75},
+        {id:"demo",label:"+ Демонтаж старого покриття",price:1.50},
+        {id:"under",label:"+ Укладка підкладки",price:0.50},
       ],
       extras:[
-        {label:"Поріг переходу",price:"$45/шт"},
-        {label:"Зняття і встановлення плінтуса",price:"$3.50/п.ф"},
-        {label:"Підрізка дверей",price:"$55/двері"},
-        {label:"Локальне нівелювання (за мішок)",price:"$65/мішок"},
+        {label:"Поріг переходу",price:"$30/шт"},
+        {label:"Зняття і встановлення плінтуса",price:"$2.00/п.ф"},
+        {label:"Підрізка дверей",price:"$30/двері"},
+        {label:"Локальне нівелювання (за мішок)",price:"$60/мішок"},
       ],
-      example:{desc:"300 кв.ф LVP + демонтаж старого",price:2100},
+      example:{desc:"200 кв.ф LVP + демонтаж старого",price:1000},
       wa:"Добрий день! Мені потрібна укладка підлоги.",
+    },
+    cabinets:{
+      label:"Фарбування кухонних шаф", tagline:"Фарба включена. Розпилювальне покриття.", badge:"Фарба включена",
+      included:["Фарба Benjamin Moore Advance® включена","Ґрунтовка та підготовка поверхні включені","Професійне розпилення","Знежирення та прибирання"],
+      youProvide:["Доступ до шаф","Фурнітура знята (або ми знімемо)"],
+      options:[
+        {label:"Повний пакет (спрей обидві сторони + рама)",sub:"Найпопулярніший",price:75,time:"за дверцята",popular:true},
+        {label:"Спрей обидві сторони",price:70,time:"за дверцята"},
+        {label:"Спрей одна сторона",price:40,time:"за дверцята"},
+        {label:"Роликове покриття (бюджет)",price:7.25,time:"за дверцята"},
+        {label:"Фасад ящика — маленький (15 см або менше)",price:25,time:"за фасад"},
+        {label:"Фасад ящика — великий (більше 15 см)",price:35,time:"за фасад"},
+        {label:"Торцева панель / Панель холодильника",price:50,time:"за панель"},
+        {label:"Кухонний острів — повне фарбування",price:175,time:"за острів"},
+        {label:"Внутрішня частина шафи (полиці та стіни)",price:30,time:"за секцію"},
+      ],
+      extras:[
+        {label:"Сильне знежирення",price:"$10/дверцята"},
+        {label:"Заповнення дубової текстури",price:"$35/дверцята"},
+        {label:"Двоколірне фарбування",price:"$125 фікс."},
+        {label:"Маскування скляних дверей",price:"$10/дверцята"},
+        {label:"Заповнення отворів фурнітури",price:"$10/дверцята"},
+        {label:"Покращене верхнє покриття",price:"$15/дверцята"},
+        {label:"Глибокий ремонт пошкоджень",price:"$20/шт"},
+        {label:"Видалення контактного паперу",price:"$50/год"},
+        {label:"Герметизація та ущільнення",price:"$1.25/п.ф"},
+      ],
+      example:{desc:"Середня кухня (15 дверцят + 6 ящиків)",price:1275},
+      wa:"Вітаю! Мені потрібне фарбування кухонних шаф.",
+    },
+    furnpaint:{
+      label:"Фарбування меблів", tagline:"Преміальна фарба. Розпилювальне покриття.", badge:"Фарба включена",
+      included:["Фарба Benjamin Moore Advance® включена","Шліфування, ґрунтовка та два фінішних шари","Професійне нанесення розпиленням","Повне прибирання"],
+      youProvide:["Доступ до меблів","Фурнітура знята бажано"],
+      options:[
+        {label:"Обідній стілець",price:40,time:"за шт"},
+        {label:"Тумбочка або приставний стіл",price:65,time:"за шт"},
+        {label:"Комод або шафа",price:170,time:"за шт"},
+        {label:"Обідній стіл",price:130,time:"за шт"},
+        {label:"Вбудовані меблі",sub:"за погонний фут",price:60,time:"за п.ф"},
+      ],
+      example:{desc:"Комод + 2 тумбочки",price:300},
+      wa:"Вітаю! Мені потрібне фарбування меблів.",
     },
     plumbing:{
       label:"Сантехніка", tagline:"Без течей. Якісні матеріали.", badge:"Без дозволів",
       included:["Лише косметична заміна","Дозволи не потрібні","Гарантія якості"],
       youProvide:["Прилад, змішувач або запчастини","Нові підводки → рефф. ліцензованого C-36"],
       options:[
-        {label:"Заміна змішувача",sub:"Кухня або ванна",price:195,time:"1.5–2.5год"},
-        {label:"Заміна душової лійки",price:150,time:"< 1год"},
-        {label:"Ремонт бачка / клапана унітазу",price:150,time:"~1год"},
-        {label:"Перегерметизація ванни / душу",sub:"Зняття старого герметика включено",price:215,time:"2–3год"},
+        {label:"Встановлення змішувача",sub:"Кухня або ванна",price:115,time:"1.5–2.5год"},
+        {label:"Заміна душової лійки",price:60,time:"< 1год"},
+        {label:"Ремонт бачка унітазу",price:95,time:"~1год"},
+        {label:"Перегерметизація ванни / душу",sub:"Зняття старого герметика включено",price:110,time:"2–3год"},
       ],
-      example:{desc:"Заміна кухонного змішувача",price:195},
+      example:{desc:"Встановлення кухонного змішувача",price:115},
       wa:"Добрий день! Мені потрібна сантехніка.",
     },
     electrical:{
@@ -608,12 +809,12 @@ ua:{
       included:["Лише аналогічна заміна","Лише існуючі коробки","Налаштування додатків для розумних пристроїв"],
       youProvide:["Прилад, пристрій або вимикач","Роботи зі щитком → рефф. ліцензованого C-10"],
       options:[
-        {label:"Заміна світильника",sub:"1 прилад (існуюча коробка)",price:175,time:"1–2год"},
-        {label:"Розетки / вимикачі (перші 3)",price:150,time:"1–2год"},
-        {label:"Розумний дзвінок / замок + налаштування",price:195,time:"1.5–2.5год"},
+        {label:"Заміна світильника",sub:"1 прилад (існуюча коробка)",price:95,time:"1–2год"},
+        {label:"Розетка / вимикач (перші 1–2)",price:75,time:"1–2год"},
+        {label:"Розумний дзвінок / замок + налаштування",price:85,time:"1.5–2.5год"},
       ],
-      addon:{label:"Кожна додаткова розетка/вимикач",price:20,time:"~15 хв"},
-      example:{desc:"2 світильники + 3 розетки",price:325},
+      addon:{label:"Кожна додаткова розетка/вимикач",price:30,time:"~15 хв"},
+      example:{desc:"2 світильники + 2 розетки",price:250},
       wa:"Добрий день! Мені потрібна електрика.",
     },
   },
@@ -635,7 +836,7 @@ ua:{
   faqs:[
     {q:"Як швидко ви відповідаєте?",a:"Протягом 10 хвилин. Працюємо 8:00–20:00 щодня. Терміновий виклик: 213-361-1700."},
     {q:"Безкоштовна оцінка?",a:"Так, 100% безкоштовно. Прозорі ціни без прихованих платежів."},
-    {q:"Є ліцензія і страховка?",a:"Так. Повна ліцензія і страховка. Всі роботи гарантовані."},
+    {q:"Страхування та легальний обсяг робіт?",a:"Так. Ми повністю застраховані та працюємо в межах California minor work exemption."},
     {q:"Гарантія?",a:"100%. Якщо незадоволені — переробимо безкоштовно протягом 7 днів."},
     {q:"Працюєте у вихідні?",a:"Так. Телефонуйте 213-361-1700 для запису у вечірній та вихідний час."},
     {q:"Як оплатити?",a:"Готівка, Venmo, PayPal, всі картки. Оплата після виконання роботи."},
@@ -644,6 +845,113 @@ ua:{
   readyWA:"💬 Написати у WhatsApp", readyCall:"📞 213-361-1700",
 },
 }; /* end T */
+
+function applyPricingRegistry(translations, registry) {
+  if (!translations || !registry || !registry.canonical || !registry.details) return;
+  const c = registry.canonical;
+  const d = registry.details;
+
+  for (const langKey of Object.keys(translations)) {
+    const t = translations[langKey];
+    if (!t || !t.svcs || !t.svcs.tv) continue;
+
+    t.svcBase = {
+      tv: `$${c.tv_mounting}`,
+      furniture: `$${c.furniture_assembly}`,
+      art: `$${c.art_mirrors}`,
+      painting: `$${Number(c.interior_painting).toFixed(2)}`,
+      flooring: `$${Number(c.flooring).toFixed(2)}`,
+      cabinets: `$${c.kitchen_cabinet_painting}`,
+      furnpaint: `$${c.furniture_painting}`,
+      plumbing: `$${c.plumbing}`,
+      electrical: `$${c.electrical}`
+    };
+
+    // TV
+    if (t.svcs.tv.options?.[0]) t.svcs.tv.options[0].price = d.tv_mounting.standard;
+    if (t.svcs.tv.options?.[1]) t.svcs.tv.options[1].price = d.tv_mounting.hidden_wire;
+    if (t.svcs.tv.example) t.svcs.tv.example.price = d.tv_mounting.standard;
+
+    // Furniture assembly
+    if (t.svcs.furniture.options?.[0]) t.svcs.furniture.options[0].price = d.furniture_assembly.small_item;
+    if (t.svcs.furniture.options?.[1]) t.svcs.furniture.options[1].price = d.furniture_assembly.dresser;
+    if (t.svcs.furniture.options?.[2]) t.svcs.furniture.options[2].price = d.furniture_assembly.bed_frame;
+    if (t.svcs.furniture.options?.[3]) t.svcs.furniture.options[3].price = d.furniture_assembly.pax_hourly;
+    if (t.svcs.furniture.example) t.svcs.furniture.example.price = d.furniture_assembly.dresser;
+
+    // Art/Mirrors
+    if (t.svcs.art.options?.[0]) t.svcs.art.options[0].price = d.art_mirrors.up_to_5_pieces;
+    if (t.svcs.art.options?.[1]) t.svcs.art.options[1].price = d.art_mirrors.curtain_first;
+    if (t.svcs.art.addon) t.svcs.art.addon.price = d.art_mirrors.curtain_each;
+    if (t.svcs.art.example) t.svcs.art.example.price = d.art_mirrors.up_to_5_pieces;
+
+    // Painting
+    if (t.svcs.painting.surfaces?.[0]) t.svcs.painting.surfaces[0].price = d.interior_painting.wall_1coat;
+    if (t.svcs.painting.surfaces?.[1]) t.svcs.painting.surfaces[1].price = d.interior_painting.wall_2coats;
+    if (t.svcs.painting.surfaces?.[2]) t.svcs.painting.surfaces[2].price = d.interior_painting.ceiling_smooth;
+    if (t.svcs.painting.surfaces?.[3]) t.svcs.painting.surfaces[3].price = d.interior_painting.ceiling_textured;
+    if (t.svcs.painting.addons?.[0]) t.svcs.painting.addons[0].price = d.interior_painting.prep;
+    if (t.svcs.painting.addons?.[1]) t.svcs.painting.addons[1].price = d.interior_painting.wallpaper;
+    if (t.svcs.painting.addons?.[2]) t.svcs.painting.addons[2].price = d.interior_painting.mold;
+    if (t.svcs.painting.trim?.[0]) t.svcs.painting.trim[0].price = `$${d.interior_painting.baseboard.toFixed(2)}/lf`;
+    if (t.svcs.painting.trim?.[1]) t.svcs.painting.trim[1].price = `$${d.interior_painting.crown_ornate.toFixed(2)}/lf`;
+    if (t.svcs.painting.trim?.[2]) t.svcs.painting.trim[2].price = `$${d.interior_painting.door_casing_side}/side`;
+    if (t.svcs.painting.trim?.[3]) t.svcs.painting.trim[3].price = `$${d.interior_painting.door_slab}/door`;
+    if (t.svcs.painting.trim?.[4]) t.svcs.painting.trim[4].price = `$${d.interior_painting.baseboard_install.toFixed(2)}/lf`;
+
+    // Flooring
+    if (t.svcs.flooring.surfaces?.[0]) t.svcs.flooring.surfaces[0].price = d.flooring.laminate;
+    if (t.svcs.flooring.surfaces?.[1]) t.svcs.flooring.surfaces[1].price = d.flooring.lvp;
+    if (t.svcs.flooring.addons?.[0]) t.svcs.flooring.addons[0].price = d.flooring.demo;
+    if (t.svcs.flooring.addons?.[1]) t.svcs.flooring.addons[1].price = d.flooring.underlayment;
+    if (t.svcs.flooring.extras?.[0]) t.svcs.flooring.extras[0].price = `$${d.flooring.transition}/ea`;
+    if (t.svcs.flooring.extras?.[1]) t.svcs.flooring.extras[1].price = `$${d.flooring.baseboard_remove_reinstall.toFixed(2)}/lf`;
+    if (t.svcs.flooring.extras?.[2]) t.svcs.flooring.extras[2].price = `$${d.flooring.door_undercut}/door`;
+    if (t.svcs.flooring.extras?.[3]) t.svcs.flooring.extras[3].price = `$${d.flooring.spot_leveling}/bag`;
+
+    // Cabinets
+    if (t.svcs.cabinets.options?.[0]) t.svcs.cabinets.options[0].price = d.kitchen_cabinet_painting.full_package;
+    if (t.svcs.cabinets.options?.[1]) t.svcs.cabinets.options[1].price = d.kitchen_cabinet_painting.spray_both_sides;
+    if (t.svcs.cabinets.options?.[2]) t.svcs.cabinets.options[2].price = d.kitchen_cabinet_painting.spray_one_side;
+    if (t.svcs.cabinets.options?.[3]) t.svcs.cabinets.options[3].price = d.kitchen_cabinet_painting.roller_budget;
+    if (t.svcs.cabinets.options?.[4]) t.svcs.cabinets.options[4].price = d.kitchen_cabinet_painting.drawer_small;
+    if (t.svcs.cabinets.options?.[5]) t.svcs.cabinets.options[5].price = d.kitchen_cabinet_painting.drawer_large;
+    if (t.svcs.cabinets.options?.[6]) t.svcs.cabinets.options[6].price = d.kitchen_cabinet_painting.end_panel;
+    if (t.svcs.cabinets.options?.[7]) t.svcs.cabinets.options[7].price = d.kitchen_cabinet_painting.island;
+    if (t.svcs.cabinets.options?.[8]) t.svcs.cabinets.options[8].price = d.kitchen_cabinet_painting.interior_section;
+    if (t.svcs.cabinets.extras?.[0]) t.svcs.cabinets.extras[0].price = `$${d.kitchen_cabinet_painting.heavy_degreasing}/door`;
+    if (t.svcs.cabinets.extras?.[1]) t.svcs.cabinets.extras[1].price = `$${d.kitchen_cabinet_painting.oak_grain_filling}/door`;
+    if (t.svcs.cabinets.extras?.[2]) t.svcs.cabinets.extras[2].price = `$${d.kitchen_cabinet_painting.two_tone} flat`;
+    if (t.svcs.cabinets.extras?.[3]) t.svcs.cabinets.extras[3].price = `$${d.kitchen_cabinet_painting.glass_masking}/door`;
+    if (t.svcs.cabinets.extras?.[4]) t.svcs.cabinets.extras[4].price = `$${d.kitchen_cabinet_painting.hardware_hole_filling}/door`;
+    if (t.svcs.cabinets.extras?.[5]) t.svcs.cabinets.extras[5].price = `$${d.kitchen_cabinet_painting.topcoat_upgrade}/door`;
+    if (t.svcs.cabinets.extras?.[6]) t.svcs.cabinets.extras[6].price = `$${d.kitchen_cabinet_painting.deep_repair}/piece`;
+    if (t.svcs.cabinets.extras?.[7]) t.svcs.cabinets.extras[7].price = `$${d.kitchen_cabinet_painting.remove_contact_paper_hourly}/hr`;
+    if (t.svcs.cabinets.extras?.[8]) t.svcs.cabinets.extras[8].price = `$${d.kitchen_cabinet_painting.caulking.toFixed(2)}/lf`;
+
+    // Furniture painting
+    if (t.svcs.furnpaint.options?.[0]) t.svcs.furnpaint.options[0].price = d.furniture_painting.chair;
+    if (t.svcs.furnpaint.options?.[1]) t.svcs.furnpaint.options[1].price = d.furniture_painting.nightstand;
+    if (t.svcs.furnpaint.options?.[2]) t.svcs.furnpaint.options[2].price = d.furniture_painting.dresser;
+    if (t.svcs.furnpaint.options?.[3]) t.svcs.furnpaint.options[3].price = d.furniture_painting.dining_table;
+    if (t.svcs.furnpaint.options?.[4]) t.svcs.furnpaint.options[4].price = d.furniture_painting.builtin_lf;
+
+    // Plumbing
+    if (t.svcs.plumbing.options?.[0]) t.svcs.plumbing.options[0].price = d.plumbing.faucet;
+    if (t.svcs.plumbing.options?.[1]) t.svcs.plumbing.options[1].price = d.plumbing.shower_head;
+    if (t.svcs.plumbing.options?.[2]) t.svcs.plumbing.options[2].price = d.plumbing.toilet_tank;
+    if (t.svcs.plumbing.options?.[3]) t.svcs.plumbing.options[3].price = d.plumbing.recaulk;
+    if (t.svcs.plumbing.example) t.svcs.plumbing.example.price = d.plumbing.faucet;
+
+    // Electrical
+    if (t.svcs.electrical.options?.[0]) t.svcs.electrical.options[0].price = d.electrical.light_fixture;
+    if (t.svcs.electrical.options?.[1]) t.svcs.electrical.options[1].price = d.electrical.outlet_switch_first;
+    if (t.svcs.electrical.options?.[2]) t.svcs.electrical.options[2].price = d.electrical.smart_device;
+    if (t.svcs.electrical.addon) t.svcs.electrical.addon.price = d.electrical.outlet_switch_additional;
+  }
+}
+
+applyPricingRegistry(T, REG);
 
 /* ─── ANIMATED NUMBER ─────────────────────────────────────────── */
 function AnimNum({ value }) {
@@ -806,7 +1114,7 @@ function SvcPanel({ svcId, isMobile, t }) {
         {item.sub&&<div style={{fontSize:11,color:C.light,marginTop:2}}>{item.sub}</div>}
       </div>
       <div style={{textAlign:"right",minWidth:70}}>
-        <span style={{fontWeight:800,fontSize:isMobile?15:16,color:C.gold}}>{item.hourly?"$75/hr":fmt(item.price)}</span>
+        <span style={{fontWeight:800,fontSize:isMobile?15:16,color:C.gold}}>{item.hourly?"$50/hr":fmt(item.price)}</span>
       </div>
       <div style={{textAlign:"right",minWidth:isMobile?50:65,fontSize:11,color:C.light,paddingLeft:isMobile?8:14}}>{item.time}</div>
     </div>
@@ -888,6 +1196,10 @@ function SvcPanel({ svcId, isMobile, t }) {
               </div>
             )}
           </div>
+          {svc.extras&&<>
+            <div style={{fontSize:11,fontWeight:700,color:C.light,textTransform:"uppercase",letterSpacing:1,marginBottom:8,marginTop:16}}>{t.optAddons||t.extras}</div>
+            <div style={{borderRadius:12,overflow:"hidden",border:`1px solid ${C.border}`,marginBottom:12}}>{KV_ROW(svc.extras)}</div>
+          </>}
         </div>
       )}
 
