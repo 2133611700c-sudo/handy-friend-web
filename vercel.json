@@ -9,6 +9,38 @@
       "destination": "/pricing/index.html"
     },
     {
+      "source": "/services",
+      "destination": "/services/index.html"
+    },
+    {
+      "source": "/tv-mounting",
+      "destination": "/tv-mounting/index.html"
+    },
+    {
+      "source": "/furniture-assembly",
+      "destination": "/furniture-assembly/index.html"
+    },
+    {
+      "source": "/cabinet-painting",
+      "destination": "/cabinet-painting/index.html"
+    },
+    {
+      "source": "/flooring",
+      "destination": "/flooring/index.html"
+    },
+    {
+      "source": "/gallery",
+      "destination": "/gallery/index.html"
+    },
+    {
+      "source": "/reviews",
+      "destination": "/reviews/index.html"
+    },
+    {
+      "source": "/book",
+      "destination": "/book/index.html"
+    },
+    {
       "source": "/review",
       "destination": "/api/review-redirect"
     },
