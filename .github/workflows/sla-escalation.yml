@@ -14,22 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - name: Call SLA escalation endpoint
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run SLA check
         env:
-          SITE_URL: https://handyandfriend.com
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: |
-          response=$(curl -s -w "\n%{http_code}" \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            "${SITE_URL}/api/cron/sla-escalation")
-
-          http_code=$(echo "$response" | tail -1)
-          body=$(echo "$response" | head -n -1)
-
-          echo "HTTP Status: $http_code"
-          echo "Response: $body"
-
-          if [ "$http_code" -ge 500 ]; then
-            echo "::error::SLA escalation failed with HTTP $http_code"
-            exit 1
-          fi
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node scripts/sla-check.mjs
