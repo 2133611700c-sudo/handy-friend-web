@@ -194,6 +194,14 @@ async function main() {
     summary.reactivation.found = true;
     summary.reactivation.lead_id = lostLead.id;
 
+    // Dedup: skip if reactivation already logged for this lead
+    const existing = await sbGet(
+      `lead_events?select=id&lead_id=eq.${lostLead.id}&event_type=eq.reactivation_attempt_prepared&limit=1`
+    );
+    if (existing.length > 0) {
+      summary.reactivation.skipped = 'already_prepared';
+      console.log(`[sprint1] Reactivation already prepared for ${lostLead.id}, skipping`);
+    } else {
     const text = buildReactivationText();
     const phoneDigits = normalizePhoneDigits(lostLead.phone);
     const waLink = phoneDigits ? `https://wa.me/1${phoneDigits}?text=${encodeURIComponent(text)}` : null;
@@ -231,6 +239,7 @@ async function main() {
       prepared_at: new Date().toISOString(),
     });
     summary.reactivation.event_logged = true;
+    } // end dedup else
   }
 
   const reviewTargets = await findReviewTargets(3);
