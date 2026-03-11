@@ -5,6 +5,7 @@
   "description": "Handy & Friend landing and serverless functions",
   "license": "UNLICENSED",
   "scripts": {
+    "audit:prod": "bash scripts/audit.sh",
     "workflow:bootstrap": "bash scripts/openai-workflow-bootstrap.sh",
     "workflow:validate": "bash scripts/validate-openai-workflow.sh",
     "workflow:start": "bash scripts/start-atlas-ops-session.sh",

@@ -1,0 +1,285 @@
+#!/usr/bin/env bash
+set -u
+
+SITE="https://handyandfriend.com"
+ALLOW_DIRTY=0
+STATS_KEY="${STATS_SECRET:-}"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --site)
+      SITE="$2"; shift 2 ;;
+    --allow-dirty)
+      ALLOW_DIRTY=1; shift ;;
+    --stats-key)
+      STATS_KEY="$2"; shift 2 ;;
+    *)
+      echo "Unknown arg: $1" >&2
+      exit 2 ;;
+  esac
+done
+
+PASS=0
+FAIL=0
+FAIL_LIST=()
+
+note() { printf '%s\n' "$*"; }
+pass() { PASS=$((PASS+1)); printf '[PASS] %s\n' "$*"; }
+fail() { FAIL=$((FAIL+1)); FAIL_LIST+=("$*"); printf '[FAIL] %s\n' "$*"; }
+
+check_cmd() {
+  local label="$1"
+  shift
+  if "$@" >/dev/null 2>&1; then
+    pass "$label"
+  else
+    fail "$label"
+  fi
+}
+
+json_bool() {
+  local key="$1"
+  local payload="${2-}"
+  if [[ -z "$payload" ]]; then payload='{}'; fi
+  python3 -c 'import json,sys
+key=sys.argv[1]
+raw=sys.argv[2]
+try:
+ d=json.loads(raw)
+ v=d
+ for p in key.split("."):
+  v=v.get(p) if isinstance(v,dict) else None
+ print("true" if v is True else "false")
+except Exception:
+ print("false")' "$key" "$payload"
+}
+
+json_get() {
+  local key="$1"
+  local payload="${2-}"
+  if [[ -z "$payload" ]]; then payload='{}'; fi
+  python3 -c 'import json,sys
+key=sys.argv[1]
+raw=sys.argv[2]
+try:
+ d=json.loads(raw)
+ v=d
+ for p in key.split("."):
+  v=v.get(p) if isinstance(v,dict) else None
+ print("" if v is None else v)
+except Exception:
+ print("")' "$key" "$payload"
+}
+
+http_code() {
+  curl -sS -o /dev/null -w "%{http_code}" "$1"
+}
+
+http_redirect() {
+  curl -sS -o /dev/null -w "%{redirect_url}" "$1"
+}
+
+resolve_stats_key() {
+  if [[ -n "$STATS_KEY" ]]; then
+    printf '%s' "$STATS_KEY" | tr -d '\r\n[:space:]'
+    return
+  fi
+
+  if [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
+    printf '%s' "${SUPABASE_SERVICE_ROLE_KEY:0:16}" | tr -d '\r\n[:space:]'
+    return
+  fi
+
+  if [[ -f ".env.production" ]]; then
+    local val
+    val=$(python3 - <<'PY'
+import re
+p='.env.production'
+key='SUPABASE_SERVICE_ROLE_KEY'
+try:
+    txt=open(p,'r',encoding='utf-8').read()
+    m=re.search(rf'^{key}="?([^"\n]+)"?', txt, flags=re.M)
+    if m:
+        print(m.group(1)[:16])
+except Exception:
+    pass
+PY
+)
+    if [[ -n "$val" ]]; then
+      printf '%s' "$val" | tr -d '\r\n[:space:]'
+      return
+    fi
+  fi
+
+  echo ""
+}
+
+note "== PROD Readiness Audit =="
+note "Time: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+note "Site: $SITE"
+
+# 1) Git hygiene
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  pass "inside git repo"
+else
+  fail "inside git repo"
+fi
+
+BRANCH="$(git branch --show-current 2>/dev/null || true)"
+if [[ -n "$BRANCH" ]]; then
+  pass "branch detected: $BRANCH"
+else
+  fail "branch detected"
+fi
+
+if [[ "$ALLOW_DIRTY" -eq 1 ]]; then
+  note "[INFO] dirty tree allowed by flag"
+else
+  if [[ -z "$(git status --porcelain 2>/dev/null)" ]]; then
+    pass "git tree clean"
+  else
+    fail "git tree clean"
+  fi
+fi
+
+# 2) Local quality gates
+check_cmd "workflow:validate" npm run -s workflow:validate
+check_cmd "validate:pricing" npm run -s validate:pricing
+check_cmd "validate:ads" npm run -s validate:ads
+
+# 3) Routes and redirects
+check_route() {
+  local path="$1" expected="$2" label="$3"
+  local code
+  code=$(http_code "$SITE$path")
+  if [[ "$code" == "$expected" ]]; then
+    pass "$label ($path -> $expected)"
+  else
+    fail "$label ($path expected $expected got $code)"
+  fi
+}
+
+check_route "/" "200" "route"
+check_route "/pricing" "200" "route"
+check_route "/privacy" "200" "route"
+check_route "/terms" "200" "route"
+check_route "/api/health" "200" "route"
+check_route "/r/one-tap/" "200" "route"
+
+code_fb=$(http_code "$SITE/fb")
+redir_fb=$(http_redirect "$SITE/fb")
+if [[ "$code_fb" == "302" && "$redir_fb" == *"facebook.com"* ]]; then
+  pass "redirect /fb -> Facebook"
+else
+  fail "redirect /fb -> Facebook"
+fi
+
+code_review=$(http_code "$SITE/review")
+redir_review=$(http_redirect "$SITE/review")
+if [[ "$code_review" == "302" && "$redir_review" == *"google"* ]]; then
+  pass "redirect /review -> Google"
+else
+  fail "redirect /review -> Google"
+fi
+
+# 4) Basic health checks
+health_json=$(curl -sS "$SITE/api/health" 2>/dev/null || echo '{}')
+if [[ "$(json_bool ok "$health_json")" == "true" ]]; then
+  pass "api/health ok=true"
+else
+  fail "api/health ok=true"
+fi
+for k in supabase_url supabase_service_role_key telegram_bot_token telegram_chat_id resend_api_key fb_page_access_token fb_verify_token deepseek_api_key; do
+  if [[ "$(json_bool "checks.$k" "$health_json")" == "true" ]]; then
+    pass "health checks.$k=true"
+  else
+    fail "health checks.$k=true"
+  fi
+done
+
+# 5) API contracts
+submit_code=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$SITE/api/submit-lead" -H 'content-type: application/json' -d '{}' || echo "000")
+[[ "$submit_code" == "400" ]] && pass "submit-lead empty body returns 400" || fail "submit-lead empty body returns 400"
+
+bad_ai_code=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$SITE/api/ai-chat" -H 'content-type: application/json' -d '{"message":"test"}' || echo "000")
+[[ "$bad_ai_code" == "400" ]] && pass "ai-chat invalid payload returns 400" || fail "ai-chat invalid payload returns 400"
+
+ai_json=$(curl -sS -X POST "$SITE/api/ai-chat" -H 'content-type: application/json' -d '{"sessionId":"prod-audit-check","lang":"en","messages":[{"role":"user","content":"How much for TV mounting standard and hidden wires?"}]}' 2>/dev/null || echo '{}')
+ai_reply=$(json_get reply "$ai_json")
+if [[ -n "$ai_reply" ]]; then
+  pass "ai-chat valid payload returns reply"
+else
+  fail "ai-chat valid payload returns reply"
+fi
+
+if [[ "$ai_reply" == *"\$105"* && "$ai_reply" == *"\$185"* ]]; then
+  pass "ai-chat TV price anchors \$105/\$185"
+else
+  fail "ai-chat TV price anchors \$105/\$185"
+fi
+
+# 6) Tracking + legacy price leakage
+main_html=$(curl -sS "$SITE/" 2>/dev/null || true)
+pricing_html=$(curl -sS "$SITE/pricing" 2>/dev/null || true)
+one_html=$(curl -sS "$SITE/r/one-tap/" 2>/dev/null || true)
+combined="$main_html
+$pricing_html
+$one_html"
+
+for needle in "G-Z05XJ8E281" "GTM-NQTL3S6Q"; do
+  [[ "$main_html" == *"$needle"* ]] && pass "main contains $needle" || fail "main contains $needle"
+  [[ "$pricing_html" == *"$needle"* ]] && pass "pricing contains $needle" || fail "pricing contains $needle"
+  [[ "$one_html" == *"$needle"* ]] && pass "one-tap contains $needle" || fail "one-tap contains $needle"
+done
+
+for page in main pricing; do
+  html_var="$main_html"
+  [[ "$page" == "pricing" ]] && html_var="$pricing_html"
+  [[ "$html_var" == *"AW-17971094967"* ]] && pass "$page contains AW-17971094967" || fail "$page contains AW-17971094967"
+done
+
+if printf '%s' "$combined" | rg -q '\$155|\$165|\$175'; then
+  fail 'legacy prices $155/$165/$175 leaked in public pages'
+else
+  pass 'legacy prices $155/$165/$175 not present in public pages'
+fi
+
+# 7) Protected stats
+STATS_KEY_RESOLVED="$(resolve_stats_key)"
+if [[ -z "$STATS_KEY_RESOLVED" ]]; then
+  fail "stats key resolved"
+else
+  pass "stats key resolved"
+  stats_json=$(curl -sS "$SITE/api/health?type=stats&key=$STATS_KEY_RESOLVED&days=30" 2>/dev/null || echo '{}')
+  if [[ "$(json_bool ok "$stats_json")" == "true" ]]; then
+    pass "stats endpoint authorized and ok=true"
+  else
+    fail "stats endpoint authorized and ok=true"
+  fi
+
+  for metric in leads_total revenue conversion_rate jobs_completed profit; do
+    val=$(json_get "data.$metric" "$stats_json")
+    if [[ -n "$val" && "$val" != "null" ]]; then
+      pass "stats metric data.$metric present ($val)"
+    else
+      fail "stats metric data.$metric present"
+    fi
+  done
+fi
+
+note ""
+note "== SUMMARY =="
+note "PASS: $PASS"
+note "FAIL: $FAIL"
+
+if [[ "$FAIL" -gt 0 ]]; then
+  note "Failed checks:" 
+  for item in "${FAIL_LIST[@]}"; do
+    note " - $item"
+  done
+  note "VERDICT: FAIL"
+  exit 1
+fi
+
+note "VERDICT: PASS"
+exit 0
