@@ -1,0 +1,35 @@
+name: SLA Escalation Check
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run mode'
+        required: false
+        default: 'full'
+
+jobs:
+  sla-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Call SLA escalation endpoint
+        env:
+          SITE_URL: https://handyandfriend.com
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          response=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${SITE_URL}/api/cron/sla-escalation")
+
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+
+          if [ "$http_code" -ge 500 ]; then
+            echo "::error::SLA escalation failed with HTTP $http_code"
+            exit 1
+          fi
