@@ -38,6 +38,7 @@ a:hover{color:var(--sp-orange-hover)}
 @media(max-width:600px){
   .sp-nav{gap:2px}
   .sp-nav a{font-size:12px;padding:5px 6px}
+  .sp-nav a:nth-child(4),.sp-nav-cta{display:none}/* Pricing + CTA hidden — accessible via in-page CTAs */
 }
 
 /* ── HERO SECTION ── */
