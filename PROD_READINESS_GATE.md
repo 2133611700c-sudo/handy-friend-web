@@ -17,6 +17,7 @@ Useful flags:
 
 ```bash
 bash scripts/audit.sh --allow-dirty
+bash scripts/audit.sh --skip-stats
 bash scripts/audit.sh --site https://handyandfriend.com --allow-dirty
 bash scripts/audit.sh --stats-key "<key>" --allow-dirty
 ```
@@ -63,6 +64,7 @@ bash scripts/audit.sh --stats-key "<key>" --allow-dirty
 7. Protected stats verification
 - call `/api/health?type=stats&key=<secret>&days=30`
 - must return `ok=true` and numeric core metrics
+- CI mode can skip this block with `--skip-stats` when secret is not available
 
 Stats key resolution order in script:
 1) `--stats-key` argument

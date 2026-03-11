@@ -54,9 +54,41 @@ jobs:
           node --check ops/build-asset-inventory.mjs
           node --check ops/build-post-pack.mjs
           node --check ops/factory-guard.mjs
+          node --check scripts/build-browser-price-registry.mjs
+          node --check lib/price-registry.js
+          node --check lib/pricing-policy.js
+          node --check lib/attribution.js
+          node --check lib/alex-policy-engine.js
+          node --check api/ai-chat.js
+          node --check api/alex-webhook.js
+          node --check api/submit-lead.js
+          node --check api/health.js
           echo "✅ Factory scripts syntax OK"
+
+      - name: Verify browser price registry is generated from canonical source
+        run: |
+          git ls-files --error-unmatch assets/js/price-registry.browser.js
+          node scripts/build-browser-price-registry.mjs
+          git diff --exit-code -- assets/js/price-registry.browser.js
+          echo "✅ Browser registry is in sync with canonical price-registry"
+
+      - name: Run pricing and policy parity tests (hard fail)
+        run: |
+          node --test tests/pricing-policy.test.js
+          echo "✅ Pricing/policy parity tests passed"
+
+      - name: Run ads/attribution contract tests (hard fail)
+        run: |
+          node --test tests/ads-attribution.test.js
+          echo "✅ Ads/attribution tests passed"
 
       - name: Run mandatory factory guard (release gate)
         run: |
           node ops/factory-guard.mjs
           echo "✅ Factory guard passed"
+
+      - name: Run production readiness audit (main only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          bash scripts/audit.sh --skip-stats
+          echo "✅ Production readiness audit passed"

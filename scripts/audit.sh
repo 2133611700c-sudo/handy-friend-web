@@ -3,6 +3,7 @@ set -u
 
 SITE="https://handyandfriend.com"
 ALLOW_DIRTY=0
+SKIP_STATS=0
 STATS_KEY="${STATS_SECRET:-}"
 
 while [[ $# -gt 0 ]]; do
@@ -11,6 +12,8 @@ while [[ $# -gt 0 ]]; do
       SITE="$2"; shift 2 ;;
     --allow-dirty)
       ALLOW_DIRTY=1; shift ;;
+    --skip-stats)
+      SKIP_STATS=1; shift ;;
     --stats-key)
       STATS_KEY="$2"; shift 2 ;;
     *)
@@ -245,26 +248,30 @@ else
 fi
 
 # 7) Protected stats
-STATS_KEY_RESOLVED="$(resolve_stats_key)"
-if [[ -z "$STATS_KEY_RESOLVED" ]]; then
-  fail "stats key resolved"
+if [[ "$SKIP_STATS" -eq 1 ]]; then
+  note "[INFO] stats checks skipped by flag"
 else
-  pass "stats key resolved"
-  stats_json=$(curl -sS "$SITE/api/health?type=stats&key=$STATS_KEY_RESOLVED&days=30" 2>/dev/null || echo '{}')
-  if [[ "$(json_bool ok "$stats_json")" == "true" ]]; then
-    pass "stats endpoint authorized and ok=true"
+  STATS_KEY_RESOLVED="$(resolve_stats_key)"
+  if [[ -z "$STATS_KEY_RESOLVED" ]]; then
+    fail "stats key resolved"
   else
-    fail "stats endpoint authorized and ok=true"
-  fi
-
-  for metric in leads_total revenue conversion_rate jobs_completed profit; do
-    val=$(json_get "data.$metric" "$stats_json")
-    if [[ -n "$val" && "$val" != "null" ]]; then
-      pass "stats metric data.$metric present ($val)"
+    pass "stats key resolved"
+    stats_json=$(curl -sS "$SITE/api/health?type=stats&key=$STATS_KEY_RESOLVED&days=30" 2>/dev/null || echo '{}')
+    if [[ "$(json_bool ok "$stats_json")" == "true" ]]; then
+      pass "stats endpoint authorized and ok=true"
     else
-      fail "stats metric data.$metric present"
+      fail "stats endpoint authorized and ok=true"
     fi
-  done
+
+    for metric in leads_total revenue conversion_rate jobs_completed profit; do
+      val=$(json_get "data.$metric" "$stats_json")
+      if [[ -n "$val" && "$val" != "null" ]]; then
+        pass "stats metric data.$metric present ($val)"
+      else
+        fail "stats metric data.$metric present"
+      fi
+    done
+  fi
 fi
 
 note ""
