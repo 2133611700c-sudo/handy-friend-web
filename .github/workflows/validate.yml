@@ -87,8 +87,7 @@ jobs:
           node ops/factory-guard.mjs
           echo "✅ Factory guard passed"
 
-      - name: Run production readiness audit (main only)
-        if: github.ref == 'refs/heads/main'
+      - name: Run production readiness audit (blocking)
         run: |
           bash scripts/audit.sh --skip-stats
           echo "✅ Production readiness audit passed"

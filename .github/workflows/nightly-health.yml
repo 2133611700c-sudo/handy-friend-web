@@ -1,0 +1,67 @@
+name: Nightly Health Monitor
+
+on:
+  schedule:
+    - cron: '0 15 * * *' # 08:00 America/Los_Angeles during DST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  nightly-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run nightly readiness audit (no stats secret in CI)
+        id: audit
+        continue-on-error: true
+        run: |
+          mkdir -p ops/reports
+          bash scripts/audit.sh --skip-stats | tee ops/reports/nightly-health-${{ github.run_id }}.log
+
+      - name: Upload audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-health-${{ github.run_id }}
+          path: ops/reports/nightly-health-${{ github.run_id }}.log
+
+      - name: Create issue on failure
+        if: steps.audit.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = `Nightly health failed — ${new Date().toISOString().slice(0,10)}`;
+            const body = [
+              'Nightly health monitor detected a failure.',
+              '',
+              `- Workflow run: ${runUrl}`,
+              '- Artifact: nightly health log attached to workflow run',
+              '',
+              'Action required:',
+              '1) Open run logs',
+              '2) Fix failing checks',
+              '3) Re-run workflow_dispatch'
+            ].join('\n');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['ops', 'monitoring', 'incident']
+            });
+
+      - name: Fail job if audit failed
+        if: steps.audit.outcome == 'failure'
+        run: exit 1
