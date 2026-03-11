@@ -7,13 +7,18 @@
  * Uses: Supabase REST + Resend + Telegram
  */
 
+function clean(v) {
+  return String(v || '').trim().replace(/\\n$/, '');
+}
+
 const ENV = {
-  SUPABASE_URL: String(process.env.SUPABASE_URL || '').replace(/\/$/, ''),
-  SUPABASE_SERVICE_ROLE_KEY: String(process.env.SUPABASE_SERVICE_ROLE_KEY || ''),
-  RESEND_API_KEY: String(process.env.RESEND_API_KEY || ''),
-  TELEGRAM_BOT_TOKEN: String(process.env.TELEGRAM_BOT_TOKEN || ''),
-  TELEGRAM_CHAT_ID: String(process.env.TELEGRAM_CHAT_ID || ''),
-  OWNER_PHONE: String(process.env.OWNER_PHONE || '2133611700'),
+  SUPABASE_URL: clean(process.env.SUPABASE_URL).replace(/\/$/, ''),
+  SUPABASE_SERVICE_ROLE_KEY: clean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+  RESEND_API_KEY: clean(process.env.RESEND_API_KEY),
+  TELEGRAM_BOT_TOKEN: clean(process.env.TELEGRAM_BOT_TOKEN),
+  TELEGRAM_CHAT_ID: clean(process.env.TELEGRAM_CHAT_ID),
+  OWNER_PHONE: clean(process.env.OWNER_PHONE || '2133611700'),
+  OWNER_EMAIL: clean(process.env.OWNER_EMAIL || process.env.REPORT_EMAIL_TO || '2133611700c@gmail.com'),
 };
 
 const REVIEW_URL = 'https://handyandfriend.com/review';
@@ -72,6 +77,26 @@ async function sendTelegramHtml(html) {
     return { ok: false, error: json };
   }
   return json;
+}
+
+async function sendOwnerEmail(subject, html) {
+  if (!ENV.RESEND_API_KEY || !ENV.OWNER_EMAIL) return { ok: false, reason: 'resend_or_owner_missing' };
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${ENV.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'Handy & Friend Ops <hello@handyandfriend.com>',
+      to: ENV.OWNER_EMAIL,
+      subject,
+      html,
+    }),
+  });
+  const text = await resp.text().catch(() => '');
+  if (!resp.ok) return { ok: false, status: resp.status, detail: text.slice(0, 300) };
+  return { ok: true };
 }
 
 async function sendReviewEmail(lead) {
@@ -160,8 +185,8 @@ async function main() {
 
   const summary = {
     ts: new Date().toISOString(),
-    reactivation: { found: false, lead_id: null, telegram_sent: false, event_logged: false },
-    reviews: { targets: 0, emails_sent: 0, sms_manual: 0, events_logged: 0, errors: [] },
+    reactivation: { found: false, lead_id: null, telegram_sent: false, owner_email_sent: false, event_logged: false },
+    reviews: { targets: 0, emails_sent: 0, sms_manual: 0, owner_email_sent: 0, events_logged: 0, errors: [] },
   };
 
   const lostLead = await findLostLead();
@@ -189,6 +214,16 @@ async function main() {
 
     const tgResult = await sendTelegramHtml(tg);
     summary.reactivation.telegram_sent = Boolean(tgResult?.ok);
+    if (!tgResult?.ok) {
+      const emailResult = await sendOwnerEmail(
+        'Sprint 1 Reactivation Packet',
+        `<pre style="white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace">${tg.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`
+      );
+      summary.reactivation.owner_email_sent = Boolean(emailResult?.ok);
+      if (!emailResult?.ok) {
+        summary.reviews.errors.push({ lead_id: lostLead.id, error: `owner_email_failed:${emailResult?.status || emailResult?.reason || 'unknown'}` });
+      }
+    }
 
     await logLeadEvent(lostLead.id, 'reactivation_attempt_prepared', {
       channel: 'telegram_handoff',
@@ -230,7 +265,20 @@ async function main() {
         ].filter(Boolean).join('\n')
       );
       if (!tgResult?.ok) {
-        summary.reviews.errors.push({ lead_id: lead.id, error: 'telegram_failed_or_skipped' });
+        const emailResult = await sendOwnerEmail(
+          `Review Request Packet: ${lead.full_name || lead.id}`,
+          [
+            `<p><b>Lead:</b> ${lead.full_name || 'Unknown'} (${lead.phone || 'no phone'})</p>`,
+            `<p><b>Service:</b> ${lead.service_type || 'unknown'}</p>`,
+            `<p><b>Channel:</b> ${channel}</p>`,
+            `<p><b>SMS fallback:</b><br/>${smsText}</p>`,
+          ].join('\n')
+        );
+        if (emailResult?.ok) {
+          summary.reviews.owner_email_sent += 1;
+        } else {
+          summary.reviews.errors.push({ lead_id: lead.id, error: `telegram_and_email_failed:${emailResult?.status || emailResult?.reason || 'unknown'}` });
+        }
       }
 
       await logLeadEvent(lead.id, 'review_request_sent', {
