@@ -27,6 +27,16 @@
   ],
   "redirects": [
     {
+      "source": "/messenger",
+      "destination": "https://m.me/61588215297678",
+      "permanent": false
+    },
+    {
+      "source": "/chat",
+      "destination": "https://m.me/61588215297678",
+      "permanent": false
+    },
+    {
       "source": "/(.*)",
       "has": [
         {

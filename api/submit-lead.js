@@ -12,7 +12,103 @@
 const { saveLeadContext } = require('./_lib/lead-context-store.js');
 const { restInsert, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
-const { createOrMergeLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
+const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
+const { normalizeAttribution, buildSourceDetails } = require('../lib/attribution.js');
+
+const SUBMIT_DEDUP_TTL_MS = 10 * 60 * 1000;
+const SUBMIT_RESULT_CACHE = globalThis.__HF_SUBMIT_RESULT_CACHE || new Map();
+const SUBMIT_INFLIGHT = globalThis.__HF_SUBMIT_INFLIGHT || new Map();
+globalThis.__HF_SUBMIT_RESULT_CACHE = SUBMIT_RESULT_CACHE;
+globalThis.__HF_SUBMIT_INFLIGHT = SUBMIT_INFLIGHT;
+
+function cleanupSubmitCache(now = Date.now()) {
+  for (const [key, item] of SUBMIT_RESULT_CACHE.entries()) {
+    if (!item?.ts || now - item.ts > SUBMIT_DEDUP_TTL_MS) SUBMIT_RESULT_CACHE.delete(key);
+  }
+  for (const [key, item] of SUBMIT_INFLIGHT.entries()) {
+    if (!item?.ts || now - item.ts > 60 * 1000) SUBMIT_INFLIGHT.delete(key);
+  }
+}
+
+function normalizePhoneDigits(raw) {
+  let digits = String(raw || '').replace(/\D/g, '');
+  if (digits.length === 11 && digits.startsWith('1')) digits = digits.slice(1);
+  return digits.slice(-10);
+}
+
+function normalizeEmail(raw) {
+  return String(raw || '').trim().toLowerCase();
+}
+
+function normalizeService(raw) {
+  return String(raw || 'unknown').trim().toLowerCase().replace(/[\s-]+/g, '_');
+}
+
+function buildSubmitDedupKeys({ requestId, phone, email, service, ip }) {
+  const keys = [];
+  const reqKey = String(requestId || '').trim();
+  if (reqKey) keys.push(`req:${reqKey}`);
+  const phoneDigits = normalizePhoneDigits(phone);
+  const safeEmail = normalizeEmail(email);
+  const safeService = normalizeService(service);
+  const fingerprint = [phoneDigits || '-', safeEmail || '-', safeService, String(ip || '')].join('|');
+  keys.push(`fp:${fingerprint}`);
+  return keys;
+}
+
+function createDeferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+function startSubmitDedup(payload) {
+  cleanupSubmitCache();
+  const keys = buildSubmitDedupKeys(payload);
+
+  for (const key of keys) {
+    const cached = SUBMIT_RESULT_CACHE.get(key);
+    if (cached?.leadId) {
+      return { duplicate: true, leadId: cached.leadId, mode: 'cache', keys };
+    }
+    const inflight = SUBMIT_INFLIGHT.get(key);
+    if (inflight?.deferred?.promise) {
+      return { duplicate: true, pending: inflight.deferred.promise, mode: 'inflight', keys };
+    }
+  }
+
+  const deferred = createDeferred();
+  const ticket = { keys, deferred };
+  for (const key of keys) {
+    SUBMIT_INFLIGHT.set(key, { deferred, ts: Date.now() });
+  }
+  return { duplicate: false, ticket };
+}
+
+function resolveSubmitDedup(ticket, leadId) {
+  if (!ticket?.keys?.length) return;
+  const ts = Date.now();
+  for (const key of ticket.keys) {
+    SUBMIT_INFLIGHT.delete(key);
+    if (leadId) {
+      SUBMIT_RESULT_CACHE.set(key, { leadId, ts });
+    }
+  }
+  ticket.deferred?.resolve?.(leadId || null);
+}
+
+function rejectSubmitDedup(ticket, err) {
+  if (!ticket?.keys?.length) return;
+  for (const key of ticket.keys) SUBMIT_INFLIGHT.delete(key);
+  if (err) {
+    console.warn('[SUBMIT_DEDUP_RELEASE]', err.message || err);
+  }
+  ticket.deferred?.resolve?.(null);
+}
 
 export default async function handler(req, res) {
   // CORS headers
@@ -56,6 +152,7 @@ export default async function handler(req, res) {
     timestamp,
     recaptchaToken,
     recaptchaAction,
+    requestId,
     _subject
   } = req.body || {};
   const normalizedAttribution = normalizeAttribution(attribution);
@@ -77,8 +174,27 @@ export default async function handler(req, res) {
     });
   }
 
+  const dedupState = startSubmitDedup({
+    requestId,
+    phone,
+    email,
+    service,
+    ip: submitIp
+  });
+  if (dedupState.duplicate) {
+    if (dedupState.pending) {
+      const existingLeadId = await dedupState.pending.catch(() => null);
+      if (existingLeadId) {
+        return res.status(200).json({ success: true, mode: 'dedup_inflight', deduped: true, leadId: existingLeadId });
+      }
+    } else if (dedupState.leadId) {
+      return res.status(200).json({ success: true, mode: 'dedup_cache', deduped: true, leadId: dedupState.leadId });
+    }
+  }
+
   if (process.env.RECAPTCHA_SECRET_KEY) {
     if (!recaptchaToken) {
+      rejectSubmitDedup(dedupState.ticket, new Error('missing_recaptcha_token'));
       return res.status(400).json({
         success: false,
         error: 'Missing reCAPTCHA token'
@@ -107,6 +223,7 @@ export default async function handler(req, res) {
         Number(recaptchaData.score || 0) < minScore
       ) {
         console.warn('[RECAPTCHA_BLOCKED]', recaptchaData);
+        rejectSubmitDedup(dedupState.ticket, new Error('recaptcha_blocked'));
         return res.status(403).json({
           success: false,
           error: 'reCAPTCHA validation failed'
@@ -114,6 +231,7 @@ export default async function handler(req, res) {
       }
     } catch (err) {
       console.error('[RECAPTCHA_ERROR]', err.message);
+      rejectSubmitDedup(dedupState.ticket, err);
       return res.status(500).json({
         success: false,
         error: 'Failed to verify reCAPTCHA'
@@ -145,12 +263,8 @@ export default async function handler(req, res) {
     timestamp: timestamp || new Date().toISOString(),
     ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown',
     userAgent: req.headers['user-agent'] || 'unknown',
-    source: normalizedAttribution.summary || 'website_form',
-    sourceDetails: {
-      utmSource: normalizedAttribution.utmSource || '',
-      utmCampaign: normalizedAttribution.utmCampaign || '',
-      placementId: normalizedAttribution.placementId || ''
-    }
+    source: normalizedAttribution.channel || 'website_form',
+    sourceDetails: buildSourceDetails(normalizedAttribution)
   };
 
   console.log('[LEAD_CAPTURED]', JSON.stringify(leadData));
@@ -167,19 +281,25 @@ export default async function handler(req, res) {
       service_type: String(service || 'Not specified'),
       message: String(message || 'No message'),
       source: leadData.source,
-      zip: String(zip || '')
+      source_details: leadData.sourceDetails,
+      zip: String(zip || ''),
+      ga4ClientId: normalizedAttribution.ga4ClientId || ''
     });
     leadId = pipelineResult.id;
 
-    // Log to pipeline event trail
+    // Log to pipeline event trail (includes requestId for idempotency tracking)
     await pipelineLogEvent(leadId, 'form_submission', {
       service: service,
       source: leadData.source,
       has_email: Boolean(email),
       has_phone: Boolean(phone),
       is_new: pipelineResult.isNew,
-      attachments_count: safeAttachments.length
+      attachments_count: safeAttachments.length,
+      request_id: requestId || null
     }).catch(err => console.error('[PIPELINE_LOG]', err.message));
+    await transitionLead(leadId, 'contacted', {
+      contacted_at: new Date().toISOString()
+    }).catch(() => {});
 
     if (pipelineResult.isNew) {
       console.log('[LEAD_CREATED_NEW]', leadId);
@@ -214,6 +334,7 @@ export default async function handler(req, res) {
     };
     await insertLeadWithSchemaFallback(legacyRecord);
   }
+  resolveSubmitDedup(dedupState.ticket, leadId);
 
   // Build email HTML
   const safePhoneDigits = String(phone || '').replace(/\D/g, '');
@@ -317,13 +438,30 @@ export default async function handler(req, res) {
       if (!resendRes.ok) {
         const err = await resendRes.json().catch(() => ({}));
         console.error('[RESEND_ERROR]', resendRes.status, err);
+        await safeLogLeadEvent(leadId, 'owner_email_failed', {
+          provider: 'resend',
+          status: resendRes.status,
+          error: String(err?.message || JSON.stringify(err) || 'resend_error').slice(0, 300)
+        });
         // Fall through to demo mode
       } else {
         const data = await resendRes.json();
         console.log('[RESEND_SENT]', data.id, 'to', process.env.OWNER_EMAIL || '2133611700c@gmail.com');
+        await safeLogLeadEvent(leadId, 'owner_email_sent', {
+          provider: 'resend',
+          email_id: data?.id || null,
+          to: process.env.OWNER_EMAIL || '2133611700c@gmail.com'
+        });
 
-        // Fire Telegram notification asynchronously (don't wait for it)
-        notifyViaTelegram(leadData);
+        // Auto-responder: send confirmation to the customer (async, non-blocking)
+        if (email) {
+          sendCustomerAutoResponder({ leadId, name, email, service, phone }).catch(err =>
+            console.error('[AUTO_RESPONDER_ERROR]', err.message)
+          );
+        }
+
+        // Best-effort Telegram delivery (serverless-safe with timeout)
+        await notifyViaTelegramBestEffort({ ...leadData, leadId });
 
         return res.status(200).json({
           success: true,
@@ -359,9 +497,14 @@ export default async function handler(req, res) {
 
       if (sgRes.ok || sgRes.status === 202) {
         console.log('[SENDGRID_SENT] to', process.env.OWNER_EMAIL || '2133611700c@gmail.com');
+        await safeLogLeadEvent(leadId, 'owner_email_sent', {
+          provider: 'sendgrid',
+          status: sgRes.status,
+          to: process.env.OWNER_EMAIL || '2133611700c@gmail.com'
+        });
 
-        // Fire Telegram notification asynchronously
-        notifyViaTelegram(leadData);
+        // Best-effort Telegram delivery (serverless-safe with timeout)
+        await notifyViaTelegramBestEffort({ ...leadData, leadId });
 
         return res.status(200).json({ success: true, mode: 'sendgrid', leadId });
       }
@@ -374,8 +517,8 @@ export default async function handler(req, res) {
   console.log('[DEMO_MODE] No email API configured. Lead logged only.');
   console.log('[DEMO_LEAD]', JSON.stringify(leadData, null, 2));
 
-  // Fire Telegram notification asynchronously even in demo mode
-  notifyViaTelegram(leadData);
+  // Best-effort Telegram delivery even in demo mode
+  await notifyViaTelegramBestEffort({ ...leadData, leadId });
 
   return res.status(200).json({
     success: true,
@@ -425,7 +568,7 @@ async function safeLogLeadEvent(leadId, eventType, eventPayload) {
  */
 function notifyViaTelegram(leadData) {
   if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID) {
-    return; // Silently skip if not configured
+    return Promise.resolve(false); // Silently skip if not configured
   }
 
   const { leadId, name, phone, email, zip, preferredContact, service, message, attachments, attribution } = leadData;
@@ -452,7 +595,7 @@ function notifyViaTelegram(leadData) {
 <b>Message:</b>
 ${escapeHtml(message || '—')}
 
-<b>Attribution:</b> <code>${escapeHtml((attribution && attribution.summary) || 'direct')}</code>
+<b>Attribution:</b> <code>${escapeHtml((attribution && attribution.summary) || leadData.source || 'direct')}</code>
 
 <b>Lead ID:</b> <code>${leadId}</code>
 <b>CTX:</b> <code>CTX:${leadId}:${phone}</code>
@@ -480,7 +623,7 @@ ${email ? `<a href="tel:${phone}">📞 Call</a> • <a href="https://wa.me/${saf
   const replyMarkup = { inline_keyboard: keyboardRows };
 
   // Non-blocking fetch to Telegram API
-  fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+  return fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -511,55 +654,21 @@ ${email ? `<a href="tel:${phone}">📞 Call</a> • <a href="https://wa.me/${saf
       logLeadEvent(leadId, 'telegram_failed', {
         error: String(err.message || 'telegram_fetch_error').slice(0, 240)
       }).catch(() => {});
+      return false;
     });
 }
 
-/**
- * Escape special HTML characters for Telegram
- */
-function normalizeAttribution(raw) {
-  const safe = raw && typeof raw === 'object' ? raw : {};
-  const clickId = safe.clickId && typeof safe.clickId === 'object' ? safe.clickId : {};
-  const normalized = {
-    pageUrl: String(safe.pageUrl || ''),
-    referrer: String(safe.referrer || ''),
-    utmSource: String(safe.utmSource || ''),
-    utmMedium: String(safe.utmMedium || ''),
-    utmCampaign: String(safe.utmCampaign || ''),
-    utmContent: String(safe.utmContent || ''),
-    utmTerm: String(safe.utmTerm || ''),
-    placementId: String(safe.placementId || ''),
-    landingPath: String(safe.landingPath || ''),
-    lang: String(safe.lang || ''),
-    clickId: {
-      fbclid: String(clickId.fbclid || ''),
-      gclid: String(clickId.gclid || ''),
-      msclkid: String(clickId.msclkid || ''),
-      ttclid: String(clickId.ttclid || ''),
-      gbraid: String(clickId.gbraid || ''),
-      wbraid: String(clickId.wbraid || '')
-    }
-  };
-
-  const summaryParts = [];
-  if (normalized.utmSource) summaryParts.push('src=' + normalized.utmSource);
-  if (normalized.utmMedium) summaryParts.push('med=' + normalized.utmMedium);
-  if (normalized.utmCampaign) summaryParts.push('cmp=' + normalized.utmCampaign);
-  if (normalized.placementId) summaryParts.push('plc=' + normalized.placementId);
-  if (normalized.referrer) summaryParts.push('ref=' + normalized.referrer);
-
-  const clickParts = [];
-  if (normalized.clickId.fbclid) clickParts.push('fbclid');
-  if (normalized.clickId.gclid) clickParts.push('gclid');
-  if (normalized.clickId.msclkid) clickParts.push('msclkid');
-  if (normalized.clickId.ttclid) clickParts.push('ttclid');
-  if (normalized.clickId.gbraid) clickParts.push('gbraid');
-  if (normalized.clickId.wbraid) clickParts.push('wbraid');
-  if (clickParts.length) summaryParts.push('click=' + clickParts.join(','));
-
-  normalized.summary = summaryParts.join(' | ') || 'direct';
-  return normalized;
+async function notifyViaTelegramBestEffort(leadData, timeoutMs = 1500) {
+  try {
+    await Promise.race([
+      Promise.resolve(notifyViaTelegram(leadData)),
+      new Promise((resolve) => setTimeout(resolve, timeoutMs))
+    ]);
+  } catch (err) {
+    console.error('[TELEGRAM_BEST_EFFORT_ERROR]', err.message || err);
+  }
 }
+
 function escapeHtml(text) {
   if (!text) return '';
   return String(text)
@@ -584,4 +693,90 @@ function buildFullSummary({ service, message, preferredContact, source }) {
     `Source: ${String(source || 'direct')}`,
     `Problem: ${String(message || 'No message')}`
   ].join(' | ').slice(0, 1200);
+}
+
+/**
+ * Send auto-responder email to the customer after form submission.
+ * Only works when RESEND_API_KEY is configured and domain is verified.
+ */
+async function sendCustomerAutoResponder({ leadId, name, email, service, phone }) {
+  if (!process.env.RESEND_API_KEY || !email) return;
+
+  const firstName = String(name || 'there').split(' ')[0] || 'there';
+  const serviceName = String(service || 'your project');
+  const safePhone = String(phone || '').replace(/\D/g, '');
+
+  const html = `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f9f7f4">
+  <div style="background:#1a237e;padding:24px;border-radius:12px 12px 0 0;text-align:center">
+    <h1 style="color:#fff;margin:0;font-size:22px">🔧 Handy & Friend</h1>
+    <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:14px">Los Angeles Handyman Service</p>
+  </div>
+  <div style="background:#fff;padding:28px;border:1px solid #e5dfd5">
+    <h2 style="color:#1a237e;font-size:20px;margin-top:0">Got your request, ${escapeHtml(firstName)}!</h2>
+    <p style="font-size:15px;line-height:1.6;color:#333">
+      Thanks for reaching out about <strong>${escapeHtml(serviceName)}</strong>.
+      We've received your details and typically respond within <strong>1 hour</strong> during business hours (8am-8pm PT, Mon-Sat).
+    </p>
+    <h3 style="color:#1a237e;font-size:16px">What happens next:</h3>
+    <ol style="font-size:14px;line-height:1.8;color:#333;padding-left:20px">
+      <li>We review your project details</li>
+      <li>You'll get a call or text with your exact price — no surprises</li>
+      <li>We schedule at your convenience (same-day often available)</li>
+    </ol>
+    <div style="text-align:center;margin:24px 0">
+      <a href="tel:+12133611700" style="display:inline-block;background:#1a237e;color:#fff;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:15px">📞 Call Us: (213) 361-1700</a>
+    </div>
+    ${safePhone ? `<p style="text-align:center;font-size:14px;color:#666">Or text/WhatsApp: <a href="https://wa.me/12133611700" style="color:#1a237e">(213) 361-1700</a></p>` : ''}
+    <hr style="border:none;border-top:1px solid #e5dfd5;margin:24px 0">
+    <p style="font-size:13px;color:#888;text-align:center">
+      Insured · Upfront pricing · No hidden fees<br>
+      <a href="https://handyandfriend.com" style="color:#1a237e">handyandfriend.com</a>
+    </p>
+  </div>
+</body></html>`;
+
+  try {
+    const resp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'Handy & Friend <hello@handyandfriend.com>',
+        to: [email],
+        subject: `Got your request — here's what happens next | Handy & Friend`,
+        html: html,
+        reply_to: 'hello@handyandfriend.com'
+      })
+    });
+    if (resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      console.log('[AUTO_RESPONDER_SENT]', email);
+      await safeLogLeadEvent(leadId, 'customer_email_sent', {
+        provider: 'resend',
+        email_id: data?.id || null,
+        to: email
+      });
+    } else {
+      const err = await resp.json().catch(() => ({}));
+      console.error('[AUTO_RESPONDER_FAILED]', resp.status, err);
+      await safeLogLeadEvent(leadId, 'customer_email_failed', {
+        provider: 'resend',
+        status: resp.status,
+        to: email,
+        error: String(err?.message || JSON.stringify(err) || 'autoresponder_failed').slice(0, 300)
+      });
+    }
+  } catch (err) {
+    console.error('[AUTO_RESPONDER_ERROR]', err.message);
+    await safeLogLeadEvent(leadId, 'customer_email_failed', {
+      provider: 'resend',
+      to: email,
+      error: String(err.message || 'autoresponder_error').slice(0, 300)
+    });
+  }
 }

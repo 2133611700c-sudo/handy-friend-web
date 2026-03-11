@@ -1,10 +1,20 @@
 /**
  * Unified health endpoint (replaces factory-health + funnel-health).
- *   GET /api/health          -> basic runtime diagnostics
- *   GET /api/health?type=funnel&hours=24  -> funnel analytics
+ *   GET /api/health              -> basic runtime diagnostics
+ *   GET /api/health?type=funnel  -> funnel analytics
+ *   GET /api/health?type=fb      -> Facebook diagnostic
+ *   GET /api/health?type=stats&key=SECRET&days=30       -> dashboard stats (JSON)
+ *   GET /api/health?type=stats&key=SECRET&view=funnel   -> specific analytics view
+ *
+ * Stats views: funnel, conversion, channels, services, geo, daily, weekly,
+ *              response_time, chat, losses, reviews, capacity, pnl, repeat
  */
 
 const { getConfig } = require('./_lib/supabase-admin.js');
+const { getCanonicalPriceMatrix, getMessengerPostbackTexts, getPricingSourceVersion } = require('../lib/price-registry.js');
+const { checkMigration007 } = require('../lib/lead-pipeline.js');
+const { analyzeMessengerPricingPolicy } = require('../lib/pricing-policy.js');
+const { normalizeAttribution } = require('../lib/attribution.js');
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,7 +30,98 @@ export default async function handler(req, res) {
 
   if (type === 'funnel') return funnelHealth(req, res);
   if (type === 'fb') return fbHealth(req, res);
+  if (type === 'pricing') return pricingHealth(req, res);
+  if (type === 'attribution') return attributionHealth(req, res);
+  if (type === 'lead_integrity') return leadIntegrityHealth(req, res);
+  if (type === 'policy') return policyHealth(req, res);
+  if (type === 'stats') return statsReport(req, res);
+  if (type === 'data_quality') return dataQualityHealth(req, res);
   return basicHealth(req, res);
+}
+
+/* ── attribution integrity diagnostic ── */
+async function attributionHealth(req, res) {
+  const config = getConfig();
+  if (!config) return res.status(200).json({ ok: false, error: 'supabase_not_configured' });
+
+  const windowHours = clampHours(req.query?.hours || 168);
+  const sinceIso = new Date(Date.now() - windowHours * 60 * 60 * 1000).toISOString();
+
+  try {
+    const rows = await fetchSupabase(
+      config,
+      `leads?select=id,created_at,source,source_details&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=2000`
+    );
+
+    if (!rows.ok) {
+      return res.status(502).json({ ok: false, error: rows.error || 'attribution_fetch_failed' });
+    }
+
+    const channelSplit = {};
+    const invalidSplit = {};
+    const allowedChannels = new Set([
+      'website_chat', 'website_form', 'exit_intent', 'calculator',
+      'facebook', 'instagram', 'whatsapp', 'phone', 'referral',
+      'nextdoor', 'craigslist', 'thumbtack', 'google_business', 'google_organic',
+      'google_lsa', 'google_ads_search', 'google_ads_display', 'google_ads_pmax',
+      'facebook_ads', 'facebook_organic', 'instagram_ads', 'instagram_organic',
+      'yelp', 'other'
+    ]);
+    let otherCount = 0;
+    let googleCount = 0;
+    let missingSourceCount = 0;
+    let invalidChannelCount = 0;
+
+    for (const row of rows.data || []) {
+      const source = String(row?.source || '').trim() || 'other';
+      channelSplit[source] = (channelSplit[source] || 0) + 1;
+      if (source === 'other') otherCount += 1;
+      if (source.startsWith('google_')) googleCount += 1;
+      if (!row?.source) missingSourceCount += 1;
+      if (!allowedChannels.has(source)) {
+        invalidChannelCount += 1;
+        invalidSplit[source] = (invalidSplit[source] || 0) + 1;
+      }
+    }
+
+    const total = (rows.data || []).length;
+    const otherRate = total ? Number((otherCount / total).toFixed(4)) : 0;
+    const attributionIntegrity = total === 0 || (otherRate <= 0.3 && invalidChannelCount === 0) ? 'PASS' : 'WARN';
+
+    const synthetic = [
+      { name: 'gclid_only', input: { clickId: { gclid: 'x' } }, expected: 'google_ads_search' },
+      { name: 'utm_google_cpc', input: { utmSource: 'google', utmMedium: 'cpc' }, expected: 'google_ads_search' },
+      { name: 'utm_google_lsa', input: { utmSource: 'google', utmCampaign: 'local services ads' }, expected: 'google_lsa' },
+      { name: 'utm_google_gbp', input: { utmSource: 'google', utmMedium: 'business_profile' }, expected: 'google_business' }
+    ].map((test) => {
+      const normalized = normalizeAttribution(test.input);
+      return {
+        name: test.name,
+        expected: test.expected,
+        actual: normalized.channel,
+        status: normalized.channel === test.expected ? 'PASS' : 'FAIL'
+      };
+    });
+
+    return res.status(200).json({
+      ok: true,
+      window_hours: windowHours,
+      attribution_integrity: attributionIntegrity,
+      totals: {
+        leads: total,
+        other: otherCount,
+        other_rate: otherRate,
+        google_channels: googleCount,
+        missing_source: missingSourceCount,
+        invalid_channel_keys: invalidChannelCount
+      },
+      channel_split: channelSplit,
+      invalid_channel_split: invalidSplit,
+      synthetic_checks: synthetic
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: String(err?.message || 'attribution_health_failed') });
+  }
 }
 
 /* ── basic (ex factory-health) ── */
@@ -93,6 +194,196 @@ async function fbHealth(_req, res) {
   return res.status(200).json(out);
 }
 
+/* ── pricing consistency diagnostic ── */
+async function pricingHealth(_req, res) {
+  const matrix = getCanonicalPriceMatrix();
+  const postbacks = getMessengerPostbackTexts();
+  const pricingVersion = getPricingSourceVersion();
+  const services = [
+    { id: 'tv_mounting', label: 'TV Mounting', expected: '$105' },
+    { id: 'furniture_assembly', label: 'Furniture Assembly', expected: '$75' },
+    { id: 'art_mirrors', label: 'Art & Mirrors', expected: '$95' },
+    { id: 'interior_painting', label: 'Painting', expected: '$3.00' },
+    { id: 'flooring', label: 'Flooring', expected: '$3.00' },
+    { id: 'kitchen_cabinet_painting', label: 'Kitchen Cabinet Painting', expected: '$75' },
+    { id: 'furniture_painting', label: 'Furniture Painting', expected: '$40' },
+    { id: 'plumbing', label: 'Plumbing', expected: '$115' },
+    { id: 'electrical', label: 'Electrical', expected: '$95' }
+  ];
+
+  let pricingHtml = '';
+  let indexHtml = '';
+  try {
+    const [pricingResp, indexResp] = await Promise.all([
+      fetch('https://handyandfriend.com/pricing?lang=en'),
+      fetch('https://handyandfriend.com/')
+    ]);
+    pricingHtml = pricingResp.ok ? await pricingResp.text() : '';
+    indexHtml = indexResp.ok ? await indexResp.text() : '';
+  } catch (_) {}
+
+  const messengerPolicy = analyzeMessengerPricingPolicy(postbacks, matrix);
+  const mismatches = [];
+  const checks = [];
+
+  for (const s of services) {
+    const siteOk = containsAll(pricingHtml, [s.label, s.expected]);
+    const chatExpected = matrix[s.id];
+    const chatOk = Number.isFinite(chatExpected);
+    const messengerOk = messengerPolicy.ok;
+    const jsonldOk = jsonLdHasExpected(indexHtml, s.id, chatExpected);
+
+    checks.push({
+      service_id: s.id,
+      service: s.label,
+      expected_display: s.expected,
+      channels: {
+        site: siteOk ? 'PASS' : 'FAIL',
+        ai_chat: chatOk ? 'PASS' : 'FAIL',
+        messenger: messengerOk ? 'PASS_GATED' : 'FAIL',
+        messenger_reason: messengerOk ? 'gated_no_price_leak' : messengerPolicy.reason,
+        jsonld: jsonldOk ? 'PASS' : 'FAIL'
+      }
+    });
+
+    if (!siteOk || !chatOk || !messengerOk || !jsonldOk) {
+      mismatches.push({
+        service_id: s.id,
+        failed_channels: [
+          !siteOk ? 'site' : null,
+          !chatOk ? 'ai_chat' : null,
+          !messengerOk ? 'messenger' : null,
+          !jsonldOk ? 'jsonld' : null
+        ].filter(Boolean)
+      });
+    }
+  }
+
+  return res.status(200).json({
+    pricing_source_version: pricingVersion,
+    messenger_policy: messengerPolicy,
+    pricing_consistency_status: mismatches.length ? 'FAIL' : 'PASS',
+    mismatch_count: mismatches.length,
+    mismatches,
+    checks
+  });
+}
+
+/* ── lead capture integrity diagnostic ── */
+async function leadIntegrityHealth(_req, res) {
+  const config = getConfig();
+  if (!config) return res.status(200).json({ ok: false, error: 'supabase_not_configured' });
+
+  const migration = await checkMigration007();
+  if (!migration.hasSessionId) {
+    return res.status(200).json({
+      ok: true,
+      lead_capture_integrity: 'UNKNOWN_COMPACT_MODE',
+      note: 'session_id column missing; phone-present loss detection limited until migration 007 is applied'
+    });
+  }
+
+  const sinceIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const conversations = await fetchSupabase(
+      config,
+      `ai_conversations?select=session_id,message_role,message_text,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=2000`
+    );
+    if (!conversations.ok) return res.status(502).json({ ok: false, error: conversations.error });
+
+    const phoneRegex = /(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/;
+    const sessionsWithPhone = new Set();
+    for (const row of conversations.data || []) {
+      if (row?.message_role !== 'user') continue;
+      if (phoneRegex.test(String(row?.message_text || ''))) {
+        sessionsWithPhone.add(String(row.session_id || ''));
+      }
+    }
+
+    const sessionList = [...sessionsWithPhone].filter(s => s && !s.startsWith('test_'));
+    if (!sessionList.length) {
+      return res.status(200).json({
+        ok: true,
+        lead_capture_integrity: 'PASS',
+        phone_present_sessions: 0,
+        captured_sessions: 0,
+        phone_present_lead_not_captured: 0
+      });
+    }
+
+    const inList = sessionList.map((s) => `"${s.replace(/"/g, '\\"')}"`).join(',');
+    const leads = await fetchSupabase(
+      config,
+      `leads?select=id,session_id,created_at&session_id=in.(${encodeURIComponent(inList)})&created_at=gte.${encodeURIComponent(sinceIso)}&limit=2000`
+    );
+    if (!leads.ok) return res.status(502).json({ ok: false, error: leads.error });
+
+    const capturedSessions = new Set((leads.data || []).map((r) => String(r?.session_id || '')).filter(Boolean));
+    const missingSessions = sessionList.filter((sid) => !capturedSessions.has(sid));
+
+    return res.status(200).json({
+      ok: true,
+      lead_capture_integrity: missingSessions.length ? 'FAIL' : 'PASS',
+      phone_present_sessions: sessionList.length,
+      captured_sessions: capturedSessions.size,
+      phone_present_lead_not_captured: missingSessions.length,
+      sample_missing_sessions: missingSessions.slice(0, 20)
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: String(err?.message || 'lead_integrity_failed') });
+  }
+}
+
+/* ── policy violation diagnostic ── */
+async function policyHealth(_req, res) {
+  const config = getConfig();
+  if (!config) return res.status(200).json({ ok: false, error: 'supabase_not_configured' });
+
+  const sinceIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const [events, conv] = await Promise.all([
+      fetchSupabase(
+        config,
+        `lead_events?select=event_type,event_payload,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&event_type=in.(policy_violation,cross_sell_policy_violation)&limit=2000`
+      ),
+      fetchSupabase(
+        config,
+        `ai_conversations?select=session_id,message_role,message_text,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&message_role=eq.assistant&limit=2000`
+      )
+    ]);
+
+    if (!events.ok || !conv.ok) {
+      return res.status(502).json({
+        ok: false,
+        error: 'policy_data_fetch_failed',
+        details: { events: events.error || null, conversations: conv.error || null }
+      });
+    }
+
+    let heuristicCrossSellViolations = 0;
+    for (const row of conv.data || []) {
+      const text = String(row?.message_text || '').toLowerCase();
+      const isPlumbElec = text.includes('plumbing') || text.includes('electrical') || text.includes('сантех') || text.includes('электр');
+      const hasCrossSell = text.includes('save 20%') || text.includes('bundle') || text.includes('same visit') || text.includes('кстати') || text.includes('por cierto');
+      if (isPlumbElec && hasCrossSell) heuristicCrossSellViolations += 1;
+    }
+
+    const explicitViolations = (events.data || []).length;
+    const totalViolations = explicitViolations + heuristicCrossSellViolations;
+
+    return res.status(200).json({
+      ok: true,
+      policy_violation_count: totalViolations,
+      explicit_policy_violations: explicitViolations,
+      heuristic_cross_sell_policy_violations: heuristicCrossSellViolations,
+      policy_status: totalViolations ? 'FAIL' : 'PASS',
+      window_hours: 24
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: String(err?.message || 'policy_health_failed') });
+  }
+}
+
 /* ── funnel analytics (ex funnel-health) ── */
 async function funnelHealth(req, res) {
   const config = getConfig();
@@ -130,6 +421,115 @@ async function funnelHealth(req, res) {
   }
 }
 
+/* ── data quality diagnostic ── */
+async function dataQualityHealth(req, res) {
+  const config = getConfig();
+  if (!config) return res.status(200).json({ ok: false, error: 'supabase_not_configured' });
+
+  const windowHours = clampHours(req.query?.hours || 168);
+  const sinceIso = new Date(Date.now() - windowHours * 60 * 60 * 1000).toISOString();
+
+  try {
+    const rows = await fetchSupabase(
+      config,
+      `leads?select=id,is_test,channel,service_type,source,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=2000`
+    );
+
+    if (!rows.ok) {
+      return res.status(502).json({ ok: false, error: rows.error || 'data_quality_fetch_failed' });
+    }
+
+    const leads = rows.data || [];
+    const total = leads.length;
+    const checks = [];
+    const failReasons = [];
+
+    // 1. Test contamination rate (on is_test column — requires 013 migration)
+    const hasIsTest = total > 0 && leads[0].hasOwnProperty('is_test');
+    let testCount = 0;
+    let prodCount = 0;
+    if (hasIsTest) {
+      testCount = leads.filter(l => l.is_test === true).length;
+      prodCount = total - testCount;
+      const contamRate = total ? Number((testCount / total).toFixed(4)) : 0;
+      const pass = contamRate < 0.5; // For overall DB; new leads should be 0%
+      checks.push({
+        name: 'test_contamination_rate',
+        value: contamRate,
+        test_count: testCount,
+        prod_count: prodCount,
+        status: pass ? 'PASS' : 'WARN',
+        note: hasIsTest ? null : 'is_test column missing — run 013_test_isolation.sql'
+      });
+      if (!pass) failReasons.push(`test_contamination=${(contamRate * 100).toFixed(1)}% (${testCount}/${total})`);
+    } else {
+      checks.push({
+        name: 'test_contamination_rate',
+        value: null,
+        status: 'UNKNOWN',
+        note: 'is_test column missing — run 013_test_isolation.sql'
+      });
+      failReasons.push('is_test column not available');
+    }
+
+    // 2. Channel completeness rate
+    const withChannel = leads.filter(l => l.channel && l.channel !== 'null').length;
+    const channelRate = total ? Number((withChannel / total).toFixed(4)) : 1;
+    const channelPass = channelRate >= 0.9;
+    checks.push({
+      name: 'channel_completeness_rate',
+      value: channelRate,
+      populated: withChannel,
+      missing: total - withChannel,
+      status: channelPass ? 'PASS' : 'FAIL'
+    });
+    if (!channelPass) failReasons.push(`channel_missing=${total - withChannel}/${total}`);
+
+    // 3. Service type quality rate
+    const badServicePatterns = ['[object object]', 'unknown', 'not specified', '', 'null', 'test'];
+    const badServiceCount = leads.filter(l => {
+      const svc = String(l.service_type || '').toLowerCase().trim();
+      return badServicePatterns.includes(svc) || !svc;
+    }).length;
+    const serviceQuality = total ? Number((1 - badServiceCount / total).toFixed(4)) : 1;
+    const servicePass = serviceQuality >= 0.90;
+
+    // Count [object Object] specifically
+    const objectObjectCount = leads.filter(l =>
+      String(l.service_type || '').toLowerCase().includes('[object object]')
+    ).length;
+
+    checks.push({
+      name: 'service_type_quality_rate',
+      value: serviceQuality,
+      bad_count: badServiceCount,
+      object_object_count: objectObjectCount,
+      unknown_count: leads.filter(l => {
+        const s = String(l.service_type || '').toLowerCase().trim();
+        return s === 'unknown' || s === 'not specified' || !s;
+      }).length,
+      status: servicePass ? 'PASS' : (objectObjectCount > 0 ? 'FAIL' : 'WARN')
+    });
+    if (objectObjectCount > 0) failReasons.push(`[object Object] service_type count=${objectObjectCount}`);
+    if (!servicePass) failReasons.push(`service_quality=${(serviceQuality * 100).toFixed(1)}%`);
+
+    // Overall status
+    const allPass = checks.every(c => c.status === 'PASS');
+    const hasFail = checks.some(c => c.status === 'FAIL');
+
+    return res.status(200).json({
+      ok: true,
+      data_quality_status: hasFail ? 'FAIL' : (allPass ? 'PASS' : 'WARN'),
+      window_hours: windowHours,
+      total_leads: total,
+      checks,
+      fail_reasons: failReasons
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: String(err?.message || 'data_quality_failed') });
+  }
+}
+
 /* ── helpers ── */
 function clampHours(input) {
   const n = Number(input || 24);
@@ -151,6 +551,55 @@ async function fetchSupabase(config, path) {
     return { ok: false, error: `postgrest_${response.status}:${text.slice(0, 200)}` };
   }
   return { ok: true, data: await response.json().catch(() => []) };
+}
+
+/* ── stats report (dashboard_stats + analytics views) ── */
+const STATS_VIEW_MAP = {
+  funnel: 'v_lead_funnel', conversion: 'v_conversion_rates',
+  channels: 'v_channel_roi', services: 'v_service_performance',
+  geo: 'v_geo_heatmap', daily: 'v_daily_trends',
+  weekly: 'v_weekly_summary', response_time: 'v_response_time_dist',
+  chat: 'v_chat_analytics', losses: 'v_loss_reasons',
+  reviews: 'v_reviews_summary', capacity: 'v_capacity',
+  pnl: 'v_monthly_pl', repeat: 'v_repeat_customers',
+};
+
+async function statsReport(req, res) {
+  const config = getConfig();
+  if (!config) {
+    return res.status(500).json({ ok: false, error: 'supabase_not_configured' });
+  }
+
+  const secret = process.env.STATS_SECRET || config.serviceRoleKey.slice(0, 16);
+  const providedKey = String(req.query?.key || '');
+  if (!providedKey || providedKey !== secret) {
+    return res.status(401).json({ ok: false, error: 'unauthorized' });
+  }
+
+  const view = String(req.query?.view || '').toLowerCase();
+  const days = Math.min(Math.max(parseInt(req.query?.days) || 30, 1), 365);
+
+  try {
+    if (view && STATS_VIEW_MAP[view]) {
+      const r = await fetchSupabase(config, `${STATS_VIEW_MAP[view]}?limit=500`);
+      if (!r.ok) return res.status(502).json({ ok: false, error: r.error });
+      return res.status(200).json({ ok: true, type: STATS_VIEW_MAP[view], rows: (r.data || []).length, data: r.data });
+    }
+
+    const response = await fetch(`${config.projectUrl}/rest/v1/rpc/dashboard_stats`, {
+      method: 'POST',
+      headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_days: days }),
+    });
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      return res.status(502).json({ ok: false, error: `supabase_${response.status}`, details: body.slice(0, 500) });
+    }
+    const data = await response.json();
+    return res.status(200).json({ ok: true, type: 'dashboard', days, data });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message || 'stats_error' });
+  }
 }
 
 function buildMetrics(events, leads) {
@@ -201,4 +650,38 @@ function buildMetrics(events, leads) {
     photo_forward_success_rate: totalPhotoAttempts > 0 ? Number((photosForwardedCount / totalPhotoAttempts).toFixed(4)) : null,
     chat_photo_failure_reasons: failureReasons
   };
+}
+
+function containsAll(text, needles) {
+  const t = String(text || '');
+  return needles.every((n) => t.includes(String(n)));
+}
+
+function containsAny(text, needles) {
+  const t = String(text || '');
+  return needles.some((n) => t.includes(String(n)));
+}
+
+function jsonLdHasExpected(indexHtml, serviceId, expectedPrice) {
+  const html = String(indexHtml || '');
+  if (!html) return false;
+
+  const mapping = {
+    tv_mounting: 'TV Mounting',
+    furniture_assembly: 'Furniture Assembly',
+    art_mirrors: 'Art & Mirror Hanging',
+    interior_painting: 'Interior Painting',
+    flooring: 'Flooring Installation',
+    kitchen_cabinet_painting: 'Kitchen Cabinet Painting',
+    furniture_painting: 'Furniture Painting',
+    plumbing: 'Plumbing',
+    electrical: 'Electrical'
+  };
+  const serviceName = mapping[serviceId];
+  if (!serviceName) return false;
+
+  const idx = html.indexOf(`\"name\":\"${serviceName}\"`);
+  if (idx === -1) return false;
+  const chunk = html.slice(idx, idx + 300);
+  return chunk.includes(`\"price\":\"${Number(expectedPrice).toFixed(2)}\"`) || chunk.includes(`\"price\":\"${Number(expectedPrice)}\"`);
 }

@@ -1,5 +1,5 @@
 /**
- * AI Sales Chat — BLOCK 2
+ * AI Sales Chat -- BLOCK 2
  * POST /api/ai-chat
  * Body: { sessionId, messages, lang }
  * Returns: { reply, leadCaptured, leadId }
@@ -11,8 +11,14 @@ const { restInsert, logLeadEvent, getConfig } = require('./_lib/supabase-admin.j
 const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
 const { createHash } = require('node:crypto');
 const { callAlex } = require('../lib/ai-fallback.js');
-const { createOrMergeLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
-const { buildSystemPrompt, getGuardMode, GUARD_MODES } = require('../lib/alex-one-truth.js');
+const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
+const { buildSystemPrompt, getGuardMode, GUARD_MODES, POLICY_VERSION } = require('../lib/alex-one-truth.js');
+const { getPricingSourceVersion } = require('../lib/price-registry.js');
+const {
+  inferServiceType: inferServiceTypeShared,
+  appendCrossSellNudge: appendCrossSellNudgeShared,
+  stripDollarAmounts
+} = require('../lib/alex-policy-engine.js');
 
 // Legacy language helper; prompt logic is sourced only from alex-one-truth.js
 const { detectLanguage } = require('../lib/alex-v8-system.js');
@@ -42,7 +48,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Too many chat messages. Please wait a moment.' });
   }
 
-  const { sessionId, messages, lang = 'en' } = req.body || {};
+  const { sessionId, messages, lang = 'en', attribution } = req.body || {};
 
   if (!sessionId || typeof sessionId !== 'string' || sessionId.length > 128) {
     return res.status(400).json({ error: 'sessionId required (string, max 128 chars)' });
@@ -71,6 +77,21 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'No valid messages' });
   }
   const latestUserText = safeMessages[safeMessages.length - 1]?.content || '';
+
+  // v11: Prompt injection defense -- detect and deflect
+  if (hasPromptInjectionSignals(latestUserText)) {
+    console.warn('[AI_CHAT] Prompt injection attempt detected:', latestUserText.slice(0, 100));
+    const deflect = {
+      en: "I can only help with our handyman services: painting, flooring, TV mounting, plumbing, and electrical. What project can I help you with?",
+      ru: "Я могу помочь только с нашими услугами: покраска, полы, монтаж ТВ, сантехника, электрика. Какой у вас проект?",
+      uk: "Я можу допомогти лише з нашими послугами: фарбування, підлога, монтаж ТВ, сантехніка, електрика. Який у вас проект?",
+      es: "Solo puedo ayudar con nuestros servicios: pintura, pisos, montaje TV, plomeria, electrica. En que proyecto puedo ayudarte?"
+    };
+    return res.status(200).json({
+      reply: deflect[safeLang] || deflect.en,
+      leadCaptured: false, leadId: null, contact_captured: false, service: '', fallback_used: false
+    });
+  }
   const userOnlyMessages = safeMessages.filter((m) => m.role === 'user');
   const sessionContext = await fetchSessionLeadContext(sessionId);
   const userMsgCount = userOnlyMessages.length;
@@ -87,7 +108,7 @@ export default async function handler(req, res) {
   if (!process.env.DEEPSEEK_API_KEY) {
     // Graceful fallback when key not configured
     return res.status(200).json({
-      reply: 'Hi! I\'m Alex from Handy & Friend. We\'d love to help with your project! Please call us at (213) 361-1700 or use the quote form below — we respond within 1 hour.',
+      reply: 'Hi! I\'m Alex from Handy & Friend. We\'d love to help with your project! Please call us at (213) 361-1700 or use the quote form below -- we respond within 1 hour.',
       leadCaptured: false,
       leadId: null,
       fallback: true
@@ -104,12 +125,7 @@ export default async function handler(req, res) {
       const alexResult = await callAlex(safeMessages, systemPrompt);
       rawReply = alexResult.reply;
 
-      // Optional: Retry with stricter guard if needed (safety measure)
-      if (guardMode !== GUARD_MODES.POST_CONTACT_EXACT && shouldRegenerateForStrictRange({ guardMode, reply: rawReply })) {
-        const strictPrompt = `${systemPrompt}\n\nCRITICAL: User has no phone yet. NO prices, NO ranges, NO dollar amounts. Ask for phone first.`;
-        const retry = await callAlex(safeMessages, strictPrompt);
-        rawReply = retry.reply;
-      }
+      // v11: No more regeneration -- soft gate allows ranges pre-phone
 
       if (alexResult.model === 'static_fallback') {
         console.warn('[AI_CHAT] Using static fallback for DeepSeek API');
@@ -121,11 +137,32 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error('[AI_CHAT] AI error:', err.message);
-    return res.status(502).json({ error: 'AI service temporarily unavailable. Please try again.' });
+    // v11: Sales-safe fallback -- NEVER dead-end the conversation
+    const salesFallback = {
+      en: "I'm having a brief connection issue, but I can still help! Tell me about your project -- what service do you need? Share details and your phone number, and our manager will call with a quote within 30 minutes. Or call us: (213) 361-1700",
+      ru: "Небольшой сбой связи, но я все равно могу помочь! Расскажите о проекте -- какая услуга нужна? Оставьте детали и номер телефона, наш менеджер перезвонит с расчетом в течение 30 минут. Или звоните: (213) 361-1700",
+      uk: "Невеликий збій зв'язку, але я все одно можу допомогти! Розкажіть про проект -- яка послуга потрібна? Залиште деталі та номер телефону, наш менеджер передзвонить з розрахунком протягом 30 хвилин. Або телефонуйте: (213) 361-1700",
+      es: "Tengo un breve problema de conexion, pero puedo ayudarte! Cuentame sobre tu proyecto -- que servicio necesitas? Comparte los detalles y tu numero de telefono, y nuestro gerente te llamara con un presupuesto en 30 minutos. O llama: (213) 361-1700"
+    };
+    rawReply = salesFallback[safeLang] || salesFallback.en;
   }
 
-  // Enforce a direct contact CTA before contact is captured to improve conversion.
-  if (!hasPhone && !isClearlyOutOfScopeRequest(latestUserText)) {
+  // v11 Soft CTA: only append phone CTA every 3rd user message (not every reply)
+  // Skip CTA if user explicitly declined giving phone in conversation
+  const userDeclinedPhone = userOnlyMessages.some(m => {
+    const t = String(m.content || '').toLowerCase();
+    return (
+      (t.includes('no phone') || t.includes('dont want') || t.includes("don't want") || t.includes('not giving') || t.includes('no number')) &&
+      (t.includes('phone') || t.includes('number'))
+    ) || (
+      (t.includes('не хочу') || t.includes('не дам') || t.includes('не буду')) &&
+      (t.includes('телефон') || t.includes('номер'))
+    ) || (
+      (t.includes('no quiero') || t.includes('no voy a dar')) &&
+      (t.includes('telefono') || t.includes('numero'))
+    );
+  });
+  if (!hasPhone && !isClearlyOutOfScopeRequest(latestUserText) && !userDeclinedPhone && userMsgCount % 3 === 0 && userMsgCount > 0) {
     rawReply = enforceContactCaptureCTA(rawReply, safeLang, guardMode);
   }
 
@@ -169,15 +206,24 @@ export default async function handler(req, res) {
     }
   }
 
-  if (guardMode === GUARD_MODES.POST_CONTACT_EXACT && !isClearlyOutOfScopeRequest(latestUserText)) {
-    const serviceForUpsell = String(capturedLead?.service || inferServiceType(userOnlyMessages.map((m) => m.content).join('\n')) || '').toLowerCase();
-    reply = appendCrossSellNudge(reply, safeLang, serviceForUpsell);
+  const serviceInference = inferServiceType(userOnlyMessages.map((m) => m.content).join('\n'));
+  const inferredService = serviceInference.serviceId || '';
+  const isStandalone = inferredService === 'plumbing' || inferredService === 'electrical';
+
+  // v11: Strip cross-sell from plumbing/electrical (AI sometimes generates it despite prompt rules)
+  if (isStandalone) {
+    reply = stripCrossSellFromStandalone(reply);
   }
 
-  // Final output hygiene: keep chat text clean and enforce no-price leakage pre-phone.
+  if (guardMode === GUARD_MODES.POST_CONTACT_EXACT && !isClearlyOutOfScopeRequest(latestUserText) && !isStandalone) {
+    const serviceForUpsell = String(capturedLead?.service || inferredService || '').toLowerCase();
+    reply = appendCrossSellNudgeShared({ reply, lang: safeLang, serviceId: serviceForUpsell });
+  }
+
+  // Final output hygiene: keep chat text clean
   reply = stripMarkdownArtifacts(reply);
-  if (!hasPhone && !isClearlyOutOfScopeRequest(latestUserText)) {
-    reply = removePrePhoneDollarAmounts(reply, safeLang);
+  // v11: prices are allowed pre-phone (ranges). No more dollar stripping.
+  if (!isClearlyOutOfScopeRequest(latestUserText)) {
     reply = enforceMaterialPolicyHint(reply, latestUserText, safeLang);
   }
 
@@ -187,26 +233,42 @@ export default async function handler(req, res) {
     console.error('[AI_CHAT] saveTurns error:', err.message)
   );
 
-  // Notify Telegram only for captured leads (cleaner signal, less noise).
+  // v11: Send photos to Telegram IMMEDIATELY (pre-lead) so owner sees all inquiries
+  if (latestUserPhotos.length > 0 && !leadCaptured) {
+    sendPreLeadPhotoToTelegram({
+      sessionId,
+      lang: safeLang,
+      userText: lastUser?.content || '',
+      photos: latestUserPhotos,
+      serviceInference
+    }).catch((err) => console.error('[AI_CHAT] Telegram pre-lead photo error:', err.message));
+  }
+
+  // v11: Strict Sales Card for captured leads
   if (leadCaptured && leadId) {
-    sendLeadCapturedToTelegram({
+    sendStrictSalesCard({
       sessionId,
       leadId,
       lang: safeLang,
       userText: lastUser?.content || '',
       aiReply: reply,
       photos: latestUserPhotos,
-      lead: capturedLead
-    }).catch((err) => console.error('[AI_CHAT] Telegram forward error:', err.message));
+      lead: capturedLead,
+      serviceInference,
+      estimateMode: hasPhone ? 'exact' : 'range'
+    }).catch((err) => console.error('[AI_CHAT] Telegram sales card error:', err.message));
   }
 
+  // v11: enriched response contract
+  const contactCaptured = Boolean(sessionContext.hasPhone || hasPhoneCapture(userOnlyMessages));
+  // v11: Only expose fields the frontend needs. Internal state stays server-side.
   return res.status(200).json({
     reply,
     leadCaptured,
     leadId,
-    guard_mode: guardMode,
-    contact_captured: Boolean(sessionContext.hasPhone || hasPhoneCapture(userOnlyMessages)),
-    price_detail_level: guardMode === 'post_contact_exact' ? 'exact' : 'gated'
+    contact_captured: contactCaptured,
+    service: serviceInference.serviceId || '',
+    fallback_used: false
   });
 }
 
@@ -215,9 +277,10 @@ export default async function handler(req, res) {
 
 async function createLead(leadData, sessionId, lang, messages) {
   const { name, phone, email, service, description } = normalizeLeadPreview(leadData);
+  const normalizedService = service || 'unknown';
 
-  if (!service || !phone) {
-    return { ok: false, error: 'missing_service_or_phone' };
+  if (!phone) {
+    return { ok: false, error: 'missing_phone' };
   }
 
   try {
@@ -226,9 +289,10 @@ async function createLead(leadData, sessionId, lang, messages) {
       name: String(name || 'Unknown').slice(0, 160),
       email: String(email || '').slice(0, 160),
       phone: String(phone || '').slice(0, 40),
-      service_type: String(service || '').slice(0, 120),
+      service_type: String(normalizedService || '').slice(0, 120),
       message: String(description || '').slice(0, 2000),
       source: 'website_chat',
+      source_details: attribution && typeof attribution === 'object' ? attribution : undefined,
       session_id: sessionId
     });
 
@@ -236,15 +300,30 @@ async function createLead(leadData, sessionId, lang, messages) {
 
     // Log to pipeline event trail
     await pipelineLogEvent(leadId, 'ai_chat_capture', {
-      service,
+      service: normalizedService,
       lang,
       session_id: sessionId,
+      correlation_id: `ai_chat:${sessionId}`,
+      idempotency_key: `ai_chat_capture:${sessionId}:${leadId}`,
       is_new: pipelineResult.isNew,
       conversation_summary: buildSummary(messages, lang).slice(0, 500)
     }).catch(err => console.error('[PIPELINE_LOG]', err.message));
+    await transitionLead(leadId, 'contacted', {
+      contacted_at: new Date().toISOString()
+    }).catch(() => {});
 
-    console.log('[AI_CHAT] Lead captured:', leadId, service, phone, pipelineResult.isNew ? '(new)' : '(merged)');
-    return { ok: true, leadId, lead: { name, phone, email, service, description } };
+    if (normalizedService === 'unknown') {
+      await pipelineLogEvent(leadId, 'service_inference_failed', {
+        source: 'website_chat',
+        session_id: sessionId,
+        correlation_id: `ai_chat:${sessionId}`,
+        idempotency_key: `service_inference_failed:${sessionId}:${leadId}`,
+        lang
+      }).catch(() => {});
+    }
+
+    console.log('[AI_CHAT] Lead captured:', leadId, normalizedService, phone, pipelineResult.isNew ? '(new)' : '(merged)');
+    return { ok: true, leadId, lead: { name, phone, email, service: normalizedService, description } };
 
   } catch (err) {
     console.error('[AI_CHAT] Pipeline error:', err.message);
@@ -254,12 +333,12 @@ async function createLead(leadData, sessionId, lang, messages) {
 
     const record = {
       id: fallbackId,
-      source: 'ai_chat',
+      source: 'website_chat',
       status: 'new',
       full_name: String(name || 'Unknown').slice(0, 160),
       phone: String(phone || '').slice(0, 40),
       email: String(email || '').slice(0, 160),
-      service_type: String(service || '').slice(0, 120),
+      service_type: String(normalizedService || '').slice(0, 120),
       problem_description: String(description || '').slice(0, 2000),
       ai_summary: buildSummary(messages, lang).slice(0, 2000),
       source_details: { session_id: sessionId, lang, channel: 'chat_widget' }
@@ -272,7 +351,7 @@ async function createLead(leadData, sessionId, lang, messages) {
     }
 
     console.log('[AI_CHAT] Lead created (legacy fallback):', fallbackId);
-    return { ok: true, leadId: fallbackId, lead: { name, phone, email, service, description } };
+    return { ok: true, leadId: fallbackId, lead: { name, phone, email, service: normalizedService, description } };
   }
 }
 
@@ -336,9 +415,9 @@ async function sendLeadCapturedToTelegram({ sessionId, leadId, lang, userText, a
   const safeSession = String(sessionId || 'unknown');
   const photoCount = Array.isArray(photos) ? photos.length : 0;
   const safeLeadData = normalizeLeadPreview(lead);
-  const contactLine = safeLeadData.phone || '—';
-  const locationLine = safeLeadData.city || safeLeadData.zip || '—';
-  const text = `🔔 <b>LEAD_CAPTURED</b>\nName: <b>${escapeHtml(safeLeadData.name || 'Unknown')}</b>\nContact: <code>${escapeHtml(contactLine)}</code>\nService: ${escapeHtml(safeLeadData.service || '—')}\nArea: ${escapeHtml(locationLine)}\nSession: <code>${escapeHtml(safeSession)}</code>\nLead: <code>${escapeHtml(safeLead)}</code>\nLang: ${escapeHtml(String(lang || 'en').toUpperCase())}\nPhotos: ${photoCount}\n\n<b>User intent:</b> ${escapeHtml(String(userText || '—').slice(0, 320))}\n<b>Alex reply:</b> ${escapeHtml(String(aiReply || '—').slice(0, 320))}`;
+  const contactLine = safeLeadData.phone || '--';
+  const locationLine = safeLeadData.city || safeLeadData.zip || '--';
+  const text = `🔔 <b>LEAD_CAPTURED</b>\nName: <b>${escapeHtml(safeLeadData.name || 'Unknown')}</b>\nContact: <code>${escapeHtml(contactLine)}</code>\nService: ${escapeHtml(safeLeadData.service || '--')}\nArea: ${escapeHtml(locationLine)}\nSession: <code>${escapeHtml(safeSession)}</code>\nLead: <code>${escapeHtml(safeLead)}</code>\nLang: ${escapeHtml(String(lang || 'en').toUpperCase())}\nPhotos: ${photoCount}\n\n<b>User intent:</b> ${escapeHtml(String(userText || '--').slice(0, 320))}\n<b>Alex reply:</b> ${escapeHtml(String(aiReply || '--').slice(0, 320))}`;
 
   const msgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
@@ -414,6 +493,87 @@ async function sendLeadCapturedToTelegram({ sessionId, leadId, lang, userText, a
       failed_count: failedPhotos.length,
       failed: failedPhotos
     });
+  }
+}
+
+// v11: Pre-lead photo notification -- owner sees photos BEFORE phone is captured
+async function sendPreLeadPhotoToTelegram({ sessionId, lang, userText, photos, serviceInference }) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+
+  const service = serviceInference?.serviceId || 'unknown';
+  const confidence = serviceInference?.confidence || 0;
+  const text = `📷 <b>NEW_INQUIRY</b> (no phone yet)\n` +
+    `Service: ${escapeHtml(service)} (${Math.round(confidence * 100)}%)\n` +
+    `Lang: ${escapeHtml(String(lang || 'en').toUpperCase())}\n` +
+    `Session: <code>${escapeHtml(String(sessionId || 'unknown'))}</code>\n` +
+    `Photos: ${photos.length}\n\n` +
+    `<b>User:</b> ${escapeHtml(String(userText || '').slice(0, 400))}`;
+
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true })
+  }).catch(() => {});
+
+  // Forward photos
+  const dedup = filterDedupedPhotos(String(sessionId || 'unknown'), photos);
+  for (let i = 0; i < dedup.photos.length; i++) {
+    await sendTelegramPhotoWithRetry(token, chatId, dedup.photos[i], {
+      caption: i === 0 ? `📸 Pre-lead inquiry\nSession: ${String(sessionId || '').slice(0, 40)}` : ''
+    }).catch(() => {});
+  }
+}
+
+// v11: Strict Sales Card -- structured lead notification with next action + SLA
+async function sendStrictSalesCard({ sessionId, leadId, lang, userText, aiReply, photos, lead, serviceInference, estimateMode }) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+
+  const safeLead = normalizeLeadPreview(lead);
+  const photoCount = Array.isArray(photos) ? photos.length : 0;
+  const service = safeLead.service || serviceInference?.serviceId || 'unknown';
+  const now = new Date();
+  const slaDeadline = new Date(now.getTime() + 60 * 60 * 1000); // +1hr
+  const slaTime = slaDeadline.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Los_Angeles' });
+
+  const text = `🔔 <b>LEAD_CAPTURED</b>\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `👤 Name: <b>${escapeHtml(safeLead.name || 'Unknown')}</b>\n` +
+    `📱 Phone: <code>${escapeHtml(safeLead.phone || '--')}</code>\n` +
+    `🔧 Service: ${escapeHtml(service)}\n` +
+    `📍 Area: ${escapeHtml(safeLead.city || safeLead.zip || '--')}\n` +
+    `🌐 Lang: ${escapeHtml(String(lang || 'en').toUpperCase())}\n` +
+    `📷 Photos: ${photoCount}\n` +
+    `💰 Estimate: ${escapeHtml(estimateMode || 'range')}\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `📋 <b>Next action:</b> Call customer\n` +
+    `⏰ <b>SLA deadline:</b> ${slaTime} PT\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `Session: <code>${escapeHtml(String(sessionId || ''))}</code>\n` +
+    `Lead: <code>${escapeHtml(String(leadId || ''))}</code>\n\n` +
+    `<b>User:</b> ${escapeHtml(String(userText || '').slice(0, 300))}\n` +
+    `<b>Alex:</b> ${escapeHtml(String(aiReply || '').slice(0, 300))}`;
+
+  const msgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true })
+  });
+  const msgData = await msgRes.json().catch(() => ({}));
+  if (!msgRes.ok || !msgData.ok) {
+    throw new Error(msgData?.description || `sendMessage failed (${msgRes.status})`);
+  }
+
+  // Forward photos if any
+  if (!photoCount) return;
+  const dedup = filterDedupedPhotos(String(sessionId || 'unknown'), photos);
+  for (let i = 0; i < dedup.photos.length; i++) {
+    await sendTelegramPhotoWithRetry(token, chatId, dedup.photos[i], {
+      caption: i === 0 ? `📸 Lead photos\nLead: ${String(leadId || '').slice(0, 40)}` : ''
+    }).catch(() => {});
   }
 }
 
@@ -589,11 +749,25 @@ function normalizeLeadPreview(leadData) {
     name: String(data.name || '').trim().slice(0, 160) || 'Unknown',
     phone: String(data.phone || '').trim().slice(0, 40),
     email: String(data.email || '').trim().slice(0, 160),
-    service: String(data.service || data.service_type || '').trim().slice(0, 120),
+    service: extractServiceString(data.service || data.service_type || '').slice(0, 120),
     description: String(data.description || data.problem_description || '').trim().slice(0, 600),
     city: String(data.city || '').trim().slice(0, 80),
     zip: String(data.zip || '').trim().slice(0, 16)
   };
+}
+
+/**
+ * Safely extract service_type as a string.
+ * Handles: string, object ({serviceId: '...'}), null/undefined.
+ * Prevents [object Object] from ever reaching the database.
+ */
+function extractServiceString(raw) {
+  if (!raw) return '';
+  if (typeof raw === 'string') return raw.trim();
+  if (typeof raw === 'object' && raw !== null) {
+    return String(raw.serviceId || raw.service_id || raw.id || raw.name || '').trim();
+  }
+  return String(raw).trim();
 }
 
 function hasPhoneCapture(messages) {
@@ -603,39 +777,21 @@ function hasPhoneCapture(messages) {
   return phoneRegex.test(fullText);
 }
 
-function shouldRegenerateForStrictRange({ guardMode, reply }) {
-  if (!reply || guardMode === 'post_contact_exact') return false;
-  const text = String(reply || '').toLowerCase();
 
-  const mathIntent = [' x ', ' × ', ' per door', '/door', 'per sq', '/sf', 'line item', 'breakdown', 'subtotal', 'range'];
-  const exactSignals = ['exact', 'total is', 'that comes to', 'would come to', 'equals', 'formula'];
-  const hasMathIntent = mathIntent.some((k) => text.includes(k));
-  const hasExactSignal = exactSignals.some((k) => text.includes(k));
-  const hasAnyDollarValue = (text.match(/\$\s*\d[\d,.]*/g) || []).length >= 1;
 
-  return hasAnyDollarValue || hasMathIntent || hasExactSignal;
-}
-
-function enforceContactCaptureCTA(reply, lang, guardMode) {
+function enforceContactCaptureCTA(reply, lang) {
   const text = String(reply || '').trim();
   if (!text) return text;
 
-  const asksForContact = /(phone|number|call|text|телефон|номер|дзвінок|telefono|n[uú]mero)/i.test(text);
+  const asksForContact = /(phone|number|call|text|телефон|номер|дзвінок|telefono|n[uú]mero|\(213\))/i.test(text);
   if (asksForContact) return text;
 
+  // v11: Soft CTA -- booking-focused, not aggressive
   const ctaByLang = {
-    en: guardMode === GUARD_MODES.NO_CONTACT_HARDENED
-      ? 'Share your phone number, or call (213) 361-1700 📲'
-      : 'Send your phone number and I’ll calculate the exact estimate 📲',
-    ru: guardMode === GUARD_MODES.NO_CONTACT_HARDENED
-      ? 'Оставьте номер телефона или позвоните (213) 361-1700 📲'
-      : 'Отправьте номер телефона, и я сразу посчитаю точную смету 📲',
-    uk: guardMode === GUARD_MODES.NO_CONTACT_HARDENED
-      ? 'Залиште номер телефону або телефонуйте (213) 361-1700 📲'
-      : "Надішліть номер телефону, і я одразу порахую точний кошторис 📲",
-    es: guardMode === GUARD_MODES.NO_CONTACT_HARDENED
-      ? 'Deja tu numero de telefono o llama al (213) 361-1700 📲'
-      : 'Envia tu numero de telefono y calculo el presupuesto exacto 📲'
+    en: 'For exact pricing and to book a date, share your phone number or call (213) 361-1700',
+    ru: 'Для точного расчета и бронирования оставьте номер или позвоните (213) 361-1700',
+    uk: 'Для точного розрахунку та бронювання залиште номер або телефонуйте (213) 361-1700',
+    es: 'Para precio exacto y reservar fecha, comparte tu numero o llama al (213) 361-1700'
   };
 
   const cta = ctaByLang[lang] || ctaByLang.en;
@@ -659,7 +815,7 @@ function appendCrossSellNudge(reply, lang, service) {
       generic: "Also, we can bundle one more service in the same visit to save a trip."
     },
     ru: {
-      cabinet: "Также можем сразу обновить стены, пока фасады сохнут — это экономит выезд.",
+      cabinet: "Также можем сразу обновить стены, пока фасады сохнут -- это экономит выезд.",
       paint: "Также можем добавить потолок или плинтус в этот же визит для единого финиша.",
       flooring: "Также можем покрасить плинтус во время укладки пола для аккуратного финала.",
       tv: "Также можем повесить зеркала или картины в тот же визит.",
@@ -669,7 +825,7 @@ function appendCrossSellNudge(reply, lang, service) {
       generic: "Также можем объединить еще одну услугу в этот же визит и сэкономить выезд."
     },
     uk: {
-      cabinet: "Також можемо оновити стіни, поки фасади сохнуть — це економить виїзд.",
+      cabinet: "Також можемо оновити стіни, поки фасади сохнуть -- це економить виїзд.",
       paint: "Також можемо додати стелю або плінтус у цей же візит для єдиного фінішу.",
       flooring: "Також можемо пофарбувати плінтус під час укладання підлоги для чистого фіналу.",
       tv: "Також можемо повісити дзеркала або картини в той самий візит.",
@@ -733,8 +889,8 @@ function inferLeadFromConversation(messages) {
   const phone = phoneMatch ? phoneMatch[0].trim() : '';
   if (!phone) return null;
 
-  const serviceType = inferServiceType(joined);
-  if (!serviceType) return null;
+  const serviceResult = inferServiceType(joined);
+  const serviceType = serviceResult.serviceId || 'unknown';
 
   const nameMatch = joined.match(/\b(?:my name is|i am|this is|name[:\s])\s+([A-Za-z][A-Za-z' -]{1,40})/i);
   const rawName = nameMatch ? nameMatch[1].trim() : '';
@@ -753,23 +909,52 @@ function inferLeadFromConversation(messages) {
   };
 }
 
-function inferServiceType(text) {
+function hasPromptInjectionSignals(text) {
   const t = String(text || '').toLowerCase();
-  const map = [
-    ['cabinet painting', ['cabinet', 'door', 'drawer', 'kitchen cabinet']],
-    ['furniture assembly', ['furniture assembly', 'assemble', 'ikea', 'bed frame', 'dresser']],
-    ['furniture painting', ['furniture painting', 'refinish furniture', 'paint furniture']],
-    ['interior painting', ['interior painting', 'paint walls', 'wall paint', 'ceiling paint', 'painting']],
-    ['flooring', ['flooring', 'laminate', 'lvp', 'vinyl floor', 'floor install']],
-    ['tv mounting', ['tv mount', 'tv mounting']],
-    ['art hanging', ['mirror', 'art hanging', 'picture hanging', 'curtain']],
-    ['plumbing', ['plumbing', 'faucet', 'toilet', 'shower head', 'caulk tub']],
-    ['electrical', ['electrical', 'light fixture', 'outlet', 'switch', 'smart lock', 'doorbell']]
+  const patterns = [
+    /ignore\s+(your|all|previous|prior)\s+(instructions?|rules?|prompt)/,
+    /reveal\s+(your|the|system)\s+(prompt|instructions?|rules?)/,
+    /show\s+(me\s+)?(your|the)\s+(system\s+)?prompt/,
+    /what\s+(are|is)\s+your\s+(system\s+)?(prompt|instructions?|rules?)/,
+    /forget\s+(your|all|previous)\s+(rules?|instructions?)/,
+    /override\s+(your|the|all)\s+(rules?|settings?|instructions?)/,
+    /\b(admin|debug|developer|sudo|root)\s+mode\b/,
+    /pretend\s+(you\s+)?(are|to\s+be)\s+(a|an|the)\b/,
+    /act\s+as\s+(if|a|an|the)\b/,
+    /you\s+are\s+now\s+(a|an|in)\b/,
+    /\bdisregard\b.*\b(above|previous|prior|instructions?)\b/,
+    /\bjailbreak\b/,
+    /\bDAN\b.*\bmode\b/,
+    /print\s+(your|the)\s+(system|initial)\s+(prompt|message)/
   ];
-  for (const [service, keywords] of map) {
-    if (keywords.some((k) => t.includes(k))) return service;
-  }
-  return '';
+  return patterns.some(p => p.test(t));
+}
+
+function inferServiceType(text) {
+  return inferServiceTypeShared(text); // returns { serviceId, confidence }
+}
+
+/**
+ * v11: Strip cross-sell/upsell paragraphs from plumbing/electrical responses.
+ * AI sometimes generates "also we can re-caulk..." despite prompt rules.
+ */
+function stripCrossSellFromStandalone(text) {
+  const t = String(text || '');
+  // Remove paragraphs containing cross-sell signals
+  const lines = t.split('\n\n');
+  const filtered = lines.filter(paragraph => {
+    const p = paragraph.toLowerCase();
+    const hasCrossSell = (
+      (p.includes('also') && (p.includes('same visit') || p.includes('while we') || p.includes('book both') || p.includes('save 20'))) ||
+      (p.includes('by the way') && (p.includes('same visit') || p.includes('save 20'))) ||
+      (p.includes('bundle') && p.includes('save')) ||
+      /\bкстати\b.*визит/i.test(p) ||
+      /\bдо речі\b.*візит/i.test(p) ||
+      /\bpor cierto\b.*visita/i.test(p)
+    );
+    return !hasCrossSell;
+  });
+  return filtered.join('\n\n').trim();
 }
 
 function stripMarkdownArtifacts(text) {
@@ -783,17 +968,6 @@ function stripMarkdownArtifacts(text) {
     .trim();
 }
 
-function removePrePhoneDollarAmounts(text, lang) {
-  const hasDollar = /\$\s*\d/.test(text);
-  if (!hasDollar) return text;
-  const fallback = {
-    en: 'I can give you exact pricing right away once you share your phone number 📲',
-    ru: 'Сразу дам точный расчет, как только вы отправите номер телефона 📲',
-    uk: 'Одразу дам точний розрахунок, щойно ви надішлете номер телефону 📲',
-    es: 'Te doy el precio exacto en cuanto compartas tu número de teléfono 📲'
-  };
-  return `${text.replace(/\$\s*\d[\d,]*(?:\.\d+)?(?:\s*[-–]\s*\$\s*\d[\d,]*(?:\.\d+)?)?/g, 'pricing')}\n\n${fallback[lang] || fallback.en}`;
-}
 
 function enforceMaterialPolicyHint(reply, userText, lang) {
   const r = String(reply || '').trim();
@@ -803,7 +977,8 @@ function enforceMaterialPolicyHint(reply, userText, lang) {
   const asksMaterials = /(material|materials|входят|материал|включ|materiales|incluye|incluidos|incluye)/i.test(u);
   if (!asksMaterials) return r;
 
-  const service = inferServiceType(u);
+  const serviceResult = inferServiceType(u);
+  const service = serviceResult.serviceId || '';
   const alreadyMentions = /(labor-only|materials.*separate|you purchase.*materials|материалы.*отдель|материалы.*самостоятель|только работа|solo mano de obra|materiales.*separ|cliente.*compra.*material|premium paint.*included|краска.*включ|pintura.*incluid)/i.test(r);
   if (alreadyMentions) return r;
 

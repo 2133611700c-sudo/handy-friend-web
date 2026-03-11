@@ -13,21 +13,15 @@
 
 const { restInsert, getConfig, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { callAlex } = require('../lib/ai-fallback.js');
-const { createOrMergeLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
+const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
 const { buildSystemPrompt, getGuardMode, GUARD_MODES } = require('../lib/alex-one-truth.js');
+const { getMessengerPostbackTexts, getPricingSourceVersion } = require('../lib/price-registry.js');
+const { inferServiceType: inferServiceTypeShared } = require('../lib/alex-policy-engine.js');
 
 const FB_GRAPH_VERSION = process.env.FB_GRAPH_VERSION || 'v19.0';
 const MAX_HISTORY_TURNS = 16;
 
-const POSTBACK_RESPONSES = {
-  GET_STARTED: "Hi! I'm Alex from Handy & Friend 👋\n\nTell me what service you need and I'll guide you to the right estimate.\n\nWe're available same-week in LA — what can I help you with?",
-  ICE_TV: "📺 TV Mounting Pricing:\n\n• Standard flat/tilt mount — $165\n• Full-motion mount — $165\n• Concealed in-wall wiring — $250\n\nIncludes stud location, level mount, and cleanup.\n\nWhat size TV and what type of wall? Send your phone number and I'll confirm availability today 📲",
-  ICE_CABINET: "🎨 Cabinet Painting Pricing:\n\n• Full spray finish (both sides) — $155/door\n• 2-side spray — $125/door\n• 1-side spray — $95/door\n• Roller finish — $45/door\n• Drawer fronts — from $65\n• Island — $460\n\nIncludes premium paint, primer, degreasing, and prep.\n\nHow many doors do you have? Send your phone and I'll calculate your exact quote 📲",
-  ICE_SERVICES: "🔧 Handy & Friend — Full Service List:\n\n📺 TV Mounting from $165\n🎨 Cabinet Painting from $95/door\n🖌️ Interior Painting from $3/sq ft\n🪑 Furniture Assembly from $150\n🖼️ Art & Mirror Hanging $175\n🏠 LVP Flooring from $3.50/sq ft\n🔧 Minor Plumbing from $150\n⚡ Minor Electrical from $150\n\nBook 2+ services = 20% off combo!\n\nInsured. Upfront pricing. Same-week availability.\n\nText your project details and I'll quote you instantly 📲",
-  ICE_BOOK: "📅 Ready to book? Let's go!\n\nWe're available same-week Mon–Sat 8am–8pm in LA.\n\nJust tell me:\n1️⃣ What service do you need?\n2️⃣ Your neighborhood or zip code\n3️⃣ Your phone number\n\nI'll confirm the date and price within minutes! 🚀",
-  MENU_QUOTE: "Let's get your free quote!\n\nTell me:\n• What service do you need?\n• Your neighborhood in LA\n• Your phone number\n\nI'll calculate the exact price and check availability right now 📲",
-  MENU_SERVICES: "🔧 Our Services & Prices:\n\n📺 TV Mounting — from $165\n🎨 Cabinet Painting — from $95/door\n🖌️ Interior Painting — from $3/sq ft\n🪑 Furniture Assembly — from $150\n🖼️ Art/Mirror Hanging — $175\n🏠 LVP Flooring — from $3.50/sq ft\n\n💡 Book 2+ services = 20% combo discount\n\nFull pricing: handyandfriend.com\nOr just ask me anything here 👋"
-};
+const POSTBACK_RESPONSES = getMessengerPostbackTexts();
 
 async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -139,13 +133,22 @@ async function handleMessagingEvent(event) {
   const sessionContext = await fetchSessionLeadContext(sessionId);
   const hasPhone = sessionContext.hasPhone || hasPhoneCapture(messages);
 
-  const guardMode = getGuardMode({ hasPhone, userMsgCount });
+  const guardMode = getGuardMode({ hasPhone });
   const systemPrompt = buildSystemPrompt({ guardMode });
   const alexResult = await callAlex(messages, systemPrompt);
   let reply = stripLeadPayloadBlock(String(alexResult.reply || '').trim());
 
-  if (!hasPhone && guardMode !== GUARD_MODES.POST_CONTACT_EXACT) {
-    reply = enforceContactCaptureCTA(reply, guardMode);
+  // v11: Strip cross-sell from plumbing/electrical (AI may generate despite prompt rules)
+  const allUserText = messages.filter(m => m.role === 'user').map(m => m.content).join('\n');
+  const fbServiceInference = inferServiceTypeShared(allUserText);
+  const fbIsStandalone = fbServiceInference.serviceId === 'plumbing' || fbServiceInference.serviceId === 'electrical';
+  if (fbIsStandalone) {
+    reply = stripCrossSellFromStandalone(reply);
+  }
+
+  // v11: Soft CTA every 3rd message, not every reply
+  if (!hasPhone && userMsgCount % 3 === 0 && userMsgCount > 0) {
+    reply = enforceContactCaptureCTA(reply);
   }
   reply = stripMarkdownArtifacts(reply).slice(0, 1500);
   if (!reply) reply = 'Please send your project details and best phone number 📲';
@@ -169,8 +172,23 @@ async function handleMessagingEvent(event) {
       await pipelineLogEvent(created.id, 'messenger_capture', {
         source: 'facebook',
         sender_id: senderId,
-        session_id: sessionId
+        session_id: sessionId,
+        correlation_id: `messenger:${sessionId}`,
+        idempotency_key: `messenger_capture:${sessionId}:${created.id}`,
+        pricing_source_version: getPricingSourceVersion()
       }).catch(() => {});
+      await transitionLead(created.id, 'contacted', {
+        contacted_at: new Date().toISOString()
+      }).catch(() => {});
+      if ((inferredLead.service_type || 'unknown') === 'unknown') {
+        await pipelineLogEvent(created.id, 'service_inference_failed', {
+          source: 'facebook',
+          sender_id: senderId,
+          session_id: sessionId,
+          correlation_id: `messenger:${sessionId}`,
+          idempotency_key: `service_inference_failed:${sessionId}:${created.id}`
+        }).catch(() => {});
+      }
 
       // Notify Telegram about new Facebook Messenger lead
       notifyTelegramFbLead({
@@ -199,16 +217,37 @@ async function handleMessagingEvent(event) {
 
 function normalizeInboundText(event) {
   const text = String(event?.message?.text || '').trim();
-  if (text) return text;
 
   const attachments = Array.isArray(event?.message?.attachments) ? event.message.attachments : [];
+  const imageUrls = attachments
+    .filter((a) => a?.type === 'image' && a?.payload?.url)
+    .map((a) => String(a.payload.url))
+    .slice(0, 4);
+
+  // v11: Forward Messenger photos to Telegram immediately
+  if (imageUrls.length > 0) {
+    forwardMessengerPhotosToTelegram(imageUrls, event?.sender?.id, text).catch((e) =>
+      console.error('[ALEX_WEBHOOK] Photo forward error:', e.message)
+    );
+  }
+
+  if (text) {
+    if (imageUrls.length > 0) {
+      return `${text}\n\n[Customer sent ${imageUrls.length} photo(s) -- photos forwarded to manager for review]`;
+    }
+    return text;
+  }
+
   if (!attachments.length) return '';
+
+  if (imageUrls.length > 0) {
+    return `Customer sent ${imageUrls.length} photo(s) of their project. Photos forwarded to manager. To provide an estimate, please describe the project scope.`;
+  }
 
   const names = attachments
     .map((a) => String(a?.type || '').trim())
     .filter(Boolean)
     .slice(0, 3);
-
   if (!names.length) return '';
   return `Customer sent attachment: ${names.join(', ')}`;
 }
@@ -339,17 +378,15 @@ function stripLeadPayloadBlock(rawReply) {
   return rawReply.slice(0, leadMatch.index).trim();
 }
 
-function enforceContactCaptureCTA(reply, guardMode) {
+function enforceContactCaptureCTA(reply) {
   const text = String(reply || '').trim();
   if (!text) return text;
 
-  const asksContact = /(phone|number|call|text|телефон|номер|telefono|n[uú]mero)/i.test(text);
+  const asksContact = /(phone|number|call|text|телефон|номер|telefono|n[uú]mero|\(213\))/i.test(text);
   if (asksContact) return text;
 
-  if (guardMode === GUARD_MODES.NO_CONTACT_HARDENED) {
-    return `${text}\n\nShare your phone number, or call (213) 361-1700 📲`;
-  }
-  return `${text}\n\nSend your phone number and I’ll calculate the exact estimate 📲`;
+  // v11: Soft CTA -- booking-focused
+  return `${text}\n\nFor exact pricing and to book, share your phone number or call (213) 361-1700`;
 }
 
 function inferLeadFromConversation(messages) {
@@ -375,40 +412,29 @@ function inferLeadFromConversation(messages) {
 }
 
 function inferServiceType(text) {
-  const t = String(text || '').toLowerCase();
-  const map = [
-    ['cabinet painting', ['cabinet', 'door', 'drawer', 'kitchen cabinet', 'facade',
-      'шкаф', 'шкафчик', 'дверца', 'фасад', 'кухон', 'armario', 'gabinete', 'puerta']],
-    ['furniture assembly', ['furniture assembly', 'assemble', 'ikea', 'bed frame', 'dresser',
-      'сборка', 'мебел', 'кровать', 'комод', 'mueble', 'ensamblar', 'cama']],
-    ['interior painting', ['interior painting', 'paint walls', 'wall paint', 'ceiling paint', 'painting',
-      'покраска стен', 'стены', 'покраска', 'pintura', 'pared', 'pintar']],
-    ['flooring', ['flooring', 'laminate', 'lvp', 'vinyl floor', 'floor install',
-      'пол', 'укладка', 'ламинат', 'piso', 'suelo', 'piso laminado']],
-    ['tv mounting', ['tv mount', 'tv mounting',
-      'телевизор', 'монтаж тв', 'тв', 'televisor', 'instalar tv', 'montar tv']],
-    ['art hanging', ['mirror', 'art hanging', 'picture hanging', 'curtain',
-      'зеркало', 'картин', 'карниз', 'espejo', 'cuadro', 'cortina']],
-    ['plumbing', ['plumbing', 'faucet', 'toilet', 'shower head', 'caulk tub',
-      'сантехник', 'кран', 'унитаз', 'душ', 'plomería', 'grifo', 'sanitario']],
-    ['electrical', ['electrical', 'light fixture', 'outlet', 'switch', 'smart lock', 'doorbell',
-      'электрик', 'светильник', 'розетка', 'выключатель', 'eléctrico', 'tomacorriente']]
-  ];
-  for (const [service, keywords] of map) {
-    if (keywords.some((k) => t.includes(k))) return service;
-  }
-  return '';
+  return inferServiceTypeShared(text).serviceId || '';
 }
 
+// v11: Strict Sales Card for Messenger leads
 async function notifyTelegramFbLead({ leadId, sessionId, phone, service, userText, aiReply }) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
 
-  const esc = (s) => String(s || '—').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+  const esc = (s) => String(s || '--').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+  const now = new Date();
+  const slaDeadline = new Date(now.getTime() + 60 * 60 * 1000);
+  const slaTime = slaDeadline.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Los_Angeles' });
+
   const text = `🔔 <b>FB_MESSENGER_LEAD</b>\n` +
-    `📱 Contact: <code>${esc(phone)}</code>\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `📱 Phone: <code>${esc(phone)}</code>\n` +
     `🔧 Service: ${esc(service)}\n` +
+    `🌐 Channel: Facebook Messenger\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `📋 <b>Next action:</b> Call customer\n` +
+    `⏰ <b>SLA deadline:</b> ${slaTime} PT\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
     `Session: <code>${esc(sessionId)}</code>\n` +
     `Lead: <code>${esc(leadId)}</code>\n\n` +
     `<b>User:</b> ${esc(String(userText || '').slice(0, 300))}\n` +
@@ -425,6 +451,55 @@ async function notifyTelegramFbLead({ leadId, sessionId, phone, service, userTex
   } else {
     console.error('[ALEX_WEBHOOK] Telegram error:', JSON.stringify(tgData));
   }
+}
+
+// v11: Forward Messenger photos to Telegram immediately (pre-lead)
+async function forwardMessengerPhotosToTelegram(imageUrls, senderId, userText) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId || !imageUrls.length) return;
+
+  const esc = (s) => String(s || '').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+  const msg = `📷 <b>FB_MESSENGER_PHOTO</b> (no phone yet)\n` +
+    `Sender: <code>fb_${esc(String(senderId || ''))}</code>\n` +
+    `Photos: ${imageUrls.length}\n` +
+    `<b>Text:</b> ${esc(String(userText || '').slice(0, 300))}`;
+
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'HTML' })
+  }).catch(() => {});
+
+  // Send each photo URL directly (Telegram can fetch from URL)
+  for (const url of imageUrls) {
+    await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        photo: url,
+        caption: `FB Messenger photo (sender: fb_${String(senderId || '').slice(0, 20)})`
+      })
+    }).catch((e) => console.error('[ALEX_WEBHOOK] TG photo send error:', e.message));
+  }
+}
+
+function stripCrossSellFromStandalone(text) {
+  const t = String(text || '');
+  const lines = t.split('\n\n');
+  const filtered = lines.filter(paragraph => {
+    const p = paragraph.toLowerCase();
+    return !(
+      (p.includes('also') && (p.includes('same visit') || p.includes('while we') || p.includes('book both') || p.includes('save 20'))) ||
+      (p.includes('by the way') && (p.includes('same visit') || p.includes('save 20'))) ||
+      (p.includes('bundle') && p.includes('save')) ||
+      /\bкстати\b.*визит/i.test(p) ||
+      /\bдо речі\b.*візит/i.test(p) ||
+      /\bpor cierto\b.*visita/i.test(p)
+    );
+  });
+  return filtered.join('\n\n').trim();
 }
 
 function stripMarkdownArtifacts(text) {

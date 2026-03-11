@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<!-- Google Tag Manager — deferred to idle -->
+<!-- Google Tag Manager -- deferred to idle -->
 <script>window.dataLayer=window.dataLayer||[];</script>
 <title>Handy &amp; Friend | Los Angeles Handyman</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/main.css?v=7">
 
-<meta name="description" id="metaDesc" content="Handy &amp; Friend — handyman services &amp; home repair in Los Angeles, CA 90038. TV Mounting, Furniture Assembly, Painting, Flooring. Labor only, upfront pricing. Call 2133611700.">
+<meta name="description" id="metaDesc" content="Handy &amp; Friend -- handyman services &amp; home repair in Los Angeles, CA 90038. TV Mounting, Furniture Assembly, Painting, Flooring. Labor only, upfront pricing. Call 2133611700.">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://handyandfriend.com/">
 
@@ -25,6 +25,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:locale" id="ogLocale" content="en_US">
 <meta property="fb:page_id" content="61588215297678">
+<!-- Facebook Domain Verification: uncomment + paste code from Meta Business Suite → Brand Safety → Domains -->
+<!-- <meta name="facebook-domain-verification" content="REPLACE_WITH_REAL_CODE" /> -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" id="twTitle" content="Handy &amp; Friend | Los Angeles Handyman">
 <meta name="twitter:description" id="twDesc" content="Premium labor-only handyman. Same-week availability. Call or WhatsApp for a quote.">
@@ -36,11 +38,12 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="recaptcha-site-key" content="6Le1C3gsAAAAAGTzWCcplce_QCITlw1vcqQXjqEy">
 
-<!-- gtag stub — real script deferred to idle -->
+<!-- gtag stub -- real script deferred to idle -->
 <script>
   function gtag(){dataLayer.push(arguments);}
   var recaptchaMeta = document.querySelector('meta[name="recaptcha-site-key"]');
   window.HF_RECAPTCHA_SITE_KEY = recaptchaMeta ? recaptchaMeta.content.trim() : '';
+  window.HF_GOOGLE_ADS_ID = 'AW-17971094967';
 </script>
 
 <!-- All heavy third-party scripts deferred to after page is interactive -->
@@ -63,10 +66,14 @@
     dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});
     loadScript('https://www.googletagmanager.com/gtm.js?id=GTM-NQTL3S6Q');
 
-    /* 2. GA4 standalone (gtag.js) */
+    /* 2. GA4 standalone (gtag.js) + Google Ads conversion tracking */
     loadScript('https://www.googletagmanager.com/gtag/js?id=G-Z05XJ8E281', function(){
       gtag('js', new Date());
       gtag('config', 'G-Z05XJ8E281');
+      /* Google Ads -- add AW-ID via GOOGLE_ADS_ID env var or GTM */
+      if(window.HF_GOOGLE_ADS_ID){
+        gtag('config', window.HF_GOOGLE_ADS_ID);
+      }
     });
 
     /* 3. Meta Pixel */
@@ -82,7 +89,7 @@
     fbq('track','PageView');
   });
 
-  /* 4. reCAPTCHA — load only when user interacts with a form */
+  /* 4. reCAPTCHA -- load only when user interacts with a form */
   var rcLoaded=false;
   function loadRecaptcha(){
     if(rcLoaded||!window.HF_RECAPTCHA_SITE_KEY) return;
@@ -129,34 +136,36 @@
     "geoMidpoint": {"@type":"GeoCoordinates","latitude":34.0837,"longitude":-118.3413},
     "geoRadius": "20000"
   },
-  "sameAs": [
-    "https://www.yelp.com/biz/handy-and-friend",
-    "https://www.facebook.com/profile.php?id=61588215297678&locale=en_US"
+  "logo": "https://handyandfriend.com/assets/img/og.jpg",
+  "image": [
+    "https://handyandfriend.com/assets/img/og.jpg"
   ],
+  "sameAs": [
+    "https://www.facebook.com/profile.php?id=61588215297678",
+    "https://nextdoor.com/pages/handy-and-friend-los-angeles-ca/"
+  ],
+  "hasMap": "https://www.google.com/maps/search/Handy+Friend+Los+Angeles+CA+handyman",
   "openingHoursSpecification": {
     "@type": "OpeningHoursSpecification",
     "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
     "opens": "08:00",
     "closes": "20:00"
   },
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "5.0",
-    "reviewCount": "12",
-    "bestRating": "5"
-  },
+  "_aggregateRating_note": "Removed until real Google reviews are collected. Re-enable with actual data.",
   "paymentAccepted": "Cash, Credit Card, Venmo, PayPal",
   "hasOfferCatalog": {
     "@type": "OfferCatalog",
     "name": "Handyman Services",
     "itemListElement": [
-      {"@type":"Offer","itemOffered":{"@type":"Service","name":"TV Mounting"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"}},
-      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Furniture Assembly"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"}},
-      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Interior Painting"},"priceSpecification":{"@type":"UnitPriceSpecification","price":"2.25","priceCurrency":"USD","unitCode":"FTK","unitText":"per sq ft"}},
-      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Flooring Installation"},"priceSpecification":{"@type":"UnitPriceSpecification","price":"4.25","priceCurrency":"USD","unitCode":"FTK","unitText":"per sq ft"}},
-      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Plumbing"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"}},
-      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Electrical"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"}},
-      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Art & Mirror Hanging"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"}}
+      {"@type":"Offer","itemOffered":{"@type":"Service","name":"TV Mounting"},"priceSpecification":{"@type":"PriceSpecification","price":"105","priceCurrency":"USD","minPrice":"105"}},
+      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Furniture Assembly"},"priceSpecification":{"@type":"PriceSpecification","price":"75","priceCurrency":"USD","minPrice":"75"}},
+      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Interior Painting"},"priceSpecification":{"@type":"UnitPriceSpecification","price":"3.00","priceCurrency":"USD","unitCode":"FTK","unitText":"per sq ft"}},
+      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Flooring Installation"},"priceSpecification":{"@type":"UnitPriceSpecification","price":"3.00","priceCurrency":"USD","unitCode":"FTK","unitText":"per sq ft"}},
+      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Plumbing"},"priceSpecification":{"@type":"PriceSpecification","price":"115","priceCurrency":"USD","minPrice":"115"}},
+      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Electrical"},"priceSpecification":{"@type":"PriceSpecification","price":"95","priceCurrency":"USD","minPrice":"95"}},
+      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Art & Mirror Hanging"},"priceSpecification":{"@type":"PriceSpecification","price":"95","priceCurrency":"USD","minPrice":"95"}},
+      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Kitchen Cabinet Painting"},"priceSpecification":{"@type":"PriceSpecification","price":"75","priceCurrency":"USD","minPrice":"75","unitText":"per door"}},
+      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Furniture Painting"},"priceSpecification":{"@type":"PriceSpecification","price":"40","priceCurrency":"USD","minPrice":"40"}}
     ]
   }
 }
@@ -192,14 +201,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- Hero offer headline -->
   <div class="hero-headline">
     <p class="hero-offer-eyebrow">Los Angeles · Professional &amp; Insured</p>
-    <h1 class="hero-offer-title" id="heroOfferTitle">Professional Cabinet Painting From $155 Per Door</h1>
+    <h1 class="hero-offer-title" id="heroOfferTitle">Professional Cabinet Painting From $75 Per Door</h1>
     <p class="hero-offer-sub" id="heroOfferSub"><span class="hero-included-accent">Premium paint, primer, degreasing, and prep are included in the price</span><br>A smooth spray finish that costs less than replacement</p>
-    <!-- HERO CTAs — above fold, drive immediate action -->
-    <div class="hero-ctas" style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:center">
-      <a href="tel:+12133611700" class="hero-cta-btn" style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:#2d2d2d;color:#fff;border-radius:999px;text-decoration:none;font-weight:700;font-size:16px;transition:transform .15s" data-i18n="heroBtnCall">📞 Call Now — Free Quote</a>
-      <a href="https://wa.me/12133611700?text=Hi%2C%20I%20need%20a%20quote%20for%20handyman%20services" class="hero-cta-btn" style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:#25D366;color:#fff;border-radius:999px;text-decoration:none;font-weight:700;font-size:16px;transition:transform .15s" data-i18n="heroBtnWA">💬 WhatsApp</a>
-      <a href="#leadSection" class="hero-cta-btn" style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:#B8892C;color:#fff;border-radius:999px;text-decoration:none;font-weight:700;font-size:16px;transition:transform .15s" data-i18n="heroBtnQuote">📋 Get Quote in 2 Min</a>
-    </div>
+    <!-- HERO CTAs -- above fold, drive immediate action -->
   </div>
 
 </div>
@@ -207,7 +211,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- URGENCY + TRUST STRIP -->
 <div id="promoStrip" style="background:linear-gradient(135deg,#2a1f14,#3d2e1a);padding:12px 16px;text-align:center">
   <p style="color:#fff;font-size:14px;margin:0;font-weight:600">
-    <span style="color:#F5C542">⚡ This week:</span> Book 2+ services — <span style="color:#F5C542">save 20%</span> &nbsp;|&nbsp;
+    <span style="color:#F5C542">⚡ This week:</span> Book 2+ services -- <span style="color:#F5C542">save 20%</span> &nbsp;|&nbsp;
     <span style="opacity:.85">Same-day response</span> &nbsp;|&nbsp;
     <span style="opacity:.85">Insured</span> &nbsp;|&nbsp;
     <a href="tel:+12133611700" style="color:#F5C542;text-decoration:none;font-weight:700">(213) 361-1700</a>
@@ -257,8 +261,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div id="sqftModeWrap" style="display:none">
           <!-- Flooring sub-toggle: Laminate / LVP -->
           <div class="sub-toggle" id="floorSubToggle" style="display:none">
-            <button class="sub-btn active" data-sub="fl" type="button" id="subFlLam">Laminate — $3.50/sf</button>
-            <button class="sub-btn" data-sub="fv" type="button" id="subFlLvp">LVP — $3.75/sf</button>
+            <button class="sub-btn active" data-sub="fl" type="button" id="subFlLam">Laminate -- $3.00/sf</button>
+            <button class="sub-btn" data-sub="fv" type="button" id="subFlLvp">LVP -- $3.00/sf</button>
           </div>
           <div class="iblk price-row">
             <span class="ilbl" id="lSqftPrice">Price per sq ft</span>
@@ -310,7 +314,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
           <div class="iblk price-row">
             <span class="ilbl" id="lDoorPriceEdit">Price per door ($)</span>
-            <input type="number" class="price-edit" id="kitchenPriceEdit" min="0" step="1" placeholder="155" inputmode="decimal">
+            <input type="number" class="price-edit" id="kitchenPriceEdit" min="0" step="1" placeholder="75" inputmode="decimal">
           </div>
           <div class="iblk">
             <span class="ilbl" id="lDoorQtyK"></span>
@@ -341,7 +345,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
           <div class="iblk price-row">
             <span class="ilbl" id="lPiecePriceEdit">Price per piece ($)</span>
-            <input type="number" class="price-edit" id="furnPriceEdit" min="0" step="1" placeholder="95" inputmode="decimal">
+            <input type="number" class="price-edit" id="furnPriceEdit" min="0" step="1" placeholder="40" inputmode="decimal">
           </div>
           <div class="iblk">
             <span class="ilbl" id="lPieceQty"></span>
@@ -357,7 +361,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
           <div class="iblk price-row">
             <span class="ilbl" id="lLinearPriceEdit">Price per ft ($)</span>
-            <input type="number" class="price-edit" id="linearPriceEdit" min="0" step="0.01" placeholder="4.50" inputmode="decimal">
+            <input type="number" class="price-edit" id="linearPriceEdit" min="0" step="0.01" placeholder="3.00" inputmode="decimal">
           </div>
           <div class="iblk">
             <span class="ilbl" id="lLinearLength"></span>
@@ -395,7 +399,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <div class="univ-row">
                 <div class="univ-field">
                   <span class="univ-lbl" id="univSqftPriceLbl">$/sf</span>
-                  <input type="number" class="price-edit" id="univSqftPrice" placeholder="3.50" step="0.01" min="0" inputmode="decimal">
+                  <input type="number" class="price-edit" id="univSqftPrice" placeholder="3.00" step="0.01" min="0" inputmode="decimal">
                 </div>
                 <span class="univ-x">×</span>
                 <div class="univ-field">
@@ -403,7 +407,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                   <input type="number" id="univSqftArea" placeholder="300" min="1" inputmode="numeric">
                 </div>
               </div>
-              <div class="univ-result" id="univSqftResult">—</div>
+              <div class="univ-result" id="univSqftResult">--</div>
             </div>
           </div>
           <div class="univ-section">
@@ -415,7 +419,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <div class="univ-row">
                 <div class="univ-field">
                   <span class="univ-lbl" id="univLinPriceLbl">$/lf</span>
-                  <input type="number" class="price-edit" id="univLinPrice" placeholder="4.50" step="0.01" min="0" inputmode="decimal">
+                  <input type="number" class="price-edit" id="univLinPrice" placeholder="3.00" step="0.01" min="0" inputmode="decimal">
                 </div>
                 <span class="univ-x">×</span>
                 <div class="univ-field">
@@ -423,7 +427,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                   <input type="number" id="univLinLen" placeholder="100" min="1" inputmode="numeric">
                 </div>
               </div>
-              <div class="univ-result" id="univLinResult">—</div>
+              <div class="univ-result" id="univLinResult">--</div>
             </div>
           </div>
         </div>
@@ -510,9 +514,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </div>
 
+<script src="/assets/js/price-registry.browser.js" defer></script>
 <script src="assets/js/main.js?v=7" defer></script>
 
 <script>
+/* ── UTM & Click-ID persistence across pages ── */
+(function(){
+  try {
+    var p = new URLSearchParams(window.location.search || '');
+    ['utm_source','utm_medium','utm_campaign','utm_content','utm_term',
+     'gclid','fbclid','gbraid','wbraid','msclkid','ttclid'].forEach(function(k){
+      var v = p.get(k);
+      if (v) sessionStorage.setItem('hf_' + k, v);
+    });
+  } catch(e) { /* sessionStorage unavailable in private mode on some browsers */ }
+})();
+
 function emitCoreEvent(eventName, params) {
   var payload = Object.assign({
     page_location: window.location.href
@@ -568,18 +585,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (href.indexOf('https://wa.me/') === 0 || href.toLowerCase().indexOf('whatsapp') !== -1) {
       emitCoreEvent('whatsapp_click', { link_url: href, link_text: linkText });
+      return;
+    }
+    if (href.indexOf('https://m.me/') === 0 || href.toLowerCase().indexOf('messenger') !== -1) {
+      emitCoreEvent('messenger_click', { link_url: href, link_text: linkText });
+      if (typeof fbq !== 'undefined') {
+        fbq('trackCustom', 'messenger_click', { link_url: href });
+      }
     }
   });
 });
 </script>
 
 <!-- TESTIMONIALS SECTION -->
+<!-- NOTE: Replace placeholder reviews below with real Google/Yelp reviews as they come in.
+     Track progress: ops/google-review-template.md — aim for 2-4 real reviews/month.
+     Once GBP verified + real reviews exist, re-enable aggregateRating in JSON-LD above. -->
 <div class="rev-section">
   <div class="rev-wrap">
     <div class="rev-head">
       <h2 class="rev-title" data-i18n="testimonialsTitle">What Our Customers Say</h2>
       <div class="rev-summary">
-        <span class="rev-score">4.9</span>
         <span class="rev-stars-row">⭐⭐⭐⭐⭐</span>
         <span class="rev-count" data-i18n="testimonialsSub">Trusted by local customers across Los Angeles</span>
       </div>
@@ -678,7 +704,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <div id="leadPhotosBox" style="border:2px dashed var(--st);border-radius:10px;padding:16px;text-align:center;cursor:pointer" onclick="document.getElementById('leadPhotos').click()">
         <input type="file" id="leadPhotos" accept="image/*" multiple style="display:none">
-        <p style="margin:0;font-size:14px;color:var(--ink2);font-weight:600">📸 Photos (optional — helps us give a more accurate quote)</p>
+        <p style="margin:0;font-size:14px;color:var(--ink2);font-weight:600">📸 Photos (optional -- helps us give a more accurate quote)</p>
         <p style="margin:8px 0 0;font-size:12px;color:var(--ink3)">Click to upload photos of the job area</p>
         <p style="margin:6px 0 0;font-size:11px;color:var(--ink3)">Up to 6 photos. Helps us give accurate quotes.</p>
         <p id="leadPhotosStatus" style="margin:8px 0 0;font-size:12px;color:#2e7d32;display:none;font-weight:700"></p>
@@ -756,12 +782,15 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- FINAL CTA SECTION -->
 <div style="background:var(--ink);padding:48px 18px;text-align:center">
   <div style="max-width:800px;margin:0 auto">
-    <h2 style="color:#fff;font-size:28px;font-weight:700;font-family:var(--fs);margin-bottom:16px" data-i18n="finalCtaTitle">Don't Wait—Book Your Handyman Today</h2>
+    <h2 style="color:#fff;font-size:28px;font-weight:700;font-family:var(--fs);margin-bottom:16px" data-i18n="finalCtaTitle">Don't Wait--Book Your Handyman Today</h2>
     <p style="color:rgba(255,255,255,0.80);font-size:16px;margin-bottom:24px" data-i18n="finalCtaSub">Professional service across Los Angeles with clear, upfront scope.</p>
 
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
       <a href="https://wa.me/12133611700?text=I%20want%20to%20book%20a%20service%20this%20week" style="display:inline-flex;align-items:center;gap:8px;padding:16px 28px;background:#25D366;color:#fff;border-radius:999px;font-weight:700;text-decoration:none;transition:opacity 200ms" data-event="final_cta_whatsapp" data-i18n="finalCtaWhatsApp">
         💬 Message on WhatsApp
+      </a>
+      <a href="/messenger" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:16px 28px;background:#1877F2;color:#fff;border-radius:999px;font-weight:700;text-decoration:none;transition:opacity 200ms" data-event="final_cta_messenger" data-i18n="finalCtaMessenger">
+        💬 Facebook Messenger
       </a>
       <a href="tel:+12133611700" style="display:inline-flex;align-items:center;gap:8px;padding:16px 28px;background:rgba(255,255,255,0.15);color:#fff;border-radius:999px;font-weight:700;text-decoration:none;transition:background 200ms;border:1.5px solid rgba(255,255,255,0.30)" data-event="final_cta_call" data-i18n="finalCtaCall">
         📞 Call Now
@@ -795,27 +824,27 @@ function setSafeWhatsAppLink(anchorId, formData) {
   anchor.href = 'https://wa.me/12133611700?text=' + encodeURIComponent(buildSafeWaText(formData));
 }
 
-/* Cross-sell on form success — cluster-safe upsells */
+/* Cross-sell on form success -- cluster-safe upsells */
 const SUCCESS_CROSS_SELL = {
   'tv-mounting': [
-    { emoji:'🪞', name:{en:'Art & Mirror Hanging',es:'Cuadros y espejos',ru:'Зеркала и картины',ua:'Дзеркала та картини'}, price:'$175' },
-    { emoji:'🛋️', name:{en:'Furniture Assembly',es:'Ensamblaje de muebles',ru:'Сборка мебели',ua:'Збирання меблів'}, price:'from $150' }
+    { emoji:'🪞', name:{en:'Art & Mirror Hanging',es:'Cuadros y espejos',ru:'Зеркала и картины',ua:'Дзеркала та картини'}, price:'$95' },
+    { emoji:'🛋️', name:{en:'Furniture Assembly',es:'Ensamblaje de muebles',ru:'Сборка мебели',ua:'Збирання меблів'}, price:'from $75' }
   ],
   'furniture-assembly': [
-    { emoji:'📺', name:{en:'TV Mounting',es:'Montaje de TV',ru:'Монтаж ТВ',ua:'Монтаж ТВ'}, price:'from $165' },
-    { emoji:'🪞', name:{en:'Art & Mirror Hanging',es:'Cuadros y espejos',ru:'Зеркала і картини',ua:'Дзеркала та картини'}, price:'$175' }
+    { emoji:'📺', name:{en:'TV Mounting',es:'Montaje de TV',ru:'Монтаж ТВ',ua:'Монтаж ТВ'}, price:'from $105' },
+    { emoji:'🪞', name:{en:'Art & Mirror Hanging',es:'Cuadros y espejos',ru:'Зеркала і картини',ua:'Дзеркала та картини'}, price:'$95' }
   ],
   'mirrors': [
-    { emoji:'📺', name:{en:'TV Mounting',es:'Montaje de TV',ru:'Монтаж ТВ',ua:'Монтаж ТВ'}, price:'from $165' },
-    { emoji:'🪑', name:{en:'Curtain Rods',es:'Barras de cortinas',ru:'Карнизы',ua:'Карнизи'}, price:'from $165' }
+    { emoji:'📺', name:{en:'TV Mounting',es:'Montaje de TV',ru:'Монтаж ТВ',ua:'Монтаж ТВ'}, price:'from $105' },
+    { emoji:'🪑', name:{en:'Curtain Rods',es:'Barras de cortinas',ru:'Карнизы',ua:'Карнизи'}, price:'from $75' }
   ],
   'painting': [
-    { emoji:'🏠', name:{en:'Flooring',es:'Pisos',ru:'Полы',ua:'Підлога'}, price:'from $3.50/sf' },
-    { emoji:'🍳', name:{en:'Kitchen Cabinets',es:'Gabinetes de cocina',ru:'Кухонные шкафы',ua:'Кухонні шафи'}, price:'from $155/door' }
+    { emoji:'🏠', name:{en:'Flooring',es:'Pisos',ru:'Полы',ua:'Підлога'}, price:'from $3/sf' },
+    { emoji:'🍳', name:{en:'Kitchen Cabinets',es:'Gabinetes de cocina',ru:'Кухонные шкафы',ua:'Кухонні шафи'}, price:'from $75/door' }
   ],
   'flooring': [
     { emoji:'🎨', name:{en:'Interior Painting',es:'Pintura interior',ru:'Покраска стен',ua:'Фарбування стін'}, price:'from $3/sf' },
-    { emoji:'📏', name:{en:'Baseboard Install',es:'Instalación de zócalos',ru:'Установка плинтусов',ua:'Встановлення плінтусів'}, price:'from $3.50/lf' }
+    { emoji:'📏', name:{en:'Baseboard Install',es:'Instalación de zócalos',ru:'Установка плинтусов',ua:'Встановлення плінтусів'}, price:'from $2.50/lf' }
   ]
 };
 
@@ -823,8 +852,8 @@ function showFormSuccessCrossSell(service) {
   const items = SUCCESS_CROSS_SELL[service];
   if (!items || items.length === 0) return;
   const curLang = (document.documentElement.lang || 'en').substring(0,2).toLowerCase();
-  const title = {en:'While we\'re coming — need anything else?',es:'Ya que vamos — ¿necesitas algo más?',ru:'Раз мы едем — нужно что-то ещё?',ua:'Раз ми їдемо — треба щось ще?'}[curLang] || 'While we\'re coming — need anything else?';
-  const combo = {en:'Book 2+ services — Save 20%',es:'Reserva 2+ servicios — Ahorra 20%',ru:'Закажи 2+ услуги — Скидка 20%',ua:'Замов 2+ послуги — Знижка 20%'}[curLang] || 'Book 2+ services — Save 20%';
+  const title = {en:'While we\'re coming -- need anything else?',es:'Ya que vamos -- ¿necesitas algo más?',ru:'Раз мы едем -- нужно что-то ещё?',ua:'Раз ми їдемо -- треба щось ще?'}[curLang] || 'While we\'re coming -- need anything else?';
+  const combo = {en:'Book 2+ services -- Save 20%',es:'Reserva 2+ servicios -- Ahorra 20%',ru:'Закажи 2+ услуги -- Скидка 20%',ua:'Замов 2+ послуги -- Знижка 20%'}[curLang] || 'Book 2+ services -- Save 20%';
 
   let html = `<div style="margin-top:16px;padding:16px;background:linear-gradient(135deg,rgba(184,137,44,0.06),rgba(184,137,44,0.02));border:1px solid rgba(184,137,44,0.2);border-radius:12px;text-align:left">
     <div style="font-size:14px;font-weight:700;color:#B8892C;margin-bottom:10px;text-align:center">🎁 ${title}</div>`;
@@ -852,8 +881,28 @@ function showFormSuccessCrossSell(service) {
   }
 }
 
+const HF_LEAD_FORM_LOCK_MS = 15000;
+let hfLeadFormLockUntil = 0;
+
 async function handleLeadSubmit(e) {
   e.preventDefault();
+
+  if (Date.now() < hfLeadFormLockUntil) return;
+  hfLeadFormLockUntil = Date.now() + HF_LEAD_FORM_LOCK_MS;
+
+  // Dedup guard: disable button immediately to prevent rapid re-clicks
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = '0.6'; }
+  const unlockSubmit = () => {
+    hfLeadFormLockUntil = 0;
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
+  };
+
+  // Idempotency key: unique per click, sent to backend to prevent race-condition dupes
+  const requestId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+
   const ui = (typeof window.HF_UI === 'function') ? window.HF_UI() : {};
 
   const name = document.getElementById('leadName').value;
@@ -874,6 +923,7 @@ async function handleLeadSubmit(e) {
   let recaptchaToken = '';
   if (window.HF_RECAPTCHA_SITE_KEY) {
     if (!(window.grecaptcha && window.grecaptcha.execute)) {
+      unlockSubmit();
       alert(ui.leadSubmitError || 'Security check is loading. Please retry in a few seconds.');
       return;
     }
@@ -886,6 +936,7 @@ async function handleLeadSubmit(e) {
         });
       });
     } catch (err) {
+      unlockSubmit();
       alert(ui.leadSubmitError || 'Security verification failed. Please try again.');
       return;
     }
@@ -921,6 +972,7 @@ async function handleLeadSubmit(e) {
         timestamp: new Date().toISOString(),
         recaptchaToken: recaptchaToken,
         recaptchaAction: 'lead_submit',
+        requestId: requestId,
         _subject: `New Quote Request: ${service} from ${name}`,
         _replyto: email
       })
@@ -928,6 +980,7 @@ async function handleLeadSubmit(e) {
 
     const submitData = await submitResponse.json().catch(() => ({}));
     if (!submitResponse.ok || !submitData.success) {
+      unlockSubmit();
       alert(ui.leadSubmitError || 'Error submitting form. Please call 213-361-1700 directly.');
       return;
     }
@@ -943,11 +996,33 @@ async function handleLeadSubmit(e) {
     showFormSuccessCrossSell(service);
 
     console.log('Lead captured:', { name, email, phone, service, leadId });
+    // Enhanced Conversions: set user data BEFORE conversion events
+    // so Google Ads can match conversions to ad clicks via GA4 imports
+    if (typeof gtag === 'function') {
+      gtag('set', 'user_data', {
+        email: email || undefined,
+        phone_number: phone || undefined
+      });
+    }
+
+    // PRIMARY: form_submit — imported as Google Ads conversion ($100 value)
+    // Enhanced Measurement auto-event + explicit gtag fire for reliability
     emitCoreEvent('form_submit', {
       form_id: formId,
       form_name: 'Lead Form',
-      service: service || 'unknown'
+      service: service || 'unknown',
+      value: 100.00,
+      currency: 'USD'
     });
+
+    // SECONDARY: GA4 generate_lead — Key Event for GA4 reporting & funnel analysis
+    if (typeof gtag === 'function') {
+      gtag('event', 'generate_lead', {
+        value: 100.00,
+        currency: 'USD',
+        event_label: service || 'general'
+      });
+    }
 
     const photoFiles = attachmentFiles;
     if (photoFiles.length > 0) {
@@ -960,6 +1035,7 @@ async function handleLeadSubmit(e) {
       }
     }
   } catch (err) {
+    unlockSubmit();
     alert(ui.leadSubmitError || 'Error submitting form. Please call 213-361-1700 directly.');
     console.error(err);
   }
@@ -967,24 +1043,32 @@ async function handleLeadSubmit(e) {
 
 function collectLeadAttribution() {
   const params = new URLSearchParams(window.location.search || '');
+  // Helper: read from URL params first, fall back to sessionStorage (persisted on landing)
+  function pOrS(key, storageKey) {
+    return params.get(key) || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('hf_' + (storageKey || key)) : '') || '';
+  }
   const clickId = {
-    fbclid: params.get('fbclid') || '',
-    gclid: params.get('gclid') || '',
-    msclkid: params.get('msclkid') || '',
-    ttclid: params.get('ttclid') || '',
-    gbraid: params.get('gbraid') || '',
-    wbraid: params.get('wbraid') || ''
+    fbclid: pOrS('fbclid'),
+    gclid: pOrS('gclid'),
+    msclkid: pOrS('msclkid'),
+    ttclid: pOrS('ttclid'),
+    gbraid: pOrS('gbraid'),
+    wbraid: pOrS('wbraid')
   };
+  // Extract GA4 browser client_id from _ga cookie for server-side event linking
+  var gaMatch = document.cookie.match(/_ga=GA\d+\.\d+\.(.+)/);
+  var ga4ClientId = gaMatch ? gaMatch[1] : '';
   return {
     pageUrl: window.location.href,
     referrer: document.referrer || 'direct',
-    utmSource: params.get('utm_source') || '',
-    utmMedium: params.get('utm_medium') || '',
-    utmCampaign: params.get('utm_campaign') || '',
-    utmContent: params.get('utm_content') || '',
-    utmTerm: params.get('utm_term') || '',
+    utmSource: pOrS('utm_source'),
+    utmMedium: pOrS('utm_medium'),
+    utmCampaign: pOrS('utm_campaign'),
+    utmContent: pOrS('utm_content'),
+    utmTerm: pOrS('utm_term'),
     placementId: params.get('placement_id') || document.getElementById('leadPlacementId')?.value || '',
     clickId,
+    ga4ClientId,
     landingPath: window.location.pathname || '/',
     lang: (document.documentElement.lang || 'en').toLowerCase()
   };
@@ -1058,11 +1142,11 @@ const servicePlaceholders = {
 
 // Cross-sell map for lead form (cluster-safe, no plumb/elec auto cross-sell)
 const FORM_CROSS_SELL = {
-  'tv-mounting':        { suggest: 'mirrors',            label: {en:'Add Art & Mirror Hanging — $175',es:'Agregar cuadros y espejos — $175',ru:'Добавить зеркала и картины — $175',ua:'Додати дзеркала та картини — $175'} },
-  'furniture-assembly': { suggest: 'tv-mounting',        label: {en:'Add TV Mounting — from $165',es:'Agregar montaje de TV — desde $165',ru:'Добавить монтаж ТВ — от $165',ua:'Додати монтаж ТВ — від $165'} },
-  'mirrors':            { suggest: 'tv-mounting',        label: {en:'Add TV Mounting — from $165',es:'Agregar montaje de TV — desde $165',ru:'Добавить монтаж ТВ — от $165',ua:'Додати монтаж ТВ — від $165'} },
-  'painting':           { suggest: 'flooring',           label: {en:'Add Flooring — from $3.50/sf',es:'Agregar pisos — desde $3.50/sf',ru:'Добавить полы — от $3.50/sf',ua:'Додати підлогу — від $3.50/sf'} },
-  'flooring':           { suggest: 'painting',           label: {en:'Add Painting — from $3/sf',es:'Agregar pintura — desde $3/sf',ru:'Добавить покраску — от $3/sf',ua:'Додати фарбування — від $3/sf'} },
+  'tv-mounting':        { suggest: 'mirrors',            label: {en:'Add Art & Mirror Hanging -- $95',es:'Agregar cuadros y espejos -- $95',ru:'Добавить зеркала и картины -- $95',ua:'Додати дзеркала та картини -- $95'} },
+  'furniture-assembly': { suggest: 'tv-mounting',        label: {en:'Add TV Mounting -- from $105',es:'Agregar montaje de TV -- desde $105',ru:'Добавить монтаж ТВ -- от $105',ua:'Додати монтаж ТВ -- від $105'} },
+  'mirrors':            { suggest: 'tv-mounting',        label: {en:'Add TV Mounting -- from $105',es:'Agregar montaje de TV -- desde $105',ru:'Добавить монтаж ТВ -- от $105',ua:'Додати монтаж ТВ -- від $105'} },
+  'painting':           { suggest: 'flooring',           label: {en:'Add Flooring -- from $3/sf',es:'Agregar pisos -- desde $3/sf',ru:'Добавить полы -- от $3/sf',ua:'Додати підлогу -- від $3/sf'} },
+  'flooring':           { suggest: 'painting',           label: {en:'Add Painting -- from $3/sf',es:'Agregar pintura -- desde $3/sf',ru:'Добавить покраску -- от $3/sf',ua:'Додати фарбування -- від $3/sf'} },
 };
 
 // Update placeholder when service changes + show cross-sell suggestion
@@ -1121,11 +1205,43 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
 })();
 </script>
 
+<!-- ═══════════════════════════════════════════
+     SERVICE AREA MAP
+     ═══════════════════════════════════════════ -->
+<section id="service-area" style="padding:60px 18px 0;background:#fff">
+  <div style="max-width:1200px;margin:0 auto;text-align:center">
+    <h2 style="font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,36px);font-weight:700;color:#1e2a3b;margin:0 0 8px" data-i18n="map_title">Our Service Area</h2>
+    <p style="color:#666;font-size:15px;margin:0 0 28px;max-width:600px;display:inline-block" data-i18n="map_subtitle">Serving Los Angeles, Hollywood, West Hollywood, Beverly Hills & Santa Monica</p>
+    <div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12);position:relative;max-width:100%;aspect-ratio:16/9;background:#e8e8e8">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d105916.8!2d-118.4!3d34.08!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80c2bf07045279bf%3A0xf67a9e3f0f262b7e!2sLos%20Angeles%2C%20CA!5e0!3m2!1sen!2sus!4v1"
+        width="100%" height="100%" style="border:0;position:absolute;top:0;left:0;width:100%;height:100%"
+        allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+        title="Handy & Friend service area in Los Angeles">
+      </iframe>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px;margin-bottom:40px">
+      <a href="tel:+12133611700" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#B8892C;color:#fff;border-radius:10px;text-decoration:none;font-size:14px;font-weight:600;transition:background 200ms" data-event="map_call_cta">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg>
+        Call 213-361-1700
+      </a>
+      <a href="/messenger" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#1877F2;color:#fff;border-radius:10px;text-decoration:none;font-size:14px;font-weight:600;transition:opacity 200ms" data-event="map_messenger_cta">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.2 5.42 3.15 7.17.16.15.26.36.27.58l.05 1.81c.02.54.55.9 1.05.72l2.02-.79c.17-.07.36-.08.54-.04.93.25 1.92.39 2.92.39 5.64 0 10-4.13 10-9.7S17.64 2 12 2zm5.95 7.57l-2.91 4.62c-.46.74-1.45.93-2.14.42l-2.31-1.73a.6.6 0 00-.72 0l-3.12 2.37c-.42.32-.96-.17-.68-.62l2.91-4.62c.46-.74 1.45-.93 2.14-.42l2.31 1.73a.6.6 0 00.72 0l3.12-2.37c.42-.32.96.17.68.62z"/></svg>
+        Message on Messenger
+      </a>
+      <a href="/review" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#fff;color:#333;border:2px solid #e0e0e0;border-radius:10px;text-decoration:none;font-size:14px;font-weight:600;transition:border-color 200ms" data-event="map_review_cta">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#FBBC05"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
+        Leave a Google Review
+      </a>
+    </div>
+  </div>
+</section>
+
 <!-- LEGAL DISCLAIMER & FOOTER -->
-<footer style="background:#2A1F14;padding:48px 18px;margin-top:60px">
+<footer style="background:#2A1F14;padding:48px 18px;margin-top:0">
   <div style="max-width:1200px;margin:0 auto">
     <!-- Main Footer Content -->
-    <div style="display:grid;grid-template-columns:1fr;gap:40px;margin-bottom:40px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:40px;margin-bottom:40px">
       <!-- Column 1: About -->
       <div>
         <h3 style="color:#B8892C;font-size:14px;font-weight:700;margin-bottom:12px;letter-spacing:.05em;text-transform:uppercase">About</h3>
@@ -1147,21 +1263,30 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
         <h3 style="color:#B8892C;font-size:14px;font-weight:700;margin-bottom:12px;letter-spacing:.05em;text-transform:uppercase">Contact</h3>
         <p style="color:rgba(255,255,255,0.75);font-size:13px;line-height:1.6;margin:0">
           <a href="tel:+12133611700" style="color:#B8892C;text-decoration:none;font-weight:700">📞 Call 213-361-1700</a><br>
-          <a href="https://wa.me/12133611700" style="color:#25D366;text-decoration:none;font-weight:700">💬 WhatsApp Message</a>
+          <a href="https://wa.me/12133611700" style="color:#25D366;text-decoration:none;font-weight:700">💬 WhatsApp Message</a><br>
+          <a href="/messenger" target="_blank" rel="noopener" style="color:#1877F2;text-decoration:none;font-weight:700" data-event="footer_messenger">💬 Facebook Messenger</a>
         </p>
       </div>
 
       <!-- Column 4: Follow Us -->
       <div>
         <h3 style="color:#B8892C;font-size:14px;font-weight:700;margin-bottom:12px;letter-spacing:.05em;text-transform:uppercase">Follow Us</h3>
-        <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
           <a href="https://www.facebook.com/profile.php?id=61588215297678" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#1877F2;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;transition:opacity 200ms" data-event="footer_facebook">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
             Facebook
           </a>
-          <a href="https://g.co/kgs/handyandfriend" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#fff;color:#333;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;transition:opacity 200ms" data-event="footer_google">
+          <a href="/review" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#fff;color:#333;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;transition:opacity 200ms" data-event="footer_google">
             <svg width="16" height="16" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
             Google
+          </a>
+          <a href="https://nextdoor.com/pages/handy-and-friend-los-angeles-ca/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#8ED500;color:#1e2a3b;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;transition:opacity 200ms" data-event="footer_nextdoor">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#1e2a3b"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm4 0h-2v-6h2v6zm-3-8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+            Nextdoor
+          </a>
+          <a href="https://losangeles.craigslist.org/search/hss#search=1~list~0~0" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#5a0e99;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;transition:opacity 200ms" data-event="footer_craigslist">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+            Craigslist
           </a>
         </div>
       </div>
@@ -1183,14 +1308,14 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
       <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap">
         <a href="/privacy" style="color:rgba(255,255,255,0.60);font-size:11px;text-decoration:none;transition:color 200ms">Privacy Policy</a>
         <a href="/terms" style="color:rgba(255,255,255,0.60);font-size:11px;text-decoration:none;transition:color 200ms">Terms of Service</a>
-        <a href="#" style="color:rgba(255,255,255,0.60);font-size:11px;text-decoration:none;transition:color 200ms">Contact Us</a>
+        <a href="tel:+12133611700" style="color:rgba(255,255,255,0.60);font-size:11px;text-decoration:none;transition:color 200ms">Contact Us</a>
       </div>
     </div>
   </div>
 </footer>
 
 <!-- ══════════════════════════════════════════════
-     AI CHAT WIDGET — BLOCK 2 (DeepSeek Sales Bot)
+     AI CHAT WIDGET -- BLOCK 2 (DeepSeek Sales Bot)
      ══════════════════════════════════════════════ -->
 <style>
 @keyframes wave{0%{transform:rotate(0deg)}10%{transform:rotate(14deg)}20%{transform:rotate(-8deg)}30%{transform:rotate(14deg)}40%{transform:rotate(-4deg)}50%{transform:rotate(10deg)}60%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
@@ -1404,21 +1529,42 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
     document.getElementById('hf-chat-photo-input').click();
   };
 
+  // v11: Compress photos to max 800px before sending (prevents payload overflow)
+  function compressPhoto(file, callback){
+    var img = new Image();
+    var reader = new FileReader();
+    reader.onload = function(e){
+      img.onload = function(){
+        var maxDim = 800;
+        var w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        var compressed = canvas.toDataURL('image/jpeg', 0.7);
+        callback({dataUrl: compressed, name: file.name || 'photo.jpg'});
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
   document.getElementById('hf-chat-photo-input').onchange = function(e){
     var files = e.target.files;
     for(var i=0; i<files.length; i++){
-      var reader = new FileReader();
-      reader.onload = function(event){
-        chatPhotos.push({dataUrl: event.target.result, name: 'photo'});
+      compressPhoto(files[i], function(photo){
+        chatPhotos.push(photo);
         updatePhotoPreview();
-      };
-      reader.readAsDataURL(files[i]);
+      });
     }
     e.target.value = '';
   };
 
   window.hfSend = function(){
-    if(busy||leadCaptured) return;
+    if(busy) return; // v11: allow sending after lead captured (follow-up)
     var input = document.getElementById('hf-chat-input');
     var text = (input.value||'').trim();
     if(!text && chatPhotos.length === 0) return;
@@ -1454,7 +1600,8 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
       body: JSON.stringify({
         sessionId: getSession(),
         messages: history,
-        lang: lang
+        lang: lang,
+        attribution: typeof collectLeadAttribution === 'function' ? collectLeadAttribution() : undefined
       })
     })
     .then(function(r){return r.json();})
@@ -1462,24 +1609,37 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
       hideTyping();
       busy = false;
       if(data.error){
-        addMsg('bot','Sorry, I had a connection issue. Please try again or call us at (213) 361-1700.');
+        // v11: Sales-safe -- ask for project details even on error
+        var errReply = {
+          en:"Brief hiccup! What service do you need? Share your project details and I'll help right away. Or call (213) 361-1700",
+          ru:"Небольшая заминка! Какая услуга нужна? Расскажите о проекте, я сразу помогу. Или звоните (213) 361-1700",
+          uk:"Невелика затримка! Яка послуга потрібна? Розкажіть про проект, я одразу допоможу. Або телефонуйте (213) 361-1700",
+          es:"Breve pausa! Que servicio necesitas? Comparte los detalles y te ayudo. O llama (213) 361-1700"
+        };
+        addMsg('bot', errReply[getLang()]||errReply.en);
         return;
       }
       if(data.reply) addMsg('bot', data.reply);
-      if(data.leadCaptured){
+      if(data.leadCaptured && !leadCaptured){
         leadCaptured = true;
         setTimeout(function(){
           renderMsg('sys', LEAD_MSG[lang]||LEAD_MSG.en);
-          document.getElementById('hf-chat-input').disabled = true;
-          document.getElementById('hf-chat-send').disabled = true;
-          document.getElementById('hf-chat-status').textContent = '✅ Request received';
+          // v11: Do NOT disable input -- conversation continues for booking/follow-up
+          document.getElementById('hf-chat-status').textContent = '✅ Request received -- chat continues';
         }, 600);
       }
     })
     .catch(function(){
       hideTyping();
       busy = false;
-      addMsg('bot','Connection error. Please call us: (213) 361-1700.');
+      // v11: Sales-safe fallback -- never dead-end
+      var errMsg = {
+        en:"Brief connection issue! Tell me about your project -- what service do you need? Or call us directly: (213) 361-1700",
+        ru:"Небольшой сбой связи! Расскажите о проекте -- какая услуга нужна? Или звоните: (213) 361-1700",
+        uk:"Невеликий збій! Розкажіть про проект -- яка послуга потрібна? Або телефонуйте: (213) 361-1700",
+        es:"Breve problema de conexion! Cuentame sobre tu proyecto o llama: (213) 361-1700"
+      };
+      addMsg('bot', errMsg[getLang()]||errMsg.en);
     });
   }
 

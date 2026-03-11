@@ -4,6 +4,18 @@
   "version": "1.0.0",
   "description": "Handy & Friend landing and serverless functions",
   "license": "UNLICENSED",
+  "scripts": {
+    "workflow:bootstrap": "bash scripts/openai-workflow-bootstrap.sh",
+    "workflow:validate": "bash scripts/validate-openai-workflow.sh",
+    "workflow:start": "bash scripts/start-atlas-ops-session.sh",
+    "generate:pricing-browser": "node scripts/build-browser-price-registry.mjs",
+    "backfill:lead-sources": "node scripts/backfill-lead-sources.mjs",
+    "ops:audit": "node scripts/daily_ops_audit.mjs",
+    "test:pricing-policy": "node --test tests/pricing-policy.test.js",
+    "test:ads-attribution": "node --test tests/ads-attribution.test.js",
+    "validate:pricing": "npm run generate:pricing-browser && npm run test:pricing-policy",
+    "validate:ads": "npm run test:ads-attribution"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
   }
