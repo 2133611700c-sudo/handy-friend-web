@@ -33,6 +33,42 @@
       "destination": "/gallery/index.html"
     },
     {
+      "source": "/interior-painting",
+      "destination": "/interior-painting/index.html"
+    },
+    {
+      "source": "/art-hanging",
+      "destination": "/art-hanging/index.html"
+    },
+    {
+      "source": "/plumbing",
+      "destination": "/plumbing/index.html"
+    },
+    {
+      "source": "/electrical",
+      "destination": "/electrical/index.html"
+    },
+    {
+      "source": "/drywall",
+      "destination": "/drywall/index.html"
+    },
+    {
+      "source": "/door-installation",
+      "destination": "/door-installation/index.html"
+    },
+    {
+      "source": "/vanity-installation",
+      "destination": "/vanity-installation/index.html"
+    },
+    {
+      "source": "/backsplash",
+      "destination": "/backsplash/index.html"
+    },
+    {
+      "source": "/furniture-painting",
+      "destination": "/furniture-painting/index.html"
+    },
+    {
       "source": "/reviews",
       "destination": "/reviews/index.html"
     },
