@@ -59,6 +59,11 @@
   ],
   "redirects": [
     {
+      "source": "/handyfriend_10.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "source": "/messenger",
       "destination": "https://m.me/61588215297678",
       "permanent": false
