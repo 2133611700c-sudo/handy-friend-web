@@ -262,8 +262,8 @@ const T={
     heroAccent:"Instant Help",
     heroSub:"Describe your project and get AI-powered guidance on pricing, timeline, and next steps—instantly.",
     aiPowered:"AI Powered",
-    heroOfferTitle:"Professional Cabinet Painting From $75 Per Door",
-    heroOfferSubHtml:'<span class="hero-included-accent">Premium paint, primer, degreasing, and prep are included in the price</span><br>A smooth spray finish that costs less than replacement',
+    heroOfferTitle:"Hire a Handyman in Los Angeles",
+    heroOfferSubHtml:'<span class="hero-included-accent">Same-day response, transparent pricing, and professional insured service</span><br>Book online in minutes or call (213) 361-1700 for a fast quote',
     aiSearchPlaceholder:"Ask AI: price my project",
     aiBadge:"Smart",
     aiSubmit:"Get Estimate",
@@ -572,8 +572,8 @@ const T={
     heroAccent:"Ayuda al Instante",
     heroSub:"Solo mano de obra · Sin margen en materiales · Misma semana",
     aiPowered:"Con IA",
-    heroOfferTitle:"Pintura profesional de gabinetes desde $75 por puerta",
-    heroOfferSubHtml:'<span class="hero-included-accent">Pintura premium, primer, desengrasado y preparacion estan incluidos en el precio</span><br>Acabado en spray liso que cuesta menos que reemplazar',
+    heroOfferTitle:"Contrata un handyman en Los Ángeles",
+    heroOfferSubHtml:'<span class="hero-included-accent">Respuesta el mismo día, precios transparentes y servicio profesional asegurado</span><br>Reserva en línea en minutos o llama al (213) 361-1700 para una cotización rápida',
     aiSearchPlaceholder:"Pregunta a IA: cotiza mi proyecto",
     aiBadge:"Inteligente",
     aiSubmit:"Obtener Estimado",
@@ -882,8 +882,8 @@ const T={
     heroAccent:"мгновенную помощь",
     heroSub:"Опишите свой проект и получите помощь ИИ по ценам, срокам и следующим шагам — мгновенно.",
     aiPowered:"Работает ИИ",
-    heroOfferTitle:"Профессиональная покраска шкафов от $75 за дверцу",
-    heroOfferSubHtml:'<span class="hero-included-accent">Премиальная краска, грунт, обезжиривание и подготовка уже включены в стоимость</span><br>Гладкий распылительный финиш стоит дешевле полной замены',
+    heroOfferTitle:"Закажите мастера в Лос-Анджелесе",
+    heroOfferSubHtml:'<span class="hero-included-accent">Ответ в тот же день, прозрачные цены и профессиональный застрахованный сервис</span><br>Запишитесь онлайн за пару минут или звоните (213) 361-1700 для быстрой сметы',
     aiSearchPlaceholder:"ИИ: оцените мой проект",
     aiBadge:"Умный",
     aiSubmit:"Считать смету",
@@ -1191,8 +1191,8 @@ const T={
     heroAccent:"миттєву допомогу",
     heroSub:"Опишіть свій проект і отримайте допомогу ШІ щодо цін, термінів та наступних кроків — миттєво.",
     aiPowered:"Працює ШІ",
-    heroOfferTitle:"Професійне фарбування шаф від $75 за дверцята",
-    heroOfferSubHtml:'<span class="hero-included-accent">Преміальна фарба, ґрунт, знежирення та підготовка вже входять у вартість</span><br>Гладке розпилювальне покриття коштує дешевше за повну заміну',
+    heroOfferTitle:"Замовте майстра в Лос-Анджелесі",
+    heroOfferSubHtml:'<span class="hero-included-accent">Відповідь того ж дня, прозорі ціни та професійний застрахований сервіс</span><br>Бронюйте онлайн за кілька хвилин або телефонуйте (213) 361-1700 для швидкого кошторису',
     aiSearchPlaceholder:"ШІ: оцініть мій проект",
     aiBadge:"Розумна",
     aiSubmit:"Розрахувати",
@@ -2112,10 +2112,10 @@ function applyLang(){
   document.getElementById('langTxt').textContent=l.lang;
   document.getElementById('langNext').textContent=`→ ${nextL}`;
   const heroOfferTitleEl=document.getElementById('heroOfferTitle');
-  if(heroOfferTitleEl) heroOfferTitleEl.textContent=l.heroOfferTitle||'Professional Cabinet Painting From $75 Per Door';
+  if(heroOfferTitleEl) heroOfferTitleEl.textContent=l.heroOfferTitle||'Hire a Handyman in Los Angeles';
   const heroOfferSubEl=document.getElementById('heroOfferSub');
   if(heroOfferSubEl) {
-    heroOfferSubEl.innerHTML=l.heroOfferSubHtml||'<span class="hero-included-accent">Premium paint, primer, degreasing, and prep are included in the price</span><br>A smooth spray finish that costs less than replacement';
+    heroOfferSubEl.innerHTML=l.heroOfferSubHtml||'<span class="hero-included-accent">Same-day response, transparent pricing, and professional insured service</span><br>Book online in minutes or call (213) 361-1700 for a fast quote';
   }
   const heroSubEl=document.getElementById('heroSub');
   if(heroSubEl)heroSubEl.textContent=l.heroSub;
