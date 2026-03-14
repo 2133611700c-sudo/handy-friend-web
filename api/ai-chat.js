@@ -246,17 +246,20 @@ export default async function handler(req, res) {
 
   // v11: Strict Sales Card for captured leads
   if (leadCaptured && leadId) {
-    sendStrictSalesCard({
-      sessionId,
-      leadId,
-      lang: safeLang,
-      userText: lastUser?.content || '',
-      aiReply: reply,
-      photos: latestUserPhotos,
-      lead: capturedLead,
-      serviceInference,
-      estimateMode: hasPhone ? 'exact' : 'range'
-    }).catch((err) => console.error('[AI_CHAT] Telegram sales card error:', err.message));
+    await Promise.race([
+      sendStrictSalesCard({
+        sessionId,
+        leadId,
+        lang: safeLang,
+        userText: lastUser?.content || '',
+        aiReply: reply,
+        photos: latestUserPhotos,
+        lead: capturedLead,
+        serviceInference,
+        estimateMode: hasPhone ? 'exact' : 'range'
+      }),
+      sleep(1800)
+    ]).catch((err) => console.error('[AI_CHAT] Telegram sales card error:', err.message));
   }
 
   // v11: enriched response contract
