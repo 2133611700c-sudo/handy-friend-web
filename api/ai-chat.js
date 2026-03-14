@@ -564,16 +564,66 @@ async function sendStrictSalesCard({ sessionId, leadId, lang, userText, aiReply,
   });
   const msgData = await msgRes.json().catch(() => ({}));
   if (!msgRes.ok || !msgData.ok) {
+    if (leadId) {
+      await pipelineLogEvent(leadId, 'telegram_failed', {
+        source: 'ai_chat',
+        step: 'sendMessage',
+        session_id: sessionId,
+        error: String(msgData?.description || `sendMessage_${msgRes.status}`).slice(0, 300)
+      }).catch(() => {});
+    }
     throw new Error(msgData?.description || `sendMessage failed (${msgRes.status})`);
   }
 
+  const sentPhotoIds = [];
+  const failedPhotos = [];
+
   // Forward photos if any
-  if (!photoCount) return;
+  if (!photoCount) {
+    if (leadId) {
+      await pipelineLogEvent(leadId, 'telegram_sent', {
+        source: 'ai_chat',
+        session_id: sessionId,
+        message_id: msgData?.result?.message_id || null,
+        photos_total: 0,
+        photos_sent: 0
+      }).catch(() => {});
+    }
+    return;
+  }
   const dedup = filterDedupedPhotos(String(sessionId || 'unknown'), photos);
   for (let i = 0; i < dedup.photos.length; i++) {
-    await sendTelegramPhotoWithRetry(token, chatId, dedup.photos[i], {
+    const result = await sendTelegramPhotoWithRetry(token, chatId, dedup.photos[i], {
       caption: i === 0 ? `📸 Lead photos\nLead: ${String(leadId || '').slice(0, 40)}` : ''
-    }).catch(() => {});
+    }).catch((err) => ({ ok: false, error: String(err?.message || 'send_photo_error').slice(0, 300) }));
+    if (result?.ok) sentPhotoIds.push(result.messageId || null);
+    else failedPhotos.push({ i, error: result?.error || 'send_photo_failed' });
+  }
+
+  if (leadId) {
+    if (failedPhotos.length) {
+      await pipelineLogEvent(leadId, 'telegram_failed', {
+        source: 'ai_chat',
+        step: 'sendPhoto',
+        session_id: sessionId,
+        message_id: msgData?.result?.message_id || null,
+        photos_total: dedup.photos.length,
+        photos_sent: sentPhotoIds.filter(Boolean).length,
+        dedup_skipped_count: dedup.skipped,
+        failed_count: failedPhotos.length,
+        failed: failedPhotos.slice(0, 5)
+      }).catch(() => {});
+    } else {
+      await pipelineLogEvent(leadId, 'telegram_sent', {
+        source: 'ai_chat',
+        session_id: sessionId,
+        message_id: msgData?.result?.message_id || null,
+        photo_message_ids: sentPhotoIds.filter(Boolean),
+        photos_total: dedup.photos.length,
+        photos_sent: sentPhotoIds.filter(Boolean).length,
+        dedup_skipped_count: dedup.skipped
+      }).catch(() => {});
+    }
   }
 }
 
