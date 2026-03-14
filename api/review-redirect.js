@@ -12,12 +12,12 @@ export default async function handler(req, res) {
   const target = process.env.GOOGLE_REVIEW_URL;
 
   if (target) {
-    return res.redirect(302, target);
+    return res.redirect(301, target);
   }
 
   // Fallback: direct Google Write Review with verified Place ID
   // Place ID: ChIJ6V5HHH7HwoARFgMKq_E0XK8 (1213 Gordon St, Los Angeles — verified 2026-03-13)
   const fallback = 'https://search.google.com/local/writereview?placeid=ChIJ6V5HHH7HwoARFgMKq_E0XK8';
 
-  return res.redirect(302, fallback);
+  return res.redirect(301, fallback);
 }
