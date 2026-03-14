@@ -105,6 +105,16 @@
     if (!formEl) return;
     formEl.addEventListener('submit', function(e) {
       e.preventDefault();
+      var phoneVal = (formEl.querySelector('[name="phone"]') || {}).value || '';
+      if (phoneVal.replace(/\D/g,'').length < 10) {
+        var phoneField = formEl.querySelector('[name="phone"]');
+        if (phoneField) { phoneField.focus(); phoneField.style.borderColor = '#e53e3e'; }
+        return;
+      }
+      /* Honeypot anti-bot */
+      var honey = formEl.querySelector('[name="website"]');
+      if (honey && honey.value) return;
+
       var btn = formEl.querySelector('button[type="submit"]');
       if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
 
@@ -150,6 +160,14 @@
   document.addEventListener('DOMContentLoaded', function(){
     var form = document.getElementById('sp-lead-form');
     if (form) handleLeadForm(form);
+
+    /* Reset phone error styling on input */
+    var phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+      phoneInput.addEventListener('input', function(){
+        this.style.borderColor = '';
+      });
+    }
 
     /* Pre-fill service from ?service= param */
     var serviceParam = new URLSearchParams(window.location.search).get('service');
@@ -200,6 +218,17 @@
         if (e.target === lightbox || e.target.classList.contains('sp-lightbox-close'))
           lightbox.classList.remove('active');
       });
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape') lightbox.classList.remove('active');
+      });
+    }
+
+    /* Inject mobile sticky CTA bar if not already present */
+    if (!document.querySelector('.sp-book-sticky') && window.location.pathname !== '/book') {
+      var stickyBar = document.createElement('div');
+      stickyBar.className = 'sp-book-sticky';
+      stickyBar.innerHTML = '<a href="tel:+12133611700">\uD83D\uDCDE Call (213) 361-1700</a><a href="/book">Get Free Estimate</a>';
+      document.body.appendChild(stickyBar);
     }
   });
 

@@ -735,6 +735,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <p id="leadPhotosStatus" style="margin:8px 0 0;font-size:12px;color:#2e7d32;display:none;font-weight:700"></p>
       </div>
 
+      <input type="text" name="website" style="display:none;position:absolute;left:-9999px" tabindex="-1" autocomplete="off">
       <button type="submit" style="padding:16px;background:linear-gradient(135deg,#1B2B4B 0%,#2B4A8C 100%);color:#fff;border:none;border-radius:999px;font-weight:700;font-size:16px;cursor:pointer;transition:all 200ms;box-shadow:0 8px 28px rgba(27,43,75,.40)" data-event="lead_submit">
         <span data-i18n="leadFormBtn">Get Your Quote in 2 Min</span>
       </button>
@@ -912,6 +913,9 @@ let hfLeadFormLockUntil = 0;
 async function handleLeadSubmit(e) {
   e.preventDefault();
 
+  /* Honeypot anti-bot */
+  if (document.querySelector('[name="website"]') && document.querySelector('[name="website"]').value) return;
+
   if (Date.now() < hfLeadFormLockUntil) return;
   hfLeadFormLockUntil = Date.now() + HF_LEAD_FORM_LOCK_MS;
 
@@ -933,6 +937,13 @@ async function handleLeadSubmit(e) {
   const name = document.getElementById('leadName').value;
   const email = document.getElementById('leadEmail').value;
   const phone = document.getElementById('leadPhone').value;
+  /* Phone validation: require at least 10 digits */
+  if ((phone.match(/\d/g) || []).length < 10) {
+    const ui2 = (typeof window.HF_UI === 'function') ? window.HF_UI() : {};
+    alert(ui2.leadPhoneError || 'Please enter a valid phone number (at least 10 digits).');
+    unlockSubmit();
+    return;
+  }
   const zip = document.getElementById('leadZip').value;
   const preferredContact = document.getElementById('leadPreferredContact').value;
   const service = document.getElementById('leadService').value;
