@@ -1,97 +1,45 @@
 {
   "rewrites": [
-    {
-      "source": "/pricing/",
-      "destination": "/pricing/index.html"
-    },
-    {
-      "source": "/pricing",
-      "destination": "/pricing/index.html"
-    },
-    {
-      "source": "/services",
-      "destination": "/services/index.html"
-    },
-    {
-      "source": "/tv-mounting",
-      "destination": "/tv-mounting/index.html"
-    },
-    {
-      "source": "/furniture-assembly",
-      "destination": "/furniture-assembly/index.html"
-    },
-    {
-      "source": "/cabinet-painting",
-      "destination": "/cabinet-painting/index.html"
-    },
-    {
-      "source": "/flooring",
-      "destination": "/flooring/index.html"
-    },
-    {
-      "source": "/gallery",
-      "destination": "/gallery/index.html"
-    },
-    {
-      "source": "/interior-painting",
-      "destination": "/interior-painting/index.html"
-    },
-    {
-      "source": "/art-hanging",
-      "destination": "/art-hanging/index.html"
-    },
-    {
-      "source": "/plumbing",
-      "destination": "/plumbing/index.html"
-    },
-    {
-      "source": "/electrical",
-      "destination": "/electrical/index.html"
-    },
-    {
-      "source": "/drywall",
-      "destination": "/drywall/index.html"
-    },
-    {
-      "source": "/door-installation",
-      "destination": "/door-installation/index.html"
-    },
-    {
-      "source": "/vanity-installation",
-      "destination": "/vanity-installation/index.html"
-    },
-    {
-      "source": "/backsplash",
-      "destination": "/backsplash/index.html"
-    },
-    {
-      "source": "/furniture-painting",
-      "destination": "/furniture-painting/index.html"
-    },
-    {
-      "source": "/reviews",
-      "destination": "/reviews/index.html"
-    },
-    {
-      "source": "/book",
-      "destination": "/book/index.html"
-    },
-    {
-      "source": "/review",
-      "destination": "/api/review-redirect"
-    },
-    {
-      "source": "/fb",
-      "destination": "/api/fb-redirect"
-    },
-    {
-      "source": "/privacy",
-      "destination": "/privacy.html"
-    },
-    {
-      "source": "/terms",
-      "destination": "/terms.html"
-    }
+    { "source": "/pricing/",              "destination": "/pricing/index.html" },
+    { "source": "/pricing",               "destination": "/pricing/index.html" },
+    { "source": "/services/",             "destination": "/services/index.html" },
+    { "source": "/services",              "destination": "/services/index.html" },
+    { "source": "/tv-mounting/",          "destination": "/tv-mounting/index.html" },
+    { "source": "/tv-mounting",           "destination": "/tv-mounting/index.html" },
+    { "source": "/furniture-assembly/",   "destination": "/furniture-assembly/index.html" },
+    { "source": "/furniture-assembly",    "destination": "/furniture-assembly/index.html" },
+    { "source": "/cabinet-painting/",     "destination": "/cabinet-painting/index.html" },
+    { "source": "/cabinet-painting",      "destination": "/cabinet-painting/index.html" },
+    { "source": "/flooring/",             "destination": "/flooring/index.html" },
+    { "source": "/flooring",              "destination": "/flooring/index.html" },
+    { "source": "/gallery/",              "destination": "/gallery/index.html" },
+    { "source": "/gallery",               "destination": "/gallery/index.html" },
+    { "source": "/interior-painting/",    "destination": "/interior-painting/index.html" },
+    { "source": "/interior-painting",     "destination": "/interior-painting/index.html" },
+    { "source": "/art-hanging/",          "destination": "/art-hanging/index.html" },
+    { "source": "/art-hanging",           "destination": "/art-hanging/index.html" },
+    { "source": "/plumbing/",             "destination": "/plumbing/index.html" },
+    { "source": "/plumbing",              "destination": "/plumbing/index.html" },
+    { "source": "/electrical/",           "destination": "/electrical/index.html" },
+    { "source": "/electrical",            "destination": "/electrical/index.html" },
+    { "source": "/drywall/",              "destination": "/drywall/index.html" },
+    { "source": "/drywall",               "destination": "/drywall/index.html" },
+    { "source": "/door-installation/",    "destination": "/door-installation/index.html" },
+    { "source": "/door-installation",     "destination": "/door-installation/index.html" },
+    { "source": "/vanity-installation/",  "destination": "/vanity-installation/index.html" },
+    { "source": "/vanity-installation",   "destination": "/vanity-installation/index.html" },
+    { "source": "/backsplash/",           "destination": "/backsplash/index.html" },
+    { "source": "/backsplash",            "destination": "/backsplash/index.html" },
+    { "source": "/furniture-painting/",   "destination": "/furniture-painting/index.html" },
+    { "source": "/furniture-painting",    "destination": "/furniture-painting/index.html" },
+    { "source": "/reviews/",              "destination": "/reviews/index.html" },
+    { "source": "/reviews",               "destination": "/reviews/index.html" },
+    { "source": "/book/",                 "destination": "/book/index.html" },
+    { "source": "/book",                  "destination": "/book/index.html" },
+    { "source": "/review",                "destination": "/api/review-redirect" },
+    { "source": "/fb",                    "destination": "/api/fb-redirect" },
+    { "source": "/privacy",               "destination": "/privacy.html" },
+    { "source": "/terms",                 "destination": "/terms.html" }
   ],
   "redirects": [
     {
