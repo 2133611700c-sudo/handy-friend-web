@@ -15,8 +15,9 @@ export default async function handler(req, res) {
     return res.redirect(302, target);
   }
 
-  // Fallback: Google Maps search for the business (works before/after verification)
-  const fallback = 'https://www.google.com/maps/search/Handy+Friend+Los+Angeles+CA+handyman';
+  // Fallback: direct Google Write Review with verified Place ID
+  // Place ID: ChIJ6V5HHH7HwoARFgMKq_E0XK8 (1213 Gordon St, Los Angeles — verified 2026-03-13)
+  const fallback = 'https://search.google.com/local/writereview?placeid=ChIJ6V5HHH7HwoARFgMKq_E0XK8';
 
   return res.redirect(302, fallback);
 }

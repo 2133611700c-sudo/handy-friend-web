@@ -154,11 +154,35 @@
     /* Pre-fill service from ?service= param */
     var serviceParam = new URLSearchParams(window.location.search).get('service');
     if (serviceParam) {
+      /* Alias map: short param values → actual dropdown option values */
+      var serviceAliases = {
+        'cabinet_painting': 'kitchen_cabinet_painting',
+        'tv_mounting': 'tv_mounting',
+        'furniture_assembly': 'furniture_assembly',
+        'flooring': 'flooring',
+        'interior_painting': 'interior_painting'
+      };
+      /* Service label map for message prefill */
+      var serviceLabels = {
+        'tv_mounting': 'TV Mounting',
+        'cabinet_painting': 'Cabinet Painting',
+        'kitchen_cabinet_painting': 'Cabinet Painting',
+        'furniture_assembly': 'Furniture Assembly',
+        'flooring': 'Flooring Installation',
+        'interior_painting': 'Interior Painting'
+      };
+      var resolvedParam = serviceAliases[serviceParam] || serviceParam;
       var sel = document.querySelector('[name="service_type"]');
       if (sel) {
         for (var i = 0; i < sel.options.length; i++) {
-          if (sel.options[i].value === serviceParam) { sel.selectedIndex = i; break; }
+          if (sel.options[i].value === resolvedParam) { sel.selectedIndex = i; break; }
         }
+      }
+      /* Pre-fill message field */
+      var label = serviceLabels[serviceParam] || serviceParam.replace(/_/g, ' ');
+      var msgField = document.getElementById('message');
+      if (msgField && !msgField.value) {
+        msgField.value = 'Interested in ' + label;
       }
     }
 
