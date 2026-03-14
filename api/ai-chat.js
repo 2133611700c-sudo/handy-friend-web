@@ -26,6 +26,7 @@ const { detectLanguage } = require('../lib/alex-v8-system.js');
 const PHOTO_DEDUP_WINDOW_MS = Number(process.env.TELEGRAM_PHOTO_DEDUP_MS || 10 * 60 * 1000);
 const PHOTO_DEDUP_CACHE = globalThis.__HF_CHAT_PHOTO_DEDUP || new Map();
 globalThis.__HF_CHAT_PHOTO_DEDUP = PHOTO_DEDUP_CACHE;
+const TEST_SESSION_PREFIXES = ['qa_', 'test_', 'matrix_', 'mtrx_', 'hardened_', 'debug_', 'smoke_', 'dev_'];
 
 // Prompt source of truth is lib/alex-one-truth.js
 
@@ -49,6 +50,7 @@ export default async function handler(req, res) {
   }
 
   const { sessionId, messages, lang = 'en', attribution } = req.body || {};
+  const isTestTraffic = isLikelyTestTraffic(sessionId, attribution);
 
   if (!sessionId || typeof sessionId !== 'string' || sessionId.length > 128) {
     return res.status(400).json({ error: 'sessionId required (string, max 128 chars)' });
@@ -178,7 +180,7 @@ export default async function handler(req, res) {
     reply = rawReply.slice(0, leadMatch.index).trim();
     try {
       const leadData = JSON.parse(leadMatch[1]);
-      const result = await createLead(leadData, sessionId, safeLang, safeMessages, attribution);
+      const result = await createLead(leadData, sessionId, safeLang, safeMessages, attribution, isTestTraffic);
       if (result.ok) {
         leadCaptured = true;
         leadId = result.leadId;
@@ -194,7 +196,7 @@ export default async function handler(req, res) {
     const inferredLead = inferLeadFromConversation(safeMessages);
     if (inferredLead) {
       try {
-        const fallbackResult = await createLead(inferredLead, sessionId, safeLang, safeMessages, attribution);
+        const fallbackResult = await createLead(inferredLead, sessionId, safeLang, safeMessages, attribution, isTestTraffic);
         if (fallbackResult.ok) {
           leadCaptured = true;
           leadId = fallbackResult.leadId;
@@ -278,7 +280,7 @@ export default async function handler(req, res) {
 // callDeepSeek has been replaced by callAlex() from lib/ai-fallback.js
 // which provides automatic retry logic and static fallback when API is down
 
-async function createLead(leadData, sessionId, lang, messages, attributionInput) {
+async function createLead(leadData, sessionId, lang, messages, attributionInput, isTestTraffic = false) {
   const { name, phone, email, service, description } = normalizeLeadPreview(leadData);
   const normalizedService = service || 'unknown';
 
@@ -296,6 +298,7 @@ async function createLead(leadData, sessionId, lang, messages, attributionInput)
       message: String(description || '').slice(0, 2000),
       source: 'website_chat',
       source_details: attributionInput && typeof attributionInput === 'object' ? attributionInput : undefined,
+      is_test: Boolean(isTestTraffic),
       session_id: sessionId
     });
 
@@ -309,6 +312,7 @@ async function createLead(leadData, sessionId, lang, messages, attributionInput)
       correlation_id: `ai_chat:${sessionId}`,
       idempotency_key: `ai_chat_capture:${sessionId}:${leadId}`,
       is_new: pipelineResult.isNew,
+      is_test: Boolean(isTestTraffic),
       conversation_summary: buildSummary(messages, lang).slice(0, 500)
     }).catch(err => console.error('[PIPELINE_LOG]', err.message));
     await transitionLead(leadId, 'contacted', {
@@ -344,7 +348,8 @@ async function createLead(leadData, sessionId, lang, messages, attributionInput)
       service_type: String(normalizedService || '').slice(0, 120),
       problem_description: String(description || '').slice(0, 2000),
       ai_summary: buildSummary(messages, lang).slice(0, 2000),
-      source_details: { session_id: sessionId, lang, channel: 'chat_widget' }
+      source_details: { session_id: sessionId, lang, channel: 'chat_widget', is_test_signal: Boolean(isTestTraffic) },
+      is_test: Boolean(isTestTraffic)
     };
 
     const result = await restInsert('leads', record, { returning: false });
@@ -807,6 +812,16 @@ function normalizeLeadPreview(leadData) {
     city: String(data.city || '').trim().slice(0, 80),
     zip: String(data.zip || '').trim().slice(0, 16)
   };
+}
+
+function isLikelyTestTraffic(sessionId, attribution) {
+  const sid = String(sessionId || '').toLowerCase();
+  const source = String(attribution?.source || attribution?.utm_source || '').toLowerCase();
+  const campaign = String(attribution?.campaign || attribution?.utm_campaign || '').toLowerCase();
+  const hasTestPrefix = TEST_SESSION_PREFIXES.some((prefix) => sid.startsWith(prefix));
+  const hasDebugMarker = sid.includes('_qa_') || sid.includes('test_run') || sid.includes('debug');
+  const hasTestAttribution = /(qa|test|debug|smoke|staging)/.test(`${source} ${campaign}`);
+  return hasTestPrefix || hasDebugMarker || hasTestAttribution;
 }
 
 /**
