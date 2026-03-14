@@ -19,6 +19,9 @@ jobs:
             [ -f "$f" ] && echo "✅ $f exists" || (echo "❌ MISSING: $f" && exit 1)
           done
 
+      - name: Guard canonical Vercel project linkage
+        run: npm run -s vercel:guard
+
       - name: Check file sizes (must be lean)
         run: |
           echo "=== File sizes ==="

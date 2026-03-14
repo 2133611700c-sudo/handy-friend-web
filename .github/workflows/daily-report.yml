@@ -37,6 +37,9 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Guard canonical Vercel project linkage
+        run: npm run -s vercel:guard
+
       - name: Run Daily Report
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

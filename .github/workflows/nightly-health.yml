@@ -22,6 +22,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Guard canonical Vercel project linkage
+        run: npm run -s vercel:guard
+
       - name: Run nightly readiness audit (no stats secret in CI)
         id: audit
         continue-on-error: true

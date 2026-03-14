@@ -178,7 +178,7 @@ export default async function handler(req, res) {
     reply = rawReply.slice(0, leadMatch.index).trim();
     try {
       const leadData = JSON.parse(leadMatch[1]);
-      const result = await createLead(leadData, sessionId, safeLang, safeMessages);
+      const result = await createLead(leadData, sessionId, safeLang, safeMessages, attribution);
       if (result.ok) {
         leadCaptured = true;
         leadId = result.leadId;
@@ -194,7 +194,7 @@ export default async function handler(req, res) {
     const inferredLead = inferLeadFromConversation(safeMessages);
     if (inferredLead) {
       try {
-        const fallbackResult = await createLead(inferredLead, sessionId, safeLang, safeMessages);
+        const fallbackResult = await createLead(inferredLead, sessionId, safeLang, safeMessages, attribution);
         if (fallbackResult.ok) {
           leadCaptured = true;
           leadId = fallbackResult.leadId;
@@ -275,7 +275,7 @@ export default async function handler(req, res) {
 // callDeepSeek has been replaced by callAlex() from lib/ai-fallback.js
 // which provides automatic retry logic and static fallback when API is down
 
-async function createLead(leadData, sessionId, lang, messages) {
+async function createLead(leadData, sessionId, lang, messages, attributionInput) {
   const { name, phone, email, service, description } = normalizeLeadPreview(leadData);
   const normalizedService = service || 'unknown';
 
@@ -292,7 +292,7 @@ async function createLead(leadData, sessionId, lang, messages) {
       service_type: String(normalizedService || '').slice(0, 120),
       message: String(description || '').slice(0, 2000),
       source: 'website_chat',
-      source_details: attribution && typeof attribution === 'object' ? attribution : undefined,
+      source_details: attributionInput && typeof attributionInput === 'object' ? attributionInput : undefined,
       session_id: sessionId
     });
 
