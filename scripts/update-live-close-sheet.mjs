@@ -52,6 +52,53 @@ function waLink(phone, text) {
   return `https://wa.me/1${ph}?text=${encodeURIComponent(text)}`;
 }
 
+const CONTACT_EVENT_TYPES = new Set([
+  'status_contacted',
+  'stage_contacted',
+  'manual_whatsapp_sent',
+  'call_attempt',
+  'phone_call_attempt',
+  'quote_sent',
+  'reactivation_message_sent',
+  'reactivation_followup_sent',
+  'followup_sent',
+]);
+
+const REVIEW_EVENT_TYPES = new Set(['review_request_sent', 'review_requested']);
+
+const SERVICE_META = {
+  cabinet_painting: { label: 'cabinet painting', price: '$75/door' },
+  kitchen_cabinet_painting: { label: 'cabinet painting', price: '$75/door' },
+  tv_mounting: { label: 'TV mounting', price: '$105' },
+  mirrors: { label: 'art & mirror hanging', price: '$95' },
+  art_hanging: { label: 'art & mirror hanging', price: '$95' },
+  flooring: { label: 'flooring installation', price: '$3.00/sq ft' },
+  furniture_assembly: { label: 'furniture assembly', price: '$75' },
+  interior_painting: { label: 'interior painting', price: '$3.00/sq ft' },
+  plumbing: { label: 'minor plumbing repair', price: '$115' },
+  electrical: { label: 'light fixture & electrical service', price: '$95' },
+};
+
+function getServiceMeta(serviceType) {
+  const key = String(serviceType || '').trim().toLowerCase();
+  return SERVICE_META[key] || { label: key.replace(/_/g, ' ') || 'your project', price: '' };
+}
+
+function leadAgeHours(iso) {
+  if (!iso) return 0;
+  const ts = new Date(iso).getTime();
+  if (Number.isNaN(ts)) return 0;
+  return (Date.now() - ts) / (1000 * 60 * 60);
+}
+
+function isOpenLead(lead) {
+  const stage = String(lead?.stage || '').toLowerCase();
+  const outcome = String(lead?.outcome || '').toLowerCase();
+  if (['closed', 'won', 'lost', 'archived'].includes(stage)) return false;
+  if (['won', 'lost'].includes(outcome)) return false;
+  return true;
+}
+
 async function run() {
   const today = new Date().toISOString().slice(0, 10);
   const targetFile = path.join(process.cwd(), 'ops', 'reports', `${today}-live-close-sheet.md`);
@@ -69,27 +116,46 @@ async function run() {
     byLead.get(ev.lead_id).push(ev);
   }
 
-  const activeLead = leads.find(
-    (l) => digits(l.phone).endsWith('3106635792') || l.id === 'chat_1772464815694_cxe3l'
-  );
+  const openLeads = leads.filter(isOpenLead);
+  const rankedOpenLeads = openLeads
+    .map((lead) => {
+      const evs = byLead.get(lead.id) || [];
+      const hasContact = evs.some((ev) => CONTACT_EVENT_TYPES.has(ev.event_type));
+      const hasQuote = evs.some((ev) => ev.event_type === 'quote_sent');
+      const ageH = leadAgeHours(lead.created_at);
+      const stage = String(lead.stage || '').toLowerCase();
+      let rank = 4;
+      if (stage === 'new' && !hasContact) rank = 1;
+      else if (stage === 'new') rank = 2;
+      else if (stage === 'contacted' && !hasQuote) rank = 3;
+      return { lead, rank, hasContact, ageH };
+    })
+    .sort((a, b) => (a.rank - b.rank) || (b.ageH - a.ageH));
+  const activeLead = rankedOpenLeads[0]?.lead || null;
 
-  const reviewEventLeads = [];
-  const seen = new Set();
-  for (const ev of events) {
-    if (ev.event_type !== 'review_request_sent') continue;
-    if (seen.has(ev.lead_id)) continue;
-    seen.add(ev.lead_id);
-    reviewEventLeads.push(ev.lead_id);
-    if (reviewEventLeads.length >= 3) break;
-  }
+  const reviewLeadRanked = leads
+    .map((lead) => {
+      const stage = String(lead.stage || '').toLowerCase();
+      const outcome = String(lead.outcome || '').toLowerCase();
+      const evs = byLead.get(lead.id) || [];
+      const hasReviewRequest = evs.some((ev) => REVIEW_EVENT_TYPES.has(ev.event_type));
+      const closedLike = stage === 'closed' || outcome === 'won';
+      return { lead, closedLike, hasReviewRequest, ts: new Date(lead.updated_at || lead.created_at).getTime() || 0 };
+    })
+    .filter((x) => x.closedLike)
+    .sort((a, b) => b.ts - a.ts);
 
-  const reviewTargets = reviewEventLeads
-    .map((id) => leads.find((l) => l.id === id))
-    .filter(Boolean);
+  const unsentReviewTargets = reviewLeadRanked.filter((x) => !x.hasReviewRequest);
+  const fallbackReviewTargets = reviewLeadRanked.filter((x) => x.hasReviewRequest);
+  const reviewTargets = [
+    ...unsentReviewTargets.slice(0, 3),
+    ...fallbackReviewTargets.slice(0, Math.max(0, 3 - unsentReviewTargets.length)),
+  ].slice(0, 3).map((x) => x.lead);
 
-  const reactivationText = `Hi there! This is Sergii from Handy & Friend. You reached out about cabinet painting — are you still looking for help with that?
+  const activeMeta = getServiceMeta(activeLead?.service_type);
+  const reactivationText = `Hi there! This is Sergii from Handy & Friend. You reached out about ${activeMeta.label} — are you still looking for help with that?
 
-I have availability this week. Cabinet painting starts at $75/door, paint included.
+I have availability this week.${activeMeta.price ? ` ${activeMeta.label[0].toUpperCase() + activeMeta.label.slice(1)} starts at ${activeMeta.price}.` : ''}
 
 Just reply here or call/text (213) 361-1700 for a free estimate!
 
@@ -159,7 +225,7 @@ Just reply here or call/text (213) 361-1700 for a free estimate!
   lines.push(`# Live Close Sheet — ${today}`);
   lines.push('');
   lines.push('## Objective (Today)');
-  lines.push('- Close active stale lead or mark clean loss with reason.');
+  lines.push('- Contact active high-priority lead or mark clean loss with reason.');
   lines.push('- Send 3 review requests and log actual send actions.');
   lines.push('- Keep zero open hot leads without same-day action.');
   lines.push('');
@@ -173,7 +239,7 @@ Just reply here or call/text (213) 361-1700 for a free estimate!
     lines.push('| — | — | — | — | — | — |');
   }
   lines.push('');
-  lines.push('### Touch Log (Lead 310-663-5792)');
+  lines.push(`### Touch Log${activeLead ? ` (Lead ${activeLead.phone || activeLead.id})` : ''}`);
   lines.push('| Step | Due | Status | Timestamp | Channel | Notes |');
   lines.push('|---|---|---|---|---|---|');
   lines.push(`| WhatsApp send (reactivation) | NOW | ${check(step1)} | ${step1Ts} | WhatsApp | Use prefilled deeplink |`);
@@ -184,9 +250,9 @@ Just reply here or call/text (213) 361-1700 for a free estimate!
   lines.push('');
   lines.push('### Ready Links / Script');
   lines.push('- WhatsApp deeplink:');
-  lines.push(`\`${waLink(activeLead?.phone || '3106635792', reactivationText)}\``);
+  lines.push(`\`${waLink(activeLead?.phone || '', reactivationText)}\``);
   lines.push('- Call script (30-45 sec):');
-  lines.push('"Hi, this is Sergii from Handy & Friend. You asked about cabinet painting. I have availability this week and cabinet painting starts at $75/door, paint included. Want a quick quote now?"');
+  lines.push(`"Hi, this is Sergii from Handy & Friend. You asked about ${activeMeta.label}. I have availability this week${activeMeta.price ? ` and ${activeMeta.label} starts at ${activeMeta.price}` : ''}. Want a quick quote now?"`);
   lines.push('');
   lines.push('---');
   lines.push('');
@@ -216,8 +282,8 @@ Just reply here or call/text (213) 361-1700 for a free estimate!
   lines.push('');
   lines.push('| KPI | Target | Actual | Status |');
   lines.push('|---|---|---|---|');
-  lines.push(`| Lost lead contacted | 1/1 | ${step1 ? '1' : '0'} | ${check(step1)} |`);
-  lines.push(`| Lost lead moved from \`new\` | yes | ${stageMoved ? 'yes' : 'no'} | ${check(stageMoved)} |`);
+  lines.push(`| Active lead contacted | 1/1 | ${step1 ? '1' : '0'} | ${check(step1)} |`);
+  lines.push(`| Active lead moved from \`new\` | yes | ${stageMoved ? 'yes' : 'no'} | ${check(stageMoved)} |`);
   lines.push('| Quotes sent today | >=1 |  | ⬜ |');
   lines.push('| Deals won today | >=1 |  | ⬜ |');
   lines.push(`| Review asks sent (real) | 3/3 | ${reviewSentCount}/3 | ${check(reviewSentCount >= 3)} |`);
@@ -241,4 +307,3 @@ run().catch((err) => {
   console.error('[update-live-close-sheet] fatal:', err.message);
   process.exit(1);
 });
-
