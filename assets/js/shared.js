@@ -205,4 +205,29 @@
 
   /* ── 9. Google Ads ID ── */
   window.HF_GOOGLE_ADS_ID = 'AW-17971094967';
+
+  /* ── 10. Hamburger menu ── */
+  var burger = document.getElementById('spBurger');
+  var spNav  = document.getElementById('spNav');
+  if (burger && spNav) {
+    burger.addEventListener('click', function() {
+      var isOpen = spNav.classList.toggle('open');
+      burger.setAttribute('aria-expanded', isOpen);
+      burger.innerHTML = isOpen ? '&#x2715;' : '&#9776;';
+    });
+    spNav.querySelectorAll('a').forEach(function(a) {
+      a.addEventListener('click', function() {
+        spNav.classList.remove('open');
+        burger.setAttribute('aria-expanded', 'false');
+        burger.innerHTML = '&#9776;';
+      });
+    });
+    document.addEventListener('click', function(e) {
+      if (!burger.contains(e.target) && !spNav.contains(e.target)) {
+        spNav.classList.remove('open');
+        burger.setAttribute('aria-expanded', 'false');
+        burger.innerHTML = '&#9776;';
+      }
+    });
+  }
 })();
