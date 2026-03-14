@@ -420,7 +420,7 @@ export default async function handler(req, res) {
     try {
       const resendPayload = {
         from: 'Handy & Friend Leads <leads@handyandfriend.com>',
-        to: [process.env.OWNER_EMAIL || '2133611700c@gmail.com'],
+        to: [process.env.OWNER_EMAIL || 'hello@handyandfriend.com'],
         subject: subjectLine,
         html: emailHtml
       };
@@ -446,11 +446,11 @@ export default async function handler(req, res) {
         // Fall through to demo mode
       } else {
         const data = await resendRes.json();
-        console.log('[RESEND_SENT]', data.id, 'to', process.env.OWNER_EMAIL || '2133611700c@gmail.com');
+        console.log('[RESEND_SENT]', data.id, 'to', process.env.OWNER_EMAIL || 'hello@handyandfriend.com');
         await safeLogLeadEvent(leadId, 'owner_email_sent', {
           provider: 'resend',
           email_id: data?.id || null,
-          to: process.env.OWNER_EMAIL || '2133611700c@gmail.com'
+          to: process.env.OWNER_EMAIL || 'hello@handyandfriend.com'
         });
 
         // Auto-responder: send confirmation to the customer (async, non-blocking)
@@ -479,7 +479,7 @@ export default async function handler(req, res) {
   if (process.env.SENDGRID_API_KEY) {
     try {
       const sendgridPayload = {
-        personalizations: [{ to: [{ email: process.env.OWNER_EMAIL || '2133611700c@gmail.com' }] }],
+        personalizations: [{ to: [{ email: process.env.OWNER_EMAIL || 'hello@handyandfriend.com' }] }],
         from: { email: 'leads@handyandfriend.com', name: 'Handy & Friend Leads' },
         subject: subjectLine,
         content: [{ type: 'text/html', value: emailHtml }]
@@ -496,11 +496,11 @@ export default async function handler(req, res) {
       });
 
       if (sgRes.ok || sgRes.status === 202) {
-        console.log('[SENDGRID_SENT] to', process.env.OWNER_EMAIL || '2133611700c@gmail.com');
+        console.log('[SENDGRID_SENT] to', process.env.OWNER_EMAIL || 'hello@handyandfriend.com');
         await safeLogLeadEvent(leadId, 'owner_email_sent', {
           provider: 'sendgrid',
           status: sgRes.status,
-          to: process.env.OWNER_EMAIL || '2133611700c@gmail.com'
+          to: process.env.OWNER_EMAIL || 'hello@handyandfriend.com'
         });
 
         // Best-effort Telegram delivery (serverless-safe with timeout)

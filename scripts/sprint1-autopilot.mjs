@@ -19,7 +19,7 @@ const ENV = {
   TELEGRAM_BOT_TOKEN: clean(process.env.TELEGRAM_BOT_TOKEN),
   TELEGRAM_CHAT_ID: clean(process.env.TELEGRAM_CHAT_ID),
   OWNER_PHONE: clean(process.env.OWNER_PHONE || '2133611700'),
-  OWNER_EMAIL: clean(process.env.OWNER_EMAIL || process.env.REPORT_EMAIL_TO || '2133611700c@gmail.com'),
+  OWNER_EMAIL: clean(process.env.OWNER_EMAIL || process.env.REPORT_EMAIL_TO || 'hello@handyandfriend.com'),
 };
 
 const REVIEW_URL = 'https://handyandfriend.com/review';

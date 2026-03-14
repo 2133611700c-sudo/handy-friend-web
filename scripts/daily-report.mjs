@@ -33,7 +33,7 @@ const ENV = {
   TELEGRAM_BOT_TOKEN:        cleanEnv(process.env.TELEGRAM_BOT_TOKEN),
   TELEGRAM_CHAT_ID:          cleanEnv(process.env.TELEGRAM_CHAT_ID),
   RESEND_API_KEY:            cleanEnv(process.env.RESEND_API_KEY),
-  REPORT_EMAIL_TO:           cleanEnv(process.env.REPORT_EMAIL_TO) || cleanEnv(process.env.OWNER_EMAIL) || '2133611700c@gmail.com',
+  REPORT_EMAIL_TO:           cleanEnv(process.env.REPORT_EMAIL_TO) || cleanEnv(process.env.OWNER_EMAIL) || 'hello@handyandfriend.com',
   REPORT_EMAIL_FROM:         cleanEnv(process.env.REPORT_EMAIL_FROM) || 'Handy & Friend Reports <leads@handyandfriend.com>',
 };
 
