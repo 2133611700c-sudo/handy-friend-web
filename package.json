@@ -5,6 +5,7 @@
   "description": "Handy & Friend landing and serverless functions",
   "license": "UNLICENSED",
   "scripts": {
+    "vercel:guard": "bash scripts/vercel-project-guard.sh",
     "audit:prod": "bash scripts/audit.sh",
     "migration:drift": "bash scripts/check-migration-drift.sh",
     "incident:dashboard": "node scripts/incident-dashboard.mjs",

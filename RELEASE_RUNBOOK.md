@@ -4,12 +4,13 @@
 Deploy safely with explicit rollback readiness.
 
 ## Pre-Release (Hard Gate)
-1. `npm run workflow:validate`
-2. `npm run validate:pricing`
-3. `npm run validate:ads`
-4. `npm run audit:prod` (or `bash scripts/audit.sh --skip-stats` in CI)
-5. Confirm Supabase migration state: `supabase migration list`
-6. Confirm no accidental secrets in tracked files.
+1. `npm run vercel:guard` (block accidental wrong-project deploys)
+2. `npm run workflow:validate`
+3. `npm run validate:pricing`
+4. `npm run validate:ads`
+5. `npm run audit:prod` (or `bash scripts/audit.sh --skip-stats` in CI)
+6. Confirm Supabase migration state: `supabase migration list`
+7. Confirm no accidental secrets in tracked files.
 
 ## Release Steps
 1. Merge approved PR into `main`.

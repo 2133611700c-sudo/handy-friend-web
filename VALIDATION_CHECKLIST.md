@@ -4,6 +4,7 @@
 - [ ] Confirm repo path is `/Users/sergiikuropiatnyk/handy-friend-landing-v6`
 - [ ] Confirm expected branch is checked out
 - [ ] Confirm `origin` points to `2133611700c-sudo/handy-friend-web`
+- [ ] Run `npm run vercel:guard` and confirm canonical Vercel project linkage
 
 ## Environment and Secrets
 - [ ] Required env vars are loaded

@@ -49,6 +49,7 @@
 5. Update `RUN_REPORT.md`, `STATUS.md`, `ARTIFACT_INDEX.md`.
 
 ## Operational Commands
+- `npm run vercel:guard` to ensure this repo is still linked to the canonical Vercel project before any deploy/release action.
 - `npm run workflow:bootstrap` to provision standardized path and validate baseline.
 - `npm run workflow:validate` before major changes or releases.
 - `npm run workflow:start` at session start to open required apps/surfaces and record snapshot.
