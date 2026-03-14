@@ -1,0 +1,3 @@
+date,leads_total_prod,qualified_leads,quotes_sent,stale_leads,median_response_min,response_sla_lt5m_pct,lead_to_contacted_pct,contacted_to_quoted_pct,quoted_to_closed_pct,revenue_usd,profit_usd,avg_ticket_usd,reviews_total,avg_rating,review_request_rate_pct,cabinet_leads,cabinet_quotes,cabinet_closed,cabinet_revenue_usd,notes
+2026-03-13,22,,,0,,,94.1,,,,,,5,5.0,,,,,"Day-zero baseline. Several KPI fields were not tracked in historical snapshot."
+2026-03-14,,,,,,,,,,,,,,,,,,,"V4 schema enabled. Populate from daily ops + GSC/CRM logs."
