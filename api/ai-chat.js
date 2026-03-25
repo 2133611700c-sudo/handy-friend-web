@@ -1021,8 +1021,8 @@ function stripCrossSellFromStandalone(text) {
   const filtered = lines.filter(paragraph => {
     const p = paragraph.toLowerCase();
     const hasCrossSell = (
-      (p.includes('also') && (p.includes('same visit') || p.includes('while we') || p.includes('book both') || p.includes('save 20'))) ||
-      (p.includes('by the way') && (p.includes('same visit') || p.includes('save 20'))) ||
+      (p.includes('also') && (p.includes('same visit') || p.includes('while we') || p.includes('book both'))) ||
+      (p.includes('by the way') && p.includes('same visit')) ||
       (p.includes('bundle') && p.includes('save')) ||
       /\bкстати\b.*визит/i.test(p) ||
       /\bдо речі\b.*візит/i.test(p) ||

@@ -549,8 +549,8 @@ const T={
 
     tvBadge:"Most popular",paintBadge:"Same-day possible",
 
-    comboTitle:"Pick 2 Services — Save 20%",
-    comboSub:"Book any combo, get instant discount",
+    comboTitle:"Pick 2 Services — Same Visit",
+    comboSub:"Same crew, one trip — book any combo",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Get This Estimate via SMS",
@@ -859,8 +859,8 @@ const T={
 
     tvBadge:"Más popular",paintBadge:"Posible mismo día",
 
-    comboTitle:"Elige 2 Servicios — Ahorra 20%",
-    comboSub:"Reserva cualquier combo, obtén descuento instantáneo",
+    comboTitle:"Elige 2 Servicios — Misma Visita",
+    comboSub:"Mismo equipo, un viaje — reserva cualquier combo",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Recibe este estimado por SMS",
@@ -1168,8 +1168,8 @@ const T={
 
     tvBadge:"Самый популярный",paintBadge:"Возможно в тот же день",
 
-    comboTitle:"Выбери 2 услуги — сэкономь 20%",
-    comboSub:"Закажи комбо — скидка сразу",
+    comboTitle:"Выбери 2 услуги — один визит",
+    comboSub:"Закажи комбо — одна бригада, один выезд",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Получить смету по СМС",
@@ -1477,8 +1477,8 @@ const T={
 
     tvBadge:"Найпопулярніший",paintBadge:"Можна в той же день",
 
-    comboTitle:"Обери 2 послуги — зекономь 20%",
-    comboSub:"Замов комбо — знижка одразу",
+    comboTitle:"Обери 2 послуги — один візит",
+    comboSub:"Замов комбо — одна бригада, один виїзд",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Отримати смету по СМС",
@@ -3421,11 +3421,11 @@ function showCalcCrossSell(svcId, total) {
 
   const l = L();
   const xsellTitle = {
-    en: 'Add to your project — Save 20%',
-    es: 'Agrega a tu proyecto — Ahorra 20%',
-    ru: 'Добавь к заказу — Скидка 20%',
-    ua: 'Додай до замовлення — Знижка 20%'
-  }[lang] || 'Add to your project — Save 20%';
+    en: 'Add to your project — Same Visit',
+    es: 'Agrega a tu proyecto — Misma Visita',
+    ru: 'Добавь к заказу — Один визит',
+    ua: 'Додай до замовлення — Один візит'
+  }[lang] || 'Add to your project — Same Visit';
 
   const xsellCta = {
     en: 'Add & Get Quote',

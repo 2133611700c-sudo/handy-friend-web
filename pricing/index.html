@@ -256,9 +256,9 @@ en:{
   surfaceType:"Surface type", addonsPH:"Add-ons", calcBtn:"Get My Estimate →",
   calcResult:"Estimated labor cost", calcWA:"💬 Send estimate via WhatsApp",
   minApplied:"⚡ Minimum $", applied:" applied",
-  comboTitle:"Book 2+ Services — Save 20%",
+  comboTitle:"Book 2+ Services — Same Visit",
   comboSub:"Mention combo deal when you call or message",
-  comboSave:"Save", comboCTA:"Claim My 20% Discount →",
+  comboSave:"Save", comboCTA:"Book Combo Visit →",
   faqTitle:"Common Questions",
   faqs:[
     {q:"How fast do you respond?",a:"Within 10 min. Available 8am–8pm daily. Urgent same-day: call 213-361-1700."},
@@ -451,9 +451,9 @@ es:{
   surfaceType:"Tipo de superficie", addonsPH:"Adicionales", calcBtn:"Obtener Estimado →",
   calcResult:"Costo estimado de mano de obra", calcWA:"💬 Enviar estimado por WhatsApp",
   minApplied:"⚡ Mínimo $", applied:" aplicado",
-  comboTitle:"Reserva 2+ Servicios — Ahorra 20%",
+  comboTitle:"Reserva 2+ Servicios — Misma Visita",
   comboSub:"Menciona el combo al llamar o escribir",
-  comboSave:"Ahorro", comboCTA:"Obtener Mi 20% de Descuento →",
+  comboSave:"Ahorro", comboCTA:"Reservar Visita Combo →",
   faqTitle:"Preguntas Frecuentes",
   faqs:[
     {q:"¿Qué tan rápido responden?",a:"En menos de 10 min. Disponibles 8am–8pm todos los días. Urgente: llame al 213-361-1700."},
@@ -646,9 +646,9 @@ ru:{
   surfaceType:"Тип поверхности", addonsPH:"Дополнения", calcBtn:"Рассчитать →",
   calcResult:"Ориентировочная стоимость", calcWA:"💬 Отправить смету в WhatsApp",
   minApplied:"⚡ Применён минимум $", applied:"",
-  comboTitle:"Закажи 2+ услуги — сэкономь 20%",
+  comboTitle:"Закажи 2+ услуги — один визит",
   comboSub:"Упомяните комбо при звонке или сообщении",
-  comboSave:"Экономия", comboCTA:"Получить скидку 20% →",
+  comboSave:"Экономия", comboCTA:"Заказать комбо-визит →",
   faqTitle:"Частые вопросы",
   faqs:[
     {q:"Как быстро вы отвечаете?",a:"В течение 10 минут. Работаем 8:00–20:00 ежедневно. Срочный вызов: 213-361-1700."},
@@ -841,9 +841,9 @@ ua:{
   surfaceType:"Тип поверхні", addonsPH:"Доп. роботи", calcBtn:"Розрахувати →",
   calcResult:"Орієнтовна вартість", calcWA:"💬 Надіслати кошторис у WhatsApp",
   minApplied:"⚡ Застосовано мінімум $", applied:"",
-  comboTitle:"Замов 2+ послуги — зеконом 20%",
+  comboTitle:"Замов 2+ послуги — один візит",
   comboSub:"Згадайте комбо при дзвінку або повідомленні",
-  comboSave:"Економія", comboCTA:"Отримати знижку 20% →",
+  comboSave:"Економія", comboCTA:"Замовити комбо-візит →",
   faqTitle:"Часті запитання",
   faqs:[
     {q:"Як швидко ви відповідаєте?",a:"Протягом 10 хвилин. Працюємо 8:00–20:00 щодня. Терміновий виклик: 213-361-1700."},
@@ -1309,7 +1309,7 @@ function ComboBlock({ isMobile, t }) {
         ))}
       </div>
       <div style={{textAlign:"center"}}>
-        <a href={wa("Hi! I want to book 2+ services for 20% combo discount.")} target="_blank" rel="noreferrer"
+        <a href={wa("Hi! I want to book 2+ services in the same visit.")} target="_blank" rel="noreferrer"
           style={{display:"inline-block",padding:"14px 28px",
             background:`linear-gradient(135deg,${C.goldL},${C.gold})`,borderRadius:12,
             color:C.dark,fontWeight:800,fontSize:isMobile?14:15,textDecoration:"none",
