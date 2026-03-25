@@ -171,7 +171,7 @@ check_route "/r/one-tap/" "200" "route"
 
 code_fb=$(http_code "$SITE/fb")
 redir_fb=$(http_redirect "$SITE/fb")
-if [[ "$code_fb" == "302" && "$redir_fb" == *"facebook.com"* ]]; then
+if [[ ( "$code_fb" == "301" || "$code_fb" == "302" ) && "$redir_fb" == *"facebook.com"* ]]; then
   pass "redirect /fb -> Facebook"
 else
   fail "redirect /fb -> Facebook"
@@ -179,7 +179,7 @@ fi
 
 code_review=$(http_code "$SITE/review")
 redir_review=$(http_redirect "$SITE/review")
-if [[ "$code_review" == "302" && "$redir_review" == *"google"* ]]; then
+if [[ ( "$code_review" == "301" || "$code_review" == "302" ) && "$redir_review" == *"google"* ]]; then
   pass "redirect /review -> Google"
 else
   fail "redirect /review -> Google"
@@ -215,10 +215,10 @@ else
   fail "ai-chat valid payload returns reply"
 fi
 
-if [[ "$ai_reply" == *"\$105"* && "$ai_reply" == *"\$185"* ]]; then
-  pass "ai-chat TV price anchors \$105/\$185"
+if [[ "$ai_reply" == *"\$185"* && "$ai_reply" != *"\$105"* ]]; then
+  pass "ai-chat TV pricing uses current anchors (includes \$185, excludes stale \$105)"
 else
-  fail "ai-chat TV price anchors \$105/\$185"
+  fail "ai-chat TV pricing uses current anchors (includes \$185, excludes stale \$105)"
 fi
 
 # 6) Tracking + legacy price leakage
@@ -241,7 +241,13 @@ for page in main pricing; do
   [[ "$html_var" == *"AW-17971094967"* ]] && pass "$page contains AW-17971094967" || fail "$page contains AW-17971094967"
 done
 
-if printf '%s' "$combined" | rg -q '\$155|\$165|\$175'; then
+if command -v rg >/dev/null 2>&1; then
+  has_legacy_prices() { printf '%s' "$combined" | rg -q '\$155|\$165|\$175'; }
+else
+  has_legacy_prices() { printf '%s' "$combined" | grep -Eq '\$155|\$165|\$175'; }
+fi
+
+if has_legacy_prices; then
   fail 'legacy prices $155/$165/$175 leaked in public pages'
 else
   pass 'legacy prices $155/$165/$175 not present in public pages'
