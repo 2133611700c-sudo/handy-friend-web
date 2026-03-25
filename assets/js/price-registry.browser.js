@@ -1,32 +1,32 @@
 /* Auto-generated from lib/price-registry.js. Do not edit manually. */
 window.HF_PRICE_REGISTRY = {
-  "version": "2026.03.06-v1",
+  "version": "2026.03.25-v2",
   "canonical": {
-    "tv_mounting": 105,
-    "furniture_assembly": 75,
-    "art_mirrors": 95,
+    "tv_mounting": 150,
+    "furniture_assembly": 150,
+    "art_mirrors": 150,
     "interior_painting": 3,
     "flooring": 3,
     "kitchen_cabinet_painting": 75,
-    "furniture_painting": 40,
-    "plumbing": 115,
-    "electrical": 95
+    "furniture_painting": 150,
+    "plumbing": 150,
+    "electrical": 150
   },
   "details": {
     "tv_mounting": {
-      "standard": 105,
+      "standard": 150,
       "hidden_wire": 185
     },
     "furniture_assembly": {
-      "small_item": 75,
-      "dresser": 95,
-      "bed_frame": 115,
-      "pax_hourly": 50
+      "small_item": 150,
+      "dresser": 200,
+      "bed_frame": 275,
+      "pax_hourly": 70
     },
     "art_mirrors": {
-      "up_to_5_pieces": 95,
-      "curtain_first": 75,
-      "curtain_each": 30
+      "up_to_5_pieces": 150,
+      "curtain_first": 150,
+      "curtain_each": 50
     },
     "interior_painting": {
       "wall_1coat": 3,
@@ -80,16 +80,16 @@ window.HF_PRICE_REGISTRY = {
       "builtin_lf": 60
     },
     "plumbing": {
-      "faucet": 115,
-      "shower_head": 60,
-      "toilet_tank": 95,
-      "recaulk": 110
+      "faucet": 150,
+      "shower_head": 150,
+      "toilet_tank": 165,
+      "recaulk": 150
     },
     "electrical": {
-      "light_fixture": 95,
-      "outlet_switch_first": 75,
-      "smart_device": 85,
-      "outlet_switch_additional": 30
+      "light_fixture": 150,
+      "outlet_switch_first": 150,
+      "smart_device": 195,
+      "outlet_switch_additional": 45
     }
   },
   "combos": [

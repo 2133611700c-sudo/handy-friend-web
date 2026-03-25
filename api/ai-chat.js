@@ -98,10 +98,11 @@ export default async function handler(req, res) {
   const sessionContext = await fetchSessionLeadContext(sessionId);
   const userMsgCount = userOnlyMessages.length;
   const hasPhone = hasPhoneCapture(userOnlyMessages) || sessionContext.hasPhone;
+  const hasContact = hasPhone || hasEmailCapture(userOnlyMessages) || sessionContext.hasContact;
 
   // ALEX v9: Guard mode determination and prompt building
   // Determine guard mode based on contact capture and message count
-  const guardMode = getGuardMode({ hasPhone, userMsgCount });
+  const guardMode = getGuardMode({ hasContact, hasPhone, userMsgCount });
 
   // Build complete system prompt with dynamic guard suffix
   const systemPrompt = buildSystemPrompt({ guardMode });
@@ -258,14 +259,14 @@ export default async function handler(req, res) {
         photos: latestUserPhotos,
         lead: capturedLead,
         serviceInference,
-        estimateMode: hasPhone ? 'exact' : 'range'
+        estimateMode: hasContact ? 'exact' : 'range'
       }),
       sleep(1800)
     ]).catch((err) => console.error('[AI_CHAT] Telegram sales card error:', err.message));
   }
 
   // v11: enriched response contract
-  const contactCaptured = Boolean(sessionContext.hasPhone || hasPhoneCapture(userOnlyMessages));
+  const contactCaptured = Boolean(hasContact);
   // v11: Only expose fields the frontend needs. Internal state stays server-side.
   return res.status(200).json({
     reply,
@@ -845,6 +846,13 @@ function hasPhoneCapture(messages) {
   return phoneRegex.test(fullText);
 }
 
+function hasEmailCapture(messages) {
+  if (!Array.isArray(messages) || !messages.length) return false;
+  const fullText = messages.map((m) => String(m.content || '')).join(' ');
+  const emailRegex = /[^\s@]+@[^\s@]+\.[^\s@]+/;
+  return emailRegex.test(fullText);
+}
+
 
 
 function enforceContactCaptureCTA(reply, lang) {
@@ -856,10 +864,10 @@ function enforceContactCaptureCTA(reply, lang) {
 
   // v11: Soft CTA -- booking-focused, not aggressive
   const ctaByLang = {
-    en: 'For exact pricing and to book a date, share your phone number or call (213) 361-1700',
-    ru: 'Для точного расчета и бронирования оставьте номер или позвоните (213) 361-1700',
-    uk: 'Для точного розрахунку та бронювання залиште номер або телефонуйте (213) 361-1700',
-    es: 'Para precio exacto y reservar fecha, comparte tu numero o llama al (213) 361-1700'
+    en: 'For exact pricing and to book a date, share your phone or email, or call (213) 361-1700',
+    ru: 'Для точного расчета и бронирования оставьте номер или email, либо позвоните (213) 361-1700',
+    uk: 'Для точного розрахунку та бронювання залиште номер або email, або телефонуйте (213) 361-1700',
+    es: 'Para precio exacto y reservar fecha, comparte tu telefono o email, o llama al (213) 361-1700'
   };
 
   const cta = ctaByLang[lang] || ctaByLang.en;

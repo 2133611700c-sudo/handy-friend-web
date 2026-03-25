@@ -368,7 +368,7 @@ async function policyHealth(_req, res) {
     for (const row of conv.data || []) {
       const text = String(row?.message_text || '').toLowerCase();
       const isPlumbElec = text.includes('plumbing') || text.includes('electrical') || text.includes('сантех') || text.includes('электр');
-      const hasCrossSell = text.includes('save 20%') || text.includes('bundle') || text.includes('same visit') || text.includes('кстати') || text.includes('por cierto');
+      const hasCrossSell = text.includes('bundle') || text.includes('same visit') || text.includes('кстати') || text.includes('por cierto');
       if (isPlumbElec && hasCrossSell) heuristicCrossSellViolations += 1;
     }
 

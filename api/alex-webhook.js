@@ -132,8 +132,9 @@ async function handleMessagingEvent(event) {
   const userMsgCount = messages.filter((m) => m.role === 'user').length;
   const sessionContext = await fetchSessionLeadContext(sessionId);
   const hasPhone = sessionContext.hasPhone || hasPhoneCapture(messages);
+  const hasContact = hasPhone || hasEmailCapture(messages) || sessionContext.hasContact;
 
-  const guardMode = getGuardMode({ hasPhone });
+  const guardMode = getGuardMode({ hasContact, hasPhone });
   const systemPrompt = buildSystemPrompt({ guardMode });
   const alexResult = await callAlex(messages, systemPrompt);
   let reply = stripLeadPayloadBlock(String(alexResult.reply || '').trim());
@@ -147,7 +148,7 @@ async function handleMessagingEvent(event) {
   }
 
   // v11: Soft CTA every 3rd message, not every reply
-  if (!hasPhone && userMsgCount % 3 === 0 && userMsgCount > 0) {
+  if (!hasContact && userMsgCount % 3 === 0 && userMsgCount > 0) {
     reply = enforceContactCaptureCTA(reply);
   }
   reply = stripMarkdownArtifacts(reply).slice(0, 1500);
@@ -372,6 +373,13 @@ function hasPhoneCapture(messages) {
   return phoneRegex.test(fullText);
 }
 
+function hasEmailCapture(messages) {
+  if (!Array.isArray(messages) || !messages.length) return false;
+  const fullText = messages.map((m) => String(m.content || '')).join(' ');
+  const emailRegex = /[^\s@]+@[^\s@]+\.[^\s@]+/;
+  return emailRegex.test(fullText);
+}
+
 function stripLeadPayloadBlock(rawReply) {
   const leadMatch = rawReply.match(/\n```lead-payload\s*\n(\{[\s\S]*?\})\n```\s*$/);
   if (!leadMatch) return rawReply;
@@ -386,7 +394,7 @@ function enforceContactCaptureCTA(reply) {
   if (asksContact) return text;
 
   // v11: Soft CTA -- booking-focused
-  return `${text}\n\nFor exact pricing and to book, share your phone number or call (213) 361-1700`;
+  return `${text}\n\nFor exact pricing and to book, share your phone or email, or call (213) 361-1700`;
 }
 
 function inferLeadFromConversation(messages) {

@@ -10,6 +10,7 @@ const {
   getMessengerPostbackTexts,
   getPricingSourceVersion
 } = require('../lib/price-registry.js');
+const { getGuardMode, GUARD_MODES } = require('../lib/alex-one-truth.js');
 const { analyzeMessengerPricingPolicy } = require('../lib/pricing-policy.js');
 const {
   inferServiceType,
@@ -19,22 +20,22 @@ const {
 
 test('price matrix matches canonical 9-service baseline', () => {
   const matrix = getCanonicalPriceMatrix();
-  assert.equal(matrix.tv_mounting, 105);
-  assert.equal(matrix.furniture_assembly, 75);
-  assert.equal(matrix.art_mirrors, 95);
+  assert.equal(matrix.tv_mounting, 150);
+  assert.equal(matrix.furniture_assembly, 150);
+  assert.equal(matrix.art_mirrors, 150);
   assert.equal(matrix.interior_painting, 3.0);
   assert.equal(matrix.flooring, 3.0);
   assert.equal(matrix.kitchen_cabinet_painting, 75);
-  assert.equal(matrix.furniture_painting, 40);
-  assert.equal(matrix.plumbing, 115);
-  assert.equal(matrix.electrical, 95);
+  assert.equal(matrix.furniture_painting, 150);
+  assert.equal(matrix.plumbing, 150);
+  assert.equal(matrix.electrical, 150);
   assert.match(getPricingSourceVersion(), /^20\d{2}\./);
 });
 
 test('messenger postbacks are phone-gated and do not leak stale prices', () => {
   const text = Object.values(getMessengerPostbackTexts()).join('\n');
   assert.match(text, /phone/i);
-  assert.doesNotMatch(text, /\$60|\$30/);
+  assert.doesNotMatch(text, /\$60|\$75|\$95|\$105|\$115/);
   assert.doesNotMatch(text, /\$\s*\d/);
 });
 
@@ -76,10 +77,15 @@ test('pricing page avoids prohibited trust claims', () => {
 test('index JSON-LD pricing aligns with canonical plumbing/electrical values', () => {
   const indexPath = path.resolve(__dirname, '../index.html');
   const html = fs.readFileSync(indexPath, 'utf8');
-  assert.match(html, /"name":"Plumbing"},"priceSpecification":\{"@type":"PriceSpecification","price":"115","priceCurrency":"USD","minPrice":"115"/);
-  assert.match(html, /"name":"Electrical"},"priceSpecification":\{"@type":"PriceSpecification","price":"95","priceCurrency":"USD","minPrice":"95"/);
+  assert.match(html, /"name":"Plumbing"},"priceSpecification":\{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"/);
+  assert.match(html, /"name":"Electrical"},"priceSpecification":\{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"/);
   assert.doesNotMatch(html, /"name":"Plumbing"},"priceSpecification":\{"@type":"PriceSpecification","price":"60"/);
   assert.doesNotMatch(html, /"name":"Electrical"},"priceSpecification":\{"@type":"PriceSpecification","price":"30"/);
+});
+
+test('guard mode is contact-based (phone OR email)', () => {
+  assert.equal(getGuardMode({ hasContact: false, hasPhone: true }), GUARD_MODES.PRE_CONTACT_RANGE);
+  assert.equal(getGuardMode({ hasContact: true, hasPhone: false }), GUARD_MODES.POST_CONTACT_EXACT);
 });
 
 test('canonical interior trim keys are explicit and stable', () => {

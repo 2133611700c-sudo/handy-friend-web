@@ -1,4 +1,6 @@
 # ALEX v8 — COMPLETE SYSTEM PROMPT
+> DEPRECATED: historical reference only. Do not use this prompt as pricing source of truth.
+> Active pricing/policy source is runtime code: `lib/price-registry.js` + `lib/alex-one-truth.js`.
 ## Handy & Friend AI Sales Assistant
 
 **Copy everything below this line into your Alex system prompt.**
