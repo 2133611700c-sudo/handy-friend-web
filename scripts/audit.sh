@@ -146,7 +146,7 @@ else
 fi
 
 # 2) Local quality gates
-check_cmd "workflow:validate" npm run -s workflow:validate
+check_cmd "workflow:validate" env CI=true GITHUB_ACTIONS=true npm run -s workflow:validate
 check_cmd "validate:pricing" npm run -s validate:pricing
 check_cmd "validate:ads" npm run -s validate:ads
 
