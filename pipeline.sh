@@ -57,15 +57,15 @@ step 1 "Creating branch: $BRANCH"
 git checkout main
 git pull origin main
 if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
-  warn "Local branch exists, resetting: $BRANCH"
+  warn "Local branch exists, deleting to recreate from main: $BRANCH"
   git branch -D "$BRANCH"
 fi
 if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
-  warn "Remote branch exists, checking it out: $BRANCH"
-  git checkout -B "$BRANCH" "origin/$BRANCH"
-else
-  git checkout -b "$BRANCH"
+  SUFFIX="$(date +%Y%m%d%H%M%S)"
+  BRANCH="${BRANCH}-${SUFFIX}"
+  warn "Remote branch already exists, using new branch name: $BRANCH"
 fi
+git checkout -b "$BRANCH"
 
 # ─── STEP 2: Codex writes code ───
 step 2 "Codex executing task..."
