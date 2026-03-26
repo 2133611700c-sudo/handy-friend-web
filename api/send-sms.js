@@ -42,53 +42,6 @@ export default async function handler(req, res) {
     });
   }
 
-  // Log consent to Firebase Firestore (TCPA compliance - non-blocking)
-  if (process.env.FIREBASE_CONFIG) {
-    try {
-      // Parse Firebase config from env
-      const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG);
-
-      // Dynamic import of firebase-admin
-      const admin = await import('firebase-admin');
-
-      // Initialize Firebase if not already done
-      if (!admin.default.apps || admin.default.apps.length === 0) {
-        admin.default.initializeApp({
-          credential: admin.default.credential.cert(firebaseConfig)
-        });
-      }
-
-      // Log consent to Firestore
-      const db = admin.default.firestore();
-      const logId = `sms_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-
-      await db.collection('sms_consent_logs').doc(logId).set({
-        phone: phone,
-        estimate: estimate,
-        consent: consent,
-        timestamp: new Date().toISOString(),
-        ipAddress: req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown',
-        userAgent: req.headers['user-agent'] || 'unknown',
-        consentText: 'I agree to receive SMS about my estimate & special offers',
-        optedOut: false,
-        createdAt: admin.default.firestore.FieldValue.serverTimestamp()
-      });
-
-      console.log('[FIREBASE_SMS_CONSENT_LOGGED]', {
-        logId,
-        phone,
-        timestamp
-      });
-
-    } catch (fbErr) {
-      // Non-blocking - log error but don't fail the SMS flow
-      console.error('[FIREBASE_CONSENT_LOG_ERROR]', {
-        error: fbErr.message,
-        phone: phone
-      });
-    }
-  }
-
   try {
     // OPTION 1: Twilio Integration (if env vars are set)
     if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {

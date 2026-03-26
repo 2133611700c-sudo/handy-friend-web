@@ -94,3 +94,18 @@ jobs:
         run: |
           bash scripts/audit.sh --skip-stats
           echo "✅ Production readiness audit passed"
+
+      - name: Guard against secrets in tracked files
+        run: |
+          PATTERNS='sk-[a-zA-Z0-9]{20,}|AKIA[A-Z0-9]{16}|ghp_[a-zA-Z0-9]{36}|xox[bposa]-[a-zA-Z0-9-]+'
+          if git grep -lE "$PATTERNS" -- '*.js' '*.html' '*.json' ':!package-lock.json' ':!node_modules' 2>/dev/null; then
+            echo "ERROR: Possible secrets found in tracked files!" && exit 1
+          fi
+          echo "✅ No secrets detected"
+
+      - name: Guard against banned discount messaging
+        run: |
+          if grep -ri "combo discount\|20% off\|20% discount" index.html assets/js/ lib/ api/ 2>/dev/null; then
+            echo "ERROR: Banned discount messaging found!" && exit 1
+          fi
+          echo "✅ No banned discount strings"
