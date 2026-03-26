@@ -53,14 +53,7 @@ export default async function handler(req, res) {
       return await sendViaEmail(phone, estimate, timestamp, res);
     }
 
-    // OPTION 3: Mock/Demo mode (logs to console, returns success)
-    console.log('[SMS_LEAD_CAPTURED]', {
-      phone,
-      estimate,
-      timestamp,
-      consent,
-      leadId: `sms_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    });
+    // OPTION 3: Mock/Demo mode (returns success without provider delivery)
 
     return res.status(200).json({
       success: true,
@@ -69,7 +62,6 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('[SMS_ERROR]', error);
     return res.status(500).json({
       success: false,
       error: 'Internal Server Error'
@@ -109,16 +101,8 @@ async function sendViaTwilio(phone, estimate, timestamp, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('[TWILIO_ERROR]', data);
       throw new Error(data.message || 'Twilio API error');
     }
-
-    console.log('[SMS_SENT_TWILIO]', {
-      phone: normalizedPhone,
-      messageSid: data.sid,
-      estimate,
-      timestamp
-    });
 
     return res.status(200).json({
       success: true,
@@ -127,7 +111,6 @@ async function sendViaTwilio(phone, estimate, timestamp, res) {
     });
 
   } catch (error) {
-    console.error('[TWILIO_ERROR]', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to send SMS via Twilio'
@@ -173,19 +156,12 @@ async function sendViaEmail(phone, estimate, timestamp, res) {
       throw new Error(`SendGrid API error: ${response.status}`);
     }
 
-    console.log('[SMS_LEAD_EMAIL_SENT]', {
-      phone,
-      estimate,
-      timestamp
-    });
-
     return res.status(200).json({
       success: true,
       message: 'SMS lead sent via email'
     });
 
   } catch (error) {
-    console.error('[SENDGRID_ERROR]', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to send SMS lead via email'
