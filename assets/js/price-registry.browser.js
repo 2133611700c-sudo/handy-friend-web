@@ -10,7 +10,11 @@ window.HF_PRICE_REGISTRY = {
     "kitchen_cabinet_painting": 75,
     "furniture_painting": 150,
     "plumbing": 150,
-    "electrical": 150
+    "electrical": 150,
+    "drywall": 120,
+    "door_installation": 140,
+    "vanity_installation": 195,
+    "backsplash": 20
   },
   "details": {
     "tv_mounting": {
