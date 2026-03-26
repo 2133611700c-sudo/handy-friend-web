@@ -16,6 +16,12 @@
 
 PROJECT_DIR="$HOME/handy-friend-landing-v6"
 OPENCLAW_CMD="/opt/homebrew/bin/openclaw"
+CODEX_LAST_OUTPUT_FILE="logs/codex-last-output.txt"
+
+# Fallback to script directory when project was moved
+if [ ! -d "$PROJECT_DIR" ]; then
+  PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 
 # Colors
 GREEN='\033[0;32m'
@@ -64,13 +70,21 @@ cmd_morning() {
 
 # ─── CODE: Codex task ───
 cmd_code() {
-  [ -z "$1" ] && { err "Usage: bash exo.sh code \"task description\""; exit 1; }
+  local task="$*"
+  [ -z "$task" ] && { err "Usage: bash exo.sh code \"task description\""; exit 1; }
   cd "$PROJECT_DIR" || exit 1
+  mkdir -p logs
   if command -v codex &>/dev/null; then
     log "Sending to Codex CLI..."
-    codex -a suggest "$1"
+    if codex exec --help &>/dev/null; then
+      codex exec -C "$PROJECT_DIR" --output-last-message "$CODEX_LAST_OUTPUT_FILE" "$task"
+      log "Codex response saved to $PROJECT_DIR/$CODEX_LAST_OUTPUT_FILE"
+    else
+      warn "codex exec unavailable, using interactive fallback"
+      codex "$task"
+    fi
   else
-    echo "$1" | pbcopy
+    echo "$task" | pbcopy
     open -a "Codex" "$PROJECT_DIR"
     log "Task copied to clipboard. Cmd+V in Codex app"
   fi
@@ -136,9 +150,10 @@ cmd_quick() {
     tasks)     cat ops/TASKS.md 2>/dev/null ;;
     decisions) cat ops/DECISIONS.md 2>/dev/null ;;
     diff)      git diff --stat ;;
-    deploy)    git push origin main && log "Pushed. Vercel deploys." ;;
+    pr)        BRANCH=$(git branch --show-current); gh pr create --fill --base main --head "$BRANCH" ;;
+    deploy)    err "Blocked by policy: direct push to main is forbidden. Use PR + approved deploy flow." ;;
     site)      open "https://handyandfriend.com" ;;
-    *)         echo "Options: tasks | decisions | diff | deploy | site" ;;
+    *)         echo "Options: tasks | decisions | diff | pr | deploy | site" ;;
   esac
 }
 
@@ -146,7 +161,7 @@ cmd_quick() {
 case "${1:-help}" in
   setup)    cmd_setup ;;
   morning)  cmd_morning ;;
-  code)     cmd_code "$2" ;;
+  code)     cmd_code "${@:2}" ;;
   review)   cmd_review ;;
   research) cmd_research "$2" ;;
   post)     cmd_post "$2" ;;
@@ -166,7 +181,8 @@ case "${1:-help}" in
     echo "  bash exo.sh quick tasks          показать задачи"
     echo "  bash exo.sh quick decisions      показать решения"
     echo "  bash exo.sh quick diff           git diff"
-    echo "  bash exo.sh quick deploy         push to production"
+    echo "  bash exo.sh quick pr             create PR from current branch"
+    echo "  bash exo.sh quick deploy         blocked (use PR + approved deploy)"
     echo "  bash exo.sh quick site           открыть сайт"
     echo ""
     ;;

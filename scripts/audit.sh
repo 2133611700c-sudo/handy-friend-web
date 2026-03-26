@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -u
+set -uo pipefail
 
 SITE="https://handyandfriend.com"
 ALLOW_DIRTY=0
@@ -129,6 +129,10 @@ else
 fi
 
 BRANCH="$(git branch --show-current 2>/dev/null || true)"
+if [[ -z "$BRANCH" ]]; then
+  # GitHub Actions can run in detached HEAD state on pull_request
+  BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+fi
 if [[ -n "$BRANCH" ]]; then
   pass "branch detected: $BRANCH"
 else

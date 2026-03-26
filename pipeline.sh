@@ -14,9 +14,12 @@
 #   5. Prints PASS/FAIL — you decide to merge
 # ============================================================
 
-set -e
+set -euo pipefail
 
 PROJECT_DIR="$HOME/handy-friend-landing-v6"
+if [ ! -d "$PROJECT_DIR" ]; then
+  PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 cd "$PROJECT_DIR"
 
 GREEN='\033[0;32m'
@@ -36,6 +39,11 @@ if [ -z "$TASK" ]; then
   exit 1
 fi
 
+cleanup() {
+  git checkout main >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+
 # Verify tools
 command -v codex &>/dev/null || { err "codex CLI not installed"; exit 1; }
 command -v claude &>/dev/null || { err "claude CLI not installed"; exit 1; }
@@ -48,7 +56,16 @@ BRANCH="feature/${BRANCH_SLUG}"
 step 1 "Creating branch: $BRANCH"
 git checkout main
 git pull origin main
-git checkout -b "$BRANCH"
+if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
+  warn "Local branch exists, resetting: $BRANCH"
+  git branch -D "$BRANCH"
+fi
+if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+  warn "Remote branch exists, checking it out: $BRANCH"
+  git checkout -B "$BRANCH" "origin/$BRANCH"
+else
+  git checkout -b "$BRANCH"
+fi
 
 # ─── STEP 2: Codex writes code ───
 step 2 "Codex executing task..."
@@ -72,7 +89,7 @@ RULES:
 - Do NOT create PRs — I will handle that" 2>&1 | tee /tmp/codex-output.txt
 
 # ─── STEP 3: Check changes ───
-CHANGED=$(git diff --name-only; git ls-files --others --exclude-standard)
+CHANGED="$(git diff --name-only; git ls-files --others --exclude-standard)"
 if [ -z "$CHANGED" ]; then
   warn "Codex made no file changes. Cleaning up."
   git checkout main
@@ -114,7 +131,11 @@ log "PR: $PR_URL"
 # ─── STEP 5: Claude Code reviews ───
 step 5 "Claude Code reviewing..."
 
-PR_NUM=$(echo "$PR_URL" | grep -o '[0-9]*$')
+PR_NUM="$(echo "$PR_URL" | grep -oE '[0-9]+$' || true)"
+if [[ -z "$PR_NUM" ]]; then
+  err "Could not parse PR number from: $PR_URL"
+  exit 1
+fi
 
 claude -p "Review PR #$PR_NUM on branch $BRANCH.
 
@@ -141,5 +162,3 @@ echo ""
 log "If PASS:  gh pr merge $PR_NUM --squash"
 log "If FAIL:  fix issues, push to $BRANCH, re-review"
 echo "============================================"
-
-git checkout main
