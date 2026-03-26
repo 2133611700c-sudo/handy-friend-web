@@ -7,6 +7,7 @@
 
 | Date | Decision | Why | Notes |
 |------|----------|-----|-------|
+| 03-26 | Before/After Gallery added to homepage | Real photos build trust. Gemini: +43% estimate approval. Stacked layout, 6 pairs, after testimonials. | Full pipeline test |
 | 03-25 | Remove 20% combo discount | Was never real — false claim. Messaging now "Same Visit" only | Sergii |
 | 03-25 | Adopt AI Workflow Playbook v1.1 | Solo operator needs clear tool routing to avoid waste | Sergii |
 | 03-25 | Claude = Strategy & Ops primary tool | Best at memory, docs, client-facing, analytics | Playbook v1.1 |
