@@ -8,5 +8,5 @@ Use the deterministic operations protocol:
 - `node ops/build-asset-inventory.mjs`
 - `node ops/build-post-pack.mjs`
 - `node ops/factory-guard.mjs`
-- `GET /api/factory-health`
-- `GET /api/funnel-health?hours=24`
+- `GET /api/health` — unified health check (replaces legacy factory-health/funnel-health)
+- `GET /api/health?type=stats&key=SECRET` — dashboard stats

@@ -885,7 +885,7 @@ function showFormSuccessCrossSell(service) {
     <div style="font-size:14px;font-weight:700;color:#B8892C;margin-bottom:10px;text-align:center">🎁 ${title}</div>`;
   items.forEach(s => {
     const n = s.name[curLang] || s.name.en;
-    const waMsg = encodeURIComponent('Hi! I just submitted a quote and also need: ' + n + ' (' + s.price + '). Combo discount please!');
+    const waMsg = encodeURIComponent('Hi! I just submitted a quote and also need: ' + n + ' (' + s.price + '). Same visit please!');
     html += `<a href="https://wa.me/12133611700?text=${waMsg}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;margin-bottom:6px;background:#fff;border-radius:10px;border:1px solid rgba(184,137,44,0.15);text-decoration:none;transition:all 200ms" onmouseover="this.style.borderColor='#B8892C'" onmouseout="this.style.borderColor='rgba(184,137,44,0.15)'">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:20px">${s.emoji}</span>
