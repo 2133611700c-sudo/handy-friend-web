@@ -1,4 +1,6 @@
 (function () {
+  var LEAD_VALUE = 150;
+
   function hasKey(key) {
     try { return sessionStorage.getItem(key) === '1'; } catch (_) { return false; }
   }
@@ -27,6 +29,7 @@
         trackOnce('hf_fb_viewcontent', function () {
           if (canFbq()) fbq('track', 'ViewContent', { content_name: 'Services Section' });
         });
+        observer.disconnect();
       });
     }, { threshold: 0.25 });
 
@@ -40,7 +43,7 @@
     leadForm.addEventListener('submit', function () {
       setKey('hf_quote_submitted');
       trackOnce('hf_fb_lead_quote', function () {
-        if (canFbq()) fbq('track', 'Lead', { value: 150, currency: 'USD', source: 'quote_form' });
+        if (canFbq()) fbq('track', 'Lead', { value: LEAD_VALUE, currency: 'USD', source: 'quote_form' });
       });
     }, true);
   }
@@ -48,13 +51,13 @@
   function bindExitIntentLead() {
     if (hasKey('hf_exit_submitted')) {
       trackOnce('hf_fb_lead_exit', function () {
-        if (canFbq()) fbq('track', 'Lead', { value: 150, currency: 'USD', source: 'exit_intent' });
+        if (canFbq()) fbq('track', 'Lead', { value: LEAD_VALUE, currency: 'USD', source: 'exit_intent' });
       });
     }
 
     document.addEventListener('hf:exit-intent-submitted', function () {
       trackOnce('hf_fb_lead_exit', function () {
-        if (canFbq()) fbq('track', 'Lead', { value: 150, currency: 'USD', source: 'exit_intent' });
+        if (canFbq()) fbq('track', 'Lead', { value: LEAD_VALUE, currency: 'USD', source: 'exit_intent' });
       });
     });
   }
