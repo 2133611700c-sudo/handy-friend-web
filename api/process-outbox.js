@@ -77,13 +77,26 @@ async function handler(req, res) {
   const isVercelCron = Boolean(req.headers['x-vercel-cron']);
   const secret  = req.headers['x-cron-secret'] || String(req.headers['authorization'] || '').replace('Bearer ', '');
   const authorized = (CRON_SECRET && secret === CRON_SECRET) || (!CRON_SECRET && isVercelCron);
-  if (!authorized && req.method === 'POST') {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
 
   const action = String(req.query?.action || '').toLowerCase();
 
-  // ── Daily / weekly report ─────────────────────────────────────────────────
+  // ── SLO health check (read-only, no auth required) ─────────────────────────
+  if (action === 'slo' && req.method === 'GET') {
+    try {
+      const slo = await querySlo();
+      const healthy = !slo || slo.oldest_pending_sec == null || slo.oldest_pending_sec <= 900;
+      return res.status(healthy ? 200 : 503).json({ ok: healthy, slo });
+    } catch (err) {
+      return res.status(200).json({ ok: true, slo: null, slo_error: err.message });
+    }
+  }
+
+  // ── ALL other actions require authorization ────────────────────────────────
+  if (!authorized) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  // ── Daily / weekly report (authorized only) ─────────────────────────────────
   if (action === 'daily_report') {
     try {
       await handleDailyReport();
@@ -104,18 +117,7 @@ async function handler(req, res) {
     }
   }
 
-  // ── SLO health check ──────────────────────────────────────────────────────
-  if (action === 'slo') {
-    try {
-      const slo = await querySlo();
-      const healthy = !slo || slo.oldest_pending_sec == null || slo.oldest_pending_sec <= 900;
-      return res.status(healthy ? 200 : 503).json({ ok: healthy, slo });
-    } catch (err) {
-      return res.status(200).json({ ok: true, slo: null, slo_error: err.message });
-    }
-  }
-
-  // ── DLQ replay ────────────────────────────────────────────────────────────
+  // ── DLQ replay (authorized only) ───────────────────────────────────────────
   if (action === 'replay_dlq') {
     const jobId = String(req.query?.job_id || '').trim();
     if (!jobId) return res.status(400).json({ error: 'job_id required' });
@@ -128,7 +130,7 @@ async function handler(req, res) {
     }
   }
 
-  // ── Normal batch processing ───────────────────────────────────────────────
+  // ── Normal batch processing (authorized only) ──────────────────────────────
   const startedAt = Date.now();
   const result = { processed: 0, sent: 0, retried: 0, dlq: 0, circuit_skipped: 0, errors: [] };
   resetCircuitBreakers();

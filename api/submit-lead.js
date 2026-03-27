@@ -268,7 +268,14 @@ export default async function handler(req, res) {
     sourceDetails: buildSourceDetails(normalizedAttribution)
   };
 
-  console.log('[LEAD_CAPTURED]', JSON.stringify(leadData));
+  console.log('[LEAD_CAPTURED]', JSON.stringify({
+    service: leadData.service,
+    source: leadData.source,
+    has_phone: Boolean(leadData.phone),
+    has_email: Boolean(leadData.email),
+    has_name: Boolean(leadData.name),
+    attachments: leadData.attachments?.length || 0
+  }));
   saveLeadContext(leadData).catch((err) => console.error('[LEAD_CONTEXT_ASYNC_ERROR]', err.message));
 
   // Create or merge lead using Unified Lead System v3 (multi-key dedupe + side effects via outbox)

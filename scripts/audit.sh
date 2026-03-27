@@ -300,6 +300,30 @@ else
   fail "outbox POST auth guard (expected 403 got $outbox_post_code)"
 fi
 
+# Verify GET without secret also returns 403 (batch processing requires auth)
+outbox_get_code=$(curl -sS -o /dev/null -w "%{http_code}" "$SITE/api/process-outbox" 2>/dev/null || echo "000")
+if [[ "$outbox_get_code" == "403" ]]; then
+  pass "outbox GET auth guard (403)"
+else
+  fail "outbox GET auth guard (expected 403 got $outbox_get_code)"
+fi
+
+# Verify GET replay_dlq without secret returns 403
+replay_code=$(curl -sS -o /dev/null -w "%{http_code}" "$SITE/api/process-outbox?action=replay_dlq&job_id=test" 2>/dev/null || echo "000")
+if [[ "$replay_code" == "403" ]]; then
+  pass "outbox replay_dlq auth guard (403)"
+else
+  fail "outbox replay_dlq auth guard (expected 403 got $replay_code)"
+fi
+
+# Verify GET daily_report without secret returns 403
+report_code=$(curl -sS -o /dev/null -w "%{http_code}" "$SITE/api/process-outbox?action=daily_report" 2>/dev/null || echo "000")
+if [[ "$report_code" == "403" ]]; then
+  pass "outbox daily_report auth guard (403)"
+else
+  fail "outbox daily_report auth guard (expected 403 got $report_code)"
+fi
+
 # 7b) Migration drift
 check_cmd "migration:drift" npm run -s migration:drift
 
