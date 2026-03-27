@@ -1,10 +1,27 @@
 {
-  "last_scan": null,
+  "last_scan": "2026-03-27T00:13:00-07:00",
   "daily_counts": {
-    "nextdoor_responded": 0,
+    "nextdoor_responded": 1,
     "nextdoor_limit": 25,
     "facebook_responded": 0,
     "facebook_limit": 15
   },
-  "leads": []
+  "leads": [
+    {
+      "id": "ND-2026-03-27-001",
+      "platform": "nextdoor",
+      "post_url": "https://nextdoor.com/news_feed/?rp=1&mobile_deeplink_data=action%3Dview_news_feed",
+      "author_name": "Lucy Small",
+      "author_area": "SC West (Whitsett-Laurel Canyon)",
+      "service_needed": "Handyman with shovel to spread pebbles (landscaping)",
+      "post_date": "2026-03-26T18:00:00-07:00",
+      "found_date": "2026-03-27T00:13:00-07:00",
+      "comments_at_discovery": 4,
+      "priority": "hot",
+      "our_response": "Hi! I am Sergii, your neighbor here in LA. I do this professionally - happy to give you a free estimate. Call or text (213) 361-1700. handyandfriend.com",
+      "response_template": "short",
+      "status": "responded",
+      "converted": false
+    }
+  ]
 }

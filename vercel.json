@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/process-outbox",
+      "schedule": "0 2 * * *"
+    }
+  ],
   "redirects": [
     {
       "source": "/docs/:path*",
@@ -49,6 +55,11 @@
       "source": "/handyfriend_10.html",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/fb",
+      "destination": "https://www.facebook.com/profile.php?id=61588215297678&locale=en_US",
+      "permanent": false
     },
     {
       "source": "/messenger",
@@ -238,10 +249,6 @@
     {
       "source": "/review",
       "destination": "/api/review-redirect"
-    },
-    {
-      "source": "/fb",
-      "destination": "/api/fb-redirect"
     },
     {
       "source": "/privacy",

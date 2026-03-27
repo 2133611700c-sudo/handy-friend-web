@@ -13,7 +13,7 @@
 
 const { restInsert, getConfig, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { callAlex } = require('../lib/ai-fallback.js');
-const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
+const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent, checkOwnerAlertThrottle, markOwnerAlerted, enqueueOutboundJob, drainOutboxInline } = require('../lib/lead-pipeline.js');
 const { buildSystemPrompt, getGuardMode, GUARD_MODES } = require('../lib/alex-one-truth.js');
 const { getMessengerPostbackTexts, getPricingSourceVersion } = require('../lib/price-registry.js');
 const { inferServiceType: inferServiceTypeShared } = require('../lib/alex-policy-engine.js');
@@ -167,7 +167,9 @@ async function handleMessagingEvent(event) {
         service_type: inferredLead.service_type || '',
         message: inferredLead.problem_description || inboundText,
         source: 'facebook',
-        session_id: sessionId
+        session_id: sessionId,
+        messenger_psid: senderId,
+        source_message_id: `fb_${senderId}_${Date.now()}`
       });
 
       await pipelineLogEvent(created.id, 'messenger_capture', {
@@ -191,21 +193,46 @@ async function handleMessagingEvent(event) {
         }).catch(() => {});
       }
 
-      // Notify Telegram about new Facebook Messenger lead
-      notifyTelegramFbLead({
-        leadId: created.id,
-        sessionId,
-        phone: inferredLead.phone,
-        service: inferredLead.service_type,
-        userText: inboundText,
-        aiReply: reply
-      }).catch((e) => console.error('[ALEX_WEBHOOK] Telegram notify error:', e.message));
+      // Enqueue Telegram alert via outbox (guaranteed delivery, throttled: once per hour)
+      const canAlert = await checkOwnerAlertThrottle(created.id).catch(() => true);
+      if (canAlert) {
+        const esc = s => String(s || '--').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+        const now = new Date();
+        const slaTime = new Date(now.getTime() + 60 * 60 * 1000)
+          .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Los_Angeles' });
+        const alertText = `🔔 <b>FB_MESSENGER_LEAD</b>\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `📱 Phone: <code>${esc(inferredLead.phone)}</code>\n` +
+          `🔧 Service: ${esc(inferredLead.service_type)}\n` +
+          `🌐 Channel: Facebook Messenger\n` +
+          `━━━━━━━━━━━━━━━━━━━━\n` +
+          `⏰ <b>SLA deadline:</b> ${slaTime} PT\n` +
+          `Session: <code>${esc(sessionId)}</code>\n` +
+          `Lead: <code>${esc(created.id)}</code>\n\n` +
+          `<b>User:</b> ${esc(String(inboundText || '').slice(0, 300))}\n` +
+          `<b>Alex:</b> ${esc(String(reply || '').slice(0, 300))}`;
+
+        enqueueOutboundJob('telegram_owner', created.id, { text: alertText },
+          `fb_owner_alert:${created.id}:${Math.floor(Date.now() / 3600000)}`
+        ).then(() => markOwnerAlerted(created.id).catch(() => {}))
+          .catch(() => {
+            // Fallback to direct send if outbox unavailable
+            notifyTelegramFbLead({ leadId: created.id, sessionId, phone: inferredLead.phone, service: inferredLead.service_type, userText: inboundText, aiReply: reply })
+              .then(() => markOwnerAlerted(created.id).catch(() => {}))
+              .catch(e => console.error('[ALEX_WEBHOOK] Telegram notify fallback error:', e.message));
+          });
+      } else {
+        console.log('[ALEX_WEBHOOK] Owner alert throttled for lead:', created.id);
+      }
     } catch (err) {
       console.error('[ALEX_WEBHOOK] Lead capture failed:', err.message, err.code || '', JSON.stringify(err.details || err.hint || ''));
     }
   }
 
   await sendFacebookMessage(senderId, reply);
+
+  // Drain outbox inline (compensates for Hobby plan daily-only cron)
+  drainOutboxInline();
 
   if (alexResult.model === 'static_fallback') {
     await logLeadEvent(null, 'alex_fallback', {

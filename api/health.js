@@ -40,6 +40,7 @@ export default async function handler(req, res) {
   if (type === 'policy') return policyHealth(req, res);
   if (type === 'stats') return statsReport(req, res);
   if (type === 'data_quality') return dataQualityHealth(req, res);
+  if (type === 'outbox') return outboxHealth(req, res);
   return basicHealth(req, res);
 }
 
@@ -688,4 +689,55 @@ function jsonLdHasExpected(indexHtml, serviceId, expectedPrice) {
   if (idx === -1) return false;
   const chunk = html.slice(idx, idx + 300);
   return chunk.includes(`\"price\":\"${Number(expectedPrice).toFixed(2)}\"`) || chunk.includes(`\"price\":\"${Number(expectedPrice)}\"`);
+}
+
+// ─── Outbox SLO Health ────────────────────────────────────────────────────────
+// GET /api/health?type=outbox
+// Returns 200 if queue is healthy, 503 if SLO breach (oldest_pending_sec > 900)
+// Also shows business pipeline invariants (orphan events, unalerted leads, etc.)
+
+async function outboxHealth(req, res) {
+  const config = getConfig();
+  if (!config) return res.status(200).json({ ok: false, error: 'supabase_not_configured' });
+
+  const headers = {
+    apikey:        config.serviceRoleKey,
+    Authorization: `Bearer ${config.serviceRoleKey}`,
+    Accept:        'application/json'
+  };
+
+  const [sloResp, metricsResp, invariantsResp] = await Promise.all([
+    fetch(`${config.projectUrl}/rest/v1/v_outbox_slo?limit=1`, { headers }).catch(() => null),
+    fetch(`${config.projectUrl}/rest/v1/v_outbox_metrics?order=count.desc&limit=20`, { headers }).catch(() => null),
+    fetch(`${config.projectUrl}/rest/v1/v_pipeline_invariants?limit=20`, { headers }).catch(() => null)
+  ]);
+
+  const sloRows        = sloResp?.ok        ? await sloResp.json().catch(() => [])        : [];
+  const metricsRows    = metricsResp?.ok     ? await metricsResp.json().catch(() => [])    : [];
+  const invariantRows  = invariantsResp?.ok  ? await invariantsResp.json().catch(() => []) : [];
+
+  const slo = Array.isArray(sloRows) && sloRows.length ? sloRows[0] : null;
+  const oldestPendingSec = slo?.oldest_pending_sec ?? null;
+  const dlqTotal         = slo?.dlq_total          ?? 0;
+  const queueDepth       = slo?.queue_depth         ?? 0;
+
+  // SLO breach thresholds
+  const sloBreached = oldestPendingSec !== null && oldestPendingSec > 900;
+  const dlqBreached = dlqTotal > 0;
+  const healthy     = !sloBreached;
+
+  const report = {
+    ok:       healthy,
+    slo,
+    slo_breached:    sloBreached,
+    dlq_alert:       dlqBreached,
+    queue_depth:     queueDepth,
+    oldest_pending_sec: oldestPendingSec,
+    metrics:         metricsRows,
+    pipeline_invariants: invariantRows,
+    replay_endpoint: 'POST /api/process-outbox?action=replay_dlq&job_id=<id>',
+    checked_at:      new Date().toISOString()
+  };
+
+  return res.status(healthy ? 200 : 503).json(report);
 }
