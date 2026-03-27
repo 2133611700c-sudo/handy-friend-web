@@ -21,7 +21,11 @@ For each potential lead:
 - Timestamp found
 
 ## Output
-POST each found lead to `https://handyandfriend.com/api/hunter-lead` with JSON body:
+POST each found lead to `https://handyandfriend.com/api/hunter-lead` with headers:
+- `Content-Type: application/json`
+- `x-hunter-secret: <HUNTER_API_SECRET env var>`
+
+JSON body:
 ```json
 {
   "platform": "<nextdoor|craigslist>",

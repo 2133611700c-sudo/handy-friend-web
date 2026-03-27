@@ -433,8 +433,6 @@ export default async function handler(req, res) {
   // Owner Telegram alert already enqueued via processInbound → outbox.
   // Owner email and customer auto-responder also go through outbox for retry/DLQ.
 
-  const safePhoneDigits = String(phone || '').replace(/\D/g, '');
-
   // Owner email via outbox (retries 5× with backoff)
   await enqueueOutboundJob('resend_owner', leadId, {
     subject: subjectLine,

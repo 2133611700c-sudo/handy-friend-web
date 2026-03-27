@@ -98,8 +98,10 @@ async function handler(req, res) {
   const secret = req.headers['x-hunter-secret'] || req.headers['x-cron-secret']
     || String(req.headers['authorization'] || '').replace('Bearer ', '');
   const isVercelCron = Boolean(req.headers['x-vercel-cron']);
-  if (!isVercelCron && HUNTER_SECRET && secret !== HUNTER_SECRET) {
-    return res.status(403).json({ error: 'Forbidden' });
+  if (!isVercelCron) {
+    if (!HUNTER_SECRET || secret !== HUNTER_SECRET) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
   }
 
   const config = getConfig();

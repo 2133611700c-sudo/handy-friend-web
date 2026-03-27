@@ -10,7 +10,7 @@ Run daily at 10:00 AM PT
 
 ## Process
 
-Query hunter posts from API: `GET https://handyandfriend.com/api/hunter-lead?status=responded&age=24h-48h`
+Query hunter posts from API: `GET https://handyandfriend.com/api/hunter-lead?status=responded&age=24h-48h` with header `x-hunter-secret: <HUNTER_API_SECRET env var>`
 If API is unavailable, fall back to reading `ops/leads.json` where status = "responded" and response_time is 24-48 hours ago.
 
 ### Steps
@@ -21,7 +21,7 @@ If API is unavailable, fall back to reading `ops/leads.json` where status = "res
    - Someone replied to our comment? → capture reply text
    - Post author replied to us? → capture text
    - Post author marked our comment as "helpful"?
-4. Update lead status via API: `PATCH https://handyandfriend.com/api/hunter-lead` with `{"post_url":"...","status":"warm|hot|cold|converted","engagement":{"likes":N,"replies":[...]}}`
+4. Update lead status via API: `PATCH https://handyandfriend.com/api/hunter-lead` with header `x-hunter-secret: <HUNTER_API_SECRET env var>` and body `{"post_url":"...","status":"warm|hot|cold|converted","engagement":{"likes":N,"replies":[...]}}`
    If API unavailable, update `ops/leads.json` entry as fallback:
    - likes > 0 → status: "warm"
    - reply from post author → status: "hot"

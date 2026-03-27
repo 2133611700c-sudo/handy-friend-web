@@ -107,7 +107,9 @@ Rules:
 2. Paste prepared response text
 3. Click Post
 4. Verify comment appeared
-5. POST to `https://handyandfriend.com/api/hunter-lead` with JSON body:
+5. POST to `https://handyandfriend.com/api/hunter-lead` with headers:
+   - `Content-Type: application/json`
+   - `x-hunter-secret: <HUNTER_API_SECRET env var>`
    ```json
    {
      "platform": "facebook",

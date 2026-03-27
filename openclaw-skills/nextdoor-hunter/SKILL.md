@@ -108,7 +108,9 @@ For each filtered post (HOT first):
 2. Paste prepared response text
 3. Click Post/Submit
 4. Wait for confirmation that comment appeared
-5. POST to `https://handyandfriend.com/api/hunter-lead` with JSON body:
+5. POST to `https://handyandfriend.com/api/hunter-lead` with headers:
+   - `Content-Type: application/json`
+   - `x-hunter-secret: <HUNTER_API_SECRET env var>`
    ```json
    {
      "platform": "nextdoor",

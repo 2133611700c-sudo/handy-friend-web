@@ -175,7 +175,7 @@ check_route "/r/one-tap/" "200" "route"
 
 code_fb=$(http_code "$SITE/fb")
 redir_fb=$(http_redirect "$SITE/fb")
-if [[ ( "$code_fb" == "301" || "$code_fb" == "302" ) && "$redir_fb" == *"facebook.com"* ]]; then
+if [[ ( "$code_fb" == "301" || "$code_fb" == "302" || "$code_fb" == "307" || "$code_fb" == "308" ) && "$redir_fb" == *"facebook.com"* ]]; then
   pass "redirect /fb -> Facebook"
 else
   fail "redirect /fb -> Facebook"
