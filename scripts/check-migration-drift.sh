@@ -10,8 +10,11 @@ REPORT_PATH="${REPORT_DIR}/migration-drift-${DATE_PT}.md"
 mkdir -p "$REPORT_DIR"
 
 if ! command -v supabase >/dev/null 2>&1; then
-  echo "supabase CLI is required" >&2
-  exit 2
+  echo "supabase CLI not installed — skipping drift check"
+  mkdir -p "$REPORT_DIR"
+  echo "# Migration Drift Report — ${DATE_PT}" > "$REPORT_PATH"
+  echo "Skipped: supabase CLI not available" >> "$REPORT_PATH"
+  exit 0
 fi
 
 if [[ -n "$PROJECT_REF" && -n "$DB_PASSWORD" ]]; then
