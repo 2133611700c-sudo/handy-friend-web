@@ -47,7 +47,7 @@
       "permanent": false
     },
     {
-      "source": "/:path*.txt",
+      "source": "/:path((?!robots).+).txt",
       "destination": "/",
       "permanent": false
     },

@@ -137,6 +137,13 @@
       .then(function(res) { return res.json(); })
       .then(function(json) {
         if (json.ok || json.success || json.id) {
+          /* Enhanced Conversions: set user_data BEFORE firing conversion events */
+          if (typeof gtag === 'function') {
+            var ud = {};
+            if (data.email) ud.email = data.email.trim().toLowerCase();
+            if (data.phone) ud.phone_number = data.phone.replace(/[^+\d]/g, '');
+            if (ud.email || ud.phone_number) gtag('set', 'user_data', ud);
+          }
           /* GA4 events */
           emitCoreEvent('generate_lead', { value: 100, currency: 'USD', event_label: data.service_type || 'general' });
           emitCoreEvent('form_submit', { value: 100, currency: 'USD', event_label: data.service_type || 'general' });
