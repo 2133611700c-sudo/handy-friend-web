@@ -55,6 +55,27 @@ async function handler(req, res) {
 
   const action = String(req.query?.action || '').toLowerCase();
 
+  // ── Daily / weekly report ─────────────────────────────────────────────────
+  if (action === 'daily_report') {
+    try {
+      await handleDailyReport();
+      return res.status(200).json({ ok: true, action: 'daily_report' });
+    } catch (err) {
+      console.error('[OUTBOX] Daily report error:', err.message);
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  }
+
+  if (action === 'weekly_report') {
+    try {
+      await handleWeeklyReport();
+      return res.status(200).json({ ok: true, action: 'weekly_report' });
+    } catch (err) {
+      console.error('[OUTBOX] Weekly report error:', err.message);
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  }
+
   // ── SLO health check ──────────────────────────────────────────────────────
   if (action === 'slo') {
     try {
@@ -103,10 +124,196 @@ async function handler(req, res) {
 
   const duration = Date.now() - startedAt;
   console.log(`[OUTBOX] Done in ${duration}ms:`, JSON.stringify(result));
+
+  // Auto-trigger reports when invoked by Vercel cron (cron fires at 04:00 UTC = 9pm PT)
+  if (isVercelCron) {
+    handleDailyReport().catch(err => console.error('[OUTBOX] Auto daily report error:', err.message));
+    // Weekly report on Sundays (PT): UTC day 1 (Mon) at 04:00 = Sun 9pm PT
+    const utcDay = new Date().getUTCDay();
+    if (utcDay === 1) {
+      handleWeeklyReport().catch(err => console.error('[OUTBOX] Auto weekly report error:', err.message));
+    }
+  }
+
   return res.status(200).json({ ok: true, duration_ms: duration, ...result });
 }
 
 module.exports = handler;
+
+// ─── Daily / Weekly Reports ───────────────────────────────────────────────────
+
+const { formatDailyDigest, formatWeeklyDigest } = require('../lib/alert-formats.js');
+
+async function handleDailyReport() {
+  const config = getConfig();
+  if (!config) { console.warn('[OUTBOX] Daily report: Supabase not configured'); return; }
+
+  const stats = await gatherDailyStats(config);
+  const text  = formatDailyDigest(stats);
+
+  const result = await deliverTelegramOwner({ text });
+  if (!result.ok) throw new Error(result.error);
+  console.log('[OUTBOX] Daily report sent');
+}
+
+async function handleWeeklyReport() {
+  const config = getConfig();
+  if (!config) { console.warn('[OUTBOX] Weekly report: Supabase not configured'); return; }
+
+  const stats = await gatherWeeklyStats(config);
+  const text  = formatWeeklyDigest(stats);
+
+  const result = await deliverTelegramOwner({ text });
+  if (!result.ok) throw new Error(result.error);
+  console.log('[OUTBOX] Weekly report sent');
+}
+
+// ─── Stats Gathering ──────────────────────────────────────────────────────────
+
+async function sbGet(config, table, params) {
+  const url = new URL(`${config.projectUrl}/rest/v1/${table}`);
+  for (const [k, v] of Object.entries(params || {})) url.searchParams.append(k, v);
+  const resp = await fetch(url.toString(), {
+    headers: {
+      apikey:        config.serviceRoleKey,
+      Authorization: `Bearer ${config.serviceRoleKey}`,
+      Accept:        'application/json',
+      'Range-Unit':  'items',
+      Range:         '0-999'
+    }
+  });
+  if (!resp.ok) return [];
+  return resp.json().catch(() => []);
+}
+
+async function gatherDailyStats(config) {
+  // Date boundaries in PT
+  const today   = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // YYYY-MM-DD
+  const todayTs = `${today}T00:00:00-07:00`;
+
+  const [leadsToday, allActive, hunterPosts, hunterScans] = await Promise.all([
+    sbGet(config, 'leads', {
+      select:     'id,source,stage,status,full_name,phone,service_type,intent_level,needs_owner_now',
+      created_at: `gte.${todayTs}`,
+      is_test:    'eq.false',
+      order:      'created_at.desc'
+    }),
+    sbGet(config, 'leads', {
+      select:  'stage,status',
+      is_test: 'eq.false',
+      status:  'not.in.(won,lost,spam)'
+    }),
+    sbGet(config, 'hunter_posts', {
+      select:       'id,priority,platform',
+      responded_at: `gte.${todayTs}`
+    }),
+    sbGet(config, 'hunter_scans', {
+      select:    'posts_found,posts_responded,tokens_used',
+      scan_time: `gte.${todayTs}`
+    })
+  ]);
+
+  const bySource = {};
+  const hotLeads = [];
+  for (const l of leadsToday) {
+    const src = l.source === 'facebook' ? 'facebook'
+              : l.source === 'telegram' ? 'telegram'
+              : (l.source || '').includes('hunter') ? 'hunter' : 'website';
+    bySource[src] = (bySource[src] || 0) + 1;
+    if (l.intent_level === 'high' || l.needs_owner_now) {
+      hotLeads.push({ name: l.full_name, service: l.service_type, area: null, next_action: 'Call NOW' });
+    }
+  }
+
+  const byStatus = {};
+  for (const l of allActive) {
+    const s = l.stage || l.status || 'new';
+    byStatus[s] = (byStatus[s] || 0) + 1;
+  }
+
+  const hunterFound     = hunterScans.reduce((n, r) => n + (r.posts_found    || 0), 0);
+  const hunterResponded = hunterPosts.length;
+  const hunterTokens    = hunterScans.reduce((n, r) => n + (r.tokens_used    || 0), 0);
+
+  return {
+    date:                today,
+    total_new:           leadsToday.length,
+    by_source:           bySource,
+    by_status:           byStatus,
+    hunter:              { scans: hunterScans.length, found: hunterFound, responded: hunterResponded, cost: (hunterTokens * 0.000001).toFixed(4) },
+    hot_leads:           hotLeads,
+    response_median_min: null
+  };
+}
+
+async function gatherWeeklyStats(config) {
+  const now            = new Date();
+  const weekAgo        = new Date(now.getTime() - 7 * 86400000);
+  const twoWeeksAgo    = new Date(now.getTime() - 14 * 86400000);
+  const weekAgoStr     = weekAgo.toISOString().split('T')[0];
+  const twoWeeksAgoStr = twoWeeksAgo.toISOString().split('T')[0];
+
+  const [thisWeek, prevWeek, jobs, hunterPosts] = await Promise.all([
+    sbGet(config, 'leads', {
+      select:     'id,source,stage,status,service_type,won_amount',
+      created_at: `gte.${weekAgoStr}T00:00:00`,
+      is_test:    'eq.false'
+    }),
+    sbGet(config, 'leads', {
+      select:     'id',
+      created_at: `gte.${twoWeeksAgoStr}T00:00:00`,
+      is_test:    'eq.false'
+    }),
+    sbGet(config, 'jobs', {
+      select:    'revenue',
+      completed_at: `gte.${weekAgoStr}T00:00:00`
+    }),
+    sbGet(config, 'hunter_posts', {
+      select:       'id,lead_id',
+      responded_at: `gte.${weekAgoStr}T00:00:00`
+    })
+  ]);
+
+  // prev week = leads from 14d ago but NOT in this week (client-side filter)
+  const prevWeekCount = prevWeek.filter(l => l.created_at < `${weekAgoStr}T00:00:00`).length || prevWeek.length - thisWeek.length;
+
+  const bySource = {};
+  const svcCount = {};
+  let revenue = 0;
+  let won = 0;
+
+  for (const l of thisWeek) {
+    const src = l.source === 'facebook' ? 'facebook'
+              : l.source === 'telegram' ? 'telegram'
+              : (l.source || '').includes('hunter') ? 'hunter' : 'website';
+    bySource[src] = (bySource[src] || 0) + 1;
+    const svc = l.service_type || 'other';
+    svcCount[svc] = (svcCount[svc] || 0) + 1;
+    if (l.status === 'won' || l.stage === 'closed') won++;
+    if (l.won_amount) revenue += Number(l.won_amount);
+  }
+
+  for (const j of jobs) revenue += Number(j.revenue || 0);
+
+  const topServices = Object.entries(svcCount)
+    .sort((a, b) => b[1] - a[1]).slice(0, 5)
+    .map(([service, count]) => ({ service, count }));
+
+  const hunterConverted = hunterPosts.filter(p => p.lead_id).length;
+
+  const weekLabel = `${weekAgo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
+  return {
+    week_label:       weekLabel,
+    total_leads:      thisWeek.length,
+    prev_week_leads:  prevWeekCount,
+    revenue:          revenue.toFixed(0),
+    conversion_pct:   thisWeek.length ? ((won / thisWeek.length) * 100).toFixed(0) : 0,
+    by_source:        bySource,
+    top_services:     topServices,
+    hunter:           { responded: hunterPosts.length, converted: hunterConverted }
+  };
+}
 
 // ─── Claim (SKIP LOCKED via stored function) ─────────────────────────────────
 

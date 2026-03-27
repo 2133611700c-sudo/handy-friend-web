@@ -13,10 +13,11 @@
 
 const { restInsert, getConfig, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { callAlex } = require('../lib/ai-fallback.js');
-const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent, checkOwnerAlertThrottle, markOwnerAlerted, enqueueOutboundJob, drainOutboxInline } = require('../lib/lead-pipeline.js');
+const { processInbound, transitionLead, logEvent: pipelineLogEvent, drainOutboxInline } = require('../lib/lead-pipeline.js');
 const { buildSystemPrompt, getGuardMode, GUARD_MODES } = require('../lib/alex-one-truth.js');
 const { getMessengerPostbackTexts, getPricingSourceVersion } = require('../lib/price-registry.js');
 const { inferServiceType: inferServiceTypeShared } = require('../lib/alex-policy-engine.js');
+const { createEnvelope } = require('../lib/inbound-envelope.js');
 
 const FB_GRAPH_VERSION = process.env.FB_GRAPH_VERSION || 'v19.0';
 const MAX_HISTORY_TURNS = 16;
@@ -160,69 +161,33 @@ async function handleMessagingEvent(event) {
   console.log('[ALEX_WEBHOOK] inferredLead:', inferredLead ? JSON.stringify({ phone: inferredLead.phone, service: inferredLead.service_type }) : 'null');
   if (inferredLead) {
     try {
-      const created = await createOrMergeLead({
-        name: inferredLead.name || 'Unknown',
-        phone: inferredLead.phone || '',
-        email: inferredLead.email || '',
-        service_type: inferredLead.service_type || '',
-        message: inferredLead.problem_description || inboundText,
-        source: 'facebook',
-        session_id: sessionId,
-        messenger_psid: senderId,
-        source_message_id: `fb_${senderId}_${Date.now()}`
+      // Unified Lead System v3: envelope → processInbound handles dedup + side effects via outbox
+      const fbEnvelope = createEnvelope({
+        source:            'facebook',
+        source_user_id:    senderId,
+        source_message_id: `fb_${senderId}_${event?.message?.mid || Date.now()}`,
+        source_thread_id:  sessionId,
+        lead_phone:        inferredLead.phone  || '',
+        lead_email:        inferredLead.email  || '',
+        lead_name:         inferredLead.name   || 'Unknown',
+        raw_text:          inferredLead.problem_description || inboundText,
+        service_hint:      inferredLead.service_type || '',
+        meta:              { sender_id: senderId, session_id: sessionId, pricing_version: getPricingSourceVersion() }
       });
 
-      await pipelineLogEvent(created.id, 'messenger_capture', {
-        source: 'facebook',
-        sender_id: senderId,
-        session_id: sessionId,
-        correlation_id: `messenger:${sessionId}`,
-        idempotency_key: `messenger_capture:${sessionId}:${created.id}`,
-        pricing_source_version: getPricingSourceVersion()
-      }).catch(() => {});
+      const created = await processInbound(fbEnvelope);
+
       await transitionLead(created.id, 'contacted', {
         contacted_at: new Date().toISOString()
       }).catch(() => {});
+
       if ((inferredLead.service_type || 'unknown') === 'unknown') {
         await pipelineLogEvent(created.id, 'service_inference_failed', {
           source: 'facebook',
           sender_id: senderId,
           session_id: sessionId,
-          correlation_id: `messenger:${sessionId}`,
           idempotency_key: `service_inference_failed:${sessionId}:${created.id}`
         }).catch(() => {});
-      }
-
-      // Enqueue Telegram alert via outbox (guaranteed delivery, throttled: once per hour)
-      const canAlert = await checkOwnerAlertThrottle(created.id).catch(() => true);
-      if (canAlert) {
-        const esc = s => String(s || '--').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
-        const now = new Date();
-        const slaTime = new Date(now.getTime() + 60 * 60 * 1000)
-          .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Los_Angeles' });
-        const alertText = `🔔 <b>FB_MESSENGER_LEAD</b>\n` +
-          `━━━━━━━━━━━━━━━━━━━━\n` +
-          `📱 Phone: <code>${esc(inferredLead.phone)}</code>\n` +
-          `🔧 Service: ${esc(inferredLead.service_type)}\n` +
-          `🌐 Channel: Facebook Messenger\n` +
-          `━━━━━━━━━━━━━━━━━━━━\n` +
-          `⏰ <b>SLA deadline:</b> ${slaTime} PT\n` +
-          `Session: <code>${esc(sessionId)}</code>\n` +
-          `Lead: <code>${esc(created.id)}</code>\n\n` +
-          `<b>User:</b> ${esc(String(inboundText || '').slice(0, 300))}\n` +
-          `<b>Alex:</b> ${esc(String(reply || '').slice(0, 300))}`;
-
-        enqueueOutboundJob('telegram_owner', created.id, { text: alertText },
-          `fb_owner_alert:${created.id}:${Math.floor(Date.now() / 3600000)}`
-        ).then(() => markOwnerAlerted(created.id).catch(() => {}))
-          .catch(() => {
-            // Fallback to direct send if outbox unavailable
-            notifyTelegramFbLead({ leadId: created.id, sessionId, phone: inferredLead.phone, service: inferredLead.service_type, userText: inboundText, aiReply: reply })
-              .then(() => markOwnerAlerted(created.id).catch(() => {}))
-              .catch(e => console.error('[ALEX_WEBHOOK] Telegram notify fallback error:', e.message));
-          });
-      } else {
-        console.log('[ALEX_WEBHOOK] Owner alert throttled for lead:', created.id);
       }
     } catch (err) {
       console.error('[ALEX_WEBHOOK] Lead capture failed:', err.message, err.code || '', JSON.stringify(err.details || err.hint || ''));
