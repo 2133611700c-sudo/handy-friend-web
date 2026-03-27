@@ -59,7 +59,7 @@ function parseCsv(csv) {
     });
 }
 
-const telegramRoute = readIfExists('api/send-telegram.js');
+const telegramRoute = readIfExists('api/notify.js');
 const uploadLeadPhotos = readIfExists('api/upload-lead-photos.js');
 const submitLead = readIfExists('api/submit-lead.js');
 const oneTap = readIfExists('r/one-tap/index.html');
