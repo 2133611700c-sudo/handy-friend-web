@@ -257,7 +257,53 @@ else
   pass 'legacy prices $155/$165/$175 not present in public pages'
 fi
 
-# 7) Protected stats
+# 7) Outbox health + SLO gate
+outbox_json=$(curl -sS "$SITE/api/health?type=outbox" 2>/dev/null || echo '{}')
+if [[ "$(json_bool ok "$outbox_json")" == "true" ]]; then
+  pass "outbox health ok=true"
+else
+  fail "outbox health ok=true"
+fi
+
+queue_depth=$(json_get queue_depth "$outbox_json")
+if [[ -n "$queue_depth" && "$queue_depth" != "null" ]]; then
+  pass "outbox queue_depth present ($queue_depth)"
+else
+  fail "outbox queue_depth present"
+fi
+
+dlq_total=$(json_get dlq_total "$outbox_json")
+if [[ -n "$dlq_total" && "$dlq_total" != "null" ]]; then
+  pass "outbox dlq_total present ($dlq_total)"
+  if [[ "$dlq_total" =~ ^[0-9]+$ && "$dlq_total" -gt 10 ]]; then
+    fail "outbox DLQ spike (dlq_total=$dlq_total > 10)"
+  else
+    pass "outbox DLQ within threshold (dlq_total=$dlq_total)"
+  fi
+else
+  fail "outbox dlq_total present"
+fi
+
+slo_json=$(curl -sS "$SITE/api/process-outbox?action=slo" 2>/dev/null || echo '{}')
+slo_ok=$(json_bool ok "$slo_json")
+if [[ "$slo_ok" == "true" ]]; then
+  pass "outbox SLO ok=true"
+else
+  fail "outbox SLO ok=true"
+fi
+
+# Verify POST without secret returns 403
+outbox_post_code=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$SITE/api/process-outbox" 2>/dev/null || echo "000")
+if [[ "$outbox_post_code" == "403" ]]; then
+  pass "outbox POST auth guard (403)"
+else
+  fail "outbox POST auth guard (expected 403 got $outbox_post_code)"
+fi
+
+# 7b) Migration drift
+check_cmd "migration:drift" npm run -s migration:drift
+
+# 8) Protected stats
 if [[ "$SKIP_STATS" -eq 1 ]]; then
   note "[INFO] stats checks skipped by flag"
 else

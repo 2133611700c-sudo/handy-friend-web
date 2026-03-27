@@ -22,6 +22,31 @@ const { createEnvelope } = require('../lib/inbound-envelope.js');
 const FB_GRAPH_VERSION = process.env.FB_GRAPH_VERSION || 'v19.0';
 const MAX_HISTORY_TURNS = 16;
 
+// ─── Webhook dedup (Meta can re-deliver the same event) ─────────────────────
+const WEBHOOK_SEEN_TTL = 5 * 60 * 1000; // 5 minutes
+const webhookSeen = globalThis.__HF_FB_WEBHOOK_SEEN || new Map();
+globalThis.__HF_FB_WEBHOOK_SEEN = webhookSeen;
+
+function webhookDedupKey(event) {
+  const mid = event?.message?.mid || '';
+  const sender = event?.sender?.id || '';
+  const ts = event?.timestamp || '';
+  return mid ? `mid:${mid}` : `${sender}:${ts}`;
+}
+
+function isWebhookDuplicate(event) {
+  const key = webhookDedupKey(event);
+  if (!key) return false;
+  const now = Date.now();
+  // Cleanup old entries
+  if (webhookSeen.size > 500) {
+    for (const [k, t] of webhookSeen) { if (now - t > WEBHOOK_SEEN_TTL) webhookSeen.delete(k); }
+  }
+  if (webhookSeen.has(key)) return true;
+  webhookSeen.set(key, now);
+  return false;
+}
+
 const POSTBACK_RESPONSES = getMessengerPostbackTexts();
 
 async function handler(req, res) {
@@ -47,6 +72,10 @@ async function handler(req, res) {
   const errors = [];
   for (const entry of body.entry || []) {
     for (const event of entry.messaging || []) {
+      if (isWebhookDuplicate(event)) {
+        console.log('[ALEX_WEBHOOK] Dedup skip:', webhookDedupKey(event));
+        continue;
+      }
       try {
         await handleMessagingEvent(event);
       } catch (err) {

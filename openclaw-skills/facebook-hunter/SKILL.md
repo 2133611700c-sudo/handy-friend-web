@@ -63,7 +63,7 @@ For each found post, check ALL conditions:
 - Post is REQUESTING a service (not offering) → skip if offering
 - Location is in LA area → skip if not
 - Service passes SCOPE FILTER (GREEN or YELLOW) → skip if RED
-- We have NOT already responded (check ops/leads.json by URL) → skip if duplicate
+- We have NOT already responded (pre-check: POST to `/api/hunter-lead` with `post_url` — if `{"status":"skip"}` → duplicate) → skip if duplicate
 - Author not already contacted in last 7 days (check author_name + author_area) → skip if repeat
 - Post has < 30 comments → skip if too competitive
 - Priority assignment:

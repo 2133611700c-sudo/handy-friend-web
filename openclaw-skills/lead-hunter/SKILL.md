@@ -21,11 +21,28 @@ For each potential lead:
 - Timestamp found
 
 ## Output
-Append to: ~/handy-friend-landing-v6/ops/leads.json
-Format: {"date": "...", "platform": "...", "url": "...", "service": "...", "area": "...", "urgency": "...", "status": "new"}
+POST each found lead to `https://handyandfriend.com/api/hunter-lead` with JSON body:
+```json
+{
+  "platform": "<nextdoor|craigslist>",
+  "post_url": "<full post URL>",
+  "author_name": "<name if available>",
+  "author_area": "<neighborhood/zip>",
+  "post_text": "<first 300 chars of post>",
+  "service_detected": "<service type>",
+  "scope": "GREEN",
+  "our_response": "",
+  "template_used": 0,
+  "comments_count": 0
+}
+```
+- API returns `{"status":"ok"}` → lead recorded, Telegram alert fires automatically via outbox.
+- API returns `{"status":"skip"}` → already recorded, skip.
+- If API unreachable → append to `ops/leads.json` as local backup (same JSON format).
 
 ## Alert
-If urgency = today or this week — send WhatsApp alert to Sergii
+Telegram alerts fire automatically via `/api/hunter-lead` outbox pipeline.
+If urgency = today or this week — API marks priority=hot and sends URGENT Telegram alert.
 
 ## Rules
 1. READ ONLY — never post, comment, or interact on platforms

@@ -10,19 +10,19 @@ Run daily at 10:00 AM PT
 
 ## Process
 
-For each lead in ops/leads.json where:
-- status = "responded"
-- response_time is 24-48 hours ago
+Query hunter posts from API: `GET https://handyandfriend.com/api/hunter-lead?status=responded&age=24h-48h`
+If API is unavailable, fall back to reading `ops/leads.json` where status = "responded" and response_time is 24-48 hours ago.
 
 ### Steps
-1. Open post URL from leads.json
+1. Open post URL from the query results
 2. Find our comment on the post
 3. Check engagement:
    - Our comment received likes? → count them
    - Someone replied to our comment? → capture reply text
    - Post author replied to us? → capture text
    - Post author marked our comment as "helpful"?
-4. Update leads.json entry:
+4. Update lead status via API: `PATCH https://handyandfriend.com/api/hunter-lead` with `{"post_url":"...","status":"warm|hot|cold|converted","engagement":{"likes":N,"replies":[...]}}`
+   If API unavailable, update `ops/leads.json` entry as fallback:
    - likes > 0 → status: "warm"
    - reply from post author → status: "hot"
    - phone call received (manual flag) → status: "converted"
@@ -52,5 +52,5 @@ CALL THEM NOW: check if they called (213) 361-1700
 ## Rules
 - Read-only on platforms — never post additional comments during tracking
 - Only check posts 24-48h old (not older)
-- Update leads.json after each check
+- Update lead status via API (fall back to ops/leads.json if API unavailable)
 - Log all activity to ops/hunter.log
