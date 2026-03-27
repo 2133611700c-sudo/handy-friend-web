@@ -157,6 +157,111 @@ cmd_quick() {
   esac
 }
 
+# ─── LEADS: lead hunter management ───
+cmd_leads() {
+  cd "$PROJECT_DIR" || exit 1
+  case "$1" in
+    scan)
+      log "Starting manual lead scan..."
+      if [ -x "$OPENCLAW_CMD" ]; then
+        $OPENCLAW_CMD agent --message "Run nextdoor-hunter and facebook-hunter skills NOW. Follow all rules in openclaw-skills/nextdoor-hunter/SKILL.md and openclaw-skills/facebook-hunter/SKILL.md. Send results to Telegram." 2>/dev/null
+        log "Scan initiated"
+      else
+        err "OpenClaw not available"
+      fi
+      ;;
+    list)
+      if [ -f "ops/leads.json" ]; then
+        log "Recent leads:"
+        python3 -c "
+import json
+with open('ops/leads.json') as f:
+    data = json.load(f)
+leads = data.get('leads', [])
+if not leads:
+    print('  No leads yet. Run: bash exo.sh leads scan')
+else:
+    for lead in leads[-10:]:
+        icons = {'hot':'HOT','warm':'WARM','cool':'COOL','cold':'COLD','responded':'SENT','converted':'WON'}
+        s = icons.get(lead.get('status',''), '???')
+        print(f\"  [{s}] {lead.get('author_name','?')} — {lead.get('author_area','?')} — {lead.get('service_needed','?')}\")
+" 2>/dev/null || cat ops/leads.json
+      else
+        warn "No leads.json yet. Run: bash exo.sh leads scan"
+      fi
+      ;;
+    stats)
+      if [ -f "ops/leads.json" ]; then
+        log "Lead stats:"
+        python3 -c "
+import json
+with open('ops/leads.json') as f:
+    data = json.load(f)
+leads = data.get('leads', [])
+total = len(leads)
+responded = sum(1 for l in leads if l.get('status') == 'responded')
+hot = sum(1 for l in leads if l.get('status') == 'hot')
+warm = sum(1 for l in leads if l.get('status') == 'warm')
+converted = sum(1 for l in leads if l.get('converted'))
+print(f'  Total leads found: {total}')
+print(f'  Responded: {responded}')
+print(f'  Hot (replied to us): {hot}')
+print(f'  Warm (liked our comment): {warm}')
+print(f'  Converted (became clients): {converted}')
+if total > 0:
+    print(f'  Conversion rate: {converted/total*100:.1f}%')
+else:
+    print('  No data yet')
+" 2>/dev/null
+      else
+        warn "No leads data yet"
+      fi
+      ;;
+    health)
+      log "Lead Hunter health check:"
+      # Check OpenClaw
+      if pgrep -q "openclaw" 2>/dev/null; then
+        echo -e "  OpenClaw:     ${GREEN}RUNNING${NC}"
+      else
+        echo -e "  OpenClaw:     ${RED}DOWN${NC}"
+      fi
+      # Check log
+      if [ -f "ops/hunter.log" ]; then
+        LAST_LOG=$(tail -1 ops/hunter.log 2>/dev/null)
+        echo "  Last log:     $LAST_LOG"
+      else
+        echo -e "  Last log:     ${YELLOW}No log file${NC}"
+      fi
+      # Check leads.json
+      if [ -f "ops/leads.json" ]; then
+        LAST_SCAN=$(python3 -c "import json; print(json.load(open('ops/leads.json')).get('last_scan','never'))" 2>/dev/null)
+        echo "  Last scan:    $LAST_SCAN"
+        python3 -c "
+import json
+data = json.load(open('ops/leads.json'))
+dc = data.get('daily_counts', {})
+nd = dc.get('nextdoor_responded', 0)
+fb = dc.get('facebook_responded', 0)
+print(f'  Nextdoor:     {nd}/25 responses today')
+print(f'  Facebook:     {fb}/15 responses today')
+print(f'  Total leads:  {len(data.get(\"leads\", []))}')
+" 2>/dev/null
+      else
+        echo -e "  Last scan:    ${YELLOW}Never${NC}"
+      fi
+      # Check watchdog
+      if launchctl list 2>/dev/null | grep -q handyfriend; then
+        echo -e "  Watchdog:     ${GREEN}ACTIVE${NC}"
+      else
+        echo -e "  Watchdog:     ${YELLOW}NOT INSTALLED${NC} (run scripts/setup-watchdog.sh)"
+      fi
+      ;;
+    *)
+      echo "Usage: bash exo.sh leads [scan|list|stats|health]"
+      ;;
+  esac
+}
+
 # ─── ROUTER ───
 case "${1:-help}" in
   setup)    cmd_setup ;;
@@ -166,6 +271,7 @@ case "${1:-help}" in
   research) cmd_research "$2" ;;
   post)     cmd_post "$2" ;;
   status)   cmd_status ;;
+  leads)    cmd_leads "$2" ;;
   quick)    cmd_quick "$2" ;;
   *)
     echo ""
@@ -181,6 +287,10 @@ case "${1:-help}" in
     echo "  bash exo.sh quick tasks          показать задачи"
     echo "  bash exo.sh quick decisions      показать решения"
     echo "  bash exo.sh quick diff           git diff"
+    echo "  bash exo.sh leads scan           запустить скан лидов"
+    echo "  bash exo.sh leads list           последние лиды"
+    echo "  bash exo.sh leads stats          статистика конверсии"
+    echo "  bash exo.sh leads health         здоровье системы"
     echo "  bash exo.sh quick pr             create PR from current branch"
     echo "  bash exo.sh quick deploy         blocked (use PR + approved deploy)"
     echo "  bash exo.sh quick site           открыть сайт"
