@@ -12,7 +12,7 @@
 const { saveLeadContext } = require('./_lib/lead-context-store.js');
 const { restInsert, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
-const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
+const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent, checkOwnerAlertThrottle, markOwnerAlerted } = require('../lib/lead-pipeline.js');
 const { normalizeAttribution, buildSourceDetails } = require('../lib/attribution.js');
 
 const SUBMIT_DEDUP_TTL_MS = 10 * 60 * 1000;
@@ -460,8 +460,12 @@ export default async function handler(req, res) {
           );
         }
 
-        // Best-effort Telegram delivery (serverless-safe with timeout)
-        await notifyViaTelegramBestEffort({ ...leadData, leadId });
+        // Best-effort Telegram delivery (serverless-safe, throttled once per hour)
+        const canAlertResend = await checkOwnerAlertThrottle(leadId).catch(() => true);
+        if (canAlertResend) {
+          await notifyViaTelegramBestEffort({ ...leadData, leadId });
+          markOwnerAlerted(leadId).catch(() => {});
+        }
 
         return res.status(200).json({
           success: true,
@@ -503,8 +507,12 @@ export default async function handler(req, res) {
           to: process.env.OWNER_EMAIL || 'hello@handyandfriend.com'
         });
 
-        // Best-effort Telegram delivery (serverless-safe with timeout)
-        await notifyViaTelegramBestEffort({ ...leadData, leadId });
+        // Best-effort Telegram delivery (throttled)
+        const canAlertSg = await checkOwnerAlertThrottle(leadId).catch(() => true);
+        if (canAlertSg) {
+          await notifyViaTelegramBestEffort({ ...leadData, leadId });
+          markOwnerAlerted(leadId).catch(() => {});
+        }
 
         return res.status(200).json({ success: true, mode: 'sendgrid', leadId });
       }
@@ -517,8 +525,12 @@ export default async function handler(req, res) {
   console.log('[DEMO_MODE] No email API configured. Lead logged only.');
   console.log('[DEMO_LEAD]', JSON.stringify(leadData, null, 2));
 
-  // Best-effort Telegram delivery even in demo mode
-  await notifyViaTelegramBestEffort({ ...leadData, leadId });
+  // Best-effort Telegram delivery even in demo mode (throttled)
+  const canAlertDemo = await checkOwnerAlertThrottle(leadId).catch(() => true);
+  if (canAlertDemo) {
+    await notifyViaTelegramBestEffort({ ...leadData, leadId });
+    markOwnerAlerted(leadId).catch(() => {});
+  }
 
   return res.status(200).json({
     success: true,

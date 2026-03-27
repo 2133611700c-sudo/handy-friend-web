@@ -1992,10 +1992,11 @@ function handleSmsCapture(e) {
   const calcResAmt = document.getElementById('resAmt')?.innerText || 'N/A';
 
   // Send SMS via backend API
-  fetch('/api/send-sms', {
+  fetch('/api/notify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      type: 'sms',
       phone: phone,
       estimate: calcResAmt,
       timestamp: new Date().toISOString(),
