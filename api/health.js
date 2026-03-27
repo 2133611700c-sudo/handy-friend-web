@@ -732,6 +732,7 @@ async function outboxHealth(req, res) {
     slo_breached:    sloBreached,
     dlq_alert:       dlqBreached,
     queue_depth:     queueDepth,
+    dlq_total:       dlqTotal,
     oldest_pending_sec: oldestPendingSec,
     metrics:         metricsRows,
     pipeline_invariants: invariantRows,

@@ -12,7 +12,7 @@
 const { saveLeadContext } = require('./_lib/lead-context-store.js');
 const { restInsert, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
-const { createOrMergeLead, processInbound, transitionLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
+const { createOrMergeLead, processInbound, transitionLead, logEvent: pipelineLogEvent, enqueueOutboundJob } = require('../lib/lead-pipeline.js');
 const { normalizeAttribution, buildSourceDetails } = require('../lib/attribution.js');
 const { createEnvelope } = require('../lib/inbound-envelope.js');
 
@@ -422,112 +422,57 @@ export default async function handler(req, res) {
 </html>
   `.trim();
 
-  // === SEND EMAIL ===
+  // === SEND NOTIFICATIONS VIA OUTBOX (durable delivery) ===
+  // Owner Telegram alert already enqueued via processInbound → outbox.
+  // Owner email and customer auto-responder also go through outbox for retry/DLQ.
 
-  // OPTION 1: Resend API (recommended, free 3000/month)
-  if (process.env.RESEND_API_KEY) {
-    try {
-      const resendPayload = {
-        from: 'Handy & Friend Leads <leads@handyandfriend.com>',
-        to: [process.env.OWNER_EMAIL || 'hello@handyandfriend.com'],
-        subject: subjectLine,
-        html: emailHtml
-      };
-      if (email) resendPayload.reply_to = email;
+  const safePhoneDigits = String(phone || '').replace(/\D/g, '');
 
-      const resendRes = await fetch('https://api.resend.com/emails', {
+  // Owner email via outbox (retries 5× with backoff)
+  await enqueueOutboundJob('resend_owner', leadId, {
+    subject: subjectLine,
+    html: emailHtml,
+    reply_to: email || undefined,
+    lead_id: leadId,
+    phone: safePhoneDigits,
+    service_type: service
+  }, `owner_email:${leadId}`).catch(err => {
+    console.warn('[OUTBOX_OWNER_EMAIL_ENQUEUE_FAIL]', err.message);
+    // Direct fallback if outbox table not available
+    if (process.env.RESEND_API_KEY) {
+      fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(resendPayload)
-      });
-
-      if (!resendRes.ok) {
-        const err = await resendRes.json().catch(() => ({}));
-        console.error('[RESEND_ERROR]', resendRes.status, err);
-        await safeLogLeadEvent(leadId, 'owner_email_failed', {
-          provider: 'resend',
-          status: resendRes.status,
-          error: String(err?.message || JSON.stringify(err) || 'resend_error').slice(0, 300)
-        });
-        // Fall through to demo mode
-      } else {
-        const data = await resendRes.json();
-        console.log('[RESEND_SENT]', data.id, 'to', process.env.OWNER_EMAIL || 'hello@handyandfriend.com');
-        await safeLogLeadEvent(leadId, 'owner_email_sent', {
-          provider: 'resend',
-          email_id: data?.id || null,
-          to: process.env.OWNER_EMAIL || 'hello@handyandfriend.com'
-        });
-
-        // Auto-responder: send confirmation to the customer (async, non-blocking)
-        if (email) {
-          sendCustomerAutoResponder({ leadId, name, email, service, phone }).catch(err =>
-            console.error('[AUTO_RESPONDER_ERROR]', err.message)
-          );
-        }
-
-        // Owner Telegram alert already enqueued via processInbound → outbox
-        return res.status(200).json({
-          success: true,
-          mode: 'resend',
-          leadId
-        });
-      }
-    } catch (err) {
-      console.error('[RESEND_FETCH_ERROR]', err.message);
-      // Fall through to demo mode
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'Handy & Friend Leads <leads@handyandfriend.com>',
+          to: [process.env.OWNER_EMAIL || 'hello@handyandfriend.com'],
+          subject: subjectLine,
+          html: emailHtml,
+          ...(email ? { reply_to: email } : {})
+        })
+      }).catch(() => {});
     }
+  });
+
+  // Customer auto-responder via outbox (retries 3× with backoff)
+  if (email) {
+    const customerHtml = buildCustomerAutoResponderHtml({ name, service, phone });
+    await enqueueOutboundJob('resend_customer', leadId, {
+      to: email,
+      subject: `Your request has been received — Handy & Friend`,
+      html: customerHtml,
+      lead_id: leadId
+    }, `customer_email:${leadId}`).catch(err => {
+      console.warn('[OUTBOX_CUSTOMER_EMAIL_ENQUEUE_FAIL]', err.message);
+      // Direct fallback
+      sendCustomerAutoResponder({ leadId, name, email, service, phone }).catch(() => {});
+    });
   }
 
-  // OPTION 2: Sendgrid fallback
-  if (process.env.SENDGRID_API_KEY) {
-    try {
-      const sendgridPayload = {
-        personalizations: [{ to: [{ email: process.env.OWNER_EMAIL || 'hello@handyandfriend.com' }] }],
-        from: { email: 'leads@handyandfriend.com', name: 'Handy & Friend Leads' },
-        subject: subjectLine,
-        content: [{ type: 'text/html', value: emailHtml }]
-      };
-      if (email) sendgridPayload.reply_to = { email };
-
-      const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(sendgridPayload)
-      });
-
-      if (sgRes.ok || sgRes.status === 202) {
-        console.log('[SENDGRID_SENT] to', process.env.OWNER_EMAIL || 'hello@handyandfriend.com');
-        await safeLogLeadEvent(leadId, 'owner_email_sent', {
-          provider: 'sendgrid',
-          status: sgRes.status,
-          to: process.env.OWNER_EMAIL || 'hello@handyandfriend.com'
-        });
-
-        // Owner Telegram alert already enqueued via processInbound → outbox
-        return res.status(200).json({ success: true, mode: 'sendgrid', leadId });
-      }
-    } catch (err) {
-      console.error('[SENDGRID_ERROR]', err.message);
-    }
-  }
-
-  // OPTION 3: Demo mode (no email sent — lead logged to console only)
-  console.log('[DEMO_MODE] No email API configured. Lead logged only.');
-  console.log('[DEMO_LEAD]', JSON.stringify(leadData, null, 2));
-
-  // Owner Telegram alert already enqueued via processInbound → outbox
   return res.status(200).json({
     success: true,
-    mode: 'demo',
-    leadId,
-    note: 'Lead captured. Add RESEND_API_KEY to Vercel env vars to receive email notifications.'
+    mode: 'outbox',
+    leadId
   });
 }
 
@@ -566,111 +511,8 @@ async function safeLogLeadEvent(leadId, eventType, eventPayload) {
   }
 }
 
-/**
- * Send lead notification via Telegram Bot (fire and forget, doesn't block main response)
- */
-function notifyViaTelegram(leadData) {
-  if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID) {
-    return Promise.resolve(false); // Silently skip if not configured
-  }
-
-  const { leadId, name, phone, email, zip, preferredContact, service, message, attachments, attribution } = leadData;
-  const safePhoneDigits = String(phone || '').replace(/\D/g, '');
-  const displayName = String(name || 'there').trim() || 'there';
-  const quickReplyEn = `Hi ${displayName}, thanks for your request. We can help with ${String(service || 'your project')}. What time works best today for a quick confirmation call?`;
-  const quickReplyRu = `Здравствуйте, ${displayName}! Спасибо за заявку. Поможем с работой: ${String(service || 'ваш проект')}. Подскажите, когда вам удобно коротко созвониться сегодня?`;
-
-  const waText = encodeURIComponent(quickReplyEn);
-  const panelBase = `https://handyandfriend.com/r/one-tap/?leadId=${encodeURIComponent(String(leadId || ''))}&phone=${encodeURIComponent(safePhoneDigits)}`;
-  const panelEn = `${panelBase}&lang=en&action=reply_en&text=${encodeURIComponent(quickReplyEn)}`;
-  const panelRu = `${panelBase}&lang=ru&action=reply_ru&text=${encodeURIComponent(quickReplyRu)}`;
-
-  const telegramMessage = `🔧 <b>NEW LEAD!</b>
-
-<b>Name:</b> ${escapeHtml(name)}
-<b>Phone:</b> <code>${escapeHtml(phone)}</code>
-<b>Email:</b> ${escapeHtml(email || 'Not provided')}
-<b>Service:</b> ${escapeHtml(service || 'General')}
-<b>ZIP:</b> ${escapeHtml(zip || '—')}
-<b>Preferred Contact:</b> ${escapeHtml(preferredContact || 'call')}
-<b>Photos:</b> ${Array.isArray(attachments) ? attachments.length : 0}
-
-<b>Message:</b>
-${escapeHtml(message || '—')}
-
-<b>Attribution:</b> <code>${escapeHtml((attribution && attribution.summary) || leadData.source || 'direct')}</code>
-
-<b>Lead ID:</b> <code>${leadId}</code>
-<b>CTX:</b> <code>CTX:${leadId}:${phone}</code>
-<b>Time:</b> ${new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })} PT
-
-<b>Quick Reply EN:</b>
-<code>${escapeHtml(quickReplyEn)}</code>
-
-<b>Quick Reply RU:</b>
-<code>${escapeHtml(quickReplyRu)}</code>
-
-${email ? `<a href="tel:${phone}">📞 Call</a> • <a href="https://wa.me/${safePhoneDigits}">💬 WhatsApp</a> • <a href="mailto:${email}">📧 Email</a>` : `<a href="tel:${phone}">📞 Call</a> • <a href="https://wa.me/${safePhoneDigits}">💬 WhatsApp</a>`}`;
-
-  // URL-only buttons work without Telegram webhook handling.
-  const keyboardRows = [];
-  keyboardRows.push([
-    { text: '📝 Reply EN', url: panelEn },
-    { text: '📝 Reply RU', url: panelRu }
-  ]);
-  if (safePhoneDigits) {
-    keyboardRows.push([{ text: '💬 WhatsApp', url: `https://wa.me/${safePhoneDigits}?text=${waText}` }]);
-  }
-  keyboardRows.push([{ text: '🧩 One-Tap Panel', url: panelEn }]);
-
-  const replyMarkup = { inline_keyboard: keyboardRows };
-
-  // Non-blocking fetch to Telegram API
-  return fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: process.env.TELEGRAM_CHAT_ID,
-      text: telegramMessage,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
-      reply_markup: replyMarkup
-    })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.ok) {
-        console.log('[TELEGRAM_SENT]', data.result.message_id, 'Lead ID:', leadId);
-        logLeadEvent(leadId, 'telegram_sent', {
-          message_id: data.result.message_id || null
-        }).catch(() => {});
-      } else {
-        console.error('[TELEGRAM_ERROR]', data.error_code, data.description);
-        logLeadEvent(leadId, 'telegram_failed', {
-          error_code: data.error_code || null,
-          description: String(data.description || '').slice(0, 240)
-        }).catch(() => {});
-      }
-    })
-    .catch(err => {
-      console.error('[TELEGRAM_FETCH_ERROR]', err.message);
-      logLeadEvent(leadId, 'telegram_failed', {
-        error: String(err.message || 'telegram_fetch_error').slice(0, 240)
-      }).catch(() => {});
-      return false;
-    });
-}
-
-async function notifyViaTelegramBestEffort(leadData, timeoutMs = 1500) {
-  try {
-    await Promise.race([
-      Promise.resolve(notifyViaTelegram(leadData)),
-      new Promise((resolve) => setTimeout(resolve, timeoutMs))
-    ]);
-  } catch (err) {
-    console.error('[TELEGRAM_BEST_EFFORT_ERROR]', err.message || err);
-  }
-}
+// Legacy notifyViaTelegram/notifyViaTelegramBestEffort removed — owner Telegram alerts
+// are now enqueued via processInbound → enqueueSideEffects → outbox (with DLQ + retry).
 
 function escapeHtml(text) {
   if (!text) return '';
@@ -702,6 +544,44 @@ function buildFullSummary({ service, message, preferredContact, source }) {
  * Send auto-responder email to the customer after form submission.
  * Only works when RESEND_API_KEY is configured and domain is verified.
  */
+function buildCustomerAutoResponderHtml({ name, service, phone }) {
+  const firstName = String(name || 'there').split(' ')[0] || 'there';
+  const serviceName = String(service || 'your project');
+  const safePhone = String(phone || '').replace(/\D/g, '');
+  return `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f9f7f4">
+  <div style="background:#1a237e;padding:24px;border-radius:12px 12px 0 0;text-align:center">
+    <h1 style="color:#fff;margin:0;font-size:22px">🔧 Handy & Friend</h1>
+    <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:14px">Los Angeles Handyman Service</p>
+  </div>
+  <div style="background:#fff;padding:28px;border:1px solid #e5dfd5">
+    <h2 style="color:#1a237e;font-size:20px;margin-top:0">Got your request, ${escapeHtml(firstName)}!</h2>
+    <p style="font-size:15px;line-height:1.6;color:#333">
+      Thanks for reaching out about <strong>${escapeHtml(serviceName)}</strong>.
+      We've received your details and typically respond within <strong>1 hour</strong> during business hours (8am-8pm PT, Mon-Sat).
+    </p>
+    <h3 style="color:#1a237e;font-size:16px">What happens next:</h3>
+    <ol style="font-size:14px;line-height:1.8;color:#333;padding-left:20px">
+      <li>We review your project details</li>
+      <li>You'll get a call or text with your exact price — no surprises</li>
+      <li>We schedule at your convenience (same-day often available)</li>
+    </ol>
+    <div style="text-align:center;margin:24px 0">
+      <a href="tel:+12133611700" style="display:inline-block;background:#1a237e;color:#fff;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:15px">📞 Call Us: (213) 361-1700</a>
+    </div>
+    ${safePhone ? `<p style="text-align:center;font-size:14px;color:#666">Or text/WhatsApp: <a href="https://wa.me/12133611700" style="color:#1a237e">(213) 361-1700</a></p>` : ''}
+    <hr style="border:none;border-top:1px solid #e5dfd5;margin:24px 0">
+    <p style="font-size:13px;color:#888;text-align:center">
+      Insured · Upfront pricing · No hidden fees<br>
+      <a href="https://handyandfriend.com" style="color:#1a237e">handyandfriend.com</a>
+    </p>
+  </div>
+</body></html>`;
+}
+
+// Legacy direct sender — used as fallback when outbox table unavailable
 async function sendCustomerAutoResponder({ leadId, name, email, service, phone }) {
   if (!process.env.RESEND_API_KEY || !email) return;
 

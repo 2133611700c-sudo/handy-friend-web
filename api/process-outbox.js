@@ -31,6 +31,34 @@ const CHANNEL_BACKOFF = {
   ga4_event:       [0,  60],
 };
 
+// ─── Circuit Breaker (per batch, in-memory) ──────────────────────────────────
+// If a provider fails consecutively within a batch, skip remaining jobs of that
+// type to avoid hammering a broken provider and wasting retry budgets.
+const CIRCUIT_BREAKER_THRESHOLD = 3; // consecutive failures before tripping
+const circuitState = {};             // { [jobType]: { failures: N, tripped: bool } }
+
+function circuitTripped(jobType) {
+  return circuitState[jobType]?.tripped === true;
+}
+
+function circuitRecordSuccess(jobType) {
+  circuitState[jobType] = { failures: 0, tripped: false };
+}
+
+function circuitRecordFailure(jobType) {
+  const s = circuitState[jobType] || { failures: 0, tripped: false };
+  s.failures++;
+  if (s.failures >= CIRCUIT_BREAKER_THRESHOLD) {
+    s.tripped = true;
+    console.warn(`[OUTBOX] ⚡ Circuit breaker TRIPPED for ${jobType} after ${s.failures} consecutive failures`);
+  }
+  circuitState[jobType] = s;
+}
+
+function resetCircuitBreakers() {
+  for (const k of Object.keys(circuitState)) delete circuitState[k];
+}
+
 function getBackoffSeconds(jobType, attemptCount) {
   const tiers = CHANNEL_BACKOFF[jobType] || [0, 120, 480];
   const base  = tiers[Math.min(attemptCount, tiers.length - 1)] ?? 480;
@@ -102,18 +130,26 @@ async function handler(req, res) {
 
   // ── Normal batch processing ───────────────────────────────────────────────
   const startedAt = Date.now();
-  const result = { processed: 0, sent: 0, retried: 0, dlq: 0, errors: [] };
+  const result = { processed: 0, sent: 0, retried: 0, dlq: 0, circuit_skipped: 0, errors: [] };
+  resetCircuitBreakers();
 
   try {
     const jobs = await claimJobs();
     result.processed = jobs.length;
 
     for (const job of jobs) {
+      // Circuit breaker: skip jobs for providers that are failing consecutively
+      if (circuitTripped(job.job_type)) {
+        result.circuit_skipped++;
+        // Don't count as failure — lock will expire via TTL, job retried next run
+        continue;
+      }
       try {
         await processJob(job, result);
       } catch (err) {
         result.errors.push({ job_id: job.id, error: String(err.message || err).slice(0, 200) });
         console.error(`[OUTBOX] Unhandled error on job ${job.id}:`, err.message);
+        circuitRecordFailure(job.job_type);
         // Lock will expire via TTL recovery in next outbox_claim_batch call
       }
     }
@@ -123,7 +159,30 @@ async function handler(req, res) {
   }
 
   const duration = Date.now() - startedAt;
-  console.log(`[OUTBOX] Done in ${duration}ms:`, JSON.stringify(result));
+
+  // Structured JSON log for observability
+  console.log(JSON.stringify({
+    component: 'outbox_worker',
+    worker_id: WORKER_ID,
+    duration_ms: duration,
+    processed: result.processed,
+    sent: result.sent,
+    retried: result.retried,
+    dlq: result.dlq,
+    circuit_skipped: result.circuit_skipped,
+    errors_count: result.errors.length,
+    timestamp: new Date().toISOString()
+  }));
+
+  // SLO alert: if DLQ spiked during this batch, notify owner immediately
+  if (result.dlq > 0) {
+    const alertText = `⚠️ <b>Outbox DLQ Alert</b>\n\n` +
+      `${result.dlq} job(s) moved to DLQ this batch.\n` +
+      `Sent: ${result.sent} | Retried: ${result.retried} | Circuit-skipped: ${result.circuit_skipped}\n` +
+      `Duration: ${duration}ms\n\n` +
+      `Replay: <code>POST /api/process-outbox?action=replay_dlq&amp;job_id=JOB_ID</code>`;
+    deliverTelegramOwner({ text: alertText }).catch(() => {});
+  }
 
   // Auto-trigger reports when invoked by Vercel cron (cron fires at 04:00 UTC = 9pm PT)
   if (isVercelCron) {
@@ -191,7 +250,7 @@ async function gatherDailyStats(config) {
   const today   = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // YYYY-MM-DD
   const todayTs = `${today}T00:00:00-07:00`;
 
-  const [leadsToday, allActive, hunterPosts, hunterScans] = await Promise.all([
+  const [leadsToday, allActive, hunterPosts, hunterScans, sloRows] = await Promise.all([
     sbGet(config, 'leads', {
       select:     'id,source,stage,status,full_name,phone,service_type,intent_level,needs_owner_now',
       created_at: `gte.${todayTs}`,
@@ -210,7 +269,8 @@ async function gatherDailyStats(config) {
     sbGet(config, 'hunter_scans', {
       select:    'posts_found,posts_responded,tokens_used',
       scan_time: `gte.${todayTs}`
-    })
+    }),
+    sbGet(config, 'v_outbox_slo', { limit: '1' }).catch(() => [])
   ]);
 
   const bySource = {};
@@ -235,6 +295,8 @@ async function gatherDailyStats(config) {
   const hunterResponded = hunterPosts.length;
   const hunterTokens    = hunterScans.reduce((n, r) => n + (r.tokens_used    || 0), 0);
 
+  const slo = Array.isArray(sloRows) && sloRows.length ? sloRows[0] : null;
+
   return {
     date:                today,
     total_new:           leadsToday.length,
@@ -242,7 +304,12 @@ async function gatherDailyStats(config) {
     by_status:           byStatus,
     hunter:              { scans: hunterScans.length, found: hunterFound, responded: hunterResponded, cost: (hunterTokens * 0.000001).toFixed(4) },
     hot_leads:           hotLeads,
-    response_median_min: null
+    response_median_min: null,
+    queue_health:        slo ? {
+      queue_depth: slo.queue_depth || 0,
+      dlq_total:   slo.dlq_total || 0,
+      slo_ok:      slo.oldest_pending_sec == null || slo.oldest_pending_sec <= 900
+    } : null
   };
 }
 
@@ -355,8 +422,10 @@ async function processJob(job, result) {
       p_provider_message_id: deliveryResult.provider_message_id || null
     });
     result.sent++;
+    circuitRecordSuccess(job.job_type);
     console.log(`[OUTBOX] ✓ Job ${job.id} sent${deliveryResult.provider_message_id ? ` (pid: ${deliveryResult.provider_message_id})` : ''}`);
   } else {
+    circuitRecordFailure(job.job_type);
     const backoffSec = getBackoffSeconds(job.job_type, attemptCount);
     const errorCode  = String(deliveryResult.error_code || 'DELIVERY_FAILED').slice(0, 50);
     const errorText  = String(deliveryResult.error || 'unknown').slice(0, 500);

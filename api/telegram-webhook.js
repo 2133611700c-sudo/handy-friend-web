@@ -24,6 +24,23 @@ const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const OWNER_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 const TG_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
 
+// ─── Webhook dedup (Telegram can re-deliver on timeout) ─────────────────────
+const TG_SEEN_TTL = 5 * 60 * 1000;
+const tgSeen = globalThis.__HF_TG_WEBHOOK_SEEN || new Map();
+globalThis.__HF_TG_WEBHOOK_SEEN = tgSeen;
+
+function isTgDuplicate(updateId) {
+  if (!updateId) return false;
+  const key = `tg:${updateId}`;
+  const now = Date.now();
+  if (tgSeen.size > 500) {
+    for (const [k, t] of tgSeen) { if (now - t > TG_SEEN_TTL) tgSeen.delete(k); }
+  }
+  if (tgSeen.has(key)) return true;
+  tgSeen.set(key, now);
+  return false;
+}
+
 const START_MSG = `👋 Hey! I'm Alex — your Handy & Friend assistant in Los Angeles.
 
 I can help you with:
@@ -80,6 +97,10 @@ async function handler(req, res) {
   }
 
   const updateId = String(update.update_id || '');
+  if (isTgDuplicate(updateId)) {
+    console.log('[TG_WEBHOOK] Dedup skip:', updateId);
+    return res.status(200).json({ ok: true });
+  }
   try {
     await processMessage({ chatId, fromId, userName, text, updateId });
   } catch (err) {
