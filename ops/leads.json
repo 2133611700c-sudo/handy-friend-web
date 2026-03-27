@@ -1,0 +1,10 @@
+{
+  "last_scan": null,
+  "daily_counts": {
+    "nextdoor_responded": 0,
+    "nextdoor_limit": 25,
+    "facebook_responded": 0,
+    "facebook_limit": 15
+  },
+  "leads": []
+}
