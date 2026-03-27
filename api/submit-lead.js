@@ -12,8 +12,9 @@
 const { saveLeadContext } = require('./_lib/lead-context-store.js');
 const { restInsert, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
-const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent, checkOwnerAlertThrottle, markOwnerAlerted } = require('../lib/lead-pipeline.js');
+const { createOrMergeLead, processInbound, transitionLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
 const { normalizeAttribution, buildSourceDetails } = require('../lib/attribution.js');
+const { createEnvelope } = require('../lib/inbound-envelope.js');
 
 const SUBMIT_DEDUP_TTL_MS = 10 * 60 * 1000;
 const SUBMIT_RESULT_CACHE = globalThis.__HF_SUBMIT_RESULT_CACHE || new Map();
@@ -270,21 +271,29 @@ export default async function handler(req, res) {
   console.log('[LEAD_CAPTURED]', JSON.stringify(leadData));
   saveLeadContext(leadData).catch((err) => console.error('[LEAD_CONTEXT_ASYNC_ERROR]', err.message));
 
-  // Create or merge lead using smart dedup
+  // Create or merge lead using Unified Lead System v3 (multi-key dedupe + side effects via outbox)
+  const envelope = createEnvelope({
+    source:        'website',
+    lead_phone:    phone,
+    lead_email:    email,
+    lead_name:     name,
+    raw_text:      String(message || service || ''),
+    service_hint:  service,
+    attachments:   safeAttachments.map(a => ({ type: a.type, url: a.name })),
+    attribution: {
+      utm_source:   normalizedAttribution.utmSource   || req.query?.utm_source,
+      utm_medium:   normalizedAttribution.utmMedium   || req.query?.utm_medium,
+      utm_campaign: normalizedAttribution.utmCampaign || req.query?.utm_campaign,
+      gclid:        normalizedAttribution.gclid,
+      referrer:     req.headers.referer || ''
+    },
+    meta: { zip, preferred_contact: preferredContact, lang }
+  });
+
   let pipelineResult;
   let leadId;
   try {
-    pipelineResult = await createOrMergeLead({
-      name: String(name || 'Unknown'),
-      email,
-      phone,
-      service_type: String(service || 'Not specified'),
-      message: String(message || 'No message'),
-      source: leadData.source,
-      source_details: leadData.sourceDetails,
-      zip: String(zip || ''),
-      ga4ClientId: normalizedAttribution.ga4ClientId || ''
-    });
+    pipelineResult = await processInbound(envelope);
     leadId = pipelineResult.id;
 
     // Log to pipeline event trail (includes requestId for idempotency tracking)
@@ -460,13 +469,7 @@ export default async function handler(req, res) {
           );
         }
 
-        // Best-effort Telegram delivery (serverless-safe, throttled once per hour)
-        const canAlertResend = await checkOwnerAlertThrottle(leadId).catch(() => true);
-        if (canAlertResend) {
-          await notifyViaTelegramBestEffort({ ...leadData, leadId });
-          markOwnerAlerted(leadId).catch(() => {});
-        }
-
+        // Owner Telegram alert already enqueued via processInbound → outbox
         return res.status(200).json({
           success: true,
           mode: 'resend',
@@ -507,13 +510,7 @@ export default async function handler(req, res) {
           to: process.env.OWNER_EMAIL || 'hello@handyandfriend.com'
         });
 
-        // Best-effort Telegram delivery (throttled)
-        const canAlertSg = await checkOwnerAlertThrottle(leadId).catch(() => true);
-        if (canAlertSg) {
-          await notifyViaTelegramBestEffort({ ...leadData, leadId });
-          markOwnerAlerted(leadId).catch(() => {});
-        }
-
+        // Owner Telegram alert already enqueued via processInbound → outbox
         return res.status(200).json({ success: true, mode: 'sendgrid', leadId });
       }
     } catch (err) {
@@ -525,13 +522,7 @@ export default async function handler(req, res) {
   console.log('[DEMO_MODE] No email API configured. Lead logged only.');
   console.log('[DEMO_LEAD]', JSON.stringify(leadData, null, 2));
 
-  // Best-effort Telegram delivery even in demo mode (throttled)
-  const canAlertDemo = await checkOwnerAlertThrottle(leadId).catch(() => true);
-  if (canAlertDemo) {
-    await notifyViaTelegramBestEffort({ ...leadData, leadId });
-    markOwnerAlerted(leadId).catch(() => {});
-  }
-
+  // Owner Telegram alert already enqueued via processInbound → outbox
   return res.status(200).json({
     success: true,
     mode: 'demo',

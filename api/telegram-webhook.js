@@ -14,10 +14,11 @@
  */
 
 const { callAlex } = require('../lib/ai-fallback.js');
-const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent, checkOwnerAlertThrottle, markOwnerAlerted, enqueueOutboundJob, drainOutboxInline } = require('../lib/lead-pipeline.js');
+const { processInbound, transitionLead, logEvent: pipelineLogEvent, drainOutboxInline } = require('../lib/lead-pipeline.js');
 const { buildSystemPrompt, getGuardMode } = require('../lib/alex-one-truth.js');
 const { getPricingSourceVersion } = require('../lib/price-registry.js');
 const { inferServiceType: inferServiceTypeShared } = require('../lib/alex-policy-engine.js');
+const { createEnvelope } = require('../lib/inbound-envelope.js');
 
 const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const OWNER_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
@@ -137,62 +138,28 @@ async function processMessage({ chatId, fromId, userName, text, updateId }) {
   // Drain outbox inline (compensates for Hobby plan daily-only cron)
   drainOutboxInline();
 
-  // Lead capture
+  // Lead capture — Unified Lead System v3: envelope → processInbound → outbox
   const lead = inferLead(messages, userName);
   if (lead) {
     try {
-      const created = await createOrMergeLead({
-        name: lead.name || userName,
-        phone: lead.phone || '',
-        email: lead.email || '',
-        service_type: lead.service_type || '',
-        message: lead.problem_description || text,
-        source: 'telegram',
-        session_id: sessionId,
-        telegram_user_id: fromId ? Number(fromId) : undefined,
-        source_message_id: updateId ? `tg_${updateId}` : `tg_${chatId}_${Date.now()}`
+      const tgEnvelope = createEnvelope({
+        source:            'telegram',
+        source_user_id:    String(fromId || chatId),
+        source_message_id: updateId ? `tg_${updateId}` : `tg_${chatId}_${Date.now()}`,
+        source_thread_id:  sessionId,
+        lead_phone:        lead.phone  || '',
+        lead_email:        lead.email  || '',
+        lead_name:         lead.name   || userName || '',
+        raw_text:          lead.problem_description || text,
+        service_hint:      lead.service_type || '',
+        meta:              { chat_id: chatId, from_id: fromId, session_id: sessionId, pricing_version: getPricingSourceVersion() }
       });
 
-      await pipelineLogEvent(created.id, 'telegram_capture', {
-        source: 'telegram',
-        chat_id: chatId,
-        from_id: fromId,
-        session_id: sessionId,
-        correlation_id: `tg:${sessionId}`,
-        idempotency_key: `tg_capture:${sessionId}:${created.id}`,
-        pricing_source_version: getPricingSourceVersion()
-      }).catch(() => {});
+      const created = await processInbound(tgEnvelope);
 
       await transitionLead(created.id, 'contacted', {
         contacted_at: new Date().toISOString()
       }).catch(() => {});
-
-      // Enqueue owner notification via outbox (guaranteed delivery, throttled)
-      const canAlert = await checkOwnerAlertThrottle(created.id).catch(() => true);
-      if (canAlert) {
-        const esc = s => String(s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
-        const ownerText = [
-          `🤖 <b>New Telegram Lead</b>`,
-          `👤 ${esc(created.full_name || userName)}`,
-          created.phone ? `📞 ${esc(created.phone)}` : null,
-          `🔧 ${esc(lead.service_type || 'unknown')}`,
-          `💬 ${esc(text.substring(0, 120))}`,
-          `🆔 chat_id: <code>${chatId}</code>`,
-          `🔗 Session: tg_${chatId}`
-        ].filter(Boolean).join('\n');
-
-        enqueueOutboundJob('telegram_owner', created.id, { text: ownerText },
-          `tg_owner_alert:${created.id}:${Math.floor(Date.now() / 3600000)}`
-        ).then(() => markOwnerAlerted(created.id).catch(() => {}))
-          .catch(() => {
-            // Fallback to direct send if outbox unavailable
-            notifyOwner({ lead: created, userName, chatId, text, service: lead.service_type })
-              .then(() => markOwnerAlerted(created.id).catch(() => {}))
-              .catch(() => {});
-          });
-      } else {
-        console.log(`[TG_WEBHOOK] Owner alert throttled for lead: ${created.id}`);
-      }
     } catch (err) {
       console.error('[TG_WEBHOOK] Lead capture error:', err?.message);
     }

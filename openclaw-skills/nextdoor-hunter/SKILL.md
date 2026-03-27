@@ -28,12 +28,9 @@ If RED → skip post entirely. Do NOT comment.
 
 ## DEDUP RULES
 
-1. Read `ops/leads.json` before posting
-2. Check if `post_url` already exists in leads.json
-3. If YES → SKIP (do not respond)
-4. If NO → proceed with response
-5. After posting → immediately write entry to `ops/leads.json`
-6. Check `author_name` + `author_area` for repeat posters (avoid responding to same person twice within 7 days)
+1. Dedup is handled server-side by `/api/hunter-lead` — if `post_url` was already submitted, API returns `{"status":"skip","reason":"already_responded"}` → do NOT comment
+2. After posting a comment → immediately POST to `/api/hunter-lead` (see Phase 4)
+3. Check `author_name` + `author_area` for repeat posters (avoid responding to same person twice within 7 days) — local check only, no file needed
 
 ## Schedule
 Run every 2 hours: 8am, 10am, 12pm, 2pm, 4pm, 6pm, 8pm PT
@@ -111,9 +108,25 @@ For each filtered post (HOT first):
 2. Paste prepared response text
 3. Click Post/Submit
 4. Wait for confirmation that comment appeared
-5. Record in ops/leads.json: URL, time, template used, author info, service, scope (GREEN/YELLOW)
+5. POST to `https://handyandfriend.com/api/hunter-lead` with JSON body:
+   ```json
+   {
+     "platform": "nextdoor",
+     "post_url": "<full post URL>",
+     "author_name": "<name>",
+     "author_area": "<neighborhood>",
+     "post_text": "<first 300 chars of post>",
+     "service_detected": "<service type>",
+     "scope": "GREEN",
+     "our_response": "<text of our comment>",
+     "template_used": <1-5>,
+     "comments_count": <N>
+   }
+   ```
+   API returns `{"status":"ok","post_id":"...","priority":"hot|warm|cool"}` — Telegram alert fires automatically.
+   If API returns `{"status":"skip"}` → post was already recorded, no action needed.
 
-## Phase 5: Alert via Telegram
+## Phase 5: Summary Alert
 
 After scan completes, send summary to Telegram (use telegram-alerts skill):
 
