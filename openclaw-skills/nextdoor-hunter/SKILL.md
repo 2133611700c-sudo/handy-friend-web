@@ -33,19 +33,24 @@ If RED → skip post entirely. Do NOT comment.
 3. Check `author_name` + `author_area` for repeat posters (avoid responding to same person twice within 7 days) — local check only, no file needed
 
 ## Schedule
-Run every 2 hours: 8am, 10am, 12pm, 2pm, 4pm, 6pm, 8pm PT
-Skip 12pm-1pm (lunch break)
-Sunday: only 8am + 6pm scans
+Run EVERY HOUR: 7am through 9pm PT (15 scans/day)
+Sunday: every 2 hours (8 scans/day)
 
 ## Phase 1: Search
 
 1. Open nextdoor.com (must be logged in via saved cookies)
-2. Search using keyword sets (rotate — use 1-2 sets per scan):
-   - Set A: "handyman", "need handyman", "referral"
-   - Set B: "TV mounting", "furniture assembly"
-   - Set C: "painter", "cabinet painting", "flooring"
-   - Set D: "plumber", "electrician", "home repair"
-   - Set E: "install", "fix my", "broken"
+2. Search using keyword sets (rotate — use 2-3 sets per scan, cover all within 3 scans):
+   - Set A: "handyman", "need handyman", "looking for handyman"
+   - Set B: "TV mounting", "mount my TV", "hang TV"
+   - Set C: "cabinet painting", "paint cabinets", "kitchen refresh"
+   - Set D: "interior painting", "need painter", "paint my house"
+   - Set E: "flooring", "install floor", "LVP", "laminate"
+   - Set F: "furniture assembly", "IKEA", "assemble"
+   - Set G: "plumber", "leaking", "faucet", "toilet"
+   - Set H: "electrician", "outlet", "light fixture", "switch"
+   - Set I: "drywall", "hole in wall", "patch wall"
+   - Set J: "install", "fix my", "broken", "need someone to"
+   - Set K: "home repair", "home improvement", "renovation"
 3. Filter by LA service area neighborhoods
 4. Filter by date: only posts < 7 days old
 

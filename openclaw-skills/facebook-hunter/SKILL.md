@@ -33,8 +33,8 @@ If RED → skip post entirely. Do NOT comment.
 3. Check `author_name` + `author_area` for repeat posters (avoid responding to same person twice within 7 days) — local check only, no file needed
 
 ## Schedule
-Run every 3 hours: 9am, 12pm, 3pm, 6pm, 9pm PT
-Sunday: only 9am + 6pm scans
+Run EVERY HOUR: 7am through 9pm PT (same cron as Nextdoor)
+Sunday: every 2 hours
 
 ## Phase 1: Search
 
@@ -47,14 +47,19 @@ Sunday: only 9am + 6pm scans
    - Set E: "fix", "broken", "need help with"
 3. Filter by date: only posts < 7 days old
 
-### Facebook Groups to Monitor
-1. LA Home Improvement & Repair
-2. Los Angeles Home Owners
-3. Hollywood Neighbors
-4. WeHo Community
-5. Santa Monica Community
-6. Beverly Hills Residents
+### Facebook Groups to Monitor (Priority Order)
+1. HANDYMAN SERVICES NEEDED (82K) — facebook.com/groups/955093931316242/
+2. Contractors and Referrals in LA (9.3K) — facebook.com/groups/161114600631631/
+3. Contractors & Home Improvement Referrals (41.7K) — facebook.com/groups/2218167675118358/
+4. Los Angeles (150K) — facebook.com/groups/WestLAArea/
+5. DIY Home Projects (Remodeling) — facebook.com/groups/393485987507324/
+6. Valley Village/Studio City/NoHo/Sherman Oaks — facebook.com/groups/ValleyNews/
+7. Los Angeles Buy Sell Trade — facebook.com/groups/497594043696041/
+8. New to Los Angeles — facebook.com/groups/2936630739944731/
+9. Culver City Freeforall — facebook.com/groups/ccfreeforall/
+10. Handyman in LA (948) — search result group
 
+Scan top 5 every run. Scan 6-10 once daily.
 New group discovery: once per week search "handyman los angeles" in Facebook Groups. Join max 3 new groups per week from Handy & Friend page.
 
 ## Phase 2: Filter Each Post
