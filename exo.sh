@@ -164,7 +164,7 @@ cmd_leads() {
     scan)
       log "Starting manual lead scan..."
       if [ -x "$OPENCLAW_CMD" ]; then
-        $OPENCLAW_CMD agent --message "Run nextdoor-hunter and facebook-hunter skills NOW. Follow all rules in openclaw-skills/nextdoor-hunter/SKILL.md and openclaw-skills/facebook-hunter/SKILL.md. Send results to Telegram." 2>/dev/null
+        $OPENCLAW_CMD agent --agent main --message "Run nextdoor-hunter and facebook-hunter skills NOW. Follow all rules in openclaw-skills/nextdoor-hunter/SKILL.md and openclaw-skills/facebook-hunter/SKILL.md. Send results to Telegram." 2>&1 | tail -5
         log "Scan initiated"
       else
         err "OpenClaw not available"
