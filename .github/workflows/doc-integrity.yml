@@ -1,0 +1,29 @@
+name: Document Integrity
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  doc-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq ruby
+
+      - name: Run document integrity check
+        run: |
+          bash scripts/check-doc-integrity.sh .
