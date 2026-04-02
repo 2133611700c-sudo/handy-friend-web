@@ -119,6 +119,32 @@ async function queryView(view, query = '') {
   return res.json();
 }
 
+async function queryTable(table, query = '') {
+  const url = `${ENV.SUPABASE_URL}/rest/v1/${table}${query ? '?' + query : ''}`;
+  const res = await fetchWithRetry(url, {
+    method: 'GET',
+    headers: { ...sbHeaders(), Accept: 'application/json', Prefer: 'return=representation' },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Table ${table} failed: ${res.status} ${text}`);
+  }
+  return res.json();
+}
+
+async function queryTableAll(table, query = '', { pageSize = 1000, maxPages = 20 } = {}) {
+  const out = [];
+  for (let page = 0; page < maxPages; page++) {
+    const sep = query ? '&' : '';
+    const pageQuery = `${query}${sep}limit=${pageSize}&offset=${page * pageSize}`;
+    const rows = await queryTable(table, pageQuery);
+    if (!Array.isArray(rows) || rows.length === 0) break;
+    out.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return out;
+}
+
 function defaultDashboardStats(days = 30) {
   return {
     days,
@@ -159,23 +185,237 @@ async function safeFetch(name, fn, fallback) {
   }
 }
 
+function toNum(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function toDateOrNull(v) {
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function isBetween(d, since, until = new Date()) {
+  return d && d >= since && d < until;
+}
+
+function round1(n) {
+  return Math.round(n * 10) / 10;
+}
+
+function aggregateCounts(items, keyFn) {
+  const map = {};
+  for (const it of items) {
+    const k = keyFn(it) || 'unknown';
+    map[k] = (map[k] || 0) + 1;
+  }
+  return map;
+}
+
+function getFirstContactMap(leadEvents) {
+  const allowed = new Set(['owner_email_sent', 'telegram_sent', 'status_contacted', 'stage_contacted']);
+  const first = new Map();
+  for (const e of leadEvents) {
+    if (!allowed.has(e.event_type)) continue;
+    const id = String(e.lead_id ?? '');
+    if (!id) continue;
+    const at = toDateOrNull(e.created_at);
+    if (!at) continue;
+    const prev = first.get(id);
+    if (!prev || at < prev.at) first.set(id, { at, method: e.event_type, source: 'lead_events' });
+  }
+  return first;
+}
+
+function buildPeriodStats(days, all) {
+  const nowTs = new Date();
+  const since = new Date(nowTs.getTime() - days * 24 * 60 * 60 * 1000);
+  const prevSince = new Date(since.getTime() - days * 24 * 60 * 60 * 1000);
+
+  const leadsAll = all.leads || [];
+  const jobsAll = all.jobs || [];
+  const expensesAll = all.expenses || [];
+  const reviewsAll = all.reviews || [];
+  const convAll = all.conversations || [];
+  const firstContact = all.firstContact || new Map();
+
+  const leadsIn = leadsAll.filter(l => {
+    const d = toDateOrNull(l.created_at);
+    return d && isBetween(d, since, nowTs);
+  });
+  const leadsPrev = leadsAll.filter(l => {
+    const d = toDateOrNull(l.created_at);
+    return d && isBetween(d, prevSince, since);
+  });
+
+  const prodIn = leadsIn.filter(l => l.is_test !== true);
+  const prodPrev = leadsPrev.filter(l => l.is_test !== true);
+  const testIn = leadsIn.filter(l => l.is_test === true);
+
+  const revenue = leadsAll
+    .filter(l => l.is_test !== true && l.outcome === 'won' && isBetween(toDateOrNull(l.closed_at), since, nowTs))
+    .reduce((s, l) => s + toNum(l.won_amount), 0);
+  const revenuePrev = leadsAll
+    .filter(l => l.is_test !== true && l.outcome === 'won' && isBetween(toDateOrNull(l.closed_at), prevSince, since))
+    .reduce((s, l) => s + toNum(l.won_amount), 0);
+
+  const wonDeals = leadsAll.filter(l => l.is_test !== true && l.outcome === 'won' && isBetween(toDateOrNull(l.closed_at), since, nowTs));
+  const avgDealSize = wonDeals.length ? round1(wonDeals.reduce((s, l) => s + toNum(l.won_amount), 0) / wonDeals.length) : 0;
+
+  const pipelineValue = leadsAll
+    .filter(l => l.is_test !== true && ['quoted', 'qualified'].includes(String(l.stage || '')) && toNum(l.quoted_amount) > 0)
+    .reduce((s, l) => s + toNum(l.quoted_amount), 0);
+
+  const sinceDate = since.toISOString().slice(0, 10);
+  const jobsCompleted = jobsAll.filter(j => j.status === 'completed' && j.completed_date && String(j.completed_date) >= sinceDate);
+  const jobsRevenue = jobsCompleted.reduce((s, j) => s + toNum(j.total_amount), 0);
+  const avgJobRatingRows = jobsCompleted.filter(j => j.rating != null);
+  const avgJobRating = avgJobRatingRows.length
+    ? round1(avgJobRatingRows.reduce((s, j) => s + toNum(j.rating), 0) / avgJobRatingRows.length)
+    : null;
+
+  const expensesTotal = expensesAll
+    .filter(e => isBetween(toDateOrNull(e.created_at), since, nowTs))
+    .reduce((s, e) => s + toNum(e.amount), 0);
+
+  const staleLeads = leadsAll.filter(l => {
+    const d = toDateOrNull(l.created_at);
+    return l.is_test !== true && l.stage === 'new' && d && d < new Date(nowTs.getTime() - 24 * 60 * 60 * 1000);
+  }).length;
+
+  const responseValues = [];
+  for (const l of prodIn) {
+    const created = toDateOrNull(l.created_at);
+    if (!created) continue;
+    const fc = firstContact.get(String(l.id));
+    if (!fc || !fc.at) continue;
+    const min = Math.round((fc.at - created) / 60000);
+    if (Number.isFinite(min) && min >= 0) responseValues.push(min);
+  }
+  const avgResponse = responseValues.length ? Math.round(responseValues.reduce((a, b) => a + b, 0) / responseValues.length) : null;
+
+  const reviewsIn = reviewsAll.filter(r => isBetween(toDateOrNull(r.created_at), since, nowTs));
+  const rated = reviewsIn.filter(r => r.rating != null);
+  const reviewsAvg = rated.length ? round1(rated.reduce((s, r) => s + toNum(r.rating), 0) / rated.length) : null;
+
+  const convIn = convAll.filter(c => isBetween(toDateOrNull(c.created_at), since, nowTs));
+  const chatSessions = new Set(convIn.map(c => c.session_id).filter(Boolean)).size;
+  const chatMessages = convIn.filter(c => c.message_role === 'user').length;
+  const fbSessions = new Set(convIn.map(c => c.session_id).filter(s => String(s || '').startsWith('fb_'))).size;
+
+  const wonIn = prodIn.filter(l => l.outcome === 'won').length;
+  const conversionRate = prodIn.length ? round1((wonIn * 100) / prodIn.length) : 0;
+  const testPct = leadsIn.length ? round1((testIn.length * 100) / leadsIn.length) : 0;
+
+  return {
+    period_days: days,
+    generated_at: nowTs.toISOString(),
+    leads_total: prodIn.length,
+    leads_prev: prodPrev.length,
+    leads_by_source: aggregateCounts(prodIn, l => l.source),
+    leads_by_service: aggregateCounts(prodIn, l => l.service_type),
+    leads_by_stage: aggregateCounts(prodIn, l => l.stage),
+    revenue,
+    revenue_prev: revenuePrev,
+    avg_deal_size: avgDealSize,
+    pipeline_value: pipelineValue,
+    jobs_completed: jobsCompleted.length,
+    jobs_revenue: jobsRevenue,
+    avg_job_rating: reviewsAvg ?? avgJobRating,
+    avg_response_min: avgResponse,
+    conversion_rate: conversionRate,
+    expenses_total: expensesTotal,
+    profit: jobsRevenue - expensesTotal,
+    stale_leads: staleLeads,
+    test_leads_total: testIn.length,
+    test_leads_pct: testPct,
+    reviews_total: reviewsIn.length,
+    reviews_avg_rating: reviewsAvg,
+    unresponded_reviews: reviewsIn.filter(r => r.responded === false).length,
+    chat_sessions: chatSessions,
+    chat_messages: chatMessages,
+    fb_sessions: fbSessions,
+  };
+}
+
+async function deriveKPIFromTables() {
+  const [leads, jobs, expenses, reviews, conversations, leadEvents] = await Promise.all([
+    safeFetch('Table leads', () => queryTableAll('leads', 'select=id,created_at,source,service_type,stage,outcome,won_amount,quoted_amount,closed_at,is_test,response_time_min,contacted_at,session_id'), []),
+    safeFetch('Table jobs', () => queryTableAll('jobs', 'select=id,completed_date,status,total_amount,rating,created_at'), []),
+    safeFetch('Table expenses', () => queryTableAll('expenses', 'select=id,created_at,amount'), []),
+    safeFetch('Table reviews', () => queryTableAll('reviews', 'select=id,created_at,rating,responded'), []),
+    safeFetch('Table ai_conversations', () => queryTableAll('ai_conversations', 'select=id,session_id,message_role,created_at'), []),
+    safeFetch('Table lead_events', () => queryTableAll('lead_events', 'select=lead_id,event_type,created_at&order=created_at.desc'), []),
+  ]);
+
+  const firstContact = getFirstContactMap(leadEvents);
+  const all = { leads, jobs, expenses, reviews, conversations, firstContact };
+  const d7 = buildPeriodStats(7, all);
+  const d30 = buildPeriodStats(30, all);
+
+  const prodLeadsAll = leads.filter(l => l.is_test !== true);
+  const stageCounts = aggregateCounts(prodLeadsAll, l => l.stage);
+  const totalAll = prodLeadsAll.length || 1;
+  const funnel = Object.entries(stageCounts).map(([stage, cnt]) => ({
+    stage,
+    cnt,
+    pct: round1((cnt * 100) / totalAll),
+  })).sort((a, b) => b.cnt - a.cnt);
+
+  const recent = [...prodLeadsAll]
+    .sort((a, b) => (toDateOrNull(b.created_at)?.getTime() || 0) - (toDateOrNull(a.created_at)?.getTime() || 0))
+    .slice(0, 10)
+    .map(l => {
+      const created = toDateOrNull(l.created_at);
+      const fc = firstContact.get(String(l.id));
+      const slaMin = created && fc?.at ? Math.max(0, Math.round((fc.at - created) / 60000)) : null;
+      return {
+        id: l.id,
+        sla_min: slaMin,
+        sla_source: fc ? 'lead_events' : 'none',
+        first_contact_method: fc?.method || null,
+      };
+    });
+
+  return { d7, d30, funnel, sla: recent };
+}
+
 // ── Data Fetching ────────────────────────────────────────────
 
 async function fetchAllKPI() {
   log('info', 'Fetching KPI data from Supabase...');
 
-  // Parallel fetch with graceful degradation:
-  // report should still deliver even if one view/RPC is temporarily broken.
-  const [d7, d30, funnel, sla] = await Promise.all([
-    safeFetch('RPC dashboard_stats(7d)', () => callRPC('dashboard_stats', { p_days: 7 }), defaultDashboardStats(7)),
-    safeFetch('RPC dashboard_stats(30d)', () => callRPC('dashboard_stats', { p_days: 30 }), defaultDashboardStats(30)),
-    safeFetch('View v_lead_funnel', () => queryView('v_lead_funnel'), []),
-    safeFetch(
-      'View v_response_sla',
-      () => queryView('v_response_sla', 'select=id,sla_min,sla_source,first_contact_method&order=created_at.desc&limit=10'),
-      []
-    ),
+  const [d7rpc, d30rpc, funnelView, slaView] = await Promise.allSettled([
+    callRPC('dashboard_stats', { p_days: 7 }),
+    callRPC('dashboard_stats', { p_days: 30 }),
+    queryView('v_lead_funnel'),
+    queryView('v_response_sla', 'select=id,sla_min,sla_source,first_contact_method&order=created_at.desc&limit=10'),
   ]);
+
+  const needDerived =
+    d7rpc.status === 'rejected' ||
+    d30rpc.status === 'rejected' ||
+    funnelView.status === 'rejected' ||
+    slaView.status === 'rejected';
+
+  const derived = needDerived
+    ? await safeFetch(
+        'Derived KPI (tables fallback)',
+        () => deriveKPIFromTables(),
+        { d7: defaultDashboardStats(7), d30: defaultDashboardStats(30), funnel: [], sla: [] }
+      )
+    : null;
+
+  if (d7rpc.status === 'rejected') log('warn', 'RPC dashboard_stats(7d) failed', { error: d7rpc.reason?.message || String(d7rpc.reason) });
+  if (d30rpc.status === 'rejected') log('warn', 'RPC dashboard_stats(30d) failed', { error: d30rpc.reason?.message || String(d30rpc.reason) });
+  if (funnelView.status === 'rejected') log('warn', 'View v_lead_funnel failed', { error: funnelView.reason?.message || String(funnelView.reason) });
+  if (slaView.status === 'rejected') log('warn', 'View v_response_sla failed', { error: slaView.reason?.message || String(slaView.reason) });
+
+  const d7 = d7rpc.status === 'fulfilled' ? d7rpc.value : (derived?.d7 || defaultDashboardStats(7));
+  const d30 = d30rpc.status === 'fulfilled' ? d30rpc.value : (derived?.d30 || defaultDashboardStats(30));
+  const funnel = funnelView.status === 'fulfilled' ? funnelView.value : (derived?.funnel || []);
+  const sla = slaView.status === 'fulfilled' ? slaView.value : (derived?.sla || []);
 
   log('info', 'KPI data fetched', { d7_leads: d7.leads_total, d30_leads: d30.leads_total });
   return { d7, d30, funnel, sla };
