@@ -58,13 +58,14 @@ function log(level, msg, data) {
 }
 
 async function fetchWithRetry(url, opts, { retries = 3, backoffMs = 1000, timeoutMs = 15000 } = {}) {
+  const shouldRetryHttp = (status) => status === 408 || status === 429 || status >= 500;
   for (let attempt = 1; attempt <= retries; attempt++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const res = await fetch(url, { ...opts, signal: controller.signal });
       clearTimeout(timer);
-      if (!res.ok && attempt < retries) {
+      if (!res.ok && attempt < retries && shouldRetryHttp(res.status)) {
         log('warn', `HTTP ${res.status} on attempt ${attempt}, retrying...`, { url });
         await sleep(backoffMs * attempt);
         continue;
@@ -407,10 +408,27 @@ async function fetchAllKPI() {
       )
     : null;
 
-  if (d7rpc.status === 'rejected') log('warn', 'RPC dashboard_stats(7d) failed', { error: d7rpc.reason?.message || String(d7rpc.reason) });
-  if (d30rpc.status === 'rejected') log('warn', 'RPC dashboard_stats(30d) failed', { error: d30rpc.reason?.message || String(d30rpc.reason) });
-  if (funnelView.status === 'rejected') log('warn', 'View v_lead_funnel failed', { error: funnelView.reason?.message || String(funnelView.reason) });
-  if (slaView.status === 'rejected') log('warn', 'View v_response_sla failed', { error: slaView.reason?.message || String(slaView.reason) });
+  const isKnownSchemaDrift = (reason) => {
+    const msg = String(reason?.message || reason || '');
+    return msg.includes('operator does not exist: uuid = text') || msg.includes('"code":"42883"');
+  };
+
+  if (d7rpc.status === 'rejected') {
+    const m = d7rpc.reason?.message || String(d7rpc.reason);
+    log(isKnownSchemaDrift(d7rpc.reason) ? 'log' : 'warn', 'RPC dashboard_stats(7d) failed', { error: m });
+  }
+  if (d30rpc.status === 'rejected') {
+    const m = d30rpc.reason?.message || String(d30rpc.reason);
+    log(isKnownSchemaDrift(d30rpc.reason) ? 'log' : 'warn', 'RPC dashboard_stats(30d) failed', { error: m });
+  }
+  if (funnelView.status === 'rejected') {
+    const m = funnelView.reason?.message || String(funnelView.reason);
+    log(isKnownSchemaDrift(funnelView.reason) ? 'log' : 'warn', 'View v_lead_funnel failed', { error: m });
+  }
+  if (slaView.status === 'rejected') {
+    const m = slaView.reason?.message || String(slaView.reason);
+    log(isKnownSchemaDrift(slaView.reason) ? 'log' : 'warn', 'View v_response_sla failed', { error: m });
+  }
 
   const d7 = d7rpc.status === 'fulfilled' ? d7rpc.value : (derived?.d7 || defaultDashboardStats(7));
   const d30 = d30rpc.status === 'fulfilled' ? d30rpc.value : (derived?.d30 || defaultDashboardStats(30));
