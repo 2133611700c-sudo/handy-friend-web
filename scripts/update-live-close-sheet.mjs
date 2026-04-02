@@ -31,6 +31,14 @@ async function sbGet(pathname) {
   return text ? JSON.parse(text) : [];
 }
 
+async function trySbGet(pathname) {
+  try {
+    return await sbGet(pathname);
+  } catch (err) {
+    return { __error: err };
+  }
+}
+
 function check(v) {
   return v ? '✅' : '⬜';
 }
@@ -103,9 +111,33 @@ async function run() {
   const today = new Date().toISOString().slice(0, 10);
   const targetFile = path.join(process.cwd(), 'ops', 'reports', `${today}-live-close-sheet.md`);
 
-  const leads = await sbGet(
+  // Backward/forward schema compatibility:
+  // 1) preferred: leads.source
+  // 2) legacy: leads.platform
+  // 3) fallback: no source field
+  let leadsRes = await trySbGet(
     'leads?select=id,full_name,phone,email,service_type,stage,outcome,created_at,updated_at,source,is_test,lost_reason&is_test=eq.false&order=updated_at.desc&limit=300'
   );
+  if (leadsRes?.__error) {
+    const m1 = String(leadsRes.__error.message || '');
+    const missingSource = m1.includes('42703') || /source/i.test(m1);
+    if (!missingSource) throw leadsRes.__error;
+    leadsRes = await trySbGet(
+      'leads?select=id,full_name,phone,email,service_type,stage,outcome,created_at,updated_at,platform,is_test,lost_reason&is_test=eq.false&order=updated_at.desc&limit=300'
+    );
+    if (leadsRes?.__error) {
+      const m2 = String(leadsRes.__error.message || '');
+      const missingPlatform = m2.includes('42703') || /platform/i.test(m2);
+      if (!missingPlatform) throw leadsRes.__error;
+      leadsRes = await sbGet(
+        'leads?select=id,full_name,phone,email,service_type,stage,outcome,created_at,updated_at,is_test,lost_reason&is_test=eq.false&order=updated_at.desc&limit=300'
+      );
+    }
+  }
+  const leads = (Array.isArray(leadsRes) ? leadsRes : []).map((lead) => ({
+    ...lead,
+    source: lead.source || lead.platform || 'unknown',
+  }));
   let events = [];
   try {
     // Legacy schema
@@ -136,14 +168,16 @@ async function run() {
 
   const byLead = new Map();
   for (const ev of events) {
-    if (!byLead.has(ev.lead_id)) byLead.set(ev.lead_id, []);
-    byLead.get(ev.lead_id).push(ev);
+    const key = String(ev.lead_id || '');
+    if (!key) continue;
+    if (!byLead.has(key)) byLead.set(key, []);
+    byLead.get(key).push(ev);
   }
 
   const openLeads = leads.filter(isOpenLead);
   const rankedOpenLeads = openLeads
     .map((lead) => {
-      const evs = byLead.get(lead.id) || [];
+      const evs = byLead.get(String(lead.id)) || [];
       const hasContact = evs.some((ev) => CONTACT_EVENT_TYPES.has(ev.event_type));
       const hasQuote = evs.some((ev) => ev.event_type === 'quote_sent');
       const ageH = leadAgeHours(lead.created_at);
@@ -161,7 +195,7 @@ async function run() {
     .map((lead) => {
       const stage = String(lead.stage || '').toLowerCase();
       const outcome = String(lead.outcome || '').toLowerCase();
-      const evs = byLead.get(lead.id) || [];
+      const evs = byLead.get(String(lead.id)) || [];
       const hasReviewRequest = evs.some((ev) => REVIEW_EVENT_TYPES.has(ev.event_type));
       const closedLike = stage === 'closed' || outcome === 'won';
       return { lead, closedLike, hasReviewRequest, ts: new Date(lead.updated_at || lead.created_at).getTime() || 0 };
@@ -200,7 +234,7 @@ Just reply here or call/text (213) 361-1700 for a free estimate!
   let outcomeSetTs = '';
 
   if (activeLead) {
-    const evs = byLead.get(activeLead.id) || [];
+    const evs = byLead.get(String(activeLead.id)) || [];
     const findType = (types) => evs.find((e) => types.includes(e.event_type));
 
     const sentEvent = findType(['reactivation_message_sent', 'status_contacted', 'stage_contacted', 'manual_whatsapp_sent']);
@@ -232,7 +266,7 @@ Just reply here or call/text (213) 361-1700 for a free estimate!
   }
 
   const reviewRows = reviewTargets.map((lead, idx) => {
-    const evs = byLead.get(lead.id) || [];
+    const evs = byLead.get(String(lead.id)) || [];
     const sent = evs.find((e) => e.event_type === 'review_request_sent');
     const sentTs = sent ? fmtTs(sent.created_at) : '';
     return {
