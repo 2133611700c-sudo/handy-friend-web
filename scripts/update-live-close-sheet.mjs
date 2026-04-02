@@ -106,9 +106,33 @@ async function run() {
   const leads = await sbGet(
     'leads?select=id,full_name,phone,email,service_type,stage,outcome,created_at,updated_at,source,is_test,lost_reason&is_test=eq.false&order=updated_at.desc&limit=300'
   );
-  const events = await sbGet(
-    'lead_events?select=lead_id,event_type,created_at,event_payload&order=created_at.desc&limit=4000'
-  );
+  let events = [];
+  try {
+    // Legacy schema
+    events = await sbGet(
+      'lead_events?select=lead_id,event_type,created_at,event_payload&order=created_at.desc&limit=4000'
+    );
+  } catch (e1) {
+    const msg1 = String(e1?.message || '');
+    if (!msg1.includes('42703') && !msg1.toLowerCase().includes('event_payload')) {
+      throw e1;
+    }
+    // New schema compatibility: event_data replaces event_payload
+    try {
+      events = await sbGet(
+        'lead_events?select=lead_id,event_type,created_at,event_data&order=created_at.desc&limit=4000'
+      );
+    } catch (e2) {
+      const msg2 = String(e2?.message || '');
+      // Last resort for environments where lead_events was rotated.
+      if (!msg2.includes('PGRST205') && !msg2.toLowerCase().includes('lead_events')) {
+        throw e2;
+      }
+      events = await sbGet(
+        'lead_events_old?select=lead_id,event_type,created_at,event_data,event_payload&order=created_at.desc&limit=4000'
+      );
+    }
+  }
 
   const byLead = new Map();
   for (const ev of events) {
