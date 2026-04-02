@@ -119,17 +119,62 @@ async function queryView(view, query = '') {
   return res.json();
 }
 
+function defaultDashboardStats(days = 30) {
+  return {
+    days,
+    leads_total: 0,
+    leads_prev: 0,
+    conversion_rate: 0,
+    revenue: 0,
+    revenue_prev: 0,
+    profit: 0,
+    expenses_total: 0,
+    avg_response_min: null,
+    jobs_completed: 0,
+    avg_job_rating: null,
+    avg_deal_size: 0,
+    pipeline_value: 0,
+    jobs_revenue: 0,
+    stale_leads: 0,
+    test_leads_total: 0,
+    test_leads_pct: 0,
+    reviews_total: 0,
+    reviews_avg_rating: null,
+    unresponded_reviews: 0,
+    chat_sessions: 0,
+    chat_messages: 0,
+    fb_sessions: 0,
+    leads_by_source: {},
+    leads_by_stage: {},
+    leads_by_service: {},
+  };
+}
+
+async function safeFetch(name, fn, fallback) {
+  try {
+    return await fn();
+  } catch (err) {
+    log('warn', `${name} unavailable, using fallback`, { error: err.message });
+    return fallback;
+  }
+}
+
 // ── Data Fetching ────────────────────────────────────────────
 
 async function fetchAllKPI() {
   log('info', 'Fetching KPI data from Supabase...');
 
-  // Parallel fetch: 7d, 30d dashboard + funnel + SLA view
+  // Parallel fetch with graceful degradation:
+  // report should still deliver even if one view/RPC is temporarily broken.
   const [d7, d30, funnel, sla] = await Promise.all([
-    callRPC('dashboard_stats', { p_days: 7 }),
-    callRPC('dashboard_stats', { p_days: 30 }),
-    queryView('v_lead_funnel'),
-    queryView('v_response_sla', 'select=id,sla_min,sla_source,first_contact_method&order=created_at.desc&limit=10'),
+    safeFetch('RPC dashboard_stats(7d)', () => callRPC('dashboard_stats', { p_days: 7 }), defaultDashboardStats(7)),
+    safeFetch('RPC dashboard_stats(30d)', () => callRPC('dashboard_stats', { p_days: 30 }), defaultDashboardStats(30)),
+    safeFetch('View v_lead_funnel', () => queryView('v_lead_funnel'), []),
+    safeFetch(
+      'View v_response_sla',
+      () => queryView('v_response_sla', 'select=id,sla_min,sla_source,first_contact_method&order=created_at.desc&limit=10'),
+      []
+    ),
   ]);
 
   log('info', 'KPI data fetched', { d7_leads: d7.leads_total, d30_leads: d30.leads_total });
