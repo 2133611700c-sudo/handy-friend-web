@@ -419,39 +419,75 @@ def write_incident_supabase(base_url: str, api_key: str, summary: str, details: 
     headers = supabase_headers(api_key)
     headers["Prefer"] = "return=minimal"
 
-    payloads = [
-        {
-            "incident_type": "OPENCLAW_HEALTH",
-            "severity": sev,
-            "status": "open" if sev in {"SEV2", "SEV3"} else "resolved",
-            "summary": summary,
-            "details": details,
-            "source": "openclaw_health_monitor",
-            "occurred_at": utc_now().isoformat(),
-        },
-        {
-            "type": "OPENCLAW_HEALTH",
-            "severity": sev,
-            "status": "open" if sev in {"SEV2", "SEV3"} else "resolved",
-            "message": summary,
-            "payload": details,
-            "created_at": utc_now().isoformat(),
-        },
-        {
-            "title": "OPENCLAW_HEALTH",
-            "severity": sev,
-            "body": summary,
-            "meta": details,
-        },
-    ]
+    now_iso = utc_now().isoformat()
+    payload: Dict[str, Any] = {
+        "incident_type": "OPENCLAW_HEALTH",
+        "issue_type": "SOURCE_HEALTH",
+        "type": "OPENCLAW_HEALTH",
+        "category": "OPENCLAW_HEALTH",
+        "system_name": "openclaw_health_monitor",
+        "source": "openclaw_health_monitor",
+        "severity": sev,
+        "status": "open" if sev in {"SEV2", "SEV3"} else "resolved",
+        "summary": summary,
+        "message": summary,
+        "title": "OPENCLAW_HEALTH",
+        "body": summary,
+        "details": details,
+        "payload": details,
+        "meta": details,
+        "context": details,
+        "data": details,
+        "occurred_at": now_iso,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+    }
 
-    for p in payloads:
-        code, resp = http_json("POST", endpoint, headers=headers, body=p)
+    # Schema-adaptive insert:
+    # If PostgREST reports a missing column (PGRST204), drop it and retry.
+    for _ in range(25):
+        code, resp = http_json("POST", endpoint, headers=headers, body=payload)
         if code in (200, 201, 204):
             return True, f"incident written (HTTP {code})"
-        log_line(log_path, f"ops_incidents insert attempt failed code={code} resp={resp}")
 
-    return False, "ops_incidents unavailable or schema mismatch"
+        if (
+            code == 400
+            and isinstance(resp, dict)
+            and resp.get("code") == "PGRST204"
+            and isinstance(resp.get("message"), str)
+            and "Could not find the '" in resp["message"]
+        ):
+            msg = resp["message"]
+            try:
+                missing = msg.split("Could not find the '", 1)[1].split("'", 1)[0]
+            except Exception:
+                missing = ""
+            if missing and missing in payload:
+                payload.pop(missing, None)
+                log_line(log_path, f"ops_incidents retry without column={missing}")
+                if not payload:
+                    return False, "ops_incidents payload exhausted after schema retries"
+                continue
+
+        # Some schemas store severity as integer (e.g. 3/2/0) rather than text (SEV3/SEV2/INFO).
+        if (
+            code == 400
+            and isinstance(resp, dict)
+            and resp.get("code") == "22P02"
+            and "severity" in payload
+            and isinstance(payload.get("severity"), str)
+            and isinstance(resp.get("message"), str)
+            and "invalid input syntax for type integer" in resp["message"]
+        ):
+            sev_map = {"SEV3": 3, "SEV2": 2, "INFO": 0}
+            payload["severity"] = sev_map.get(str(payload["severity"]), 0)
+            log_line(log_path, f"ops_incidents retry with integer severity={payload['severity']}")
+            continue
+
+        log_line(log_path, f"ops_incidents insert failed code={code} resp={resp} payload_keys={sorted(payload.keys())}")
+        return False, "ops_incidents insert failed"
+
+    return False, "ops_incidents insert retries exceeded"
 
 
 def main() -> int:

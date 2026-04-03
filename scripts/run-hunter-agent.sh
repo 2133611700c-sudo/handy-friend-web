@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="/Users/sergiikuropiatnyk/handy-friend-landing-v6"
 OPENCLAW_BIN="/opt/homebrew/bin/openclaw"
 LOG_FILE="$ROOT_DIR/ops/hunter.log"
+HUNTER_TIMEOUT_SECONDS="${HUNTER_TIMEOUT_SECONDS:-600}"
 
 AGENT_KIND="${1:-nextdoor}"
 
@@ -60,9 +61,21 @@ fi
 
 cd "$ROOT_DIR"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] START $LOCK_NAME scan (agent=$OPENCLAW_AGENT_ID)" >> "$LOG_FILE"
-"$OPENCLAW_BIN" agent --agent "$OPENCLAW_AGENT_ID" --message "$MESSAGE" >> "$LOG_FILE" 2>&1 || {
-  code=$?
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAIL $LOCK_NAME scan exit=$code" >> "$LOG_FILE"
-  exit "$code"
-}
+if command -v timeout >/dev/null 2>&1; then
+  timeout "$HUNTER_TIMEOUT_SECONDS" "$OPENCLAW_BIN" agent --agent "$OPENCLAW_AGENT_ID" --message "$MESSAGE" >> "$LOG_FILE" 2>&1 || {
+    code=$?
+    if [ "$code" -eq 124 ] || [ "$code" -eq 137 ]; then
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAIL $LOCK_NAME scan timeout=${HUNTER_TIMEOUT_SECONDS}s" >> "$LOG_FILE"
+    else
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAIL $LOCK_NAME scan exit=$code" >> "$LOG_FILE"
+    fi
+    exit "$code"
+  }
+else
+  "$OPENCLAW_BIN" agent --agent "$OPENCLAW_AGENT_ID" --message "$MESSAGE" >> "$LOG_FILE" 2>&1 || {
+    code=$?
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAIL $LOCK_NAME scan exit=$code" >> "$LOG_FILE"
+    exit "$code"
+  }
+fi
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] DONE $LOCK_NAME scan" >> "$LOG_FILE"
