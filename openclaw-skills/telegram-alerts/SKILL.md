@@ -106,7 +106,7 @@ Manual check needed: [yes/no]
 ```
 
 ### 7. Low Balance Alert
-Trigger: DeepSeek balance < $5
+Trigger: DeepSeek balance < competitive pricing
 ```
 WARNING: DeepSeek balance low
 Current: $[amount]

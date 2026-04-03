@@ -5,9 +5,10 @@ description: Scans Nextdoor for handyman service requests in LA, generates perso
 
 # Nextdoor Lead Hunter
 
-## PRICING RULE — CRITICAL
+## RESPONSE RULE
 
-NEVER quote an exact dollar amount in comments. Say "free estimate", "affordable rates", "competitive pricing", or "call for a quick quote". Exact pricing happens only on the phone or in person after seeing the job.
+NO PRICES in comments. Never use `$` or exact numbers for service cost.
+Use short conversion replies: "We can help" + website + phone.
 
 ## SCOPE FILTER
 
@@ -72,29 +73,54 @@ For each found post, check ALL conditions:
 
 For each filtered post (HOT first):
 
-1. Identify service → classify as GREEN or YELLOW
-2. Identify author name and neighborhood
-3. Select template (rotate, never repeat same template consecutively)
-4. If YELLOW service → use YELLOW template instead
+1. **Detect service using detectService(post_text)** → returns `service_id` (e.g., "tv_mounting") or null
+2. Classify scope (GREEN or YELLOW) using SCOPE FILTER
+3. Identify author name and neighborhood
+4. **Select template:**
+   - If `service_id` found → use service-specific template from `nextdoor-templates.js`
+   - Else if YELLOW scope → use YELLOW template
+   - Else (GREEN scope, no service detected) → rotate generic GREEN template (1-5)
 5. Personalize with: author name, specific service, neighborhood
-6. Verify: response < 80 words, no spam words, no ALL CAPS, NO DOLLAR AMOUNTS
+6. Verify: response < 140 chars (Nextdoor limit), no spam, no ALL CAPS
 
-### Response Templates (rotate 1-5)
+### SERVICE-SPECIFIC TEMPLATES (13 services)
+
+All service-specific templates are imported from `nextdoor-templates.js`.
+All templates must follow no-price policy and include:
+- "we can help" phrasing
+- website `handyandfriend.com`
+- phone `(213) 361-1700`
+
+### FALLBACK TEMPLATES (if service_id = null)
 
 **Template 1 — Friendly neighbor:**
-"Hi [name]! I'm Sergii, your neighbor here in [area]. I do [service] professionally — happy to come take a look and give you a free estimate. Call or text (213) 361-1700. More info at handyandfriend.com"
+"Hi [name]! I'm Sergii, your local handyman in [area]. I do [service] professionally. Professional & insured, free estimate. (213) 361-1700"
 
 **Template 2 — Competitive:**
-"Hey [name]! We handle [service] — competitive rates, professional & insured. Free estimates, same-day response. Call or text (213) 361-1700 — Sergii"
+"Hi [name]! We handle [service] with competitive rates, professional & insured. Free estimate — call (213) 361-1700"
 
 **Template 3 — Social proof:**
-"[name], I just finished a similar project nearby! Check our before/after photos at handyandfriend.com. Happy to give you a free estimate — (213) 361-1700"
+"Hi [name]! I'm Sergii — just finished a similar project nearby. [service] is exactly what we do. Free estimate! (213) 361-1700"
 
-**Template 4 — Short:**
-"Hi! I can help with this. Free estimate — just call or text (213) 361-1700. Sergii, Handy & Friend"
+**Template 4 — Short & direct:**
+"Hi [name]! I can help with [service]. Professional work, free estimate. (213) 361-1700"
 
 **Template 5 — Specific:**
-"[name], this is exactly what I do! Professional & insured, free estimates. (213) 361-1700 or handyandfriend.com — Sergii"
+"Hi [name]! This is exactly what I do. Let's discuss your [service] project. Free estimate — (213) 361-1700"
+
+## PRE-POST GATE — Run before EVERY comment
+
+Before posting ANY comment, check ALL 5 gates. If ANY fails → **DO NOT POST**, log error, send Telegram alert.
+
+| Gate | Check | Fail action |
+|------|-------|-------------|
+| 1. Service detected OR fallback | `service_id != null` OR fallback explicitly chosen | Skip post, log |
+| 2. No prices / no placeholders | Template does NOT contain "$", "competitive pricing", "{}", "undefined" | Skip post, log |
+| 3. Phone present | Text contains "(213) 361-1700" | Skip post, log |
+| 4. Char limit | `text.length <= 140` | Shorten or skip |
+| 5. Dedup passed | API returned `status != "skip"` | Skip, no comment |
+
+Only proceed to posting if all 5 pass.
 
 ## Phase 4: Post Comments
 
@@ -123,10 +149,10 @@ For each filtered post (HOT first):
      "author_name": "<name>",
      "author_area": "<neighborhood>",
      "post_text": "<first 300 chars of post>",
-     "service_detected": "<service type>",
-     "scope": "GREEN",
+     "service_detected": "<service_id from detectService()>",
+     "scope": "GREEN|YELLOW",
      "our_response": "<text of our comment>",
-     "template_used": <1-5>,
+     "template_used": "<service_id if service-specific, OR 1-5 if fallback>",
      "comments_count": <N>
    }
    ```
@@ -173,7 +199,7 @@ Already responded. Call them NOW if they reply!
 - Never DM anyone first
 - Never claim licensing beyond "minor work exemption"
 - Never use: "guaranteed", "certified", "licensed contractor"
-- Never quote exact dollar amounts in comments
+- Never quote prices in comments; direct user to website for quote details
 - Always use: "Professional & Insured"
 - Phone ONLY: (213) 361-1700
 - Website ONLY: handyandfriend.com

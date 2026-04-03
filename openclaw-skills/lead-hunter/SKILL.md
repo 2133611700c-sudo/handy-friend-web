@@ -49,7 +49,8 @@ Telegram alerts fire automatically via `/api/hunter-lead` outbox pipeline.
 If urgency = today or this week — API marks priority=hot and sends URGENT Telegram alert.
 
 ## Rules
-1. READ ONLY — never post, comment, or interact on platforms
-2. Never create accounts
-3. Never use Handy & Friend name on any platform
-4. Just observe and report
+1. Nextdoor: collect leads and generate short reply drafts only.
+2. Craigslist: if quick reply is available, use short no-price reply:
+   "Hi! We can help. Please share details for a quick quote: handyandfriend.com — (213) 361-1700"
+3. Never include prices or `$` in replies.
+4. If direct posting is blocked/unavailable, switch to observe+report mode.

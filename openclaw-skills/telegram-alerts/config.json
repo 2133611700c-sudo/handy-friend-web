@@ -1,0 +1,20 @@
+{
+  "telegram": {
+    "enabled": true,
+    "token_env": "TELEGRAM_BOT_TOKEN",
+    "chat_id_env": "TELEGRAM_CHAT_ID",
+    "alerts": {
+      "hot_lead": true,
+      "scan_complete": true,
+      "daily_summary": true,
+      "weekly_report": true,
+      "errors": true
+    },
+    "quiet_hours": {
+      "start": "22:00",
+      "end": "07:00",
+      "timezone": "America/Los_Angeles",
+      "exceptions": ["hot_lead", "errors"]
+    }
+  }
+}

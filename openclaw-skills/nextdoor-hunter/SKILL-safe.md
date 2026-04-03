@@ -1,14 +1,13 @@
 ---
-name: facebook-hunter
-description: Scans Facebook groups for handyman service requests in LA, generates personalized responses with real prices, posts comments
+name: nextdoor-hunter-safe
+description: Scans Nextdoor for handyman service requests in LA, generates personalized responses WITHOUT PRICES, posts comments
 ---
 
-# Facebook Group Lead Hunter
+# Nextdoor Lead Hunter (SAFE VERSION - NO PRICES)
 
-## RESPONSE RULE
+## PRICING RULE — CRITICAL
 
-NO PRICES in comments. Never use `$` or exact numbers for service cost.
-Use short conversion replies: "We can help" + website + phone.
+**NEVER quote an exact dollar amount in comments.** Say "free estimate", "affordable rates", "competitive pricing", or "call for a quick quote". Exact pricing happens only on the phone or in person after seeing the job.
 
 ## SCOPE FILTER
 
@@ -34,33 +33,32 @@ If RED → skip post entirely. Do NOT comment.
 3. Check `author_name` + `author_area` for repeat posters (avoid responding to same person twice within 7 days) — local check only, no file needed
 
 ## Schedule
-Run EVERY HOUR: 8am through 8pm PT (12 scans/day)
-Sunday: every 2 hours (6 scans/day)
+Run EVERY HOUR: 7am through 9pm PT (15 scans/day)
+Sunday: every 2 hours (8 scans/day)
 
 ## Phase 1: Search
 
-1. Open Facebook groups (list below), sorted by Recent Posts
-2. Search each group using keyword sets (rotate):
-   - Set A: "handyman", "need handyman", "recommendation"
-   - Set B: "TV mounting", "furniture assembly", "install"
-   - Set C: "painter", "cabinet painting", "flooring"
-   - Set D: "plumber", "electrician", "home repair"
-   - Set E: "fix", "broken", "need help with"
-3. Filter by date: only posts < 7 days old
-
-### Facebook Groups to Monitor (Priority Order)
-
-1. **HANDYMAN SERVICES NEEDED** (Los Angeles) — Primary target
-2. **Contractors and Referrals in LA** — High engagement
-3. **Contractors & Home Improvement Referrals** — Active
-4. **Los Angeles Handyman Services** — Direct match
-5. **LA Home Improvement & Contractors** — Secondary
-6. **Los Angeles Contractors Network** — Backup
+1. Open nextdoor.com (must be logged in via saved cookies)
+2. Search using keyword sets (rotate — use 2-3 sets per scan, cover all within 3 scans):
+   - Set A: "handyman", "need handyman", "looking for handyman"
+   - Set B: "TV mounting", "mount my TV", "hang TV"
+   - Set C: "cabinet painting", "paint cabinets", "kitchen refresh"
+   - Set D: "interior painting", "need painter", "paint my house"
+   - Set E: "flooring", "install floor", "LVP", "laminate"
+   - Set F: "furniture assembly", "IKEA", "assemble"
+   - Set G: "plumber", "leaking", "faucet", "toilet"
+   - Set H: "electrician", "outlet", "light fixture", "switch"
+   - Set I: "drywall", "hole in wall", "patch wall"
+   - Set J: "install", "fix my", "broken", "need someone to"
+   - Set K: "home repair", "home improvement", "renovation"
+3. Filter by LA service area neighborhoods
+4. Filter by date: only posts < 7 days old
 
 ## Phase 2: Filter Each Post
 
 For each found post, check ALL conditions:
 - Post is REQUESTING a service (not offering) → skip if offering
+- Neighborhood is in our service area → skip if not
 - Service passes SCOPE FILTER (GREEN or YELLOW) → skip if RED
 - We have NOT already responded (pre-check: POST to `/api/hunter-lead` with `post_url` — if `{"status":"skip"}` → duplicate) → skip if duplicate
 - Author not already contacted in last 7 days (check author_name + author_area) → skip if repeat
@@ -70,62 +68,60 @@ For each found post, check ALL conditions:
   - WARM: posted 1-3 days ago AND < 20 comments
   - COOL: posted 3-7 days ago AND < 30 comments
 
-## Phase 3: Generate Response
+## Phase 3: Generate Response (SAFE - NO PRICES)
 
 For each filtered post (HOT first):
 
-1. **Detect service using detectService(post_text)** → returns `service_id` (e.g., "tv_mounting") or null
-2. Classify scope (GREEN or YELLOW) using SCOPE FILTER
-3. Identify author name and location
-4. **Select template:**
-   - If `service_id` found → use service-specific template from `facebook-templates.js`
-   - Else if YELLOW scope → use YELLOW template
-   - Else (GREEN scope, no service detected) → use generic GREEN fallback
-5. Personalize with: author name, specific service, location
-6. Verify: response < 80 words, no spam words, no ALL CAPS
+1. Identify service → classify as GREEN or YELLOW
+2. Identify author name and neighborhood
+3. If YELLOW service → use YELLOW template
+4. If GREEN service → use safe template from `safe-templates.js`
+5. Personalize with: author name, specific service, neighborhood
+6. Verify: response < 80 words, no spam words, no ALL CAPS, **NO DOLLAR AMOUNTS**
 
-### SERVICE-SPECIFIC TEMPLATES (use from facebook-templates.js)
+### Safe Response Templates (use from safe-templates.js)
 
-All service-specific templates are imported from `facebook-templates.js`.
-All templates must follow no-price policy and include:
-- "we can help" phrasing
-- website `handyandfriend.com`
-- phone `(213) 361-1700`
+**Cabinet Painting:**
+"Hi [name]! Cabinet painting is our specialty. Professional spray finish with premium paint included. Free estimate: (213) 361-1700"
 
-### FALLBACK TEMPLATES (if service_id = null)
+**TV Mounting:**
+"Hi [name]! TV mounting is what we do daily. Professional & insured, clean installation. Free estimate: (213) 361-1700"
 
-**Generic GREEN:**
-"Handy & Friend here! We do [service] professionally. Professional & insured, free estimates. (213) 361-1700"
+**Furniture Assembly:**
+"Hi [name]! We assemble furniture regularly - IKEA, Wayfair, all brands. Professional & insured. Free estimate: (213) 361-1700"
 
-**YELLOW:**
-"Hi [name]! That might be something I can help with — depends on the scope. Mind if I take a quick look? No charge for the estimate. (213) 361-1700 — Sergii"
+**Interior Painting:**
+"Hi [name]! We paint interiors with professional finish. Walls, ceilings, trim - we do it all. Free estimate: (213) 361-1700"
 
-## PRE-POST GATE — Run before EVERY comment
+**Flooring:**
+"Hi [name]! We install laminate/LVP flooring with professional finish. Quick turnaround. Free estimate: (213) 361-1700"
 
-Before posting ANY comment, check ALL 5 gates. If ANY fails → **DO NOT POST**, log error, send Telegram alert.
+**Plumbing:**
+"Hi [name]! We handle minor plumbing - faucets, toilets, shower heads. Professional & insured. Free estimate: (213) 361-1700"
 
-| Gate | Check | Fail action |
-|------|-------|-------------|
-| 1. Service detected OR fallback | `service_id != null` OR fallback explicitly chosen | Skip post, log |
-| 2. No prices / no placeholders | Template does NOT contain "$", "competitive pricing", "{}", "undefined" | Skip post, log |
-| 3. Phone present | Text contains "(213) 361-1700" | Skip post, log |
-| 4. Char limit | `text.length <= 140` | Shorten or skip |
-| 5. Dedup passed | API returned `status != "skip"` | Skip, no comment |
+**Electrical:**
+"Hi [name]! We do like-for-like electrical work - lights, outlets, switches. Professional & insured. Free estimate: (213) 361-1700"
 
-Only proceed to posting if all 5 pass.
+**Drywall:**
+"Hi [name]! We patch drywall holes and repair damage. Professional finish. Free estimate: (213) 361-1700"
+
+**Art/Mirror Hanging:**
+"Hi [name]! We hang art, mirrors, shelves with precision. Professional & insured. Free estimate: (213) 361-1700"
+
+**Generic (when service not detected):**
+"Hi [name]! We can help with that. Professional & insured handyman service. Free estimate: (213) 361-1700"
 
 ## Phase 4: Post Comments
 
 ### Rules
 - Start with HOT posts
 - ONE comment per post — NEVER two
-- Pause between comments: 5-8 minutes (randomized)
-- Maximum per scan: 5 responses
-- Maximum per day: 15 responses
+- Pause between comments: 3-5 minutes (randomized)
+- Maximum per scan: 8 responses
+- Maximum per day: 25 responses
 - If CAPTCHA or block detected → STOP entire scan immediately
 - Random variation: +/- 30% on all pause times
 - Rotate templates — never use same template twice in a row
-- **Post ONLY from Handy & Friend Page** — NEVER from personal profile
 
 ### Actions
 1. Click Comment on the post
@@ -137,15 +133,15 @@ Only proceed to posting if all 5 pass.
    - `x-hunter-secret: <HUNTER_API_SECRET env var>`
    ```json
    {
-     "platform": "facebook",
+     "platform": "nextdoor",
      "post_url": "<full post URL>",
      "author_name": "<name>",
-     "author_area": "<location>",
+     "author_area": "<neighborhood>",
      "post_text": "<first 300 chars of post>",
      "service_detected": "<service type>",
      "scope": "GREEN",
      "our_response": "<text of our comment>",
-     "template_used": "<service_id if service-specific, OR 'fallback_green'/'fallback_yellow'>",
+     "template_used": "safe_template",
      "comments_count": <N>
    }
    ```
@@ -158,45 +154,44 @@ After scan completes, send summary to Telegram (use telegram-alerts skill):
 
 Format:
 ```
-Facebook Hunter Scan Complete
+Lead Hunter Scan Complete (Safe Version)
 Time: [time] PT
 
-Groups scanned: [N]
 Found: [N] posts
 Responded: [N] posts
 Skipped: [N] ([reasons])
 Dedup skipped: [N]
 
 HOT LEADS:
-1. [name] — [group] — [service]
+1. [name] — [area] — [service]
    Posted [time] ago, [N] comments
-   Responded with template: [service_id or fallback]
+   Responded with safe template
    URL: [link]
 
-Daily total: [N]/15 Facebook
+Daily total: [N]/25 Nextdoor
 Next scan: [time]
 ```
 
 If HOT lead found (< 1 hour old, < 5 comments), send URGENT alert immediately:
 ```
-HOT LEAD ON FACEBOOK
-[name] — [group] — [service]
+HOT LEAD RIGHT NOW
+[name] — [area] — [service]
 Posted [X] min ago, only [Y] comments
 Already responded. Call them NOW if they reply!
 ```
 
 ## Safety Rules
 
-- Post ONLY from Handy & Friend Facebook Page
+- Post ONLY as Sergii (personal Nextdoor account)
 - Never post twice on same thread
 - Never criticize competitors
 - Never DM anyone first
 - Never claim licensing beyond "minor work exemption"
 - **NEVER use: "guaranteed", "certified", "licensed contractor"**
-- Never quote prices in comments; direct user to website for quote details
+- **NEVER quote exact dollar amounts in comments**
 - **ALWAYS use: "Professional & Insured"**
 - Phone ONLY: (213) 361-1700
 - Website ONLY: handyandfriend.com
 - If 3 CAPTCHAs in one day → stop for 24 hours + Telegram alert
 - Random delays between ALL browser actions (1-3 seconds)
-- Never scan same group twice consecutively
+- Never scan same page twice consecutively

@@ -1,14 +1,13 @@
 ---
-name: facebook-hunter
-description: Scans Facebook groups for handyman service requests in LA, generates personalized responses with real prices, posts comments
+name: facebook-hunter-safe
+description: Scans Facebook groups for handyman service requests in LA, generates personalized responses WITHOUT PRICES, posts comments
 ---
 
-# Facebook Group Lead Hunter
+# Facebook Group Lead Hunter (SAFE VERSION - NO PRICES)
 
-## RESPONSE RULE
+## PRICING RULE — CRITICAL
 
-NO PRICES in comments. Never use `$` or exact numbers for service cost.
-Use short conversion replies: "We can help" + website + phone.
+**NEVER quote an exact dollar amount in comments.** Say "free estimate", "affordable rates", "competitive pricing", or "call for a quick quote". Exact pricing happens only on the phone or in person after seeing the job.
 
 ## SCOPE FILTER
 
@@ -70,49 +69,48 @@ For each found post, check ALL conditions:
   - WARM: posted 1-3 days ago AND < 20 comments
   - COOL: posted 3-7 days ago AND < 30 comments
 
-## Phase 3: Generate Response
+## Phase 3: Generate Response (SAFE - NO PRICES)
 
 For each filtered post (HOT first):
 
-1. **Detect service using detectService(post_text)** → returns `service_id` (e.g., "tv_mounting") or null
-2. Classify scope (GREEN or YELLOW) using SCOPE FILTER
-3. Identify author name and location
-4. **Select template:**
-   - If `service_id` found → use service-specific template from `facebook-templates.js`
-   - Else if YELLOW scope → use YELLOW template
-   - Else (GREEN scope, no service detected) → use generic GREEN fallback
+1. Identify service → classify as GREEN or YELLOW
+2. Identify author name and location
+3. If YELLOW service → use YELLOW template
+4. If GREEN service → use safe template from `safe-templates.js`
 5. Personalize with: author name, specific service, location
-6. Verify: response < 80 words, no spam words, no ALL CAPS
+6. Verify: response < 80 words, no spam words, no ALL CAPS, **NO DOLLAR AMOUNTS**
 
-### SERVICE-SPECIFIC TEMPLATES (use from facebook-templates.js)
+### Safe Response Templates (use from safe-templates.js)
 
-All service-specific templates are imported from `facebook-templates.js`.
-All templates must follow no-price policy and include:
-- "we can help" phrasing
-- website `handyandfriend.com`
-- phone `(213) 361-1700`
+**Cabinet Painting:**
+"Hi! Cabinet painting is our specialty. Professional spray finish with premium paint included. Free estimate: (213) 361-1700"
 
-### FALLBACK TEMPLATES (if service_id = null)
+**TV Mounting:**
+"Hi! TV mounting is what we do daily. Professional & insured, clean installation. Free estimate: (213) 361-1700"
 
-**Generic GREEN:**
-"Handy & Friend here! We do [service] professionally. Professional & insured, free estimates. (213) 361-1700"
+**Furniture Assembly:**
+"Hi! We assemble furniture regularly - IKEA, Wayfair, all brands. Professional & insured. Free estimate: (213) 361-1700"
 
-**YELLOW:**
-"Hi [name]! That might be something I can help with — depends on the scope. Mind if I take a quick look? No charge for the estimate. (213) 361-1700 — Sergii"
+**Interior Painting:**
+"Hi! We paint interiors with professional finish. Walls, ceilings, trim - we do it all. Free estimate: (213) 361-1700"
 
-## PRE-POST GATE — Run before EVERY comment
+**Flooring:**
+"Hi! We install laminate/LVP flooring with professional finish. Quick turnaround. Free estimate: (213) 361-1700"
 
-Before posting ANY comment, check ALL 5 gates. If ANY fails → **DO NOT POST**, log error, send Telegram alert.
+**Plumbing:**
+"Hi! We handle minor plumbing - faucets, toilets, shower heads. Professional & insured. Free estimate: (213) 361-1700"
 
-| Gate | Check | Fail action |
-|------|-------|-------------|
-| 1. Service detected OR fallback | `service_id != null` OR fallback explicitly chosen | Skip post, log |
-| 2. No prices / no placeholders | Template does NOT contain "$", "competitive pricing", "{}", "undefined" | Skip post, log |
-| 3. Phone present | Text contains "(213) 361-1700" | Skip post, log |
-| 4. Char limit | `text.length <= 140` | Shorten or skip |
-| 5. Dedup passed | API returned `status != "skip"` | Skip, no comment |
+**Electrical:**
+"Hi! We do like-for-like electrical work - lights, outlets, switches. Professional & insured. Free estimate: (213) 361-1700"
 
-Only proceed to posting if all 5 pass.
+**Drywall:**
+"Hi! We patch drywall holes and repair damage. Professional finish. Free estimate: (213) 361-1700"
+
+**Art/Mirror Hanging:**
+"Hi! We hang art, mirrors, shelves with precision. Professional & insured. Free estimate: (213) 361-1700"
+
+**Generic (when service not detected):**
+"Hi! We can help with that. Professional & insured handyman service. Free estimate: (213) 361-1700"
 
 ## Phase 4: Post Comments
 
@@ -145,7 +143,7 @@ Only proceed to posting if all 5 pass.
      "service_detected": "<service type>",
      "scope": "GREEN",
      "our_response": "<text of our comment>",
-     "template_used": "<service_id if service-specific, OR 'fallback_green'/'fallback_yellow'>",
+     "template_used": "safe_template",
      "comments_count": <N>
    }
    ```
@@ -158,7 +156,7 @@ After scan completes, send summary to Telegram (use telegram-alerts skill):
 
 Format:
 ```
-Facebook Hunter Scan Complete
+Facebook Hunter Scan Complete (Safe Version)
 Time: [time] PT
 
 Groups scanned: [N]
@@ -170,7 +168,7 @@ Dedup skipped: [N]
 HOT LEADS:
 1. [name] — [group] — [service]
    Posted [time] ago, [N] comments
-   Responded with template: [service_id or fallback]
+   Responded with safe template
    URL: [link]
 
 Daily total: [N]/15 Facebook
@@ -193,7 +191,7 @@ Already responded. Call them NOW if they reply!
 - Never DM anyone first
 - Never claim licensing beyond "minor work exemption"
 - **NEVER use: "guaranteed", "certified", "licensed contractor"**
-- Never quote prices in comments; direct user to website for quote details
+- **NEVER quote exact dollar amounts in comments**
 - **ALWAYS use: "Professional & Insured"**
 - Phone ONLY: (213) 361-1700
 - Website ONLY: handyandfriend.com

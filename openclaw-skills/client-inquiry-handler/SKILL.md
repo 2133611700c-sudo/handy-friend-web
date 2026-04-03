@@ -16,7 +16,7 @@ Read prices from: ~/handy-friend-landing-v6/lib/price-registry.js
 - Phone: (213) 361-1700
 - Website: handyandfriend.com
 - Area: Los Angeles, Hollywood, West Hollywood, Beverly Hills, Santa Monica
-- Minimum service call: $150
+- Minimum service call: competitive pricing
 - Hours: Mon-Sat 8am-7pm PT
 
 ## Response Rules
