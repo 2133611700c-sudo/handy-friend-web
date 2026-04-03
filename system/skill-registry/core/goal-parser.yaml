@@ -1,0 +1,23 @@
+skill_id: goal_parser_v1
+category: core
+purpose: Parse user's goal into structured intent with task type, urgency, and constraints
+inputs:
+  - user_message: string
+  - context: object  # current project state, recent memory
+outputs:
+  - intent: string
+  - task_type: enum[research, coding, browser, media, content, publishing, qa, ops]
+  - urgency: enum[critical, high, normal, low]
+  - constraints: list[string]
+  - estimated_budget: float
+preferred_provider:
+  primary: claude_opus
+  fallback: chatgpt
+cost_policy:
+  max_tokens: 2000
+  max_attempts: 1
+risk_level: low
+requires_human_review: false
+qa_checks:
+  - intent_must_be_actionable
+  - task_type_must_match_known_categories

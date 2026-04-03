@@ -1,0 +1,81 @@
+# Skill Memory — Performance tracking for each skill
+# Updated by skill_performance_update after executions
+
+last_updated: "2026-04-01"
+
+# Format: skill_id → {executions, success_rate, avg_cost, avg_quality, notes}
+performance:
+  # Active Claude Code skills
+  lead_responder:
+    executions: 0
+    success_rate: null
+    avg_cost: null
+    status: deployed
+    location: "/Users/sergiikuropiatnyk/.claude/skills/lead-responder/"
+
+  quote_generator:
+    executions: 0
+    success_rate: null
+    avg_cost: null
+    status: deployed
+    location: "/Users/sergiikuropiatnyk/.claude/skills/quote-generator/"
+
+  social_content:
+    executions: 0
+    success_rate: null
+    avg_cost: null
+    status: deployed
+    location: "/Users/sergiikuropiatnyk/.claude/skills/social-content/"
+
+  ads_auditor:
+    executions: 0
+    success_rate: null
+    avg_cost: null
+    status: deployed
+    location: "/Users/sergiikuropiatnyk/.claude/skills/ads-auditor/"
+
+  handy_ops:
+    executions: 0
+    success_rate: null
+    avg_cost: null
+    status: deployed
+    location: "/Users/sergiikuropiatnyk/.claude/skills/handy-ops/"
+
+  # Dell background workers
+  cl_hunter_v2:
+    executions: 1
+    success_rate: 1.0
+    last_result: "79 leads"
+    status: active_on_dell
+    schedule: "every 4h"
+
+  fb_hunter_v2:
+    executions: null
+    success_rate: null
+    status: active_on_dell
+    schedule: "every 6h"
+    note: "Actually scans Telegram groups, not Facebook"
+
+  tg_legalization_scanner:
+    executions: null
+    success_rate: null
+    status: active_on_dell
+    schedule: "Monday 9AM"
+
+  tg_callback_handler:
+    executions: 0
+    status: active_on_dell
+    schedule: "always-on"
+
+# Skills defined in registry but not yet implemented
+not_yet_implemented:
+  - image_generator_router
+  - video_generator_router
+  - ad_creative_builder
+  - publish_executor
+  - provider_benchmark_runner
+  - new_feature_watcher
+  - prompt_optimizer
+  - tool_health_monitor
+  - cost_auditor
+  - session_rotator

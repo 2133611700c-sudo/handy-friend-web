@@ -1,0 +1,73 @@
+# Publishing Skills — Draft prep, formatting, approval, scheduling, UTM
+
+skills:
+  draft_preparer:
+    skill_id: draft_preparer_v1
+    purpose: Prepare content draft with all required elements before approval
+    inputs: [content, platform, media_attachments]
+    outputs: [formatted_draft, preview, checklist_passed]
+    primary: claude_opus
+    max_tokens: 2000
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+
+  channel_formatter:
+    skill_id: channel_formatter_v1
+    purpose: Format content for specific platform requirements
+    inputs: [content, platform, char_limits, image_specs]
+    outputs: [formatted_content, fits_requirements, warnings]
+    primary: claude_opus
+    secondary: deepseek
+    max_tokens: 2000
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+    platform_rules:
+      nextdoor: {max_chars: 2000, tone: neighborly}
+      facebook: {max_chars: 5000, tone: professional_friendly}
+      craigslist: {max_chars: 10000, tone: direct_no_corporate}
+      google_ads: {headline: 30, description: 90}
+
+  approval_gate:
+    skill_id: approval_gate_v1
+    purpose: Package content for human 30-second approve/reject decision
+    inputs: [content, platform, risk_level, estimated_reach]
+    outputs: [approval_package, telegram_message, approve_callback, reject_callback]
+    primary: claude_opus
+    max_tokens: 1000
+    max_cost: 0.05
+    risk_level: low
+    requires_human_review: false  # This skill CREATES the review, doesn't need review itself
+
+  post_scheduler:
+    skill_id: post_scheduler_v1
+    purpose: Schedule approved content for optimal posting times
+    inputs: [content, platform, preferred_time, timezone]
+    outputs: [scheduled_time, schedule_id, can_cancel_until]
+    primary: claude_opus
+    max_cost: 0.05
+    risk_level: medium
+    requires_human_review: true  # Scheduling = committing to publish
+
+  publish_executor:
+    skill_id: publish_executor_v1
+    purpose: Execute actual publication to platform
+    inputs: [approved_content, platform, credentials_key]
+    outputs: [published_url, post_id, timestamp]
+    primary: openclaw
+    max_cost: 0.10
+    risk_level: high
+    requires_human_review: true  # ALWAYS needs approval before publish
+    forbidden_without_approval: true
+
+  utm_tagger:
+    skill_id: utm_tagger_v1
+    purpose: Add UTM parameters to links in content
+    inputs: [links, campaign, source, medium]
+    outputs: [tagged_links, utm_params]
+    primary: claude_opus
+    max_tokens: 500
+    max_cost: 0.02
+    risk_level: low
+    requires_human_review: false

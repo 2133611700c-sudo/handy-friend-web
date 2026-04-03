@@ -1,0 +1,23 @@
+skill_id: task_decomposer_v1
+category: core
+purpose: Break a complex goal into ordered subtasks with dependencies and provider assignments
+inputs:
+  - parsed_goal: object  # output of goal_parser
+  - available_skills: list[string]
+  - budget_remaining: float
+outputs:
+  - subtasks: list[object]  # each: {id, skill_id, provider, depends_on, budget, priority}
+  - execution_plan: string  # human-readable summary
+  - total_estimated_cost: float
+preferred_provider:
+  primary: claude_opus
+  fallback: chatgpt
+cost_policy:
+  max_tokens: 4000
+  max_attempts: 1
+risk_level: low
+requires_human_review: false
+qa_checks:
+  - all_subtasks_have_provider
+  - total_cost_within_budget
+  - no_circular_dependencies

@@ -1,0 +1,100 @@
+# QA Skills — Quality checks, validation, auditing
+
+skills:
+  style_checker:
+    skill_id: style_checker_v1
+    purpose: Verify content matches brand voice and style guide
+    inputs: [content, platform, expected_tone]
+    outputs: [passes, issues, suggestions]
+    primary: claude_opus
+    secondary: chatgpt
+    max_tokens: 1000
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+    brand_rules:
+      tone: friendly_professional_local
+      forbidden_words: [cheap, discount, bargain, corporate, enterprise]
+      required_elements: [phone_or_site, service_name]
+
+  brand_checker:
+    skill_id: brand_checker_v1
+    purpose: Verify brand consistency — name, phone, URL, pricing
+    inputs: [content, brand_assets]
+    outputs: [passes, brand_violations]
+    primary: claude_opus
+    max_tokens: 500
+    max_cost: 0.05
+    risk_level: low
+    requires_human_review: false
+    brand_assets:
+      name: "Handy & Friend"
+      phone: "(213) 361-1700"
+      site: "handyandfriend.com"
+      tagline: null  # No fixed tagline
+
+  policy_checker:
+    skill_id: policy_checker_v1
+    purpose: Check content against legal and platform policies
+    inputs: [content, platform, content_type]
+    outputs: [passes, violations, risk_level]
+    primary: claude_opus
+    max_tokens: 1000
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+    policies:
+      - no_false_licensing_claims
+      - no_guaranteed_results
+      - no_competitor_disparagement
+      - no_misleading_pricing
+      - platform_tos_compliance
+
+  truth_checker:
+    skill_id: truth_checker_v1
+    purpose: Verify factual claims in content against known data
+    inputs: [content, claim_type]
+    outputs: [verified_claims, unverified_claims, false_claims]
+    primary: claude_opus
+    secondary: perplexity
+    max_tokens: 2000
+    max_cost: 0.15
+    risk_level: low
+    requires_human_review: false
+    sources:
+      - price-registry.js
+      - google_business_profile
+      - reviews
+
+  duplicate_checker:
+    skill_id: duplicate_checker_v1
+    purpose: Check if content/lead/artifact already exists
+    inputs: [content_hash, content_text, check_type]
+    outputs: [is_duplicate, matching_ids, similarity_score]
+    primary: claude_opus
+    max_tokens: 500
+    max_cost: 0.05
+    risk_level: low
+    requires_human_review: false
+
+  artifact_validator:
+    skill_id: artifact_validator_v1
+    purpose: Validate artifact meets quality standards before registration
+    inputs: [artifact, artifact_type, quality_standards]
+    outputs: [passes, quality_score, issues]
+    primary: claude_opus
+    max_tokens: 1000
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+
+  cost_auditor:
+    skill_id: cost_auditor_v1
+    purpose: Audit AI spending — identify waste, optimization opportunities
+    inputs: [usage_logs, period, budget_policy]
+    outputs: [total_spend, by_provider, by_task_type, waste_identified, recommendations]
+    primary: claude_opus
+    max_tokens: 4000
+    max_cost: 0.30
+    risk_level: low
+    requires_human_review: false

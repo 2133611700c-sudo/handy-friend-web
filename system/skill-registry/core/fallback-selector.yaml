@@ -1,0 +1,22 @@
+skill_id: fallback_selector_v1
+category: core
+purpose: Select fallback provider when primary fails or returns low confidence
+inputs:
+  - failed_provider: string
+  - error_type: string
+  - task_type: string
+  - attempts_so_far: integer
+outputs:
+  - next_provider: string
+  - adjusted_prompt: string  # optional prompt modifications for fallback
+  - should_escalate_to_human: boolean
+preferred_provider:
+  primary: claude_opus
+cost_policy:
+  max_tokens: 500
+  max_attempts: 1
+risk_level: low
+requires_human_review: false
+qa_checks:
+  - max_2_retries_before_human
+  - fallback_is_different_provider

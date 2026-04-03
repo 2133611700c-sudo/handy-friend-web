@@ -1,0 +1,57 @@
+# Operational Memory — What we did, what worked, what failed
+# Updated automatically by memory skills after each significant action
+
+last_updated: "2026-04-01"
+
+recent_actions:
+  - date: "2026-04-01"
+    action: "CL Hunter v2 deployed"
+    result: "79 new leads from HTML scraping (RSS was blocked 403)"
+    provider: claude_opus
+    cost: null
+
+  - date: "2026-04-01"
+    action: "Telegram callback handler deployed"
+    result: "Inline buttons now update social_leads.status in Supabase"
+    provider: claude_opus
+    cost: null
+
+  - date: "2026-04-01"
+    action: "Scheduler v4 deployed to Dell"
+    result: "FB 6h + CL 4h + callback handler always-on + weekly Monday 9AM"
+    provider: claude_opus
+    cost: null
+
+  - date: "2026-03-31"
+    action: "social_leads table created"
+    result: "Supabase migration applied, RLS enabled"
+    provider: claude_opus
+    cost: null
+
+  - date: "2026-03-30"
+    action: "OpenClaw templates updated"
+    result: "13 services, no prices, all under 95 chars, validator passes"
+    provider: claude_opus
+    cost: null
+
+known_issues:
+  - "Craigslist may start blocking HTML scraping — monitor status"
+  - "Dell may go to sleep — standby-timeout-ac set to 0 but verify periodically"
+  - "FB Hunter scans Telegram groups (named fb_hunter.py) — rename when expanding to actual FB"
+  - "Bing Places awaiting postcard verification"
+  - "No Instagram hunter yet"
+  - "No actual Facebook group scraper (current scanner uses Telegram only)"
+
+what_works:
+  - "CL HTML scraping with BeautifulSoup — labor gigs (lbg) is best category"
+  - "Telethon personal API for Telegram group scanning"
+  - "Supabase REST API for lead storage from Dell"
+  - "Telegram bot alerts with inline buttons"
+  - "Concise report format — zero data = one line"
+  - "SHA256 lead_hash for deduplication"
+
+what_failed:
+  - "CL RSS feeds — 403 blocked, replaced with HTML scraping"
+  - "Verbose reports with zero data — user hated them, replaced with concise format"
+  - "Interactive Telethon auth over SSH — replaced with file-based code input"
+  - "Windows cp1251 encoding — replaced with UTF-8 reconfigure"

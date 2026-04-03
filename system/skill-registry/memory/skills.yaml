@@ -1,0 +1,57 @@
+# Memory Skills — Learning, logging, optimization
+
+skills:
+  project_memory_update:
+    skill_id: project_memory_update_v1
+    purpose: Update project memory with new facts, decisions, or context
+    inputs: [memory_type, content, source, importance]
+    outputs: [updated, file_path, conflicts_resolved]
+    primary: claude_opus
+    max_tokens: 1000
+    max_cost: 0.05
+    risk_level: low
+    requires_human_review: false
+
+  decision_log_update:
+    skill_id: decision_log_update_v1
+    purpose: Log important decisions with rationale and alternatives considered
+    inputs: [decision, rationale, alternatives, outcome]
+    outputs: [logged, log_entry_id]
+    primary: claude_opus
+    max_tokens: 500
+    max_cost: 0.05
+    risk_level: low
+    requires_human_review: false
+
+  skill_performance_update:
+    skill_id: skill_performance_update_v1
+    purpose: Track skill execution metrics — success rate, cost, quality
+    inputs: [skill_id, provider, success, cost, quality_score, errors]
+    outputs: [updated, running_averages]
+    primary: claude_opus
+    max_tokens: 500
+    max_cost: 0.02
+    risk_level: low
+    requires_human_review: false
+
+  prompt_library_update:
+    skill_id: prompt_library_update_v1
+    purpose: Save and version successful prompts for reuse
+    inputs: [skill_id, prompt_text, provider, quality_score]
+    outputs: [saved, version, replaces_previous]
+    primary: claude_opus
+    max_tokens: 500
+    max_cost: 0.02
+    risk_level: low
+    requires_human_review: false
+
+  failure_pattern_capture:
+    skill_id: failure_pattern_capture_v1
+    purpose: Capture and categorize failures for future avoidance
+    inputs: [skill_id, error, context, root_cause]
+    outputs: [pattern_id, similar_past_failures, prevention_rule]
+    primary: claude_opus
+    max_tokens: 1000
+    max_cost: 0.05
+    risk_level: low
+    requires_human_review: false

@@ -1,0 +1,44 @@
+# Project Memory — Business facts, SOPs, brand rules, pricing
+# This is the "source of truth" the system references for all decisions
+
+business:
+  name: "Handy & Friend"
+  type: "Handyman services — solo operator + helper"
+  location: "Los Angeles, CA"
+  address: "1213 Gordon St, Los Angeles, CA 90038"
+  phone: "(213) 361-1700"
+  site: "handyandfriend.com"
+  capacity: "~22 working days/month"
+  hours: "Mon-Sat 8AM-7PM, Sunday Closed"
+  languages: [English, Russian, Ukrainian, Spanish]
+
+brand:
+  tone: "Friendly, professional, local neighbor"
+  forbidden_words: [cheap, discount, bargain, corporate, enterprise, luxury]
+  required_in_posts: "phone or site link"
+  logo_usage: "Always brand videos with logo, service name, price, contact bar"
+  craigslist_style: "Short, hook-first, pain headline, minimal pricing, no corporate tone"
+
+pricing_source: "lib/price-registry.js"
+pricing_version: "2026.03.25-v2"
+combo_discount: "NONE — removed 2026-03-25. Messaging is 'Same Visit' only"
+
+profiles:
+  google_business: "verified"
+  facebook: "https://www.facebook.com/profile.php?id=61588215297678"
+  nextdoor: "https://nextdoor.com/page/handy-friend/"
+  bing_places: "awaiting_postcard_verification"
+
+cross_sell_clusters:
+  wall_and_install: [tv_mounting, art_mirror_curtains, furniture_assembly]
+  paint_and_refresh: [cabinet_painting, interior_painting, furniture_painting]
+  renovation: [interior_painting, flooring, baseboards]
+  no_cross_sell: [plumbing, electrical]
+
+key_files:
+  landing: "index.html"
+  pricing_engine: "lib/price-registry.js"
+  alex_ai: "lib/alex-one-truth.js"
+  health_api: "api/health.js"
+  lead_pipeline: "api/submit-lead.js"
+  vercel_config: "vercel.json"

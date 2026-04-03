@@ -1,0 +1,143 @@
+# Ops Skills — Health, secrets, incidents, monitoring
+
+skills:
+  secret_loader:
+    skill_id: secret_loader_v1
+    purpose: Load secrets from vault/env for agent use (never expose)
+    inputs: [secret_name, requesting_agent, purpose]
+    outputs: [loaded, masked_preview]
+    primary: claude_opus
+    max_cost: 0.01
+    risk_level: high
+    requires_human_review: false
+    policy: never_log_secret_value
+
+  session_rotator:
+    skill_id: session_rotator_v1
+    purpose: Rotate API keys and session tokens on schedule
+    inputs: [service, current_key_age_days, rotation_policy]
+    outputs: [rotated, new_key_set, old_key_revoked]
+    primary: claude_opus
+    max_cost: 0.10
+    risk_level: high
+    requires_human_review: true
+
+  health_check_runner:
+    skill_id: health_check_runner_v1
+    purpose: Run health checks across all services
+    inputs: [services_to_check]
+    outputs: [results, failures, response_times]
+    primary: claude_opus
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+    services:
+      - {name: production_site, url: "https://handyandfriend.com/api/health"}
+      - {name: supabase, check: "rest_api_ping"}
+      - {name: telegram_bot, check: "getMe"}
+      - {name: dell_scheduler, check: "ssh_ping"}
+
+  error_classifier:
+    skill_id: error_classifier_v1
+    purpose: Classify errors by severity and suggest fix
+    inputs: [error_message, service, context]
+    outputs: [severity, category, suggested_fix, escalate]
+    primary: claude_opus
+    secondary: deepseek
+    max_tokens: 1000
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+
+  incident_summarizer:
+    skill_id: incident_summarizer_v1
+    purpose: Summarize an incident — what happened, impact, resolution
+    inputs: [error_logs, timeline, affected_services]
+    outputs: [summary, root_cause, impact, resolution, prevention]
+    primary: claude_opus
+    max_tokens: 2000
+    max_cost: 0.20
+    risk_level: low
+    requires_human_review: false
+
+  daily_status_report:
+    skill_id: daily_status_report_v1
+    purpose: Generate daily ops status report with only non-zero data
+    inputs: [date, metrics_source]
+    outputs: [report_text, alerts, action_items]
+    primary: claude_opus
+    secondary: deepseek
+    max_tokens: 2000
+    max_cost: 0.15
+    risk_level: low
+    requires_human_review: false
+    format_rules:
+      - "No data = one line 'No leads, no revenue, no jobs.'"
+      - "Only show non-zero sources"
+      - "Only critical/warning alerts"
+      - "No filler, no calculations on zero data"
+
+# ─── Top-Level Meta Skills ───
+  provider_benchmark_runner:
+    skill_id: provider_benchmark_runner_v1
+    purpose: Weekly comparison of provider quality/cost on standard tasks
+    inputs: [benchmark_tasks, providers_to_test]
+    outputs: [rankings, cost_comparison, quality_comparison, recommendations]
+    primary: claude_opus
+    max_cost: 2.00
+    risk_level: low
+    requires_human_review: false
+    schedule: weekly_monday
+
+  new_feature_watcher:
+    skill_id: new_feature_watcher_v1
+    purpose: Check provider release notes for new capabilities
+    inputs: [providers, last_check_date]
+    outputs: [new_features, relevant_to_us, action_items]
+    primary: perplexity
+    max_cost: 0.20
+    risk_level: low
+    requires_human_review: false
+    schedule: weekly_friday
+
+  prompt_optimizer:
+    skill_id: prompt_optimizer_v1
+    purpose: Analyze prompt performance and suggest improvements
+    inputs: [skill_id, recent_results, quality_scores]
+    outputs: [optimized_prompt, expected_improvement, a_b_test_plan]
+    primary: claude_opus
+    secondary: chatgpt
+    max_cost: 0.50
+    risk_level: low
+    requires_human_review: false
+
+  tool_health_monitor:
+    skill_id: tool_health_monitor_v1
+    purpose: Monitor availability and response time of all AI providers
+    inputs: [providers, last_status]
+    outputs: [current_status, degraded_providers, switch_recommendations]
+    primary: claude_opus
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+
+  artifact_reuse_engine:
+    skill_id: artifact_reuse_engine_v1
+    purpose: Find and suggest reusable artifacts instead of regenerating
+    inputs: [task_type, content_requirements]
+    outputs: [matching_artifacts, reuse_savings, modifications_needed]
+    primary: claude_opus
+    max_cost: 0.05
+    risk_level: low
+    requires_human_review: false
+
+  human_approval_packager:
+    skill_id: human_approval_packager_v1
+    purpose: Package any output for 30-second human approve/reject
+    inputs: [task_output, task_type, risk_level]
+    outputs: [telegram_message, approve_callback, reject_callback, auto_defer_time]
+    primary: claude_opus
+    max_tokens: 1000
+    max_cost: 0.05
+    risk_level: low
+    requires_human_review: false

@@ -1,0 +1,128 @@
+# Execution Plane — Worker Definitions
+# Each worker is an isolated execution context with specific capabilities
+
+workers:
+  research_worker:
+    role: "Web research, fact-checking, competitor intelligence"
+    primary_provider: perplexity
+    fallback_provider: chatgpt
+    skills:
+      - fresh_web_research
+      - source_validation
+      - fact_crosscheck
+      - competitor_snapshot
+      - market_signal_scan
+      - change_detection
+      - daily_digest_builder
+    isolation: none  # Read-only, no side effects
+    max_concurrent: 3
+
+  code_worker:
+    role: "Repository code changes, features, bugs, tests"
+    primary_provider: claude_opus
+    secondary_provider: codex
+    skills:
+      - repo_map
+      - bug_reproducer
+      - feature_builder
+      - test_writer
+      - refactorer
+      - migration_runner
+      - deploy_checker
+      - rollback_preparer
+    isolation: worktree
+    max_concurrent: 2
+    requires_review: true
+
+  browser_worker:
+    role: "Web automation, UI testing, form filling"
+    primary_provider: openclaw
+    secondary_provider: cursor
+    skills:
+      - login_session_runner
+      - page_navigator
+      - form_filler
+      - data_extractor
+      - ui_smoke_tester
+      - screenshot_recorder
+      - flow_video_recorder
+    isolation: browser_sandbox
+    max_concurrent: 1
+    allowed_domains:
+      - handyandfriend.com
+      - "*.vercel.app"
+      - supabase.com
+      - business.google.com
+
+  media_worker:
+    role: "Image/video generation and editing"
+    primary_provider: gemini
+    secondary_provider: chatgpt
+    skills:
+      - image_prompt_builder
+      - image_generator_router
+      - image_editor
+      - video_prompt_builder
+      - video_generator_router
+      - ad_creative_builder
+      - thumbnail_builder
+    isolation: temp_directory
+    max_concurrent: 2
+    requires_review: true
+
+  content_worker:
+    role: "Text content — posts, ads, emails, responses"
+    primary_provider: claude_opus
+    secondary_provider: deepseek
+    skills:
+      - post_writer
+      - ad_copy_writer
+      - seo_page_writer
+      - sms_writer
+      - email_writer
+      - comment_responder
+      - offer_packager
+    isolation: none
+    max_concurrent: 3
+    requires_review: true  # Customer-facing
+
+  publishing_worker:
+    role: "Content formatting, approval, scheduling, publishing"
+    primary_provider: claude_opus
+    secondary_provider: openclaw
+    skills:
+      - draft_preparer
+      - channel_formatter
+      - approval_gate
+      - post_scheduler
+      - publish_executor
+      - utm_tagger
+    isolation: none
+    max_concurrent: 1
+    requires_approval: true  # ALWAYS for publish
+
+  qa_worker:
+    role: "Quality checks, validation, auditing"
+    primary_provider: claude_opus
+    skills:
+      - style_checker
+      - brand_checker
+      - policy_checker
+      - truth_checker
+      - duplicate_checker
+      - artifact_validator
+      - cost_auditor
+    isolation: none
+    max_concurrent: 5  # QA can run many checks in parallel
+
+  memory_worker:
+    role: "Learning, logging, optimization"
+    primary_provider: claude_opus
+    skills:
+      - project_memory_update
+      - decision_log_update
+      - skill_performance_update
+      - prompt_library_update
+      - failure_pattern_capture
+    isolation: none
+    max_concurrent: 1  # Sequential to avoid conflicts

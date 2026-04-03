@@ -1,0 +1,79 @@
+# Media Skills — Image/video generation, editing, ad creatives
+
+skills:
+  image_prompt_builder:
+    skill_id: image_prompt_builder_v1
+    purpose: Create optimized image generation prompts for marketing
+    inputs: [service_type, style, dimensions, brand_elements]
+    outputs: [prompt, negative_prompt, recommended_model]
+    primary: chatgpt
+    fallback: claude_opus
+    max_tokens: 1000
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+
+  image_generator_router:
+    skill_id: image_generator_router_v1
+    purpose: Generate marketing images using best available model
+    inputs: [prompt, dimensions, style, count]
+    outputs: [image_paths, model_used, cost]
+    primary: gemini
+    secondary: chatgpt
+    max_cost: 0.50
+    risk_level: medium
+    requires_human_review: true
+    qa_checks: [no_text_errors, brand_colors_match, no_offensive_content]
+
+  image_editor:
+    skill_id: image_editor_v1
+    purpose: Edit existing images — crop, overlay, brand elements
+    inputs: [image_path, edits, brand_overlay]
+    outputs: [edited_image_path, changes_applied]
+    primary: gemini
+    max_cost: 0.30
+    risk_level: low
+    requires_human_review: true
+
+  video_prompt_builder:
+    skill_id: video_prompt_builder_v1
+    purpose: Create video generation prompts for marketing content
+    inputs: [service_type, duration, style, narration]
+    outputs: [video_prompt, scene_breakdown, recommended_model]
+    primary: chatgpt
+    fallback: claude_opus
+    max_cost: 0.15
+    risk_level: low
+    requires_human_review: false
+
+  video_generator_router:
+    skill_id: video_generator_router_v1
+    purpose: Generate marketing videos using Gemini Veo or similar
+    inputs: [prompt, duration, resolution]
+    outputs: [video_path, model_used, cost]
+    primary: gemini
+    max_cost: 1.00
+    risk_level: medium
+    requires_human_review: true
+
+  ad_creative_builder:
+    skill_id: ad_creative_builder_v1
+    purpose: Build complete ad creative (image + copy + CTA)
+    inputs: [service_type, platform, target_audience, offer]
+    outputs: [image_path, headline, description, cta, display_url]
+    primary: gemini  # image
+    secondary: claude_opus  # copy
+    max_cost: 0.80
+    risk_level: medium
+    requires_human_review: true
+    qa_checks: [no_false_claims, price_matches_registry, cta_has_phone]
+
+  thumbnail_builder:
+    skill_id: thumbnail_builder_v1
+    purpose: Create thumbnails for social media posts
+    inputs: [image_source, text_overlay, dimensions]
+    outputs: [thumbnail_path, format]
+    primary: gemini
+    max_cost: 0.20
+    risk_level: low
+    requires_human_review: true

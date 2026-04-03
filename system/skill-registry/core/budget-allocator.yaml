@@ -1,0 +1,21 @@
+skill_id: budget_allocator_v1
+category: core
+purpose: Allocate budget across subtasks respecting daily/weekly limits
+inputs:
+  - subtasks: list[object]
+  - daily_budget_remaining: float
+  - weekly_budget_remaining: float
+outputs:
+  - allocated_budgets: dict  # task_id → budget_usd
+  - warnings: list[string]
+  - deferred_tasks: list[string]  # tasks postponed due to budget
+preferred_provider:
+  primary: claude_opus
+cost_policy:
+  max_tokens: 1000
+  max_attempts: 1
+risk_level: low
+requires_human_review: false
+qa_checks:
+  - total_allocation_within_daily_limit
+  - no_task_exceeds_its_ceiling

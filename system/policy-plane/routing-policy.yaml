@@ -1,0 +1,158 @@
+# Routing Policy v1 — Provider Selection Rules
+# Controls which AI provider handles which task type
+
+routing_rules:
+  # ─── Research ───
+  web_freshness:
+    description: "Real-time web data, fresh facts, news"
+    primary: perplexity
+    fallback: chatgpt
+    budget_ceiling: 0.10
+
+  competitor_analysis:
+    description: "Market research, competitor monitoring"
+    primary: perplexity
+    fallback: chatgpt
+    budget_ceiling: 0.20
+
+  fact_verification:
+    description: "Cross-check claims, validate sources"
+    primary: perplexity
+    secondary: chatgpt
+    budget_ceiling: 0.10
+
+  # ─── Coding ───
+  coding_repo:
+    description: "Production code changes in repo"
+    primary: claude_opus
+    secondary: codex
+    fallback: cursor
+    requires_review: true
+    budget_ceiling: 2.00
+
+  feature_development:
+    description: "New features, multi-file changes"
+    primary: codex
+    secondary: claude_opus
+    isolation: worktree
+    requires_review: true
+    budget_ceiling: 5.00
+
+  bug_fix:
+    description: "Bug investigation and fix"
+    primary: claude_opus
+    secondary: codex
+    budget_ceiling: 1.00
+
+  test_writing:
+    description: "Unit tests, integration tests"
+    primary: codex
+    secondary: claude_opus
+    budget_ceiling: 1.00
+
+  # ─── Browser/UI ───
+  ui_browser_test:
+    description: "Frontend smoke tests, visual verification"
+    primary: cursor
+    secondary: openclaw
+    budget_ceiling: 0.50
+
+  form_automation:
+    description: "Form filling on first-party sites"
+    primary: openclaw
+    requires_approval: true
+    allowed_domains:
+      - handyandfriend.com
+      - vercel.com
+      - supabase.com
+      - business.google.com
+      - bing.com/forbusiness
+    budget_ceiling: 0.10
+
+  # ─── Media ───
+  image_generation:
+    description: "Marketing images, ad creatives"
+    primary: gemini
+    secondary: chatgpt
+    requires_review: true
+    budget_ceiling: 0.50
+
+  video_generation:
+    description: "Video content, reels"
+    primary: gemini
+    requires_review: true
+    budget_ceiling: 1.00
+
+  image_editing:
+    description: "Photo edits, before/after composites"
+    primary: gemini
+    budget_ceiling: 0.30
+
+  # ─── Content ───
+  social_post:
+    description: "Nextdoor, Facebook, CL posts"
+    primary: claude_opus
+    secondary: deepseek
+    requires_review: true
+    budget_ceiling: 0.20
+
+  ad_copy:
+    description: "Google Ads copy, headlines"
+    primary: chatgpt
+    secondary: claude_opus
+    requires_review: true
+    budget_ceiling: 0.30
+
+  seo_content:
+    description: "Landing pages, service pages"
+    primary: claude_opus
+    secondary: chatgpt
+    requires_review: true
+    budget_ceiling: 1.00
+
+  lead_response:
+    description: "Reply to incoming leads"
+    primary: claude_opus
+    secondary: deepseek
+    budget_ceiling: 0.10
+
+  email_writing:
+    description: "Customer emails, follow-ups"
+    primary: claude_opus
+    secondary: chatgpt
+    requires_review: true
+    budget_ceiling: 0.15
+
+  # ─── Strategy ───
+  strategy_review:
+    description: "Business strategy, planning, PRD"
+    primary: chatgpt
+    secondary: claude_opus
+    budget_ceiling: 1.00
+
+  # ─── Bulk/Cheap ───
+  bulk_drafts:
+    description: "Mass content variants, cheap generation"
+    primary: deepseek
+    secondary: chatgpt
+    budget_ceiling: 0.10
+
+  classification:
+    description: "Categorization, tagging, scoring"
+    primary: deepseek
+    secondary: claude_opus
+    budget_ceiling: 0.05
+
+  translation:
+    description: "EN/RU/ES/UA translations"
+    primary: deepseek
+    secondary: claude_opus
+    budget_ceiling: 0.05
+
+# ─── Meta Rules ───
+meta:
+  default_provider: claude_opus
+  cheapest_first: true  # Try cheapest capable provider first
+  escalate_on_low_confidence: true  # If confidence < 0.7, use next tier
+  max_retries: 2
+  require_evidence: true  # Every output must include source/proof

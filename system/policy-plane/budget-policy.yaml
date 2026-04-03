@@ -1,0 +1,70 @@
+# Budget Policy v1 — Cost Control Rules
+# Prevents runaway spending and enforces cheapest-capable routing
+
+global_limits:
+  daily_budget: 10.00        # USD max per day across all providers
+  weekly_budget: 50.00       # USD max per week
+  monthly_budget: 150.00     # USD max per month
+  per_task_default: 0.50     # USD default ceiling per task
+  per_task_max: 5.00         # USD absolute max per single task
+  emergency_stop: 20.00      # USD — halt all AI if daily spend hits this
+
+provider_budgets:
+  claude_opus:
+    daily_max: 5.00
+    per_task_max: 2.00
+    priority: high_value_only
+  chatgpt:
+    daily_max: 3.00
+    per_task_max: 1.00
+  codex:
+    daily_max: 3.00
+    per_task_max: 2.00
+  gemini:
+    daily_max: 2.00
+    per_task_max: 1.00
+  perplexity:
+    daily_max: 1.00
+    per_task_max: 0.20
+  deepseek:
+    daily_max: 1.00
+    per_task_max: 0.10
+  cursor:
+    daily_max: 2.00
+    per_task_max: 1.00
+
+cost_optimization:
+  strategy: cheapest_capable
+  rules:
+    - "If task is classification/tagging → deepseek first"
+    - "If task is draft/variant → deepseek first"
+    - "If task is translation → deepseek first"
+    - "If task is customer-facing text → claude_opus or chatgpt"
+    - "If task is production code → claude_opus or codex"
+    - "If task is research → perplexity first"
+    - "If confidence < 70% → escalate to next tier provider"
+    - "If task failed twice → escalate + alert human"
+
+escalation:
+  on_budget_80_percent:
+    action: warn_human
+    message: "Daily budget 80% used"
+  on_budget_100_percent:
+    action: stop_non_critical
+    message: "Daily budget exhausted. Only critical tasks allowed."
+  on_emergency_stop:
+    action: halt_all
+    message: "Emergency stop triggered. All AI paused."
+
+tracking:
+  log_every_call: true
+  fields:
+    - timestamp
+    - provider
+    - skill_id
+    - tokens_used
+    - cost_usd
+    - task_type
+    - confidence
+    - success
+  storage: supabase  # Table: ai_usage_log

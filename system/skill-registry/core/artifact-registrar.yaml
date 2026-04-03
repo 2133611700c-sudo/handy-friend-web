@@ -1,0 +1,27 @@
+skill_id: artifact_registrar_v1
+category: core
+purpose: Register completed task artifacts (files, posts, images) with metadata for reuse
+inputs:
+  - artifact_type: enum[text, image, video, code, report, post]
+  - content_or_path: string
+  - source_skill: string
+  - source_provider: string
+  - cost: float
+  - confidence: float
+  - metadata: object
+outputs:
+  - artifact_id: string
+  - registered: boolean
+  - reuse_candidates: list[string]  # similar existing artifacts
+preferred_provider:
+  primary: claude_opus
+cost_policy:
+  max_tokens: 500
+  max_attempts: 1
+risk_level: low
+requires_human_review: false
+qa_checks:
+  - artifact_has_type_and_metadata
+  - no_duplicate_registration
+memory_writeback:
+  - update_artifact_registry

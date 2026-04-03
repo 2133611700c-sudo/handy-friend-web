@@ -1,0 +1,24 @@
+skill_id: provider_router_v1
+category: core
+purpose: Select optimal provider for a task based on routing policy, budget, and capabilities
+inputs:
+  - task_type: string
+  - risk_level: enum[low, medium, high]
+  - budget_ceiling: float
+  - required_capabilities: list[string]
+outputs:
+  - selected_provider: string
+  - reasoning: string
+  - fallback_provider: string
+  - estimated_cost: float
+preferred_provider:
+  primary: claude_opus  # Router must be high-trust
+cost_policy:
+  max_tokens: 500
+  max_attempts: 1
+risk_level: low
+requires_human_review: false
+qa_checks:
+  - provider_has_required_capabilities
+  - cost_within_budget
+  - routing_policy_respected

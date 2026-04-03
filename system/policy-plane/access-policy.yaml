@@ -1,0 +1,110 @@
+# Access Policy v1 — Secrets, Permissions, Safety Gates
+# Controls what agents can access and when human approval is required
+
+# ─── Human Approval Required ───
+human_approval_required:
+  always:
+    - publish_to_social_media
+    - send_customer_email
+    - make_payment
+    - login_to_third_party
+    - delete_data
+    - push_to_production
+    - modify_dns
+    - change_env_vars
+    - create_ad_campaign
+    - modify_google_ads_budget
+
+  if_amount_over_50:
+    - create_quote
+    - price_override
+
+  if_risk_high:
+    - browser_automation_on_third_party
+    - bulk_message_send
+    - data_export
+
+# ─── Auto-Approved (no human needed) ───
+auto_approved:
+  - read_supabase_data
+  - read_analytics
+  - generate_draft_content
+  - run_health_check
+  - scan_leads
+  - classify_leads
+  - generate_report
+  - update_memory
+  - run_tests
+  - read_repo_code
+  - search_web
+
+# ─── Secret Management ───
+secrets:
+  storage: env_vars  # Currently: .env files + Vercel env
+  # Future: vault with ephemeral sessions
+  rotation_policy:
+    telegram_bot_token: never  # Bot token is permanent
+    supabase_key: yearly
+    deepseek_key: yearly
+    fb_page_token: non_expiring  # Generated from parent app
+    resend_key: yearly
+
+  access_by_agent:
+    claude_opus:
+      - SUPABASE_URL
+      - SUPABASE_SERVICE_ROLE_KEY
+      - TELEGRAM_BOT_TOKEN
+      - TELEGRAM_CHAT_ID
+      - DEEPSEEK_API_KEY
+      - FB_PAGE_ACCESS_TOKEN
+      - RESEND_API_KEY
+    dell_workers:
+      - TG_API_ID
+      - TG_API_HASH
+      - TG_BOT_TOKEN
+      - TG_YOUR_CHAT_ID
+      - SUPABASE_URL
+      - SUPABASE_SERVICE_ROLE_KEY
+      - DEEPSEEK_API_KEY
+    codex:
+      - read_only_repo_access
+    openclaw:
+      - browser_cookies_first_party_only
+
+# ─── Isolation Rules ───
+isolation:
+  code_execution:
+    method: worktree
+    cleanup: auto
+  browser_automation:
+    method: sandboxed_session
+    allowed_domains:
+      - handyandfriend.com
+      - "*.vercel.app"
+      - supabase.com
+      - business.google.com
+      - bing.com
+      - facebook.com  # Own page only
+      - nextdoor.com  # Own page only
+    forbidden_actions:
+      - login_as_other_user
+      - access_private_messages_of_others
+      - scrape_user_data
+      - automated_posting_without_approval
+  media_generation:
+    method: temp_directory
+    cleanup: after_approval
+
+# ─── Legal Boundaries ───
+legal:
+  automated_browsing:
+    rule: "Only first-party sites and explicitly authorized workflows"
+    requires: "Owner authorization on file"
+  social_media_posting:
+    rule: "All posts require human approval before publishing"
+    exception: "Pre-approved templates with no price claims"
+  data_collection:
+    rule: "Only public data from platforms where user is a member"
+    forbidden: "Scraping private groups, DMs, or user profiles"
+  ai_disclosure:
+    rule: "Customer-facing content must not misrepresent AI as human"

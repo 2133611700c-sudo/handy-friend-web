@@ -1,0 +1,86 @@
+# Research Skills — Web research, fact-checking, competitive intelligence
+
+skills:
+  fresh_web_research:
+    skill_id: fresh_web_research_v1
+    purpose: Get real-time web data on a topic with sourced results
+    inputs: [query, max_sources, freshness_required]
+    outputs: [findings, sources_with_urls, confidence]
+    primary: perplexity
+    fallback: chatgpt
+    max_tokens: 4000
+    max_cost: 0.20
+    risk_level: low
+    requires_human_review: false
+    qa_checks: [all_claims_have_sources, sources_are_urls]
+
+  source_validation:
+    skill_id: source_validation_v1
+    purpose: Verify if a source/claim is accurate and current
+    inputs: [claim, source_url, context]
+    outputs: [is_valid, confidence, contradicting_sources]
+    primary: perplexity
+    fallback: claude_opus
+    max_tokens: 2000
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+    qa_checks: [confidence_score_provided, contradictions_listed]
+
+  fact_crosscheck:
+    skill_id: fact_crosscheck_v1
+    purpose: Cross-check a fact across multiple sources
+    inputs: [fact, min_sources]
+    outputs: [verified, sources, disagreements]
+    primary: perplexity
+    max_tokens: 3000
+    max_cost: 0.15
+    risk_level: low
+    requires_human_review: false
+
+  competitor_snapshot:
+    skill_id: competitor_snapshot_v1
+    purpose: Quick competitor analysis — pricing, services, reviews
+    inputs: [competitor_name, area, service_type]
+    outputs: [pricing, services, review_score, strengths, weaknesses]
+    primary: perplexity
+    fallback: chatgpt
+    max_tokens: 4000
+    max_cost: 0.20
+    risk_level: low
+    requires_human_review: false
+
+  market_signal_scan:
+    skill_id: market_signal_scan_v1
+    purpose: Detect market trends, demand shifts, seasonal patterns
+    inputs: [market, location, timeframe]
+    outputs: [trends, signals, recommendations]
+    primary: perplexity
+    fallback: chatgpt
+    max_tokens: 4000
+    max_cost: 0.20
+    risk_level: low
+    requires_human_review: false
+
+  change_detection:
+    skill_id: change_detection_v1
+    purpose: Detect changes on a web page or competitor listing
+    inputs: [url, previous_snapshot, fields_to_watch]
+    outputs: [changes_detected, diff, severity]
+    primary: openclaw
+    fallback: perplexity
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+
+  daily_digest_builder:
+    skill_id: daily_digest_builder_v1
+    purpose: Compile daily digest from multiple research sources
+    inputs: [topics, sources, format]
+    outputs: [digest_text, key_items, action_items]
+    primary: claude_opus
+    fallback: chatgpt
+    max_tokens: 4000
+    max_cost: 0.30
+    risk_level: low
+    requires_human_review: false

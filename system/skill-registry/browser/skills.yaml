@@ -1,0 +1,81 @@
+# Browser Skills — Web automation, testing, data extraction
+
+skills:
+  login_session_runner:
+    skill_id: login_session_runner_v1
+    purpose: Establish authenticated session on first-party sites
+    inputs: [site, credentials_key]
+    outputs: [session_active, session_expires_at]
+    primary: openclaw
+    max_cost: 0.10
+    risk_level: high
+    requires_human_review: true
+    allowed_sites:
+      - handyandfriend.com
+      - vercel.com
+      - supabase.com
+      - business.google.com
+
+  page_navigator:
+    skill_id: page_navigator_v1
+    purpose: Navigate to a specific page and extract content
+    inputs: [url, target_element, action]
+    outputs: [page_content, screenshot_path, success]
+    primary: openclaw
+    fallback: cursor
+    max_cost: 0.10
+    risk_level: medium
+    requires_human_review: false
+    qa_checks: [url_is_allowed_domain]
+
+  form_filler:
+    skill_id: form_filler_v1
+    purpose: Fill and submit forms on authorized sites
+    inputs: [url, form_fields, submit_action]
+    outputs: [submitted, confirmation, screenshot]
+    primary: openclaw
+    max_cost: 0.10
+    risk_level: high
+    requires_human_review: true
+
+  data_extractor:
+    skill_id: data_extractor_v1
+    purpose: Extract structured data from web pages
+    inputs: [url, data_schema, selectors]
+    outputs: [extracted_data, row_count, confidence]
+    primary: openclaw
+    fallback: cursor
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+
+  ui_smoke_tester:
+    skill_id: ui_smoke_tester_v1
+    purpose: Run quick UI smoke test on deployed site
+    inputs: [url, test_steps, expected_results]
+    outputs: [all_passed, failures, screenshots]
+    primary: cursor
+    fallback: openclaw
+    max_cost: 0.50
+    risk_level: low
+    requires_human_review: false
+
+  screenshot_recorder:
+    skill_id: screenshot_recorder_v1
+    purpose: Take screenshots of pages for evidence/documentation
+    inputs: [urls, viewport_sizes]
+    outputs: [screenshot_paths, timestamps]
+    primary: openclaw
+    max_cost: 0.10
+    risk_level: low
+    requires_human_review: false
+
+  flow_video_recorder:
+    skill_id: flow_video_recorder_v1
+    purpose: Record user flow as video for QA/demo
+    inputs: [start_url, flow_steps]
+    outputs: [video_path, duration, errors_encountered]
+    primary: openclaw
+    max_cost: 0.30
+    risk_level: low
+    requires_human_review: false

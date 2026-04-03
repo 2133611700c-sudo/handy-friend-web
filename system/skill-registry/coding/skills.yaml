@@ -1,0 +1,92 @@
+# Coding Skills — Repo work, features, bugs, tests, deploys
+
+skills:
+  repo_map:
+    skill_id: repo_map_v1
+    purpose: Map repository structure, key files, dependencies
+    inputs: [repo_path, focus_area]
+    outputs: [file_tree, key_files, architecture_summary]
+    primary: claude_opus
+    fallback: codex
+    max_tokens: 4000
+    max_cost: 0.50
+    risk_level: low
+    requires_human_review: false
+
+  bug_reproducer:
+    skill_id: bug_reproducer_v1
+    purpose: Investigate and reproduce a reported bug
+    inputs: [bug_description, error_logs, affected_file]
+    outputs: [root_cause, reproduction_steps, fix_suggestion]
+    primary: claude_opus
+    fallback: codex
+    max_tokens: 4000
+    max_cost: 1.00
+    risk_level: medium
+    requires_human_review: false
+
+  feature_builder:
+    skill_id: feature_builder_v1
+    purpose: Implement a new feature across multiple files
+    inputs: [feature_spec, affected_files, test_requirements]
+    outputs: [changed_files, diff, test_results]
+    primary: codex
+    secondary: claude_opus
+    isolation: worktree
+    max_cost: 5.00
+    risk_level: medium
+    requires_human_review: true
+
+  test_writer:
+    skill_id: test_writer_v1
+    purpose: Write unit/integration tests for given code
+    inputs: [target_file, test_framework, coverage_target]
+    outputs: [test_file, test_count, coverage_report]
+    primary: codex
+    fallback: claude_opus
+    max_cost: 1.00
+    risk_level: low
+    requires_human_review: false
+
+  refactorer:
+    skill_id: refactorer_v1
+    purpose: Refactor code for readability, performance, or standards
+    inputs: [target_files, refactor_goal, constraints]
+    outputs: [changed_files, diff, before_after_metrics]
+    primary: codex
+    fallback: claude_opus
+    isolation: worktree
+    max_cost: 2.00
+    risk_level: medium
+    requires_human_review: true
+
+  migration_runner:
+    skill_id: migration_runner_v1
+    purpose: Create and apply database migrations
+    inputs: [migration_description, target_tables]
+    outputs: [migration_file, applied_status, rollback_file]
+    primary: claude_opus
+    max_cost: 1.00
+    risk_level: high
+    requires_human_review: true
+    qa_checks: [rollback_exists, no_data_loss]
+
+  deploy_checker:
+    skill_id: deploy_checker_v1
+    purpose: Verify deployment succeeded — health checks, smoke tests
+    inputs: [deploy_url, health_endpoint, expected_checks]
+    outputs: [all_passed, failed_checks, response_times]
+    primary: claude_opus
+    max_cost: 0.20
+    risk_level: low
+    requires_human_review: false
+
+  rollback_preparer:
+    skill_id: rollback_preparer_v1
+    purpose: Prepare rollback plan before risky deployment
+    inputs: [current_version, changes_summary]
+    outputs: [rollback_steps, rollback_command, estimated_downtime]
+    primary: claude_opus
+    max_cost: 0.30
+    risk_level: low
+    requires_human_review: false

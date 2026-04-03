@@ -1,0 +1,25 @@
+skill_id: risk_classifier_v1
+category: core
+purpose: Classify task risk level and determine if human review is needed
+inputs:
+  - task_description: string
+  - task_type: string
+  - involves_publish: boolean
+  - involves_payment: boolean
+  - involves_login: boolean
+  - involves_customer_data: boolean
+outputs:
+  - risk_level: enum[low, medium, high, critical]
+  - requires_human_review: boolean
+  - risk_factors: list[string]
+  - mitigation: list[string]
+preferred_provider:
+  primary: claude_opus
+cost_policy:
+  max_tokens: 500
+  max_attempts: 1
+risk_level: low
+requires_human_review: false
+qa_checks:
+  - high_risk_always_flags_human_review
+  - payment_always_critical

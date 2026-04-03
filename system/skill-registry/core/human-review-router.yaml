@@ -1,0 +1,24 @@
+skill_id: human_review_router_v1
+category: core
+purpose: Package task output for quick human approval (30-second decision)
+inputs:
+  - task_id: string
+  - task_output: object
+  - risk_level: string
+  - action_required: string  # "approve_publish", "approve_spend", etc.
+outputs:
+  - review_package: object  # formatted for Telegram/CLI quick review
+  - summary: string  # 1-2 lines
+  - approve_button: string
+  - reject_button: string
+  - deadline: datetime  # after which task auto-defers
+preferred_provider:
+  primary: claude_opus
+cost_policy:
+  max_tokens: 1000
+  max_attempts: 1
+risk_level: low
+requires_human_review: false
+qa_checks:
+  - summary_under_200_chars
+  - clear_action_buttons

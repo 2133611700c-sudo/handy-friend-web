@@ -1,0 +1,190 @@
+# Agent Hierarchy v1 — Handy & Friend Multi-Agent System
+# Defines roles, capabilities, and trust levels for each AI provider
+
+agents:
+  # ─── TIER 1: Strategic (high trust, expensive) ───
+  claude_opus:
+    role: primary_orchestrator
+    tier: 1
+    trust_level: high
+    capabilities:
+      - goal_parsing
+      - task_decomposition
+      - provider_routing
+      - code_generation
+      - code_review
+      - strategy
+      - final_qa
+      - memory_management
+    cost_per_1k_tokens: 0.075  # input avg
+    max_context: 200000
+    when_to_use:
+      - control plane decisions
+      - complex multi-step tasks
+      - code in production repos
+      - final review/audit
+      - security-sensitive operations
+    when_not_to_use:
+      - bulk drafts
+      - simple classification
+      - image/video generation
+
+  chatgpt:
+    role: strategist_reviewer
+    tier: 1
+    trust_level: high
+    capabilities:
+      - planning
+      - prd_writing
+      - sop_creation
+      - text_review
+      - artifact_qa
+      - skill_composition
+    when_to_use:
+      - strategic planning
+      - document creation
+      - requirement normalization
+      - final text audit
+    when_not_to_use:
+      - production code changes
+      - real-time data
+
+  # ─── TIER 2: Specialized (medium trust, moderate cost) ───
+  codex:
+    role: code_worker
+    tier: 2
+    trust_level: medium
+    capabilities:
+      - feature_development
+      - bug_fixing
+      - test_writing
+      - refactoring
+      - pr_creation
+      - codebase_qa
+    isolation: worktree
+    when_to_use:
+      - parallel coding tasks
+      - feature branches
+      - automated PR creation
+    requires_review_by: claude_opus
+
+  gemini:
+    role: media_worker
+    tier: 2
+    trust_level: medium
+    capabilities:
+      - image_generation
+      - video_generation
+      - image_editing
+      - multimodal_parsing
+      - visual_concepts
+    when_to_use:
+      - marketing images
+      - ad creatives
+      - video content
+      - visual recognition tasks
+    requires_review_by: chatgpt
+
+  cursor:
+    role: dev_ide_worker
+    tier: 2
+    trust_level: medium
+    capabilities:
+      - local_dev
+      - cloud_dev
+      - browser_testing
+      - ui_smoke_tests
+      - quick_coding
+    when_to_use:
+      - frontend verification
+      - browser UI tests
+      - rapid prototyping
+
+  perplexity:
+    role: research_worker
+    tier: 2
+    trust_level: medium
+    capabilities:
+      - web_research
+      - fact_checking
+      - competitor_monitoring
+      - trend_detection
+      - source_collection
+    when_to_use:
+      - fresh web data needed
+      - competitor analysis
+      - market research
+      - fact verification
+    output_requires: source_urls
+
+  # ─── TIER 3: Utility (lower trust, cheap) ───
+  deepseek:
+    role: bulk_worker
+    tier: 3
+    trust_level: low
+    capabilities:
+      - draft_generation
+      - classification
+      - summarization
+      - translation
+      - data_extraction
+    cost_per_1k_tokens: 0.001
+    when_to_use:
+      - bulk text generation
+      - cheap classification
+      - alternative variants
+      - non-critical drafts
+    requires_review_by: claude_opus
+    max_budget_per_task: 0.05
+
+  # ─── EXECUTION LAYER ───
+  openclaw:
+    role: browser_executor
+    tier: 3
+    trust_level: low
+    capabilities:
+      - page_navigation
+      - form_filling
+      - screenshot_capture
+      - data_extraction
+      - click_automation
+    isolation: browser_sandbox
+    when_to_use:
+      - first-party sites only
+      - own admin panels
+      - allowed workflows only
+    forbidden:
+      - third-party logins
+      - payment actions
+      - scraping without permission
+    requires_approval: always
+
+  dell_workers:
+    role: background_executor
+    tier: 3
+    trust_level: medium
+    host: 100.125.80.43
+    capabilities:
+      - scheduled_scanning
+      - lead_hunting
+      - telegram_monitoring
+      - long_running_tasks
+    processes:
+      - scheduler.py (fb_hunter + cl_hunter + weekly_report + callback_handler)
+    when_to_use:
+      - 24/7 background tasks
+      - periodic scans
+      - tasks requiring persistent sessions
+
+# ─── Trust Escalation Rules ───
+escalation:
+  - if: "task.risk_level == 'high'"
+    then: "require tier_1 agent review"
+  - if: "task.involves_publish"
+    then: "require human_approval"
+  - if: "task.involves_payment"
+    then: "require human_approval + tier_1 review"
+  - if: "task.involves_login"
+    then: "require human_approval"
+  - if: "agent.tier == 3 AND task.is_customer_facing"
+    then: "escalate to tier_2"

@@ -1,0 +1,96 @@
+# Content Skills — Posts, ads, emails, lead responses, SEO
+
+skills:
+  post_writer:
+    skill_id: post_writer_v1
+    purpose: Generate social media posts for Nextdoor/Facebook/CL
+    inputs: [service_type, platform, area, offer, urgency, trust_signals]
+    outputs: [headline, body, cta, comment_reply_variants]
+    primary: claude_opus
+    secondary: deepseek
+    fallback: chatgpt
+    max_tokens: 4000
+    max_cost: 0.20
+    risk_level: medium
+    requires_human_review: true
+    qa_checks:
+      - no_false_claims
+      - no_exact_prices_unless_from_registry
+      - no_disallowed_language
+      - brand_tone_match
+      - under_char_limit_per_platform
+    memory_writeback: [save_prompt_version, save_performance]
+
+  ad_copy_writer:
+    skill_id: ad_copy_writer_v1
+    purpose: Write Google Ads headlines, descriptions, sitelinks
+    inputs: [service_type, keywords, character_limits, landing_url]
+    outputs: [headlines, descriptions, sitelinks, callouts]
+    primary: chatgpt
+    secondary: claude_opus
+    max_tokens: 2000
+    max_cost: 0.30
+    risk_level: medium
+    requires_human_review: true
+    qa_checks: [within_char_limits, no_trademark_violations, cta_present]
+
+  seo_page_writer:
+    skill_id: seo_page_writer_v1
+    purpose: Write SEO-optimized service landing page content
+    inputs: [service_type, target_keywords, area, competitor_analysis]
+    outputs: [title_tag, meta_description, h1, body_sections, schema_markup]
+    primary: claude_opus
+    secondary: chatgpt
+    max_tokens: 8000
+    max_cost: 1.00
+    risk_level: medium
+    requires_human_review: true
+
+  sms_writer:
+    skill_id: sms_writer_v1
+    purpose: Write SMS/WhatsApp messages for leads and follow-ups
+    inputs: [lead_name, service_type, language, message_type]
+    outputs: [message_text, character_count]
+    primary: claude_opus
+    secondary: deepseek
+    max_tokens: 500
+    max_cost: 0.05
+    risk_level: medium
+    requires_human_review: true
+
+  email_writer:
+    skill_id: email_writer_v1
+    purpose: Write customer emails — quotes, follow-ups, confirmations
+    inputs: [recipient, email_type, service_details, language]
+    outputs: [subject, body_html, body_plain]
+    primary: claude_opus
+    secondary: chatgpt
+    max_tokens: 2000
+    max_cost: 0.15
+    risk_level: medium
+    requires_human_review: true
+
+  comment_responder:
+    skill_id: comment_responder_v1
+    purpose: Generate replies to social media comments/questions
+    inputs: [original_comment, platform, our_post_context]
+    outputs: [reply_text, tone_check]
+    primary: claude_opus
+    secondary: deepseek
+    max_tokens: 500
+    max_cost: 0.10
+    risk_level: medium
+    requires_human_review: true
+    qa_checks: [no_price_promises, helpful_tone, under_95_chars]
+
+  offer_packager:
+    skill_id: offer_packager_v1
+    purpose: Package a service offer with pricing, scope, and terms
+    inputs: [services, quantities, location, urgency]
+    outputs: [quote_text, line_items, total, terms, valid_until]
+    primary: claude_opus
+    max_tokens: 2000
+    max_cost: 0.20
+    risk_level: medium
+    requires_human_review: true
+    qa_checks: [prices_match_registry, scope_is_clear, terms_included]
