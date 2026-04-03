@@ -146,3 +146,13 @@ vite.config.ts.timestamp-*
 
 # macOS Finder metadata
 .DS_Store
+
+# Runtime / state dirs
+.clawhub/
+.openclaw/
+.playwright-cli/
+.playwright-state/
+
+# Browser cache data (from skill automation)
+.browser-data/
+**/.browser-data/

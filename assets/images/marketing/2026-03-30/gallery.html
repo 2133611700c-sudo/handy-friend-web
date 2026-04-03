@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing Images Gallery - Handy & Friend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f5f5f5;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #222;
+            font-size: 32px;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .image-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .image-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .image-info {
+            padding: 20px;
+        }
+
+        .service-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #222;
+            margin-bottom: 8px;
+        }
+
+        .service-price {
+            color: #0066cc;
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .service-desc {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .stats {
+            background: #f0f0f0;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .stats h2 {
+            margin-bottom: 20px;
+            color: #222;
+        }
+
+        .stat-item {
+            display: inline-block;
+            margin: 0 30px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0066cc;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Marketing Images - Handy & Friend (2026-03-30)</h1>
+
+        <div class="gallery">
+            <!-- Image 1: Interior Painting -->
+            <div class="image-card">
+                <img src="interior-painting-before-after.png" alt="Interior Painting Before and After">
+                <div class="image-info">
+                    <div class="service-name">🎨 Interior Painting</div>
+                    <div class="service-price">$3.00-3.75/sq ft</div>
+                    <div class="service-desc">Professional wall refresh with 1-2 coat color change. Includes prep, paint, and cleanup.</div>
+                </div>
+            </div>
+
+            <!-- Image 2: Cabinet Painting -->
+            <div class="image-card">
+                <img src="cabinet-painting-before-after.png" alt="Cabinet Painting Before and After">
+                <div class="image-info">
+                    <div class="service-name">🪟 Cabinet Painting</div>
+                    <div class="service-price">$70-75/door</div>
+                    <div class="service-desc">Professional spray finish kitchen cabinets. Both sides, paint included, 2-3 day turnaround.</div>
+                </div>
+            </div>
+
+            <!-- Image 3: Flooring -->
+            <div class="image-card">
+                <img src="flooring-before-after.png" alt="Flooring Installation Before and After">
+                <div class="image-info">
+                    <div class="service-name">🏠 Flooring Installation</div>
+                    <div class="service-price">$3.00/sq ft</div>
+                    <div class="service-desc">LVP/laminate flooring with subfloor prep, trim, and baseboard. Professional finish guaranteed.</div>
+                </div>
+            </div>
+
+            <!-- Image 4: Drywall -->
+            <div class="image-card">
+                <img src="drywall-repair-before-after.png" alt="Drywall Repair Before and After">
+                <div class="image-info">
+                    <div class="service-name">🛠️ Drywall Repair</div>
+                    <div class="service-price">$120-250</div>
+                    <div class="service-desc">Small, medium, and large patch repairs. Seamless finish with paint touch-up included.</div>
+                </div>
+            </div>
+
+            <!-- Image 5: TV Mounting -->
+            <div class="image-card">
+                <img src="tv-mounting-professional.png" alt="Professional TV Mounting">
+                <div class="image-info">
+                    <div class="service-name">📺 TV Mounting</div>
+                    <div class="service-price">$150-185</div>
+                    <div class="service-desc">Standard or hidden-wire mounting with stud-finding, level installation, and cable management.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <h2>📊 Campaign Stats</h2>
+            <div class="stat-item">
+                <div class="stat-number">5</div>
+                <div class="stat-label">Images Created</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">60</div>
+                <div class="stat-label">Posts Ready</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">13</div>
+                <div class="stat-label">Services Detected</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Channels</div>
+            </div>
+        </div>
+
+        <footer>
+            Generated: 2026-03-30 | Handy & Friend Marketing Blitz | Ready to Launch
+        </footer>
+    </div>
+</body>
+</html>
