@@ -7,7 +7,7 @@
 ---
 
 ## HEADLINE
-Cabinet & Interior Painting in LA — Spray Finish From $155/door, Walls From $3/sqft (Insured)
+Cabinet & Interior Painting in LA — Spray Finish From $70/door, Walls From $3/sqft (Insured)
 
 ## BODY
 
@@ -15,21 +15,25 @@ Cabinet & Interior Painting in LA — Spray Finish From $155/door, Walls From $3
 
 Handy & Friend — professional painting in Los Angeles.
 
-**Kitchen Cabinet Painting:**
-- Full spray finish (premium paint, primer, prep included) — $155/door
-- 2-side spray — $125/door
-- 1-side spray — $95/door
-- Roller finish — $45/door
-- Drawer fronts — from $65 each
-- Islands — $460
+**Kitchen Cabinet Painting (paint included):**
+- Full package (spray both sides + frame) — $75/door
+- Spray both sides — $70/door
+- Spray one side — $40/door
+- Roller finish (budget) — $7.25/door
+- Drawer fronts small — $25 each
+- Drawer fronts large — $35 each
+- End panel / fridge panel — $50
+- Kitchen island full repaint — $175
+- Interior cabinet section — $30/section
 
 Smooth spray finish that costs less than replacement. We use premium paint and do full prep: degreasing, sanding, priming.
 
-**Interior Wall Painting:**
+**Interior Wall Painting (labor only):**
 - 1-coat coverage — $3.00/sq ft
-- 2-coat coverage — $4.00/sq ft
-- Ceilings — $4.00/sq ft
-- Trim and baseboards — $4.50/sq ft
+- 2-coat coverage — $3.75/sq ft
+- Ceiling smooth — $3.75/sq ft
+- Ceiling textured — $4.25/sq ft
+- Baseboards/crown — $3.00/lin ft
 
 Labor only for walls — you pick and buy the paint you love.
 
@@ -38,8 +42,6 @@ Labor only for walls — you pick and buy the paint you love.
 - Before/after photos on our website
 - Respond within 1 hour (8am-8pm PT, Mon-Sat)
 - Free phone and chat quotes
-
-**Book both cabinets + walls and save 20% on the combo.**
 
 Text or call now for a free estimate:
 (213) 361-1700

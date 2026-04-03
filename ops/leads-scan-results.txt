@@ -1,0 +1,53 @@
+Lead Hunter Scan Results - 2026-03-27 00:13 PDT
+
+SCAN SUMMARY:
+- Total posts scanned: ~15 (from news feed)
+- Posts where people ASK for handyman help: 3
+- Qualifying posts (<7 days, <20 comments): 1
+- Comments left: 1
+- Posts skipped: 2 (reasons below)
+
+QUALIFYING POST (COMMENTED):
+1. Author: Lucy Small
+   Area: SC West (Whitsett-Laurel Canyon)
+   Service needed: Handyman with shovel to spread pebbles (landscaping handyman)
+   Post age: 6 hours ago
+   Comment count: 4
+   Status: COMMENTED
+   Our comment: "Hi! I am Sergii, your neighbor here in LA. I do this professionally - happy to give you a free estimate. Call or text (213) 361-1700. handyandfriend.com"
+   Timestamp: 2026-03-27 00:13 PDT
+
+POSTS SKIPPED:
+1. Author: Shimon Khorshidi
+   Area: N Pico-Robertson North
+   Service needed: Locksmith (not handyman)
+   Post age: 3 days ago
+   Comment count: 10
+   Reason: Not handyman service (locksmith)
+
+2. Author: Christina Capps
+   Area: Hollywood Hills East
+   Service needed: Handy person to empty/flush hot water tank
+   Post age: 14 Mar (13 days)
+   Comment count: 15
+   Reason: Post older than 7 days
+
+OTHER POSTS (NOT HANDYMAN):
+- Brittany Field: Architect
+- Alana Shay: Cleaning person
+- Roxane Harris: Carpenter
+- Jessica Lozano: Café promotion
+- Sam Nicholas: Unknown
+- Melissa Pastoriza: Tarot reader
+- David Crain: Introduction
+- Elise Andrews: Fan request
+- Fernanda Santana: Jobs for 14yo
+
+NEXT STEPS:
+- Monitor for responses to Lucy Small post
+- Continue scanning every few hours
+- Update leads.json with this lead
+
+SCAN COMPLETED: 2026-03-27 00:13 PDT
+Browser: OpenClaw (logged in as SERGII KUROPIATNYK)
+Location: Los Angeles area (news feed)

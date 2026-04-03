@@ -1,0 +1,58 @@
+[
+  {
+    "platform": "facebook",
+    "post_url": "https://facebook.com/groups/955093931316242/posts/123456789",
+    "author_name": "John Smith",
+    "author_area": "Silver Lake",
+    "post_text": "Need someone to mount my 65\" TV on the wall. Looking for recommendations!",
+    "service_detected": "tv_mounting",
+    "scope": "GREEN",
+    "our_response": "Handy & Friend here! We install TVs professionally. Check our work at handyandfriend.com — (213) 361-1700",
+    "template_used": "tv_mounting",
+    "comments_count": 3,
+    "priority": "hot",
+    "recorded_at": "2026-03-30T19:17:36.692Z"
+  },
+  {
+    "platform": "facebook",
+    "post_url": "https://facebook.com/groups/161114600631631/posts/987654321",
+    "author_name": "Maria Garcia",
+    "author_area": "Echo Park",
+    "post_text": "Looking for a handyman to help assemble IKEA furniture this weekend.",
+    "service_detected": "furniture_assembly",
+    "scope": "GREEN",
+    "our_response": "Furniture assembly: IKEA & more! Free estimates — (213) 361-1700",
+    "template_used": "furniture_assembly",
+    "comments_count": 8,
+    "priority": "hot",
+    "recorded_at": "2026-03-30T19:17:36.797Z"
+  },
+  {
+    "platform": "facebook",
+    "post_url": "https://facebook.com/groups/2218167675118358/posts/456789123",
+    "author_name": "Robert Chen",
+    "author_area": "Downtown LA",
+    "post_text": "Need kitchen cabinets painted. Want professional spray finish.",
+    "service_detected": "kitchen_cabinet_painting",
+    "scope": "GREEN",
+    "our_response": "Cabinet painting by Handy & Friend! Professional spray finish. Free quotes — (213) 361-1700",
+    "template_used": "kitchen_cabinet_painting",
+    "comments_count": 15,
+    "priority": "warm",
+    "recorded_at": "2026-03-30T19:17:36.899Z"
+  },
+  {
+    "platform": "facebook",
+    "post_url": "https://facebook.com/groups/393485987507324/posts/321654987",
+    "author_name": "David Brown",
+    "author_area": "Hollywood",
+    "post_text": "Need help with drywall repair - small hole in living room wall.",
+    "service_detected": "drywall",
+    "scope": "GREEN",
+    "our_response": "Drywall damage? Professional repairs — Handy & Friend (213) 361-1700",
+    "template_used": "drywall",
+    "comments_count": 2,
+    "priority": "hot",
+    "recorded_at": "2026-03-30T19:17:37.001Z"
+  }
+]

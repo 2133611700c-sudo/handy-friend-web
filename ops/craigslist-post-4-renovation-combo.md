@@ -13,14 +13,14 @@ LA Handyman — Renovation | Upfront Pricing, Insured
 
 ### Body (copy this):
 ```
-Multiple projects? One crew, one visit, save 20%.
+Multiple projects? One crew, one visit.
 
 Handy & Friend covers:
 • Flooring (LVP/laminate from $3.00/sq ft)
 • Interior painting (from $3.00/sq ft)
 • Baseboard install (from $2.50/ft)
 
-Book 2+ services together and save 20%.
+Book 2+ services same visit — one mobilization, less disruption.
 All pricing is upfront. No trip charges. No hourly surprise.
 
 Text or call: (213) 361-1700

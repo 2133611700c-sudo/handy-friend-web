@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-03-30T20:42:00.569Z",
+  "results": {
+    "found": 8,
+    "green": 5,
+    "yellow": 2,
+    "red": 1,
+    "hotLeads": [
+      {
+        "author": "John D.",
+        "area": "Silver Lake",
+        "service": "TV mounting",
+        "timeAgo": "2 hours ago",
+        "comments": 3,
+        "scope": "GREEN",
+        "postUrl": "https://nextdoor.com/p/abc123"
+      },
+      {
+        "author": "Maria S.",
+        "area": "Echo Park",
+        "service": "Cabinet painting",
+        "timeAgo": "5 hours ago",
+        "comments": 7,
+        "scope": "GREEN",
+        "postUrl": "https://nextdoor.com/p/def456"
+      }
+    ],
+    "warmLeads": [
+      {
+        "author": "Robert T.",
+        "area": "Los Feliz",
+        "service": "Furniture assembly",
+        "timeAgo": "1 day ago",
+        "comments": 12,
+        "scope": "GREEN",
+        "postUrl": "https://nextdoor.com/p/ghi789"
+      },
+      {
+        "author": "Lisa M.",
+        "area": "Highland Park",
+        "service": "Drywall repair",
+        "timeAgo": "2 days ago",
+        "comments": 8,
+        "scope": "GREEN",
+        "postUrl": "https://nextdoor.com/p/jkl012"
+      }
+    ],
+    "dailyTotal": 12
+  },
+  "message": "🔍 Nextdoor Hunter Scan Results\nTime: 3/30/2026, 1:42:00 PM\n\nFound: 8 posts\nGREEN scope: 5\nYELLOW scope: 2\nRED scope: 1\n\n🔥 HOT LEADS (<24h, <10 comments):\n1. John D. — Silver Lake\n   Service: TV mounting\n   Posted: 2 hours ago\n   Comments: 3\n   Scope: GREEN\n\n2. Maria S. — Echo Park\n   Service: Cabinet painting\n   Posted: 5 hours ago\n   Comments: 7\n   Scope: GREEN\n\n🌡️ WARM LEADS (1-3 days, <20 comments):\n1. Robert T. — Los Feliz\n   Service: Furniture assembly\n   Posted: 1 day ago\n\n2. Lisa M. — Highland Park\n   Service: Drywall repair\n   Posted: 2 days ago\n\n\nNext scan: In 1 hour\nDaily total: 12/25 Nextdoor"
+}

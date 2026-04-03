@@ -1,0 +1,12 @@
+DAILY QUALITY REPORT - Mon Mar 30 22:00:02 PDT 2026
+================================
+Price violations: 1
+Hunter processes: 1
+Last scan: 
+Total leads: 1
+Today's leads: 0
+0
+API health: "ok":true
+Telegram configured: yes
+Cron jobs: 2
+Browser processes: 1

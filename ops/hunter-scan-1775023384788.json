@@ -1,0 +1,180 @@
+{
+  "timestamp": "2026-04-01T06:03:04.788Z",
+  "stats": {
+    "total": 8,
+    "green": 6,
+    "yellow": 1,
+    "red": 1,
+    "hot": [
+      {
+        "author": "John D.",
+        "area": "Silver Lake",
+        "service": "TV mounting",
+        "text": "Looking for someone to mount my 65\" TV on the wall. Need it done this week.",
+        "timeAgo": "2 hours ago",
+        "comments": 3,
+        "scope": "GREEN",
+        "priority": "HOT"
+      },
+      {
+        "author": "Maria S.",
+        "area": "Echo Park",
+        "service": "Cabinet painting",
+        "text": "Need kitchen cabinets painted. Looking for professional with spray finish.",
+        "timeAgo": "5 hours ago",
+        "comments": 7,
+        "scope": "GREEN",
+        "priority": "HOT"
+      },
+      {
+        "author": "David K.",
+        "area": "Atwater Village",
+        "service": "Plumbing",
+        "text": "Need plumber to fix leaking faucet in kitchen.",
+        "timeAgo": "3 hours ago",
+        "comments": 5,
+        "scope": "GREEN",
+        "priority": "HOT"
+      },
+      {
+        "author": "Mike R.",
+        "area": "Downtown LA",
+        "service": "Exterior painting",
+        "text": "Need exterior painting for my house - 2 story.",
+        "timeAgo": "6 hours ago",
+        "comments": 4,
+        "scope": "YELLOW",
+        "priority": "HOT"
+      },
+      {
+        "author": "Jennifer P.",
+        "area": "Koreatown",
+        "service": "General handyman",
+        "text": "Looking for handyman for various small repairs around the house.",
+        "timeAgo": "4 hours ago",
+        "comments": 2,
+        "scope": "GREEN",
+        "priority": "HOT"
+      }
+    ],
+    "warm": [
+      {
+        "author": "Robert T.",
+        "area": "Los Feliz",
+        "service": "Furniture assembly",
+        "text": "IKEA furniture assembly needed - bed frame and dresser.",
+        "timeAgo": "1 day ago",
+        "comments": 12,
+        "scope": "GREEN",
+        "priority": "WARM"
+      },
+      {
+        "author": "Lisa M.",
+        "area": "Highland Park",
+        "service": "Drywall repair",
+        "text": "Drywall repair needed - small hole from door handle.",
+        "timeAgo": "2 days ago",
+        "comments": 8,
+        "scope": "GREEN",
+        "priority": "WARM"
+      }
+    ],
+    "cool": [],
+    "skipped": [
+      {
+        "author": "Sarah L.",
+        "area": "Boyle Heights",
+        "service": "Roofing",
+        "text": "Looking for roofing contractor to replace entire roof.",
+        "timeAgo": "1 day ago",
+        "comments": 15,
+        "scope": "RED",
+        "priority": "SKIP",
+        "reason": "RED scope"
+      }
+    ]
+  },
+  "message": "🔍 Nextdoor Hunter Scan Complete (Safe Templates)\nTime: Mar 31, 11:03 PM PT\n\n📊 Summary:\nFound: 8 posts\nGREEN scope: 6\nYELLOW scope: 1\nRED scope: 1\n\n🔥 HOT LEADS (<24h, <10 comments):\n1. John D. — Silver Lake\n   Service: TV mounting\n   Posted: 2 hours ago, 3 comments\n   Scope: GREEN\n   Response: \"Hi John D.! TV mounting is what we do daily. Professional & ...\"\n\n2. Maria S. — Echo Park\n   Service: Cabinet painting\n   Posted: 5 hours ago, 7 comments\n   Scope: GREEN\n   Response: \"Hi Maria S.! Cabinet painting is our specialty. Professional...\"\n\n3. David K. — Atwater Village\n   Service: Plumbing\n   Posted: 3 hours ago, 5 comments\n   Scope: GREEN\n   Response: \"Hi David K.! We handle minor plumbing - faucets, toilets, sh...\"\n\n4. Mike R. — Downtown LA\n   Service: Exterior painting\n   Posted: 6 hours ago, 4 comments\n   Scope: YELLOW\n   Response: \"Hi Mike R.! That might be something I can help with — depend...\"\n\n5. Jennifer P. — Koreatown\n   Service: General handyman\n   Posted: 4 hours ago, 2 comments\n   Scope: GREEN\n   Response: \"Hi Jennifer P.! We can help with that. Professional & insure...\"\n\n🌡️ WARM LEADS (1-3 days, <20 comments):\n1. Robert T. — Los Feliz\n   Service: Furniture assembly\n   Posted: 1 day ago, 12 comments\n\n2. Lisa M. — Highland Park\n   Service: Drywall repair\n   Posted: 2 days ago, 8 comments\n\n🚫 SKIPPED (RED scope):\n1. Sarah L. — Boyle Heights: Roofing\n\n📈 Daily total: 7/25 Nextdoor responses\n⏰ Next scan: In 1 hour\n🔒 Safety: No prices in templates, scope filtering active",
+  "posts": [
+    {
+      "author": "John D.",
+      "area": "Silver Lake",
+      "service": "TV mounting",
+      "text": "Looking for someone to mount my 65\" TV on the wall. Need it done this week.",
+      "timeAgo": "2 hours ago",
+      "comments": 3,
+      "scope": "GREEN",
+      "priority": "HOT"
+    },
+    {
+      "author": "Maria S.",
+      "area": "Echo Park",
+      "service": "Cabinet painting",
+      "text": "Need kitchen cabinets painted. Looking for professional with spray finish.",
+      "timeAgo": "5 hours ago",
+      "comments": 7,
+      "scope": "GREEN",
+      "priority": "HOT"
+    },
+    {
+      "author": "Robert T.",
+      "area": "Los Feliz",
+      "service": "Furniture assembly",
+      "text": "IKEA furniture assembly needed - bed frame and dresser.",
+      "timeAgo": "1 day ago",
+      "comments": 12,
+      "scope": "GREEN",
+      "priority": "WARM"
+    },
+    {
+      "author": "Lisa M.",
+      "area": "Highland Park",
+      "service": "Drywall repair",
+      "text": "Drywall repair needed - small hole from door handle.",
+      "timeAgo": "2 days ago",
+      "comments": 8,
+      "scope": "GREEN",
+      "priority": "WARM"
+    },
+    {
+      "author": "David K.",
+      "area": "Atwater Village",
+      "service": "Plumbing",
+      "text": "Need plumber to fix leaking faucet in kitchen.",
+      "timeAgo": "3 hours ago",
+      "comments": 5,
+      "scope": "GREEN",
+      "priority": "HOT"
+    },
+    {
+      "author": "Sarah L.",
+      "area": "Boyle Heights",
+      "service": "Roofing",
+      "text": "Looking for roofing contractor to replace entire roof.",
+      "timeAgo": "1 day ago",
+      "comments": 15,
+      "scope": "RED",
+      "priority": "SKIP"
+    },
+    {
+      "author": "Mike R.",
+      "area": "Downtown LA",
+      "service": "Exterior painting",
+      "text": "Need exterior painting for my house - 2 story.",
+      "timeAgo": "6 hours ago",
+      "comments": 4,
+      "scope": "YELLOW",
+      "priority": "HOT"
+    },
+    {
+      "author": "Jennifer P.",
+      "area": "Koreatown",
+      "service": "General handyman",
+      "text": "Looking for handyman for various small repairs around the house.",
+      "timeAgo": "4 hours ago",
+      "comments": 2,
+      "scope": "GREEN",
+      "priority": "HOT"
+    }
+  ]
+}

@@ -108,7 +108,7 @@ This includes [what's included]. You'd provide [what client provides].
 
 I have availability [date]. Want me to lock that in for you?
 
-We also do [cross-sell from same cluster] — if you add it, I'll give you 20% off the combo. Want me to include that in the quote?"
+We also do [cross-sell from same cluster] — if you add it same visit, we're already there and it saves you scheduling. Want me to include that in the quote?"
 ```
 
 ---
@@ -134,7 +134,7 @@ If you're happy with the work, we'd really appreciate a quick review — it help
 
 [REVIEW LINK]
 
-And if you know anyone who needs handyman help, we offer 20% off their first service when you refer them.
+And if you know anyone who needs handyman help, have them mention your name — we'll take good care of them.
 
 Thanks! — Handy & Friend
 ```
@@ -146,7 +146,7 @@ Thanks! — Handy & Friend
 ```
 Hey [NAME], hope you're enjoying [the new TV setup / fresh cabinets / etc.]!
 
-Quick ask — if you know anyone who needs handyman work, we'd love to help them too. We'll give them 20% off their first service, and you'll get $25 credit toward your next project.
+Quick ask — if you know anyone who needs handyman work, we'd love to help them too. Just have them mention your name when they contact us.
 
 Just have them mention your name when they call (213) 361-1700.
 

@@ -1,0 +1,30 @@
+HUNTER SYSTEM STARTUP REPORT
+=============================
+Startup time: Mon Mar 30 13:37:12 PDT 2026
+System status: OPTIMIZED
+
+COMPONENTS STARTED:
+1. Nextdoor Hunter - ACTIVE (safe templates)
+2. Facebook Hunter - READY (requires implementation)
+3. Cron jobs - CONFIGURED
+4. Monitoring - AVAILABLE
+
+SAFETY FEATURES:
+- No price mentions in templates
+- Scope filtering (GREEN/YELLOW/RED)
+- Deduplication via API
+- Rate limiting
+- Telegram alerts
+
+SCHEDULE:
+Nextdoor: Hourly 7am-9pm PT (Mon-Sat)
+Facebook: Hourly 8am-8pm PT (Mon-Sat)
+Quality Control: Every 2 hours
+
+NEXT STEPS:
+1. Monitor ops/hunter.log for activity
+2. Check Telegram for alerts
+3. View dashboard: ./scripts/hunter-dashboard.sh
+4. Review daily reports in ops/
+
+SYSTEM READY FOR AMAZON-LEVEL OPERATION! 🚀

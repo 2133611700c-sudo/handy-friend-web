@@ -1,4 +1,5 @@
 # Nextdoor Business Posts — Handy & Friend
+# Prices updated: 2026.03.30 — source: price-registry.js v2026.03.25-v2
 
 ## Post Schedule: 2-3 per week
 ## Current cycle: Week of 2026-03-03
@@ -12,37 +13,38 @@
 **Body:**
 Just wrapped up a TV mounting job nearby. 65" Samsung on a full-motion mount, all wires concealed in-wall — completely clean.
 
-We're Handy & Friend, your local LA handyman. TV mounting from $165, hidden wires from $250.
+We're Handy & Friend, your local LA handyman. TV mounting from $150, hidden wire setup $185.
 
 Available same week. Insured.
 
-📲 Text (213) 361-1700 and mention "ND-20260303-01" for a free quote — usually respond within 1 hour.
+📲 Text (213) 361-1700 for a free quote — usually respond within 1 hour.
 🌐 handyandfriend.com
 
-**Tag:** `ND-20260303-01` | **Tracking Code:** Ask about "Code 01" when you call
+**Tag:** `ND-20260303-01`
 **Photo:** attach TV mounting before/after if available
 
 ---
 
-## POST ND-20260303-02 (THIS WEEK): Combo Offer
+## POST ND-20260303-02 (THIS WEEK): Same Visit Savings
 
-**Title:** Book 2 home services this week — save 20%
+**Title:** Book 2 home services same visit — save time and money
 
 **Body:**
 Doing a few things around the house? We cover TV mounting, furniture assembly, cabinet painting, interior painting, flooring, and art hanging — all in one visit.
 
-Book 2 or more services together and save 20%.
+Book 2+ services same day and we're already there — one trip, less disruption for you.
 
-Popular combos:
-• TV mount + art hanging = $340 → $272
-• Furniture assembly + art hanging = $325 → $260
+Popular same-visit combos:
+• TV mount ($150) + art hanging ($150) — done in one trip
+• Cabinet painting + interior walls — one mobilization, full kitchen refresh
+• Furniture assembly + art/mirror hanging — unbox and hang everything same day
 
 Insured. Upfront pricing. No hidden fees.
 
-📲 Text (213) 361-1700 — mention "COMBO20" code for your 20% discount
+📲 Text (213) 361-1700 for your combined quote
 🌐 handyandfriend.com
 
-**Tag:** `ND-20260304-02` | **Tracking Code:** "COMBO20" = combo offer discount
+**Tag:** `ND-20260304-02`
 
 ---
 
@@ -54,11 +56,11 @@ Insured. Upfront pricing. No hidden fees.
 Hi neighbors! We're Handy & Friend, a local handyman service covering Los Angeles.
 
 What we do:
-- TV mounting (from $165)
-- Kitchen cabinet painting (spray finish, from $155/door)
-- Interior painting (from $3/sq ft)
+- TV mounting ($150 standard, $185 hidden wire)
+- Kitchen cabinet painting (spray finish from $70/door, paint included)
+- Interior painting (from $3/sq ft labor)
 - Furniture assembly (from $150)
-- Art and mirror hanging ($175)
+- Art and mirror hanging ($150 up to 5 pieces)
 
 We're insured, respond within 1 hour, and give upfront prices with no surprises.
 
@@ -77,12 +79,10 @@ Just wrapped up a cabinet painting job in [NEIGHBORHOOD]. 22 doors, full spray f
 
 Took 4 days and the kitchen looks completely different — no replacement needed.
 
-If your cabinets are looking dated, we can give them a factory-smooth spray finish starting at $155/door. Paint, primer, degreasing, and prep are all included.
+If your cabinets are looking dated, we can give them a factory-smooth spray finish starting at $70/door (both sides) or $75/door with frame. Paint, primer, degreasing, and prep are all included.
 
-📲 Free estimate: (213) 361-1700 — mention "CABINET" code
+📲 Free estimate: (213) 361-1700
 🌐 See more before/afters: handyandfriend.com
-
-**Tracking Code:** "CABINET" = Cabinet Painting inquiry
 
 ---
 
@@ -97,29 +97,27 @@ Got a new TV? Before you drill into the wall:
 2. Measure twice — center of TV should be at eye level from your couch (usually 42-48 inches)
 3. Plan your cables — hiding wires in-wall looks 10x cleaner
 
-If you'd rather have it done right the first time, we mount TVs daily. Standard mount $165, concealed wires $250.
+If you'd rather have it done right the first time, we mount TVs daily. Standard mount $150, concealed wires in-wall $185.
 
-📲 Text (213) 361-1700 — mention "TVTIP" code, usually available same day.
+📲 Text (213) 361-1700 — usually available same day.
 
 ---
 
-## POST 4: Combo Offer
+## POST 4: Same Visit Combo
 
-**Title:** Painting + flooring combo — save 20% this month
+**Title:** Painting + flooring in one visit — same crew, less hassle
 
 **Body:**
 Doing a room refresh? We handle both painting and flooring in one project, same crew.
 
-Interior painting from $3/sq ft + LVP flooring from $3.50/sq ft.
+Interior painting from $3/sq ft + LVP flooring from $3/sq ft (labor only).
 
-Book both together and save 20% on the combo.
+Book both together — one visit, one mobilization, no double scheduling.
 
 No hidden fees. Labor pricing is upfront. You pick your paint and flooring — we do the work.
 
-📲 Free estimate: (213) 361-1700 — say "PAINTFLOOR" code for 20% combo discount
+📲 Free estimate: (213) 361-1700
 🌐 handyandfriend.com
-
-**Tracking Code:** "PAINTFLOOR" = Paint + Flooring combo
 
 ---
 

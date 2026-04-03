@@ -13,7 +13,7 @@ If you've been staring at yellowed or builder-grade cabinet doors all winter, sp
 
 The biggest thing most people don't know: the finish matters more than the color. A spray-applied finish on cabinet doors holds up to grease and daily cleaning the way a brush-rolled finish just doesn't.
 
-We're Handy & Friend — we do cabinet painting for Silver Lake homeowners from $95/door for basic roller finish up to $155/door for a factory-smooth spray job. Prep, prime, and paint are all included, no surprises.
+We're Handy & Friend — we do cabinet painting for Silver Lake homeowners from $7.25/door for basic roller finish, $70/door for spray both sides, or $75/door full package with frame. Prep, prime, and paint are all included, no surprises.
 
 Most kitchens we do take 3-4 days, and the result looks like a cabinet replacement at a fraction of the cost.
 
@@ -35,7 +35,7 @@ After moving into a new apartment, most people spend the first month living out 
 
 Wall mounting a TV in a rental is totally fine as long as you hit studs and patch properly when you leave. We do this all day in WeHo apartments and have never had a landlord complaint.
 
-Standard mount starts at $165; if you want wires fully concealed in-wall (no cable covers, completely clean look), that's $250.
+Standard mount starts at $150; if you want wires fully concealed in-wall (no cable covers, completely clean look), that's $185.
 
 We usually have same-week availability and respond to texts within an hour.
 
@@ -97,7 +97,7 @@ Every March we start getting a wave of requests from Santa Monica homeowners who
 
 One thing worth knowing: booking two or more services together almost always saves you scheduling time and coordination — same crew, same visit, done in sequence.
 
-We're Handy & Friend and we cover TV mounting ($165-$250), cabinet painting ($95-$155/door), interior painting ($3-$4.50/sq ft labor), flooring ($3.50-$3.75/sq ft labor), furniture assembly (from $150), and art or mirror hanging ($175).
+We're Handy & Friend and we cover TV mounting ($150/$185 hidden wire), cabinet painting (from $70/door spray, paint included), interior painting ($3-$4.25/sq ft labor), flooring ($3/sq ft labor LVP/laminate), furniture assembly (from $150), and art or mirror hanging ($150 up to 5 pieces).
 
 We're insured, give upfront pricing with no surprises, and respond to inquiries within an hour.
 

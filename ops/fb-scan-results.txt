@@ -1,0 +1,47 @@
+Facebook Posts Scan Results
+URL: https://www.facebook.com/search/posts/?q=handyman%20los%20angeles
+Date: 2026-03-27 00:40 PDT
+Logged in as: Handy & Friend page
+
+First 5 posts found:
+
+1. AUTHOR: Dav Id
+   GROUP: General Contractor Los Angeles
+   POST TEXT: "Reliable handyman in Los Angeles area. Any recommendation?"
+   POST AGE: 18 December 2025 (over 3 months ago)
+   COMMENT COUNT: 14
+   TYPE: Request for recommendations (not direct help request)
+
+2. AUTHOR: Ruslan Handyman
+   GROUP: Handyman service Los Angeles
+   POST TEXT: "Hi neighbors! ..." (business advertisement)
+   POST AGE: 1 February (over 1 month ago)
+   COMMENT COUNT: 1
+   TYPE: Business advertisement (not help request)
+
+3. AUTHOR: Plumber Handyman Santexnik
+   PAGE: Personal/business page
+   POST TEXT: "Reliable Handyman – Los Angeles County Need help with home repairs or installations? I offer affordable, honest handyman services..."
+   POST AGE: 5 February (over 1 month ago)
+   COMMENT COUNT: 8
+   TYPE: Business advertisement (not help request)
+
+4. AUTHOR: Dmitrii Kobiakov
+   GROUP: Los Angeles Moms
+   POST TEXT: "🔧 HANDYMAN • LOS ANGELES & NEARBY AREAS Private handyman offering reliable and аккуратную работу по разумным ценам."
+   POST AGE: 17 March at 17:18 (~10 days ago)
+   COMMENT COUNT: Not shown
+   TYPE: Business advertisement (not help request)
+
+5. AUTHOR: Elijah Gash
+   GROUP: HANDYMAN SERVICES NEEDED
+   POST TEXT: "Hey everyone, I’m starting up my own handyman & electrical work on the side ... Trying to build my name so I’m offering fair pricing right now."
+   POST AGE: 2 days ago
+   COMMENT COUNT: 7
+   TYPE: Business advertisement (not help request)
+
+SUMMARY:
+- 0 posts found where people ASK for handyman help in LA area
+- All posts are business advertisements or old recommendation requests
+- Facebook search results are dominated by service providers, not customers seeking help
+- Need to search within specific LA neighborhood groups or use different search terms

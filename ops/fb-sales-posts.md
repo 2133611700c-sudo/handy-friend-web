@@ -1,4 +1,5 @@
 # Facebook Sales Posts — Ready to Publish
+# Prices updated: 2026.03.30 — source: price-registry.js v2026.03.25-v2
 
 ## POST 1: PIN THIS — Introduction + CTA
 **Type:** Text + Photo (before/after cabinet painting)
@@ -7,12 +8,12 @@
 Handy & Friend — your local LA handyman.
 
 What we do:
-- Kitchen cabinet painting (spray finish from $155/door)
-- TV mounting ($165, hidden wires $250)
-- Interior painting (from $3/sq ft)
+- Kitchen cabinet painting (full package from $75/door, paint included)
+- TV mounting ($150 standard, $185 hidden wire)
+- Interior painting (from $3/sq ft labor)
 - Furniture assembly (from $150)
-- Art & mirror hanging ($175)
-- Flooring (LVP from $3.50/sq ft)
+- Art & mirror hanging ($150 up to 5 pieces)
+- Flooring LVP/laminate (from $3/sq ft labor)
 
 Insured. Upfront pricing. No hidden fees.
 We respond within 1 hour, Mon-Sat 8am-8pm PT.
@@ -30,19 +31,19 @@ Message us right here on Facebook — Alex will give you an instant estimate.
 
 ---
 
-## POST 2: PIN THIS — Combo Offer
+## POST 2: PIN THIS — Same Visit Savings
 
 ```
-This month: Book 2+ services together and save 20%.
+Book 2+ services on the same visit — we're already there, you save travel time.
 
-Popular combos:
-TV mount + art hanging = $340 → $272 (save $68)
-Cabinet painting + interior walls = custom quote, 20% off combo
-Furniture assembly + art hanging = $325 → $260 (save $65)
+Popular same-visit combos:
+📺 TV mount ($150) + art hanging ($150) — done in one trip
+🎨 Cabinet painting (from $75/door full package) + interior walls — one mobilization, full kitchen refresh
+🛋️ Furniture assembly + art/mirror hanging — unbox and hang everything same day
 
-No hidden fees. Labor pricing is upfront.
+No hidden fees. Flat-rate pricing. Free estimate.
 
-Text (213) 361-1700 or message us here for your combo quote.
+Text (213) 361-1700 or message us here.
 
 handyandfriend.com
 ```
@@ -81,7 +82,7 @@ Thinking about mounting your new TV? Here's what most people get wrong:
 2. Center of TV should be at eye level from your couch (42-48")
 3. In-wall cable concealment looks 10x cleaner than cable covers
 
-We mount TVs daily in LA. Standard mount $165, hidden wires $250.
+We mount TVs daily in LA. Standard mount $150, hidden wire setup $185.
 
 Available same day most weeks.
 
@@ -98,14 +99,13 @@ Call (213) 361-1700 or message us here.
 Spring is here — perfect time for a home refresh.
 
 Popular spring projects:
-Interior painting (from $3/sq ft — you pick the color)
-Cabinet repaint (spray finish from $155/door)
-New flooring (LVP from $3.50/sq ft)
+🏠 Interior painting — from $3/sq ft (labor only, you pick the color)
+🎨 Cabinet repaint — from $75/door full package (paint included)
+🪵 New flooring — LVP/laminate from $3/sq ft (labor only)
 
-Book this week and get 20% off any combo of 2+ services.
+Free estimate. Same-week availability.
 
-Free estimate: (213) 361-1700
-Or message us right here — Alex will calculate your price.
+Call/text (213) 361-1700 or message us here — Alex calculates your price instantly.
 
 handyandfriend.com
 ```

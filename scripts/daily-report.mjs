@@ -523,57 +523,58 @@ function generateAlerts(d7, d30) {
 // ── Report Formatting: Telegram ──────────────────────────────
 
 function formatTelegram(kpi) {
-  const { d7, d30, funnel, sla } = kpi;
-  const alerts = generateAlerts(d7, d30);
+  const { d7, d30 } = kpi;
+  const alerts = generateAlerts(d7, d30).filter(a => a.level === 'critical' || a.level === 'warning');
   const date = fmtDate();
-  const time = fmtTime();
 
-  let msg = `📊 <b>Daily Report — ${date}</b>\n`;
-  msg += `<i>Generated: ${time} PT</i>\n\n`;
+  const leads7 = d7.leads_total || 0;
+  const leads30 = d30.leads_total || 0;
+  const rev30 = d30.revenue || 0;
+  const jobs = d30.jobs_completed || 0;
 
-  // 7-Day Snapshot
-  msg += `<b>📅 7-Day Snapshot</b>\n`;
-  msg += `├ Leads: <b>${d7.leads_total}</b>${deltaStr(d7.leads_total, d7.leads_prev, ' vs prev')}\n`;
-  msg += `├ Conversion: <b>${fmtPct(d7.conversion_rate)}</b>\n`;
-  msg += `├ Revenue: <b>${fmtMoney(d7.revenue)}</b>${deltaStr(d7.revenue, d7.revenue_prev)}\n`;
-  msg += `├ Profit: <b>${fmtMoney(d7.profit)}</b>\n`;
-  msg += `├ SLA: <b>${fmtMin(d7.avg_response_min)}</b>\n`;
-  msg += `└ Jobs: <b>${d7.jobs_completed}</b> done\n\n`;
+  // Nothing happening = one line
+  if (leads7 === 0 && leads30 === 0 && rev30 === 0 && jobs === 0 && alerts.length === 0) {
+    return `📊 <b>${date}</b> — No leads, no revenue, no jobs.`;
+  }
 
-  // 30-Day Snapshot
-  msg += `<b>📅 30-Day Snapshot</b>\n`;
-  msg += `├ Leads: <b>${d30.leads_total}</b>${deltaStr(d30.leads_total, d30.leads_prev, ' vs prev')}\n`;
-  msg += `├ Conversion: <b>${fmtPct(d30.conversion_rate)}</b>\n`;
-  msg += `├ Revenue: <b>${fmtMoney(d30.revenue)}</b>\n`;
-  msg += `├ Profit: <b>${fmtMoney(d30.profit)}</b>\n`;
-  msg += `├ Avg deal: <b>${fmtMoney(d30.avg_deal_size)}</b>\n`;
-  msg += `├ SLA: <b>${fmtMin(d30.avg_response_min)}</b>\n`;
-  msg += `└ Rating: <b>${d30.avg_job_rating ?? 'No data'}</b> ⭐\n\n`;
+  let msg = `📊 <b>${date}</b>\n`;
 
-  // Sources (30d)
+  // 7-day summary — only real numbers
+  if (leads7 > 0 || d7.revenue > 0) {
+    msg += `\n<b>7 days:</b> ${leads7} leads`;
+    if (d7.revenue > 0) msg += ` | ${fmtMoney(d7.revenue)}`;
+    if (d7.jobs_completed > 0) msg += ` | ${d7.jobs_completed} jobs`;
+    msg += '\n';
+  }
+
+  // 30-day summary — only real numbers
+  if (leads30 > 0 || rev30 > 0) {
+    msg += `<b>30 days:</b> ${leads30} leads`;
+    if (rev30 > 0) msg += ` | ${fmtMoney(rev30)}`;
+    if (jobs > 0) msg += ` | ${jobs} jobs`;
+    if (d30.conversion_rate > 0) msg += ` | ${fmtPct(d30.conversion_rate)} conv`;
+    msg += '\n';
+  }
+
+  // Sources — only if leads exist, only non-zero
   if (d30.leads_by_source) {
-    msg += `<b>📡 Lead Sources (30d)</b>\n`;
     const sources = typeof d30.leads_by_source === 'string' ? JSON.parse(d30.leads_by_source) : d30.leads_by_source;
+    const parts = [];
     for (const [src, cnt] of Object.entries(sources).sort((a, b) => b[1] - a[1])) {
-      msg += `├ ${src}: ${cnt}\n`;
+      if (cnt > 0) parts.push(`${src}: ${cnt}`);
     }
-    msg += '\n';
+    if (parts.length > 0) {
+      msg += `\n<b>Sources:</b> ${parts.join(' | ')}\n`;
+    }
   }
 
-  // Alerts
+  // Critical/warning alerts only
   if (alerts.length > 0) {
-    msg += `<b>🚨 Alerts</b>\n`;
-    for (const a of alerts) {
-      const icon = a.level === 'critical' ? '🔴' : a.level === 'warning' ? '🟡' : 'ℹ️';
-      msg += `${icon} ${a.msg}\n`;
-    }
     msg += '\n';
+    for (const a of alerts) {
+      msg += `${a.level === 'critical' ? '🔴' : '🟡'} ${a.msg}\n`;
+    }
   }
-
-  // Test leads info
-  msg += `<b>🧪 Test Leads</b>\n`;
-  msg += `├ Count: ${d30.test_leads_total}\n`;
-  msg += `└ Share: ${d30.test_leads_pct}%\n`;
 
   return msg;
 }

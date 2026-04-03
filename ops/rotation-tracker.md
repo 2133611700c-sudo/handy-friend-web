@@ -17,10 +17,10 @@
 - Furniture Painting: Headline #1 (ND)
 - Lighting Upgrade: Headline #4, Primary #1
 
-### Week C — Renovation (Mar 30 - Apr 5)
+### Week C — Renovation (Mar 30 - Apr 5) ✅ 2026-W14.md
 - Flooring: Headline #1, Primary #1, Short #1
-- Door Installation: Headline #1, Primary #1
-- Backsplash: Headline #1 (ND), Primary #1
+- Door Installation: Headline #6 ("One New Door Changes the Whole Hallway"), Primary #1
+- Backsplash: Headline #1 (ND), Primary #1 (ND variant)
 - General Handyman: All-services list post
 
 ### Week D — Plumbing & Bathroom (Apr 6-12)

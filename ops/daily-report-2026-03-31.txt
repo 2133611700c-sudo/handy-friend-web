@@ -1,0 +1,11 @@
+DAILY QUALITY REPORT - Tue Mar 31 22:46:58 PDT 2026
+================================
+Placeholder pricing violations: yes
+Hunter processes: 0
+Last scan: [2026-03-30T11:39:55] ✅ Scan complete - 1-3 leads captured with service detection
+Total leads: 1
+Today's leads: 0
+API health: ok
+Telegram configured: yes
+Cron jobs: 4
+Browser processes: 68

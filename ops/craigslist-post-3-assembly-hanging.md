@@ -22,13 +22,13 @@ Handy & Friend — professional handyman in Los Angeles.
 - We bring all tools — no mess, no stress
 
 **TV Mounting:**
-- Standard flat/tilt mount — $165
+- Standard flat/tilt mount — $150
 - Full-motion mount — included
-- Concealed in-wall wiring — $250
+- Concealed in-wall wiring — $185
 
 **Art, Mirror & Picture Hanging:**
-- Up to 5 pieces — $175
-- Curtain rod install — $165 first window, $50 each additional
+- Up to 5 pieces — $150
+- Curtain rod install — $150 first window, $50 each additional
 - Gallery walls welcome — priced per project
 
 **Why us:**
@@ -37,7 +37,7 @@ Handy & Friend — professional handyman in Los Angeles.
 - Same-day and next-day availability most weeks
 - Respond within 1 hour (8am-8pm PT, Mon-Sat)
 
-Book 2+ services together and save 20%.
+Book 2+ services same visit — one trip, less hassle.
 
 Text or call for a same-day estimate:
 (213) 361-1700
