@@ -56,6 +56,28 @@ def log_line(log_path: pathlib.Path, message: str) -> None:
         f.write(f"[{stamp}] {message}\n")
 
 
+def load_columns_cache(cache_path: pathlib.Path) -> List[str]:
+    try:
+        if not cache_path.exists():
+            return []
+        raw = json.loads(cache_path.read_text(encoding="utf-8"))
+        cols = raw.get("columns")
+        if isinstance(cols, list):
+            return [str(c) for c in cols if isinstance(c, str) and c.strip()]
+    except Exception:
+        pass
+    return []
+
+
+def save_columns_cache(cache_path: pathlib.Path, columns: List[str]) -> None:
+    ensure_log_path(cache_path)
+    payload = {
+        "columns": sorted(set(columns)),
+        "updated_at": utc_now().isoformat(),
+    }
+    cache_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def load_yaml_thresholds(candidate_paths: List[pathlib.Path], log_path: pathlib.Path) -> Dict[str, Any]:
     try:
         import yaml  # type: ignore
@@ -139,6 +161,15 @@ def require_env(name: str) -> str:
     if not value:
         raise MonitorError(f"Missing required env var: {name}")
     return value
+
+
+def telegram_token_from_env() -> str:
+    # Preferred: TELEGRAM_BOT_TOKEN
+    # Compatibility fallback: TELEGRAM_WEBHOOK_SECRET (legacy env in some nodes)
+    return (
+        os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+        or os.getenv("TELEGRAM_WEBHOOK_SECRET", "").strip()
+    )
 
 
 def supabase_headers(api_key: str) -> Dict[str, str]:
@@ -418,18 +449,28 @@ def write_incident_supabase(base_url: str, api_key: str, summary: str, details: 
     endpoint = f"{base_url}/rest/v1/ops_incidents"
     headers = supabase_headers(api_key)
     headers["Prefer"] = "return=minimal"
+    cache_path = pathlib.Path(os.path.expanduser("~/handy-friend-ops/logs/ops_incidents_columns_cache.json"))
 
     now_iso = utc_now().isoformat()
+    # Start with minimal payload compatible with Handy & Friend ops_incidents schema.
+    # If schema differs, adaptive retries below will adjust.
     payload: Dict[str, Any] = {
-        "incident_type": "OPENCLAW_HEALTH",
-        "issue_type": "SOURCE_HEALTH",
-        "type": "OPENCLAW_HEALTH",
-        "category": "OPENCLAW_HEALTH",
         "system_name": "openclaw_health_monitor",
-        "source": "openclaw_health_monitor",
-        "severity": sev,
+        "issue_type": "SOURCE_HEALTH",
+        "severity": 3 if sev == "SEV3" else (2 if sev == "SEV2" else 0),
         "status": "open" if sev in {"SEV2", "SEV3"} else "resolved",
         "summary": summary,
+        "evidence": details,
+        "detected_at": now_iso,
+        "last_seen_at": now_iso,
+        "created_by": "openclaw_health_monitor",
+    }
+    # Optional compatibility keys for other schemas.
+    payload.update({
+        "incident_type": "OPENCLAW_HEALTH",
+        "type": "OPENCLAW_HEALTH",
+        "category": "OPENCLAW_HEALTH",
+        "source": "openclaw_health_monitor",
         "message": summary,
         "title": "OPENCLAW_HEALTH",
         "body": summary,
@@ -441,13 +482,20 @@ def write_incident_supabase(base_url: str, api_key: str, summary: str, details: 
         "occurred_at": now_iso,
         "created_at": now_iso,
         "updated_at": now_iso,
-    }
+    })
+
+    # If we already know accepted columns, avoid noisy retries.
+    cached_columns = load_columns_cache(cache_path)
+    if cached_columns:
+        payload = {k: v for k, v in payload.items() if k in cached_columns}
+        log_line(log_path, f"ops_incidents using cached columns ({len(cached_columns)})")
 
     # Schema-adaptive insert:
     # If PostgREST reports a missing column (PGRST204), drop it and retry.
     for _ in range(25):
         code, resp = http_json("POST", endpoint, headers=headers, body=payload)
         if code in (200, 201, 204):
+            save_columns_cache(cache_path, list(payload.keys()))
             return True, f"incident written (HTTP {code})"
 
         if (
@@ -467,6 +515,7 @@ def write_incident_supabase(base_url: str, api_key: str, summary: str, details: 
                 log_line(log_path, f"ops_incidents retry without column={missing}")
                 if not payload:
                     return False, "ops_incidents payload exhausted after schema retries"
+                save_columns_cache(cache_path, list(payload.keys()))
                 continue
 
         # Some schemas store severity as integer (e.g. 3/2/0) rather than text (SEV3/SEV2/INFO).
@@ -483,6 +532,36 @@ def write_incident_supabase(base_url: str, api_key: str, summary: str, details: 
             payload["severity"] = sev_map.get(str(payload["severity"]), 0)
             log_line(log_path, f"ops_incidents retry with integer severity={payload['severity']}")
             continue
+
+        # If NOT NULL constraint fails, add known defaults and retry.
+        if (
+            code == 400
+            and isinstance(resp, dict)
+            and resp.get("code") == "23502"
+            and isinstance(resp.get("message"), str)
+            and "null value in column" in resp["message"]
+        ):
+            msg = resp["message"]
+            missing_col = ""
+            try:
+                missing_col = msg.split('null value in column "', 1)[1].split('"', 1)[0]
+            except Exception:
+                missing_col = ""
+            default_map: Dict[str, Any] = {
+                "system_name": "openclaw_health_monitor",
+                "issue_type": "SOURCE_HEALTH",
+                "status": "open" if sev in {"SEV2", "SEV3"} else "resolved",
+                "summary": summary,
+                "severity": 3 if sev == "SEV3" else (2 if sev == "SEV2" else 0),
+                "detected_at": now_iso,
+                "last_seen_at": now_iso,
+                "created_by": "openclaw_health_monitor",
+                "evidence": details,
+            }
+            if missing_col and missing_col in default_map:
+                payload[missing_col] = default_map[missing_col]
+                log_line(log_path, f"ops_incidents retry with required column={missing_col}")
+                continue
 
         log_line(log_path, f"ops_incidents insert failed code={code} resp={resp} payload_keys={sorted(payload.keys())}")
         return False, "ops_incidents insert failed"
@@ -506,7 +585,7 @@ def main() -> int:
         if not supabase_key:
             raise MonitorError("Missing required env var: SUPABASE_KEY or SUPABASE_SERVICE_ROLE_KEY")
 
-        tg_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+        tg_token = telegram_token_from_env()
         tg_chat = os.getenv("TELEGRAM_CHAT_ID", "").strip()
 
         thresholds = build_thresholds(log_path)
@@ -612,7 +691,7 @@ def main() -> int:
                 ok_tg, tg_msg = send_telegram(tg_token, tg_chat, digest)
                 log_line(log_path, f"telegram: {ok_tg} {tg_msg}")
             else:
-                log_line(log_path, "telegram skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID missing")
+                log_line(log_path, "telegram skipped: TELEGRAM_BOT_TOKEN/TELEGRAM_WEBHOOK_SECRET or TELEGRAM_CHAT_ID missing")
 
         print(digest)
         return 0
@@ -622,7 +701,7 @@ def main() -> int:
         log_line(log_path, err)
         log_line(log_path, traceback.format_exc())
 
-        tg_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+        tg_token = telegram_token_from_env()
         tg_chat = os.getenv("TELEGRAM_CHAT_ID", "").strip()
         if tg_token and tg_chat:
             try:
