@@ -1,4 +1,4 @@
-DAILY QUALITY REPORT - Thu Apr  2 18:00:01 PDT 2026
+DAILY QUALITY REPORT - Thu Apr  2 20:00:01 PDT 2026
 ================================
 Placeholder pricing violations: no
 Hunter processes: 0
@@ -8,4 +8,11 @@ Today's leads: 0
 API health: ok
 Telegram configured: yes
 Cron jobs: 4
-Browser processes: 25
+Browser processes: 46
+📄 Report saved to: ops/daily-report-2026-04-02.txt
+
+10. Recommendations:
+   🔧 Run manual scan: ./scripts/run-hunter-agent.sh nextdoor
+
+✅ Quality control check complete!
+======================================
