@@ -103,3 +103,42 @@ curl https://handyandfriend.com/api/health
 5. **Skill contracts** — every capability has defined inputs, outputs, budget, QA checks
 6. **Isolation** — code in worktrees, browser in sandbox, media in temp dirs
 7. **Observe everything** — log provider, cost, quality, errors for every execution
+
+## OpenClaw
+Role: web scraping / browser automation ONLY.
+
+OpenClaw is used for:
+- Nextdoor lead collection
+- Craigslist lead collection
+- source login/session handling
+- raw lead extraction
+- source-level parsing
+- first-pass source filtering
+- scrape heartbeat / source health evidence
+
+OpenClaw is NOT:
+- the CRM
+- the source of truth
+- the main orchestrator
+- the main monitoring system
+- the pricing authority
+- the incident history authority
+
+System boundaries:
+- Supabase = source of truth
+- Telegram = alerts / approvals / digests
+- rules-registry.yaml = source of truth for pricing, geography, SLA, claims, escalation
+- Claude Code / Codex / Gems = higher-level reasoning and ops tools
+
+Runtime:
+- Dell Vostro / WSL2 = 24/7 node
+- OPENCLAW_ROOT = [REPLACE AFTER PROMPT 1 WITH REAL DISCOVERED PATH]
+- Sources: nextdoor_sources.json + Craigslist config
+- Health scripts: verify_hunters.py, monitor_hunter_sla.py, agent_self_check.py
+- Output target: Supabase social_leads
+
+Severity rules:
+- feeds empty > expected interval = SEV 3
+- scanner/scheduler down = SEV 3
+- 100% lead rejection anomaly = SEV 2 minimum
+- parser drift / source format drift = SEV 2 minimum
