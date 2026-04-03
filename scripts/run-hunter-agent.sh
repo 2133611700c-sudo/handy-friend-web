@@ -33,8 +33,20 @@ if [ ! -x "$OPENCLAW_BIN" ]; then
 fi
 
 LOCK_DIR="/tmp/handyfriend-${LOCK_NAME}.lock"
+LOCK_STALE_MINUTES="${LOCK_STALE_MINUTES:-180}"
+
+if [ -d "$LOCK_DIR" ]; then
+  NOW_EPOCH="$(date +%s)"
+  LOCK_EPOCH="$(stat -f %m "$LOCK_DIR" 2>/dev/null || echo 0)"
+  LOCK_AGE_MIN=$(( (NOW_EPOCH - LOCK_EPOCH) / 60 ))
+  if [ "$LOCK_AGE_MIN" -gt "$LOCK_STALE_MINUTES" ]; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] WARN $LOCK_NAME: stale lock ${LOCK_AGE_MIN}m, removing" >> "$LOG_FILE"
+    rmdir "$LOCK_DIR" 2>/dev/null || rm -rf "$LOCK_DIR" 2>/dev/null || true
+  fi
+fi
+
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] SKIP $LOCK_NAME: lock exists (previous run active)" >> "$LOG_FILE"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] SKIP $LOCK_NAME: lock exists (active), age<=${LOCK_STALE_MINUTES}m" >> "$LOG_FILE"
   exit 0
 fi
 trap 'rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT

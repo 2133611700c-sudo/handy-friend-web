@@ -80,7 +80,7 @@ System boundaries:
 
 Runtime:
 - Dell Vostro / WSL2 = 24/7 node
-- OPENCLAW_ROOT = [REPLACE AFTER PROMPT 1 WITH REAL DISCOVERED PATH]
+- OPENCLAW_ROOT = /Users/sergiikuropiatnyk/.openclaw/agents/main/agent
 - Sources: nextdoor_sources.json + Craigslist config
 - Health scripts: verify_hunters.py, monitor_hunter_sla.py, agent_self_check.py
 - Output target: Supabase social_leads
