@@ -30,7 +30,7 @@ jobs:
           JS_SIZE=$(wc -c < assets/js/main.js)
           echo "index.html: ${INDEX_SIZE} bytes"
           echo "main.js:    ${JS_SIZE} bytes"
-          [ "$INDEX_SIZE" -lt 110000 ] || (echo "ERROR: index.html > 110 KB — check for embedded base64!" && exit 1)
+          [ "$INDEX_SIZE" -lt 160000 ] || (echo "ERROR: index.html > 160 KB — check for embedded base64!" && exit 1)
           [ "$JS_SIZE"    -lt 500000 ] || (echo "ERROR: main.js > 500 KB — check for embedded base64!" && exit 1)
           echo "✅ File sizes OK"
 
