@@ -156,3 +156,15 @@ vite.config.ts.timestamp-*
 # Browser cache data (from skill automation)
 .browser-data/
 **/.browser-data/
+
+# Browser caches from facebook monitor runtime
+skills/facebook-group-monitor/scripts/.browser-data/
+skills/facebook-group-monitor/scripts/.seen-posts.json
+
+# Local ops logs and reports
+ops/daily-report-*.txt
+ops/*.log
+!ops/lighthouse-results.md
+
+# Legacy staging files
+handyfriend_10.html

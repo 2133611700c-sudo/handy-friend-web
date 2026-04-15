@@ -1,0 +1,6 @@
+# Runtime dependencies for direct script execution from scripts/.
+playwright>=1.40,<2
+# urllib3 2.x requires OpenSSL 1.1.1+; macOS LibreSSL triggers
+# NotOpenSSLWarning — pinning to 1.x silences it cleanly.
+urllib3>=1.26,<2
+requests>=2.31
