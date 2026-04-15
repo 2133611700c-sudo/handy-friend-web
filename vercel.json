@@ -83,14 +83,9 @@
       "permanent": true
     },
     {
-      "source": "/pricing",
-      "destination": "/#calcBox",
-      "permanent": true
-    },
-    {
       "source": "/pricing/",
-      "destination": "/#calcBox",
-      "permanent": true
+      "destination": "/pricing",
+      "statusCode": 301
     },
     {
       "source": "/services/",
@@ -108,14 +103,9 @@
       "statusCode": 301
     },
     {
-      "source": "/cabinet-painting",
-      "destination": "/services",
-      "permanent": true
-    },
-    {
       "source": "/cabinet-painting/",
-      "destination": "/services",
-      "permanent": true
+      "destination": "/cabinet-painting",
+      "statusCode": 301
     },
     {
       "source": "/flooring/",
@@ -168,14 +158,9 @@
       "statusCode": 301
     },
     {
-      "source": "/furniture-painting",
-      "destination": "/services",
-      "permanent": true
-    },
-    {
       "source": "/furniture-painting/",
-      "destination": "/services",
-      "permanent": true
+      "destination": "/furniture-painting",
+      "statusCode": 301
     },
     {
       "source": "/reviews/",
