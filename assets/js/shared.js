@@ -62,8 +62,14 @@
     if (typeof dataLayer !== 'undefined') dataLayer.push(Object.assign({ event: eventName }, payload));
   };
 
-  /* ── 5. Phone / email / WhatsApp click tracking ── */
+  /* ── 5. Phone / email / WhatsApp click tracking ──
+     DISABLED on root landing page (index.html ships its own richer listener
+     at ~line 595 that also fires Google Ads phone_call conversion + beacon
+     fallback). This shared listener kept only for service sub-pages which do
+     NOT have inline tracking. Root page sets window.__HF_INLINE_CLICK_TRACKING
+     = true in its own handler initialization block to disable this. */
   document.addEventListener('click', function(e) {
+    if (window.__HF_INLINE_CLICK_TRACKING) return; // root page has its own listener
     var link = e.target.closest('a[href]');
     if (!link) return;
     var href = (link.getAttribute('href') || '').trim();
@@ -181,20 +187,19 @@
     if (serviceParam) {
       /* Alias map: short param values → actual dropdown option values */
       var serviceAliases = {
-        'cabinet_painting': 'kitchen_cabinet_painting',
         'tv_mounting': 'tv_mounting',
         'furniture_assembly': 'furniture_assembly',
         'flooring': 'flooring',
-        'interior_painting': 'interior_painting'
+        'interior_painting': 'interior_painting',
+        'drywall': 'drywall'
       };
       /* Service label map for message prefill */
       var serviceLabels = {
         'tv_mounting': 'TV Mounting',
-        'cabinet_painting': 'Cabinet Painting',
-        'kitchen_cabinet_painting': 'Cabinet Painting',
         'furniture_assembly': 'Furniture Assembly',
         'flooring': 'Flooring Installation',
-        'interior_painting': 'Interior Painting'
+        'interior_painting': 'Interior Painting',
+        'drywall': 'Drywall Repair'
       };
       var resolvedParam = serviceAliases[serviceParam] || serviceParam;
       var sel = document.querySelector('[name="service_type"]');

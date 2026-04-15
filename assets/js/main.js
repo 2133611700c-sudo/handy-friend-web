@@ -67,22 +67,6 @@ function hydratePricingFromRegistry(prices, registry) {
   const details = registry && registry.details;
   if (!canonical || !details) return;
 
-  prices.kitchen.doorFull = n(details.kitchen_cabinet_painting?.full_package, prices.kitchen.doorFull);
-  prices.kitchen.door2side = n(details.kitchen_cabinet_painting?.spray_both_sides, prices.kitchen.door2side);
-  prices.kitchen.door1side = n(details.kitchen_cabinet_painting?.spray_one_side, prices.kitchen.door1side);
-  prices.kitchen.doorRoller = n(details.kitchen_cabinet_painting?.roller_budget, prices.kitchen.doorRoller);
-  prices.kitchen.drawerSmall = n(details.kitchen_cabinet_painting?.drawer_small, prices.kitchen.drawerSmall);
-  prices.kitchen.drawerLarge = n(details.kitchen_cabinet_painting?.drawer_large, prices.kitchen.drawerLarge);
-  prices.kitchen.endPanel = n(details.kitchen_cabinet_painting?.end_panel, prices.kitchen.endPanel);
-  prices.kitchen.island = n(details.kitchen_cabinet_painting?.island, prices.kitchen.island);
-  prices.kitchen.interiorBox = n(details.kitchen_cabinet_painting?.interior_section, prices.kitchen.interiorBox);
-
-  prices.furnPaint.chair = n(details.furniture_painting?.chair, prices.furnPaint.chair);
-  prices.furnPaint.nightstand = n(details.furniture_painting?.nightstand, prices.furnPaint.nightstand);
-  prices.furnPaint.dresser = n(details.furniture_painting?.dresser, prices.furnPaint.dresser);
-  prices.furnPaint.diningTable = n(details.furniture_painting?.dining_table, prices.furnPaint.diningTable);
-  prices.furnPaint.builtIn = n(details.furniture_painting?.builtin_lf, prices.furnPaint.builtIn);
-
   prices.paint.wall1coat = n(details.interior_painting?.wall_1coat, prices.paint.wall1coat);
   prices.paint.wall2coat = n(details.interior_painting?.wall_2coats, prices.paint.wall2coat);
   prices.paint.ceiling = n(details.interior_painting?.ceiling_smooth, prices.paint.ceiling);
@@ -132,8 +116,6 @@ function n(value, fallback) {
    PHOTOS
 ═══════════════════════════════════════════════ */
 const SVC_IMG={
-  kitch:'assets/img/kitch.webp',
-  furnp:'assets/img/furnp.webp',
   paint:'assets/img/painting.webp',
   floor:'assets/img/flooring.webp',
   tv:   'assets/img/tv-mounting.webp',
@@ -263,7 +245,7 @@ const T={
     heroSub:"Describe your project and get AI-powered guidance on pricing, timeline, and next steps—instantly.",
     aiPowered:"AI Powered",
     heroOfferTitle:"Hire a Handyman in Los Angeles",
-    heroOfferSubHtml:'<span class="hero-included-accent">Same-day response, transparent pricing, and professional insured service</span><br>Book online in minutes or call (213) 361-1700 for a fast quote',
+    heroOfferSubHtml:'<span class="hero-included-accent">Same-day response, transparent pricing, and reliable local handyman help</span><br>Book online in minutes or call (213) 361-1700 for a fast quote',
     aiSearchPlaceholder:"Ask AI: price my project",
     aiBadge:"Smart",
     aiSubmit:"Get Estimate",
@@ -282,8 +264,6 @@ const T={
     gridLbl:"",
     base:[],
     svcs:[
-      {id:"kitch",name:"Kitchen Cabinet Painting",from:"$75/door"},
-      {id:"furnp",name:"Furniture Painting",      from:"$40/piece"},
       {id:"paint",name:"Interior Painting",       from:"$3.00/sf"},
       {id:"floor",name:"Flooring Installation",   from:"$3.00/sf"},
       {id:"tv",   name:"TV Mounting",             from:"$105"},
@@ -305,7 +285,7 @@ const T={
     subFlLam:"Laminate",subFlLvp:"LVP",
     subTv:"TV",subArt:"Art & Mirrors",subCurtain:"Curtains",
     subPlumb:"Plumbing",subElec:"Electrical",
-    tabKitch:"Kitchen",tabFurnp:"Furniture",tabP1:"Paint 1ct",tabP2:"Paint 2ct",tabFl:"Flooring",tabTrim:"Trim",tabTv:"TV & Decor",tabFur:"Assembly",tabPlumb:"Plumb & Elec",
+    tabP1:"Paint 1ct",tabP2:"Paint 2ct",tabFl:"Flooring",tabTrim:"Trim",tabTv:"TV & Decor",tabFur:"Assembly",tabPlumb:"Plumb & Elec",
     areaTotalHint:"Enter total sq ft",
     areaTotalFmt:(sf)=>`Total area = <strong>${sf} sq ft</strong>`,
     waGreet:"Hi Handy & Friend! 👋",
@@ -314,8 +294,6 @@ const T={
     waRoomDetail:(len,wid,sf)=>`Room: ${len}ft × ${wid}ft = ${sf} sq ft`,
     waConfirm:"Please confirm availability.",
     opts:[
-      {v:"kitch",l:"🍳 Kitchen Cabinet Painting"},
-      {v:"furnp",l:"🎨 Furniture Painting"},
       {v:"p1",l:"🖌️ Interior Painting — 1 coat ($3.00/sf)"},
       {v:"p2",l:"🖌️ Interior Painting — 2 coats ($3.75/sf)"},
       {v:"fl",l:"🏠 Flooring — Laminate ($3.00/sf)"},
@@ -426,7 +404,7 @@ const T={
       ],
       furProv:"All parts, hardware & original instructions",
       furN:"Excess complexity or missing parts billed at $50/hr after included time. $95 service call applies.",
-      artScope:"Fixed price",artDesc:"Up to 5 pieces. Level guarantee included.",
+      artScope:"Fixed price",artDesc:"Up to 5 pieces. Level-checked included.",
       art:[
         ["Art / Mirror Hanging — up to 5 pieces","$95/package","1–2h"],
         ["Curtains / Rods — first window","$75/window","1.5–2.5h"],
@@ -475,7 +453,7 @@ const T={
         ["Re-Caulk Tub / Shower (old caulk removal included)","$110/unit","2–3h"]
       ],
       plumbProv:"Fixture or parts (client provides)",
-      plumbN:"Shutoff valves must be functional. Heavy mold = extra charge. Beyond cosmetic scope → licensed C-36 plumber referral.",
+      plumbN:"Shutoff valves must be functional. Heavy mold = extra charge. Beyond cosmetic scope -> C-36 plumber referral.",
       elecScope:"Like-for-like · No permits",elecDesc:"Replacement in existing boxes only. No new circuits.",
       elec:[
         ["Light Fixture Replace (existing box)","$95/unit","1–2h"],
@@ -484,7 +462,7 @@ const T={
         ["Smart Doorbell / Smart Lock Install","$85/unit","1.5–2h"]
       ],
       elecProv:"Fixture, device, or switch (client provides)",
-      elecN:"Ceiling fans with new support box → licensed C-10 electrician. No panel work, no new runs.",
+      elecN:"Ceiling fans with new support box -> C-10 electrician referral. No panel work, no new runs.",
       paintScope:"Per sq ft · Labor only",paintDesc:"SF = painted surface area (walls/ceiling/trim), not floor area.",
       pF1:[
         ["Walls — 1 coat (refresh/same color)","$3.00/sf"],
@@ -541,7 +519,7 @@ const T={
     furnpBenefit:"Custom colors. Refinished look.",
     tvBenefit:"No mess. Wall-safe mounting.",
     furBenefit:"All parts included. Fully assembled.",
-    artBenefit:"Level guarantee. Properly secured.",
+    artBenefit:"Level-checked. Properly secured.",
     paintBenefit:"Professional finish. No spillage.",
     floorBenefit:"Clean installation. Debris removed.",
     plumbBenefit:"No leaks. Quality fixtures.",
@@ -573,7 +551,7 @@ const T={
     heroSub:"Solo mano de obra · Sin margen en materiales · Misma semana",
     aiPowered:"Con IA",
     heroOfferTitle:"Contrata un handyman en Los Ángeles",
-    heroOfferSubHtml:'<span class="hero-included-accent">Respuesta el mismo día, precios transparentes y servicio profesional asegurado</span><br>Reserva en línea en minutos o llama al (213) 361-1700 para una cotización rápida',
+    heroOfferSubHtml:'<span class="hero-included-accent">Respuesta el mismo día, precios transparentes y ayuda confiable de handyman local</span><br>Reserva en línea en minutos o llama al (213) 361-1700 para una cotización rápida',
     aiSearchPlaceholder:"Pregunta a IA: cotiza mi proyecto",
     aiBadge:"Inteligente",
     aiSubmit:"Obtener Estimado",
@@ -593,8 +571,6 @@ const T={
     gridLbl:"",
     base:[],
     svcs:[
-      {id:"kitch",name:"Pintura de Cocinas",       from:"$7.25/puerta"},
-      {id:"furnp",name:"Pintura de Muebles",       from:"$40/pieza"},
       {id:"paint",name:"Pintura Interior",         from:"$3.00/ft²"},
       {id:"floor",name:"Revestimiento de Pisos",   from:"$3.00/ft²"},
       {id:"tv",   name:"Montaje de TV",            from:"$105"},
@@ -616,7 +592,7 @@ const T={
     subFlLam:"Laminado",subFlLvp:"LVP",
     subTv:"TV",subArt:"Cuadros & Espejos",subCurtain:"Cortinas",
     subPlumb:"Plomería",subElec:"Eléctrico",
-    tabKitch:"Cocina",tabFurnp:"Muebles",tabP1:"Pintura 1c",tabP2:"Pintura 2c",tabFl:"Pisos",tabTrim:"Molduras",tabTv:"TV & Decor",tabFur:"Ensamblaje",tabPlumb:"Plom & Elec",
+    tabP1:"Pintura 1c",tabP2:"Pintura 2c",tabFl:"Pisos",tabTrim:"Molduras",tabTv:"TV & Decor",tabFur:"Ensamblaje",tabPlumb:"Plom & Elec",
     areaTotalHint:"Ingresa el total de ft²",
     areaTotalFmt:(sf)=>`Área total = <strong>${sf} ft²</strong>`,
     waGreet:"¡Hola Handy & Friend! 👋",
@@ -625,8 +601,6 @@ const T={
     waRoomDetail:(len,wid,sf)=>`Habitación: ${len}ft × ${wid}ft = ${sf} ft²`,
     waConfirm:"Por favor confirme disponibilidad.",
     opts:[
-      {v:"kitch",l:"🍳 Pintura de Gabinetes"},
-      {v:"furnp",l:"🎨 Pintura de Muebles"},
       {v:"p1",l:"🖌️ Pintura Interior — 1 capa ($3.00/ft²)"},
       {v:"p2",l:"🖌️ Pintura Interior — 2 capas ($3.75/ft²)"},
       {v:"fl",l:"🏠 Pisos — Laminado ($3.00/ft²)"},
@@ -768,7 +742,7 @@ const T={
       ],
       furProv:"Todas las piezas, tornillería e instrucciones",
       furN:"Complejidad excesiva o piezas faltantes se cobran a $50/hr después del tiempo incluido.",
-      artScope:"Precio fijo",artDesc:"Hasta 5 piezas. Garantía de nivel incluida.",
+      artScope:"Precio fijo",artDesc:"Hasta 5 piezas. Nivelado incluido.",
       art:[
         ["Arte / Espejos — hasta 5 piezas","$95/paquete","1–2h"],
         ["Cortineros / Barras — 1ra ventana","$75/ventana","1.5–2.5h"],
@@ -851,7 +825,7 @@ const T={
     furnpBenefit:"Colores personalizados. Aspecto restaurado.",
     tvBenefit:"Sin desorden. Montaje seguro en pared.",
     furBenefit:"Todas las piezas incluidas. Completamente ensamblado.",
-    artBenefit:"Garantía de nivel. Bien asegurado.",
+    artBenefit:"Nivelado. Bien fijado.",
     paintBenefit:"Acabado profesional. Sin derrames.",
     floorBenefit:"Instalación limpia. Escombros retirados.",
     plumbBenefit:"Sin fugas. Accesorios de calidad.",
@@ -883,7 +857,7 @@ const T={
     heroSub:"Опишите свой проект и получите помощь ИИ по ценам, срокам и следующим шагам — мгновенно.",
     aiPowered:"Работает ИИ",
     heroOfferTitle:"Закажите мастера в Лос-Анджелесе",
-    heroOfferSubHtml:'<span class="hero-included-accent">Ответ в тот же день, прозрачные цены и профессиональный застрахованный сервис</span><br>Запишитесь онлайн за пару минут или звоните (213) 361-1700 для быстрой сметы',
+    heroOfferSubHtml:'<span class="hero-included-accent">Ответ в тот же день, прозрачные цены и надёжный местный мастер</span><br>Запишитесь онлайн за пару минут или звоните (213) 361-1700 для быстрой сметы',
     aiSearchPlaceholder:"ИИ: оцените мой проект",
     aiBadge:"Умный",
     aiSubmit:"Считать смету",
@@ -902,8 +876,6 @@ const T={
     gridLbl:"",
     base:[],
     svcs:[
-      {id:"kitch",name:"Покраска кухонь и фасадов",from:"$7.25/дверь"},
-      {id:"furnp",name:"Покраска мебели",          from:"$40/шт"},
       {id:"paint",name:"Интерьерная покраска",     from:"$3.00/кф"},
       {id:"floor",name:"Напольное покрытие",       from:"$3.00/кф"},
       {id:"tv",   name:"Монтаж ТВ",               from:"$105"},
@@ -925,7 +897,7 @@ const T={
     subFlLam:"Ламинат",subFlLvp:"LVP",
     subTv:"ТВ",subArt:"Картины & Зеркала",subCurtain:"Карнизы",
     subPlumb:"Сантехника",subElec:"Электрика",
-    tabKitch:"Кухня",tabFurnp:"Мебель",tabP1:"Краска 1сл",tabP2:"Краска 2сл",tabFl:"Пол",tabTrim:"Молдинги",tabTv:"ТВ & Декор",tabFur:"Сборка",tabPlumb:"Сантех & Эл",
+    tabP1:"Краска 1сл",tabP2:"Краска 2сл",tabFl:"Пол",tabTrim:"Молдинги",tabTv:"ТВ & Декор",tabFur:"Сборка",tabPlumb:"Сантех & Эл",
     areaTotalHint:"Введите кв.футов",
     areaTotalFmt:(sf)=>`Общая площадь = <strong>${sf} кв.фут</strong>`,
     waGreet:"Привет, Handy & Friend! 👋",
@@ -934,8 +906,6 @@ const T={
     waRoomDetail:(len,wid,sf)=>`Комната: ${len}фт × ${wid}фт = ${sf} кв.фут`,
     waConfirm:"Пожалуйста, подтвердите наличие.",
     opts:[
-      {v:"kitch",l:"🍳 Покраска кухонных фасадов"},
-      {v:"furnp",l:"🎨 Покраска мебели"},
       {v:"p1",l:"🖌️ Интерьер — 1 слой ($3.00/кф)"},
       {v:"p2",l:"🖌️ Интерьер — 2 слоя ($3.75/кф)"},
       {v:"fl",l:"🏠 Ламинат ($3.00/кф)"},
@@ -1160,7 +1130,7 @@ const T={
     furnpBenefit:"Любые цвета. Обновлённый вид.",
     tvBenefit:"Без беспорядка. Безопасное крепление на стену.",
     furBenefit:"Все части включены. Полная сборка.",
-    artBenefit:"Гарантия уровня. Надежное крепление.",
+    artBenefit:"По уровню. Надёжное крепление.",
     paintBenefit:"Профессиональная отделка. Без пролива.",
     floorBenefit:"Чистая установка. Мусор вывезен.",
     plumbBenefit:"Без протечек. Качественная фурнитура.",
@@ -1192,7 +1162,7 @@ const T={
     heroSub:"Опишіть свій проект і отримайте допомогу ШІ щодо цін, термінів та наступних кроків — миттєво.",
     aiPowered:"Працює ШІ",
     heroOfferTitle:"Замовте майстра в Лос-Анджелесі",
-    heroOfferSubHtml:'<span class="hero-included-accent">Відповідь того ж дня, прозорі ціни та професійний застрахований сервіс</span><br>Бронюйте онлайн за кілька хвилин або телефонуйте (213) 361-1700 для швидкого кошторису',
+    heroOfferSubHtml:'<span class="hero-included-accent">Відповідь того ж дня, прозорі ціни та надійний місцевий майстер</span><br>Бронюйте онлайн за кілька хвилин або телефонуйте (213) 361-1700 для швидкого кошторису',
     aiSearchPlaceholder:"ШІ: оцініть мій проект",
     aiBadge:"Розумна",
     aiSubmit:"Розрахувати",
@@ -1211,8 +1181,6 @@ const T={
     gridLbl:"",
     base:[],
     svcs:[
-      {id:"kitch",name:"Фарбування кухонь та фасадів",from:"$7.25/дверця"},
-      {id:"furnp",name:"Фарбування меблів",           from:"$40/шт"},
       {id:"paint",name:"Інтер'єрне фарбування",       from:"$3.00/кф"},
       {id:"floor",name:"Підлогове покриття",           from:"$3.00/кф"},
       {id:"tv",   name:"Монтаж ТВ",                   from:"$105"},
@@ -1234,7 +1202,7 @@ const T={
     subFlLam:"Ламінат",subFlLvp:"LVP",
     subTv:"ТВ",subArt:"Картини & Дзеркала",subCurtain:"Карнизи",
     subPlumb:"Сантехніка",subElec:"Електрика",
-    tabKitch:"Кухня",tabFurnp:"Меблі",tabP1:"Фарба 1ш",tabP2:"Фарба 2ш",tabFl:"Підлога",tabTrim:"Молдинги",tabTv:"ТВ & Декор",tabFur:"Збирання",tabPlumb:"Сантех & Ел",
+    tabP1:"Фарба 1ш",tabP2:"Фарба 2ш",tabFl:"Підлога",tabTrim:"Молдинги",tabTv:"ТВ & Декор",tabFur:"Збирання",tabPlumb:"Сантех & Ел",
     areaTotalHint:"Введіть кв.фут",
     areaTotalFmt:(sf)=>`Загальна площа = <strong>${sf} кв.фут</strong>`,
     waGreet:"Привіт, Handy & Friend! 👋",
@@ -1243,8 +1211,6 @@ const T={
     waRoomDetail:(len,wid,sf)=>`Кімната: ${len}фт × ${wid}фт = ${sf} кв.фут`,
     waConfirm:"Просимо підтвердити наявність.",
     opts:[
-      {v:"kitch",l:"🍳 Фарбування кухонних фасадів"},
-      {v:"furnp",l:"🎨 Фарбування меблів"},
       {v:"p1",l:"🖌️ Інтер'єр — 1 шар ($3.00/кф)"},
       {v:"p2",l:"🖌️ Інтер'єр — 2 шари ($3.75/кф)"},
       {v:"fl",l:"🏠 Ламінат ($3.00/кф)"},
@@ -1469,7 +1435,7 @@ const T={
     furnpBenefit:"Будь-які кольори. Оновлений вигляд.",
     tvBenefit:"Без безладу. Безпечне кріплення на стіну.",
     furBenefit:"Усі деталі включені. Повне збирання.",
-    artBenefit:"Гарантія рівня. Надійне кріплення.",
+    artBenefit:"По рівню. Надійне кріплення.",
     paintBenefit:"Професійна обробка. Без розливів.",
     floorBenefit:"Чисте встановлення. Сміття вивезено.",
     plumbBenefit:"Без протіканння. Якісна фурнітура.",
@@ -1516,7 +1482,7 @@ const UI_I18N={
     heroResponseNote:'⏰ We respond within 1 hour during business hours (8am-8pm PT)',
     urgencyChip:'⚡ Trusted by homeowners across Los Angeles',
     urgencyTitle:'🎯 Book Your Service Today',
-    urgencySub:'100% Satisfaction Guarantee • Money-Back Guarantee if Not Happy • Insured • Same-Day Response',
+    urgencySub:'Clear pricing • Starts-at quotes • Same-Day Response • Central LA service area',
     urgencyBtn:'✅ Book Your Service Now',
     whyTitle:'Why Choose Handy & Friend?',
     painLabel:'❌ Pain Point',
@@ -1524,7 +1490,7 @@ const UI_I18N={
     pain1Title:"Contractors don't show up",
     pain1Sub:"You're left hanging. Wasted time.",
     promise1Title:'100% Reliability',
-    promise1Sub:'We show up on time. Guaranteed.',
+    promise1Sub:'We show up on time. Every appointment.',
     pain2Title:'Hidden fees surprise you',
     pain2Sub:'Final bill is 2x the quote.',
     promise2Title:'Upfront Transparent Pricing',
@@ -1532,7 +1498,7 @@ const UI_I18N={
     pain3Title:'Poor quality finish',
     pain3Sub:'Work looks sloppy. Frustrating.',
     promise3Title:'Professional Quality',
-    promise3Sub:'Insured. Satisfaction guaranteed.',
+    promise3Sub:'Clean work. Clear scope. Local team.',
     servicesTitle:'Services',
     serviceTv:'TV Mounting',
     serviceFurniture:'Furniture Assembly',
@@ -1545,8 +1511,8 @@ const UI_I18N={
     testimonialsTitle:'Trusted by LA Families',
     testimonialsSub:'Trusted by local customers across Los Angeles',
     review1:'"Amazing service! Fixed my TV mounting in 1 hour. Professional and quick. Highly recommend!"',
-    review2:'"Best handyman in LA. Upfront pricing and clear scope from start to finish."',
-    review3:'"Perfect furniture assembly! Professional, insured, and super reliable. Will call again!"',
+    review2:'"Upfront pricing and clear scope from start to finish. Showed up on time, cleaned up after."',
+    review3:'"Perfect furniture assembly! On time, clean, and super reliable. Will call again."',
     leadTitle:'Ready to Book Your Service?',
     leadSub:'Phone and chat quotes are free. On-site estimates: $75, credited toward your project when you book.',
     leadNamePlaceholder:'Your Name',
@@ -1582,7 +1548,7 @@ const UI_I18N={
     faqQ3:'Are you insured?',
     faqA3:'We carry General Liability Insurance. Work terms and service limits are explained before booking.',
     faqQ4:"What if I'm not satisfied with the work?",
-    faqA4:"100% satisfaction guarantee. If you're unhappy, we'll redo the work for free within 7 days. Your satisfaction is our priority.",
+    faqA4:"If you're unhappy with the work, tell us within 7 days and we'll come back and fix it at no extra cost. Your feedback is always welcome.",
     faqQ5:'Do you offer weekend or after-hours service?',
     faqA5:'Yes! We offer flexible scheduling. Call 213-361-1700 to arrange weekend or evening appointments.',
     faqQ6:'What payment methods do you accept?',
@@ -1594,13 +1560,80 @@ const UI_I18N={
     finalCtaWhatsApp:'💬 Message on WhatsApp',
     finalCtaMessenger:'💬 Facebook Messenger',
     finalCtaCall:'📞 Call Now',
-    legalDisclaimerHtml:'<strong>Handy & Friend</strong> provides home repair services up to $1,000 (labor only). Services include TV mounting, furniture assembly, painting, flooring, plumbing, electrical, and art hanging. For work exceeding $1,000, structural modifications, permits, or licensed requirements, consult a licensed contractor. We carry General Liability Insurance. <strong><a href="tel:+12133611700" style="color:#b88924;text-decoration:none">Call 213-361-1700</a></strong> for details.',
+    legalDisclaimerHtml:'<strong>Handy & Friend</strong> provides home repair services up to $1,000 (labor only). Services include TV mounting, furniture assembly, painting, flooring, plumbing, electrical, and art hanging. For work exceeding $1,000, structural modifications, permits, or trade-regulated requirements, consult a trade contractor. We carry General Liability Insurance. <strong><a href="tel:+12133611700" style="color:#b88924;text-decoration:none">Call 213-361-1700</a></strong> for details.',
     copyDone:'✓ Copied!',
     smsPhoneRequired:'Please provide your phone number',
     smsConsentRequired:'Please agree to receive SMS',
     smsSendError:'Error sending SMS. Please try again.',
     smsNetworkError:'Network error. Please try again.',
-    leadSubmitError:'Error submitting form. Please call 213-361-1700 directly.'
+    leadSubmitError:'Error submitting form. Please call 213-361-1700 directly.',
+    fhsTitle:'More Than Just These Services',
+    fhsSub:'From a loose doorknob to a full room refresh — one call, one team, most indoor repairs.',
+    fhsItem1:'General Repairs',
+    fhsItem2:'Electrical Help',
+    fhsItem3:'Plumbing Fixes',
+    fhsItem4:'Touch-Up Painting',
+    fhsItem5:'Door & Lock Install',
+    fhsItem6:'Mirror & Art Hanging',
+    fhsItem7:'Delivery & Setup',
+    fhsCtaText:"Not sure we do it? Text a photo or description and we'll quote it fast.",
+    hiwTitle:'How It Works',
+    hiwSub:'Three simple steps, no surprises.',
+    hiwStep1Title:'Call or Text',
+    hiwStep1Desc:'Describe what you need. Photo helps. Most quotes in 15 minutes.',
+    hiwStep2Title:'Get a Clear Price',
+    hiwStep2Desc:'Starts-at pricing or a flat quote. No hidden fees.',
+    hiwStep3Title:'We Show Up & Fix It',
+    hiwStep3Desc:'Same-day or next-day across central LA.',
+    moreServicesStrip:'TV mounting · drywall · assembly · electrical · plumbing · painting · doors · and more',
+    heroEyebrowV2:"Los Angeles · Text a Photo · 15-Min Flat Quote",
+    heroTitleV2:"TV Mount $150 · Drywall $120 · Assembly $150",
+    heroSubV2:"Text a photo, get a flat quote in 15 minutes. Same-day handyman across central LA. English · Español · Русский · עברית.",
+    heroCallBtn:"Call (213) 361-1700",
+    heroTextBtn:"Text Photo for Quote",
+    urgencyStripV2:"⚡ 3 same-day slots left this week · Text now for your 15-min quote",
+    serviceGridTitle:"Flat Prices. No Surprises.",
+    serviceGridSub:"LA-wide handyman help with clear upfront pricing.",
+    svcTvTitle:"TV Mounting",svcTvPrice:"from $150",svcTvDesc:"Standard or hidden wire. Any wall type. 45 min average.",
+    svcDwTitle:"Drywall Repair",svcDwPrice:"from $120",svcDwDesc:"Hole patches, texture matching, primer included.",
+    svcFaTitle:"Furniture Assembly",svcFaPrice:"from $150",svcFaDesc:"IKEA, Wayfair, Amazon. PAX, KALLAX, MALM, beds, dressers.",
+    svcDoorTitle:"Door Installation",svcDoorPrice:"from $140",svcDoorDesc:"Interior slab, prehung, exterior, smart locks.",
+    svcPaintTitle:"Interior Painting",svcPaintPrice:"from $3/sq ft",svcPaintDesc:"Walls, ceilings, trim, touch-up. Cabinets from $75/door.",
+    svcArtTitle:"Art & Mirror Hanging",svcArtPrice:"$150 up to 5 pcs",svcArtDesc:"Level-checked, properly secured, any wall type.",
+    pppTitle:"Tired of Bad Handyman Experiences?",
+    ppp1Pain:"Contractor no-shows",ppp1Promise:"Text confirmation 2 hours before",
+    ppp2Pain:"Hidden fees and surprises",ppp2Promise:"Flat price in writing before visit",
+    ppp3Pain:"Sloppy, rushed finish",ppp3Promise:"We don't leave until you approve",
+    ppp4Pain:"No cleanup after the job",ppp4Promise:"Drop cloths + vacuum included",
+    ppp5Pain:"Wrong tools, extra trips",ppp5Promise:"We bring everything",
+    ppp6Pain:"Can't reach them after",ppp6Promise:"Same-number warranty — just text us",
+    ownerTitle:"Who You're Hiring",
+    ownerBody:"Handy & Friend is a small local team — solo operator with one helper for bigger jobs. We do most work ourselves and answer our own phone. If something goes wrong, you call us directly. 12+ years fixing LA homes.",
+    neighborhoodsTitle:"Serving Central Los Angeles",
+    neighborhoodsSub:"Same-day service across these neighborhoods and nearby areas:",
+    doneRightTitle:"The Done-Right Promise",
+    doneRightBody:"If the work isn't right, we come back and fix it at no extra cost. 1-year on workmanship. If we can't finish what we quoted, you don't pay for it.",
+    mobileStickyCall:"Call",mobileStickyText:"Text",mobileStickyPrice:"Pricing",
+    faqNewQ1:"How fast can you come?",
+    faqNewA1:"Most requests get a same-day or next-day slot. Text us a photo and we confirm within 15 minutes during Mon-Sat 8am-7pm.",
+    faqNewQ2:"Are you insured?",
+    faqNewA2:"Yes — General Liability Insurance. We're a small local team; we handle minor handyman jobs under $500 labor. For anything bigger or requiring permits, we refer you to a trade contractor.",
+    faqNewQ3:"What's your minimum job size?",
+    faqNewA3:"Our service minimum is $150. This covers our travel, tools, materials, and a short job. Many small tasks fit within one visit.",
+    faqNewQ4:"Do you work weekends and same-day?",
+    faqNewA4:"Yes — Mon to Sat 8am to 7pm. Same-day and next-day availability most weeks. Sunday by special request only.",
+    faqNewQ5:"Do you bring your own tools?",
+    faqNewA5:"Yes — drill, mounts, anchors, drop cloths, paint, even spackling. You don't have to buy anything.",
+    faqNewQ6:"Do I have to be home for the quote?",
+    faqNewA6:"No — text us a photo or a short description. Most quotes come back within 15 minutes. Onsite visit only when needed.",
+    faqNewQ7:"Do you clean up after the job?",
+    faqNewA7:"Always. Drop cloths go down before work, trash and dust go out when we leave. Vacuum included.",
+    faqNewQ8:"How do I pay?",
+    faqNewA8:"Cash, Zelle, Venmo, or credit/debit card. Payment is due after the job is done and you're happy with it.",
+    faqNewQ9:"What if something breaks after?",
+    faqNewA9:"We stand behind our work for 1 year. Just text us and we come back. Same-number warranty — no runaround.",
+    faqNewQ10:"Do you speak Spanish or Russian?",
+    faqNewA10:"Yes — our team speaks English, Spanish, Russian, and Hebrew."
   },
   es:{
     seoTitle:'Handy & Friend | Handyman en Los Angeles',
@@ -1620,7 +1653,7 @@ const UI_I18N={
     heroResponseNote:'⏰ Respondemos en 1 hora durante horario laboral (8am-8pm PT)',
     urgencyChip:'⚡ Con la confianza de hogares en Los Angeles',
     urgencyTitle:'🎯 Reserva tu servicio hoy',
-    urgencySub:'Garantia de satisfaccion 100% • Reembolso si no quedas conforme • Asegurado • Respuesta el mismo dia',
+    urgencySub:'Precios claros • Cotizacion desde • Respuesta el mismo dia • Area de servicio central de LA',
     urgencyBtn:'✅ Reserva tu lugar ahora',
     whyTitle:'Por que elegir Handy & Friend?',
     painLabel:'❌ Problema',
@@ -1628,7 +1661,7 @@ const UI_I18N={
     pain1Title:'Los contratistas no llegan',
     pain1Sub:'Te dejan esperando. Tiempo perdido.',
     promise1Title:'100% confiabilidad',
-    promise1Sub:'Llegamos a tiempo. Garantizado.',
+    promise1Sub:'Llegamos a tiempo. En cada cita.',
     pain2Title:'Cargos ocultos sorpresa',
     pain2Sub:'La factura final sale al doble.',
     promise2Title:'Precios transparentes desde el inicio',
@@ -1636,7 +1669,7 @@ const UI_I18N={
     pain3Title:'Acabado de mala calidad',
     pain3Sub:'Trabajo descuidado y frustrante.',
     promise3Title:'Calidad profesional',
-    promise3Sub:'Asegurado. Satisfaccion garantizada.',
+    promise3Sub:'Trabajo limpio. Alcance claro. Equipo local.',
     servicesTitle:'Servicios',
     serviceTv:'Montaje de TV',
     serviceFurniture:'Ensamblaje de muebles',
@@ -1649,8 +1682,8 @@ const UI_I18N={
     testimonialsTitle:'Con la confianza de familias de LA',
     testimonialsSub:'Con la confianza de clientes locales en Los Angeles',
     review1:'"Servicio increible. Montaron mi TV en 1 hora. Profesional y rapido. Super recomendado."',
-    review2:'"El mejor handyman en LA. Precio claro y sin sorpresas. Me devolvieron la llamada en 10 minutos."',
-    review3:'"Armado de muebles perfecto. Profesional, asegurado y muy confiable. Llamare de nuevo."',
+    review2:'"Precio claro y alcance bien definido de principio a fin. Llegaron a tiempo y dejaron todo limpio."',
+    review3:'"Armado de muebles perfecto. Llegaron a tiempo, limpios y muy confiables. Llamare de nuevo."',
     leadTitle:'Listo para reservar tu servicio?',
     leadSub:'Las cotizaciones por telefono y chat son gratis. Estimado en sitio: $75, acreditado al contratar.',
     leadNamePlaceholder:'Tu nombre',
@@ -1686,7 +1719,7 @@ const UI_I18N={
     faqQ3:'Estan asegurados?',
     faqA3:'Si. Tenemos Seguro de Responsabilidad General. Todo trabajo esta garantizado.',
     faqQ4:'Que pasa si no quedo satisfecho?',
-    faqA4:'Garantia de satisfaccion 100%. Si no quedas conforme, rehacemos el trabajo gratis dentro de 7 dias.',
+    faqA4:'Si no quedas conforme con el trabajo, avisanos dentro de 7 dias y regresamos a corregirlo sin costo extra.',
     faqQ5:'Ofrecen servicio en fin de semana o fuera de horario?',
     faqA5:'Si. Ofrecemos horarios flexibles. Llama al 213-361-1700 para coordinar.',
     faqQ6:'Que metodos de pago aceptan?',
@@ -1704,7 +1737,74 @@ const UI_I18N={
     smsConsentRequired:'Debes aceptar recibir SMS',
     smsSendError:'Error al enviar SMS. Intentalo de nuevo.',
     smsNetworkError:'Error de red. Intentalo de nuevo.',
-    leadSubmitError:'Error al enviar el formulario. Llama al 213-361-1700.'
+    leadSubmitError:'Error al enviar el formulario. Llama al 213-361-1700.',
+    fhsTitle:'Mas que solo estos servicios',
+    fhsSub:'De una manija suelta a una habitacion renovada — una llamada, un equipo, la mayoria de reparaciones interiores.',
+    fhsItem1:'Reparaciones generales',
+    fhsItem2:'Ayuda electrica',
+    fhsItem3:'Arreglos de plomeria',
+    fhsItem4:'Retoques de pintura',
+    fhsItem5:'Puertas y cerraduras',
+    fhsItem6:'Espejos y cuadros',
+    fhsItem7:'Entrega y montaje',
+    fhsCtaText:'No estas seguro? Envia una foto o descripcion y te cotizamos rapido.',
+    hiwTitle:'Como funciona',
+    hiwSub:'Tres pasos simples, sin sorpresas.',
+    hiwStep1Title:'Llama o escribe',
+    hiwStep1Desc:'Describe lo que necesitas. Una foto ayuda. Cotizacion en 15 minutos.',
+    hiwStep2Title:'Precio claro',
+    hiwStep2Desc:'Precio desde o cotizacion fija. Sin sorpresas.',
+    hiwStep3Title:'Llegamos y lo arreglamos',
+    hiwStep3Desc:'El mismo dia o al dia siguiente en el centro de LA.',
+    moreServicesStrip:'Montaje de TV · drywall · muebles · electrico · plomeria · pintura · puertas · y mas',
+    heroEyebrowV2:"Los Ángeles · Envía una foto · Cotización fija en 15 min",
+    heroTitleV2:"Montaje TV $150 · Drywall $120 · Armado $150",
+    heroSubV2:"Envía una foto por SMS y cotizamos en 15 minutos. Handyman el mismo día en el centro de LA. English · Español · Русский · עברית.",
+    heroCallBtn:"Llama al (213) 361-1700",
+    heroTextBtn:"Envía foto para cotizar",
+    urgencyStripV2:"⚡ Quedan 3 cupos para hoy esta semana · Escríbenos ahora y cotizamos en 15 min",
+    serviceGridTitle:"Precios fijos. Sin sorpresas.",
+    serviceGridSub:"Ayuda de handyman en todo LA con precios claros desde el inicio.",
+    svcTvTitle:"Montaje de TV",svcTvPrice:"desde $150",svcTvDesc:"Estándar o con cables ocultos. Cualquier tipo de pared. 45 min en promedio.",
+    svcDwTitle:"Reparación de drywall",svcDwPrice:"desde $120",svcDwDesc:"Parches, igualación de textura, imprimante incluido.",
+    svcFaTitle:"Armado de muebles",svcFaPrice:"desde $150",svcFaDesc:"IKEA, Wayfair, Amazon. PAX, KALLAX, MALM, camas, cómodas.",
+    svcDoorTitle:"Instalación de puertas",svcDoorPrice:"desde $140",svcDoorDesc:"Interior, prehung, exterior, cerraduras inteligentes.",
+    svcPaintTitle:"Pintura interior",svcPaintPrice:"desde $3/ft²",svcPaintDesc:"Paredes, techos, molduras, retoques. Gabinetes desde $75 por puerta.",
+    svcArtTitle:"Cuadros y espejos",svcArtPrice:"$150 hasta 5 piezas",svcArtDesc:"Nivelados, bien fijados, cualquier tipo de pared.",
+    pppTitle:"¿Cansado de malas experiencias con handymen?",
+    ppp1Pain:"Contratistas que no llegan",ppp1Promise:"Confirmación por SMS 2 horas antes",
+    ppp2Pain:"Cargos ocultos y sorpresas",ppp2Promise:"Precio fijo por escrito antes de la visita",
+    ppp3Pain:"Trabajo apurado y descuidado",ppp3Promise:"No nos vamos hasta que tú lo apruebes",
+    ppp4Pain:"No limpian al terminar",ppp4Promise:"Lonas protectoras + aspirado incluidos",
+    ppp5Pain:"Herramientas faltantes, idas y vueltas",ppp5Promise:"Llegamos con todo",
+    ppp6Pain:"No contestan después",ppp6Promise:"Garantía al mismo número — solo escríbenos",
+    ownerTitle:"Con quién trabajas",
+    ownerBody:"Handy & Friend es un equipo local pequeño — operador independiente con un ayudante para trabajos más grandes. Hacemos el trabajo nosotros mismos y contestamos nuestro propio teléfono. Si algo sale mal, nos llamas directamente. 12+ años arreglando casas en LA.",
+    neighborhoodsTitle:"Servimos el centro de Los Ángeles",
+    neighborhoodsSub:"Servicio el mismo día en estos vecindarios y zonas cercanas:",
+    doneRightTitle:"Nuestra promesa: trabajo bien hecho",
+    doneRightBody:"Si el trabajo no queda bien, volvemos y lo arreglamos sin costo extra. 1 año de garantía en mano de obra. Si no terminamos lo cotizado, no lo pagas.",
+    mobileStickyCall:"Llamar",mobileStickyText:"SMS",mobileStickyPrice:"Precios",
+    faqNewQ1:"¿Qué tan rápido pueden venir?",
+    faqNewA1:"La mayoría de las solicitudes recibe un cupo el mismo día o al día siguiente. Envíanos una foto por SMS y confirmamos en 15 minutos, lunes a sábado de 8am a 7pm.",
+    faqNewQ2:"¿Tienen seguro?",
+    faqNewA2:"Sí — seguro de responsabilidad civil (General Liability). Somos un equipo local pequeño; nos encargamos de trabajos menores de handyman con mano de obra de menos de $500. Para trabajos más grandes o que requieran permisos, te referimos a un contratista con licencia.",
+    faqNewQ3:"¿Cuál es el trabajo mínimo?",
+    faqNewA3:"Nuestro mínimo es $150. Cubre el traslado, las herramientas, los materiales y un trabajo corto. Varias tareas pequeñas suelen caber en una sola visita.",
+    faqNewQ4:"¿Trabajan fines de semana y el mismo día?",
+    faqNewA4:"Sí — de lunes a sábado de 8am a 7pm. La mayoría de las semanas tenemos disponibilidad el mismo día o al día siguiente. Los domingos solo por pedido especial.",
+    faqNewQ5:"¿Traen sus propias herramientas?",
+    faqNewA5:"Sí — taladro, soportes, anclajes, lonas, pintura e incluso masilla. No tienes que comprar nada.",
+    faqNewQ6:"¿Tengo que estar en casa para la cotización?",
+    faqNewA6:"No — envíanos una foto o una breve descripción por SMS. La mayoría de las cotizaciones llegan en 15 minutos. Visita en persona solo cuando es necesario.",
+    faqNewQ7:"¿Limpian al terminar?",
+    faqNewA7:"Siempre. Ponemos lonas antes de empezar y al irnos nos llevamos la basura y el polvo. Aspirado incluido.",
+    faqNewQ8:"¿Cómo se paga?",
+    faqNewA8:"Efectivo, Zelle, Venmo o tarjeta de crédito/débito. El pago se realiza al terminar el trabajo, cuando estés conforme.",
+    faqNewQ9:"¿Qué pasa si algo se daña después?",
+    faqNewA9:"Respaldamos nuestro trabajo por 1 año. Solo escríbenos y volvemos. Garantía al mismo número — sin vueltas.",
+    faqNewQ10:"¿Hablan español o ruso?",
+    faqNewA10:"Sí — nuestro equipo habla inglés, español, ruso y hebreo."
   },
   ru:{
     seoTitle:'Handy & Friend | Мастер в Лос-Анджелесе',
@@ -1724,7 +1824,7 @@ const UI_I18N={
     heroResponseNote:'⏰ Отвечаем в течение 1 часа в рабочие часы (8am-8pm PT)',
     urgencyChip:'⚡ Нам доверяют клиенты по всему Лос-Анджелесу',
     urgencyTitle:'🎯 Забронируйте услугу сегодня',
-    urgencySub:'100% гарантия удовлетворенности • Вернем деньги, если не довольны • Застрахованы • Ответ в тот же день',
+    urgencySub:'Прозрачные цены • Расчёт от такой-то суммы • Ответ в тот же день • Центр Лос-Анджелеса',
     urgencyBtn:'✅ Забронировать сейчас',
     whyTitle:'Почему выбирают Handy & Friend?',
     painLabel:'❌ Проблема',
@@ -1732,7 +1832,7 @@ const UI_I18N={
     pain1Title:'Подрядчики не приезжают',
     pain1Sub:'Вы теряете время в ожидании.',
     promise1Title:'100% надежность',
-    promise1Sub:'Приезжаем вовремя. Гарантированно.',
+    promise1Sub:'Приезжаем вовремя. На каждую встречу.',
     pain2Title:'Скрытые доплаты',
     pain2Sub:'Итоговый счет в 2 раза выше.',
     promise2Title:'Прозрачная цена заранее',
@@ -1740,7 +1840,7 @@ const UI_I18N={
     pain3Title:'Плохое качество',
     pain3Sub:'Небрежная работа и разочарование.',
     promise3Title:'Профессиональное качество',
-    promise3Sub:'Страховка, гарантия результата.',
+    promise3Sub:'Чистая работа. Ясный объём. Местная команда.',
     servicesTitle:'Услуги',
     serviceTv:'Монтаж ТВ',
     serviceFurniture:'Сборка мебели',
@@ -1753,8 +1853,8 @@ const UI_I18N={
     testimonialsTitle:'Нам доверяют семьи Лос-Анджелеса',
     testimonialsSub:'Нам доверяют местные клиенты в Лос-Анджелесе',
     review1:'"Отличный сервис! Смонтировали ТВ за 1 час. Профессионально и быстро."',
-    review2:'"Лучший мастер в ЛА. Прозрачные цены без сюрпризов. Перезвонили за 10 минут."',
-    review3:'"Идеальная сборка мебели! Профессионально, застрахованы, очень надежно. Обращусь снова."',
+    review2:'"Прозрачные цены и понятный объём работ от начала до конца. Приехали вовремя, всё убрали после себя."',
+    review3:'"Идеальная сборка мебели! Вовремя, чисто, очень надёжно. Обращусь снова."',
     leadTitle:'Готовы забронировать услугу?',
     leadSub:'Оценка по телефону и в чате бесплатна. Выездная смета: $75, сумма засчитывается при заказе.',
     leadNamePlaceholder:'Ваше имя',
@@ -1788,9 +1888,9 @@ const UI_I18N={
     faqQ2:'Вы берете плату за смету?',
     faqA2:'Нет. Все сметы бесплатные. Прозрачные цены без скрытых платежей.',
     faqQ3:'У вас есть страховка?',
-    faqA3:'Да. У нас есть страхование общей ответственности. На все работы действует гарантия.',
+    faqA3:'Да. У нас есть страхование общей ответственности (General Liability Insurance). Условия и объём работ обсуждаются до начала.',
     faqQ4:'Что если я недоволен работой?',
-    faqA4:'100% гарантия удовлетворенности. Если не устроит, переделаем бесплатно в течение 7 дней.',
+    faqA4:'Если работа не устроит, сообщите нам в течение 7 дней — приедем и исправим без доплат.',
     faqQ5:'Работаете по выходным и вечером?',
     faqA5:'Да. Предлагаем гибкий график. Позвоните по номеру 213-361-1700.',
     faqQ6:'Какие способы оплаты принимаете?',
@@ -1808,7 +1908,74 @@ const UI_I18N={
     smsConsentRequired:'Нужно согласиться на получение SMS',
     smsSendError:'Ошибка отправки SMS. Попробуйте снова.',
     smsNetworkError:'Сетевая ошибка. Попробуйте снова.',
-    leadSubmitError:'Ошибка отправки формы. Позвоните 213-361-1700.'
+    leadSubmitError:'Ошибка отправки формы. Позвоните 213-361-1700.',
+    fhsTitle:'Больше чем просто эти услуги',
+    fhsSub:'От шатающейся дверной ручки до обновления комнаты — один звонок, одна бригада, почти любые домашние работы.',
+    fhsItem1:'Общий ремонт',
+    fhsItem2:'Электрика',
+    fhsItem3:'Сантехника',
+    fhsItem4:'Подкраска',
+    fhsItem5:'Двери и замки',
+    fhsItem6:'Зеркала и картины',
+    fhsItem7:'Доставка и сборка',
+    fhsCtaText:'Не уверены, что сделаем? Пришлите фото или описание — быстро посчитаем.',
+    hiwTitle:'Как это работает',
+    hiwSub:'Три простых шага без сюрпризов.',
+    hiwStep1Title:'Звонок или СМС',
+    hiwStep1Desc:'Опишите задачу. Фото помогает. Расчёт за 15 минут.',
+    hiwStep2Title:'Честная цена',
+    hiwStep2Desc:'От такой-то суммы или фиксированная цена. Без скрытых платежей.',
+    hiwStep3Title:'Приезжаем и делаем',
+    hiwStep3Desc:'Сегодня или завтра в центре Лос-Анджелеса.',
+    moreServicesStrip:'Монтаж ТВ · гипсокартон · сборка мебели · электрика · сантехника · покраска · двери · и многое другое',
+    heroEyebrowV2:"Лос-Анджелес · Фото в SMS · Расчёт за 15 мин",
+    heroTitleV2:"Монтаж ТВ $150 · Гипсокартон $120 · Сборка $150",
+    heroSubV2:"Пришлите фото в SMS — расчёт за 15 минут. Хендимен в день обращения по центру LA. English · Español · Русский · עברית.",
+    heroCallBtn:"Звонок (213) 361-1700",
+    heroTextBtn:"Отправить фото для расчёта",
+    urgencyStripV2:"⚡ Осталось 3 места на этой неделе с приездом сегодня · Напишите сейчас — расчёт за 15 мин",
+    serviceGridTitle:"Фиксированные цены. Без сюрпризов.",
+    serviceGridSub:"Услуги хендимена по всему LA с понятной ценой заранее.",
+    svcTvTitle:"Монтаж ТВ",svcTvPrice:"от $150",svcTvDesc:"Стандартный или со скрытой проводкой. Любая стена. В среднем 45 минут.",
+    svcDwTitle:"Ремонт гипсокартона",svcDwPrice:"от $120",svcDwDesc:"Заделка дыр, подгонка текстуры, грунт включён.",
+    svcFaTitle:"Сборка мебели",svcFaPrice:"от $150",svcFaDesc:"IKEA, Wayfair, Amazon. PAX, KALLAX, MALM, кровати, комоды.",
+    svcDoorTitle:"Установка дверей",svcDoorPrice:"от $140",svcDoorDesc:"Межкомнатные, в коробке, входные, смарт-замки.",
+    svcPaintTitle:"Внутренняя покраска",svcPaintPrice:"от $3 за фут²",svcPaintDesc:"Стены, потолки, плинтусы, подкраска. Кухонные фасады от $75 за дверцу.",
+    svcArtTitle:"Картины и зеркала",svcArtPrice:"$150 до 5 штук",svcArtDesc:"По уровню, надёжно закреплено, любая стена.",
+    pppTitle:"Устали от плохих хендименов?",
+    ppp1Pain:"Мастер не пришёл",ppp1Promise:"SMS с подтверждением за 2 часа до визита",
+    ppp2Pain:"Скрытые доплаты и сюрпризы",ppp2Promise:"Фиксированная цена в письменном виде до визита",
+    ppp3Pain:"Сделано наспех и небрежно",ppp3Promise:"Не уходим, пока вы не одобрите работу",
+    ppp4Pain:"После работы оставляют мусор",ppp4Promise:"Защитная плёнка + уборка пылесосом включены",
+    ppp5Pain:"Нет нужных инструментов, лишние поездки",ppp5Promise:"Привозим всё с собой",
+    ppp6Pain:"После работы не дозвониться",ppp6Promise:"Гарантия по тому же номеру — просто напишите",
+    ownerTitle:"Кто будет работать у вас",
+    ownerBody:"Handy & Friend — небольшая местная команда. Работает один мастер, на крупных задачах — с помощником. Большинство работ делаем сами и сами отвечаем на звонки. Если что-то пошло не так — вы звоните напрямую нам. Ремонтируем дома в LA более 12 лет.",
+    neighborhoodsTitle:"Работаем в центральной части Лос-Анджелеса",
+    neighborhoodsSub:"Приезд в день обращения в эти районы и рядом:",
+    doneRightTitle:"Гарантия, что всё сделано как надо",
+    doneRightBody:"Если работа выполнена не так, как нужно, — приедем и исправим без доплат. Гарантия на работу — 1 год. Если не можем закончить оговоренное, вы за это не платите.",
+    mobileStickyCall:"Звонок",mobileStickyText:"SMS",mobileStickyPrice:"Цены",
+    faqNewQ1:"Как быстро можете приехать?",
+    faqNewA1:"Обычно даём слот на сегодня или завтра. Пришлите фото в SMS — подтверждаем в течение 15 минут. Пн–Сб, 8:00–19:00.",
+    faqNewQ2:"Есть страховка?",
+    faqNewA2:"Да — страховка гражданской ответственности (General Liability). Мы небольшая местная команда и берём мелкие задачи хендимена с работой до $500. Более крупные работы или те, где нужны разрешения, передаём подрядчику с лицензией.",
+    faqNewQ3:"Какой минимальный заказ?",
+    faqNewA3:"Минимальный заказ — $150. В него входят выезд, инструмент, материалы и короткая работа. Часто в один визит помещается сразу несколько мелких задач.",
+    faqNewQ4:"Работаете ли по выходным и в день обращения?",
+    faqNewA4:"Да — пн–сб с 8:00 до 19:00. Выезд в тот же или на следующий день есть почти всегда. Воскресенье — только по отдельной договорённости.",
+    faqNewQ5:"Привозите ли свой инструмент?",
+    faqNewA5:"Да — дрель, кронштейны, анкеры, защитная плёнка, краска и даже шпаклёвка. Вам ничего покупать не нужно.",
+    faqNewQ6:"Нужно ли быть дома для расчёта?",
+    faqNewA6:"Нет — пришлите фото или короткое описание в SMS. Обычно присылаем расчёт в течение 15 минут. Приезд на место — только если это действительно нужно.",
+    faqNewQ7:"Убираете ли после работы?",
+    faqNewA7:"Всегда. Перед работой стелем защитную плёнку, мусор и пыль забираем с собой. Уборка пылесосом включена.",
+    faqNewQ8:"Как можно оплатить?",
+    faqNewA8:"Наличные, Zelle, Venmo или кредитная/дебетовая карта. Оплата — после завершения работы, когда вы всем довольны.",
+    faqNewQ9:"Что если что-то сломается после работы?",
+    faqNewA9:"Мы отвечаем за свою работу 1 год. Просто напишите нам — приедем и исправим. Гарантия по тому же номеру, без лишних переключений.",
+    faqNewQ10:"Говорите ли по-испански или по-русски?",
+    faqNewA10:"Да — наша команда говорит по-английски, по-испански, по-русски и на иврите."
   },
   ua:{
     seoTitle:'Handy & Friend | Майстер у Лос-Анджелесі',
@@ -1828,7 +1995,7 @@ const UI_I18N={
     heroResponseNote:'⏰ Відповідаємо протягом 1 години в робочий час (8am-8pm PT)',
     urgencyChip:'⚡ Нам довіряють клієнти по всьому Лос-Анджелесу',
     urgencyTitle:'🎯 Забронюйте послугу сьогодні',
-    urgencySub:'100% гарантія задоволення • Повернення коштів, якщо не задоволені • Застраховані • Відповідь того ж дня',
+    urgencySub:'Прозорі ціни • Розрахунок від такої-то суми • Відповідь того ж дня • Центр Лос-Анджелеса',
     urgencyBtn:'✅ Забронювати зараз',
     whyTitle:'Чому обирають Handy & Friend?',
     painLabel:'❌ Проблема',
@@ -1836,7 +2003,7 @@ const UI_I18N={
     pain1Title:'Підрядники не приїжджають',
     pain1Sub:'Ви марнуєте час в очікуванні.',
     promise1Title:'100% надійність',
-    promise1Sub:'Приїжджаємо вчасно. Гарантовано.',
+    promise1Sub:'Приїжджаємо вчасно. На кожну зустріч.',
     pain2Title:'Приховані доплати',
     pain2Sub:'Фінальний рахунок у 2 рази вищий.',
     promise2Title:'Прозора ціна наперед',
@@ -1844,7 +2011,7 @@ const UI_I18N={
     pain3Title:'Низька якість',
     pain3Sub:'Неакуратна робота і розчарування.',
     promise3Title:'Професійна якість',
-    promise3Sub:'Страховка та гарантія результату.',
+    promise3Sub:'Чиста робота. Ясний обсяг. Місцева команда.',
     servicesTitle:'Послуги',
     serviceTv:'Монтаж ТВ',
     serviceFurniture:'Збирання меблів',
@@ -1857,8 +2024,8 @@ const UI_I18N={
     testimonialsTitle:'Нам довіряють родини Лос-Анджелеса',
     testimonialsSub:'Нам довіряють місцеві клієнти в Лос-Анджелесі',
     review1:'"Чудовий сервіс! ТВ змонтували за 1 годину. Професійно і швидко."',
-    review2:'"Найкращий handyman у ЛА. Прозора ціна без сюрпризів. Передзвонили за 10 хвилин."',
-    review3:'"Ідеальне збирання меблів! Професійно, застраховані, дуже надійно. Звернусь ще."',
+    review2:'"Прозорі ціни й зрозумілий обсяг робіт від початку до кінця. Приїхали вчасно, прибрали після себе."',
+    review3:'"Ідеальне збирання меблів! Вчасно, чисто, дуже надійно. Звернусь ще."',
     leadTitle:'Готові забронювати послугу?',
     leadSub:'Оцінка телефоном і в чаті безкоштовна. Виїзний кошторис: $75, зараховується при замовленні.',
     leadNamePlaceholder:'Ваше ім’я',
@@ -1892,9 +2059,9 @@ const UI_I18N={
     faqQ2:'Чи берете оплату за кошторис?',
     faqA2:'Ні. Усі кошториси безкоштовні. Прозорі ціни без прихованих платежів.',
     faqQ3:'Чи маєте страховку?',
-    faqA3:'Так. Ми маємо страхування загальної відповідальності. На всі роботи діє гарантія.',
+    faqA3:'Так. Ми маємо страхування загальної відповідальності (General Liability Insurance). Умови та обсяг робіт обговорюються до початку.',
     faqQ4:'Що як я не задоволений роботою?',
-    faqA4:'100% гарантія задоволення. Якщо не влаштує, переробимо безкоштовно протягом 7 днів.',
+    faqA4:'Якщо робота не влаштує, повідомте нам протягом 7 днів — приїдемо та виправимо без доплат.',
     faqQ5:'Чи працюєте у вихідні та ввечері?',
     faqA5:'Так. Пропонуємо гнучкий графік. Телефонуйте 213-361-1700.',
     faqQ6:'Які способи оплати приймаєте?',
@@ -1912,7 +2079,74 @@ const UI_I18N={
     smsConsentRequired:'Потрібно погодитись на SMS',
     smsSendError:'Помилка надсилання SMS. Спробуйте ще раз.',
     smsNetworkError:'Мережева помилка. Спробуйте ще раз.',
-    leadSubmitError:'Помилка відправки форми. Зателефонуйте 213-361-1700.'
+    leadSubmitError:'Помилка відправки форми. Зателефонуйте 213-361-1700.',
+    fhsTitle:'Більше ніж просто ці послуги',
+    fhsSub:'Від розхитаної дверної ручки до оновлення кімнати — один дзвінок, одна бригада, майже будь-які домашні роботи.',
+    fhsItem1:'Загальний ремонт',
+    fhsItem2:'Електрика',
+    fhsItem3:'Сантехніка',
+    fhsItem4:'Підфарбовування',
+    fhsItem5:'Двері та замки',
+    fhsItem6:'Дзеркала та картини',
+    fhsItem7:'Доставка та збирання',
+    fhsCtaText:'Не впевнені, що зробимо? Надішліть фото або опис — швидко порахуємо.',
+    hiwTitle:'Як це працює',
+    hiwSub:'Три прості кроки без сюрпризів.',
+    hiwStep1Title:'Дзвінок або СМС',
+    hiwStep1Desc:'Опишіть завдання. Фото допомагає. Розрахунок за 15 хвилин.',
+    hiwStep2Title:'Чесна ціна',
+    hiwStep2Desc:'Від такої-то суми або фіксована ціна. Без прихованих платежів.',
+    hiwStep3Title:'Приїжджаємо та робимо',
+    hiwStep3Desc:'Сьогодні або завтра в центрі Лос-Анджелеса.',
+    moreServicesStrip:'Монтаж ТВ · гіпсокартон · збирання меблів · електрика · сантехніка · фарбування · двері · і багато іншого',
+    heroEyebrowV2:"Лос-Анджелес · Фото в SMS · Розрахунок за 15 хв",
+    heroTitleV2:"Монтаж ТВ $150 · Гіпсокартон $120 · Збирання $150",
+    heroSubV2:"Надішліть фото в SMS — розрахунок за 15 хвилин. Хендімен у день звернення по центру LA. English · Español · Русский · עברית.",
+    heroCallBtn:"Дзвінок (213) 361-1700",
+    heroTextBtn:"Надіслати фото для розрахунку",
+    urgencyStripV2:"⚡ Залишилось 3 слоти цього тижня з приїздом сьогодні · Напишіть зараз — розрахунок за 15 хв",
+    serviceGridTitle:"Фіксовані ціни. Без сюрпризів.",
+    serviceGridSub:"Послуги хендімена по всьому LA зі зрозумілою ціною наперед.",
+    svcTvTitle:"Монтаж ТВ",svcTvPrice:"від $150",svcTvDesc:"Стандартний або з прихованою проводкою. Будь-яка стіна. У середньому 45 хвилин.",
+    svcDwTitle:"Ремонт гіпсокартону",svcDwPrice:"від $120",svcDwDesc:"Латання отворів, підбір текстури, ґрунтовка включена.",
+    svcFaTitle:"Збирання меблів",svcFaPrice:"від $150",svcFaDesc:"IKEA, Wayfair, Amazon. PAX, KALLAX, MALM, ліжка, комоди.",
+    svcDoorTitle:"Встановлення дверей",svcDoorPrice:"від $140",svcDoorDesc:"Міжкімнатні, з коробкою, вхідні, смарт-замки.",
+    svcPaintTitle:"Внутрішнє фарбування",svcPaintPrice:"від $3 за фут²",svcPaintDesc:"Стіни, стелі, плінтуси, підфарбовування. Кухонні фасади від $75 за дверцята.",
+    svcArtTitle:"Картини та дзеркала",svcArtPrice:"$150 до 5 шт.",svcArtDesc:"По рівню, надійно закріплено, будь-яка стіна.",
+    pppTitle:"Втомилися від поганих хендіменів?",
+    ppp1Pain:"Майстер не прийшов",ppp1Promise:"SMS з підтвердженням за 2 години до візиту",
+    ppp2Pain:"Приховані доплати й сюрпризи",ppp2Promise:"Фіксована ціна письмово до візиту",
+    ppp3Pain:"Зроблено поспіхом і недбало",ppp3Promise:"Не йдемо, доки ви не схвалите роботу",
+    ppp4Pain:"Після роботи залишають безлад",ppp4Promise:"Захисна плівка + прибирання пилососом включені",
+    ppp5Pain:"Немає потрібних інструментів, зайві поїздки",ppp5Promise:"Привозимо все з собою",
+    ppp6Pain:"Після роботи не додзвонитися",ppp6Promise:"Гарантія за тим самим номером — просто напишіть",
+    ownerTitle:"Хто у вас працюватиме",
+    ownerBody:"Handy & Friend — невелика місцева команда. Працює один майстер, на більших задачах — з помічником. Більшість робіт виконуємо самі й самі відповідаємо на дзвінки. Якщо щось пішло не так — телефонуєте напряму нам. Ремонтуємо будинки в LA понад 12 років.",
+    neighborhoodsTitle:"Працюємо в центральній частині Лос-Анджелеса",
+    neighborhoodsSub:"Приїзд у день звернення в ці райони та поруч:",
+    doneRightTitle:"Гарантія, що все зроблено як слід",
+    doneRightBody:"Якщо роботу виконано не так, як треба, — приїдемо й виправимо без додаткової оплати. Гарантія на роботу — 1 рік. Якщо не зможемо завершити обумовлене, ви за це не платите.",
+    mobileStickyCall:"Дзвінок",mobileStickyText:"SMS",mobileStickyPrice:"Ціни",
+    faqNewQ1:"Як швидко можете приїхати?",
+    faqNewA1:"Зазвичай даємо слот на сьогодні або завтра. Надішліть фото в SMS — підтвердимо протягом 15 хвилин. Пн–Сб, 8:00–19:00.",
+    faqNewQ2:"Чи є страховка?",
+    faqNewA2:"Так — страховка цивільної відповідальності (General Liability). Ми невелика місцева команда й беремо дрібні задачі хендімена з роботою до $500. Більші роботи або ті, де потрібні дозволи, передаємо підряднику з ліцензією.",
+    faqNewQ3:"Яке мінімальне замовлення?",
+    faqNewA3:"Мінімальне замовлення — $150. У нього входять виїзд, інструмент, матеріали та коротка робота. Часто в один візит вміщується одразу кілька дрібних задач.",
+    faqNewQ4:"Чи працюєте у вихідні та в день звернення?",
+    faqNewA4:"Так — пн–сб з 8:00 до 19:00. Виїзд у той самий або наступний день є майже завжди. Неділя — тільки за окремою домовленістю.",
+    faqNewQ5:"Чи привозите свій інструмент?",
+    faqNewA5:"Так — дриль, кронштейни, анкери, захисна плівка, фарба й навіть шпаклівка. Вам нічого купувати не потрібно.",
+    faqNewQ6:"Чи потрібно бути вдома для розрахунку?",
+    faqNewA6:"Ні — надішліть фото або короткий опис у SMS. Зазвичай надсилаємо розрахунок протягом 15 хвилин. Приїзд на місце — лише коли це справді потрібно.",
+    faqNewQ7:"Чи прибираєте після роботи?",
+    faqNewA7:"Завжди. Перед роботою стелимо захисну плівку, сміття та пил забираємо з собою. Прибирання пилососом включене.",
+    faqNewQ8:"Як можна оплатити?",
+    faqNewA8:"Готівка, Zelle, Venmo або кредитна/дебетова картка. Оплата — після завершення роботи, коли ви всім задоволені.",
+    faqNewQ9:"Що робити, якщо щось зламається після роботи?",
+    faqNewA9:"Ми відповідаємо за свою роботу 1 рік. Просто напишіть нам — приїдемо та виправимо. Гарантія за тим самим номером, без зайвих перемикань.",
+    faqNewQ10:"Чи говорите іспанською або російською?",
+    faqNewA10:"Так — наша команда говорить англійською, іспанською, російською та івритом."
   }
 };
 
@@ -2116,7 +2350,7 @@ function applyLang(){
   if(heroOfferTitleEl) heroOfferTitleEl.textContent=l.heroOfferTitle||'Hire a Handyman in Los Angeles';
   const heroOfferSubEl=document.getElementById('heroOfferSub');
   if(heroOfferSubEl) {
-    heroOfferSubEl.innerHTML=l.heroOfferSubHtml||'<span class="hero-included-accent">Same-day response, transparent pricing, and professional insured service</span><br>Book online in minutes or call (213) 361-1700 for a fast quote';
+    heroOfferSubEl.innerHTML=l.heroOfferSubHtml||'<span class="hero-included-accent">Same-day response, transparent pricing, and reliable local handyman help</span><br>Book online in minutes or call (213) 361-1700 for a fast quote';
   }
   const heroSubEl=document.getElementById('heroSub');
   if(heroSubEl)heroSubEl.textContent=l.heroSub;
@@ -2151,7 +2385,7 @@ function applyLang(){
   if(baseBanner)baseBanner.innerHTML=l.base.map(s=>`<div class="bp"><strong>·</strong> ${s}</div>`).join('');
 
   /* Tab labels */
-  const tabMap={kitch:'tabKitch',furnp:'tabFurnp',p1:'tabP1',p2:'tabP2',fl:'tabFl',trim:'tabTrim',tv:'tabTv',fur:'tabFur',plumb:'tabPlumb'};
+  const tabMap={p1:'tabP1',p2:'tabP2',fl:'tabFl',trim:'tabTrim',tv:'tabTv',fur:'tabFur',plumb:'tabPlumb'};
   document.querySelectorAll('.calc-tab').forEach(tab=>{
     const key=tabMap[tab.dataset.svc];
     if(key&&l[key]){
@@ -2196,16 +2430,6 @@ function applyLang(){
 
 /* ─── SERVICE CARD DETAILS MAPPING ─── */
 const serviceDetails = {
-  kitch: {
-    time: 'kitchTime',
-    benefit: 'kitchBenefit',
-    badge: null
-  },
-  furnp: {
-    time: 'furnpTime',
-    benefit: 'furnpBenefit',
-    badge: null
-  },
   paint: {
     time: 'paintTime',
     benefit: 'paintBenefit',
@@ -2251,7 +2475,7 @@ function renderGrid(){
   g.innerHTML='';
   const l = L();
   // Services with modal calculator
-  const calcServices = ['kitch', 'furnp', 'paint', 'floor'];
+  const calcServices = ['paint', 'floor'];
   l.svcs.forEach(svc=>{
     const card=document.createElement('div');
     card.className='scard';
@@ -2299,7 +2523,7 @@ function renderGrid(){
       // prevent lightbox from opening on service card clicks
       if(e.target.closest('.sph')) e.stopPropagation();
       // Update calculator tab selection without scrolling
-      const tabMap={kitch:'kitch',furnp:'furnp',paint:'p1',floor:'fl',tv:'tv',fur:'fur',art:'tv',plumb:'plumb',elec:'plumb'};
+      const tabMap={paint:'p1',floor:'fl',tv:'tv',fur:'fur',art:'tv',plumb:'plumb',elec:'plumb'};
       const tabSvc=tabMap[svc.id]||svc.id;
       const tab=document.querySelector('.calc-tab[data-svc="'+tabSvc+'"]');
       if(tab){
@@ -2363,12 +2587,6 @@ function buildDrawer(id){
   // ── Что предоставляет клиент ──
   const C=(label,items)=>`<div class="dprov">📦 <div><strong>${label}:</strong> ${items}</div></div>`;
   let h='';
-  if(id==='kitch'){
-    h=H(d.kitchScope,d.kitchDesc)+R(d.kitch)+C(d.prov,d.kitchProv)+N(d.kitchN);
-  }
-  if(id==='furnp'){
-    h=H(d.furnpScope,d.furnpDesc)+R(d.furnp)+C(d.prov,d.furnpProv)+N(d.furnpN);
-  }
   if(id==='tv'){
     h=H(d.tvScope,d.tvDesc)+R(d.tv)+C(d.prov,d.tvProv)+N(d.tvN);
   }
@@ -2438,10 +2656,9 @@ function updateArea(){
 /* ═══════════════════════════════════════════════
    CALCULATOR — tab-based system
 ═══════════════════════════════════════════════ */
-let currentSvc='kitch'; /* default active tab */
+let currentSvc='p1'; /* default active tab */
 
 const SVC_MODE={
-  kitch:'kitchen',furnp:'furniture',
   p1:'sqft',p2:'sqft',fl:'sqft',fv:'sqft',
   trim:'linear',
   tv:'fixed',art:'fixed',fur:'fixed',plumb:'fixed',elec:'fixed'
@@ -3326,9 +3543,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ─── CTA Click Tracking ───
 // NOTE: phone_click is already tracked via emitCoreEvent() in index.html (tel: link delegation)
 // Removed duplicate click_call to avoid double-counting in GA4.
-document.querySelector('.bwa')?.addEventListener('click',()=>{
-  track('click_whatsapp',{method:'wa.me',phone:'+12133611700'});
-});
+// whatsapp_click tracked via href delegation in index.html (wa.me link listener)
 
 /* ═══════════════════════════════════════════════
    CROSS-SELL ENGINE — every service has 2 best upsells
@@ -3336,7 +3551,7 @@ document.querySelector('.bwa')?.addEventListener('click',()=>{
 /*
  * CROSS-SELL — 3 safe clusters (plumb/elec excluded from auto cross-sell)
  * Cluster 1 (Wall & Install): tv, art, fur, curtain
- * Cluster 2 (Paint & Refresh): kitch, furnp, paint
+ * Cluster 2 (Paint & Refresh): paint, floor
  * Cluster 3 (Renovation):      paint, floor, trim/base
  */
 const CROSS_SELL = {
@@ -3349,23 +3564,14 @@ const CROSS_SELL = {
     { id:'tv',   emoji:'📺', price:'from $105' },
     { id:'art',  emoji:'🪞', price:'$95' }
   ],
-  /* Cluster 2: Paint & Refresh */
-  kitch: [
-    { id:'furnp', emoji:'🪑', price:'from $40/piece' },
-    { id:'paint', emoji:'🎨', price:'from $3/sq ft' }
-  ],
-  furnp: [
-    { id:'kitch', emoji:'🍳', price:'from $75/door' },
-    { id:'paint', emoji:'🎨', price:'from $3/sq ft' }
-  ],
   /* Cluster 3: Renovation */
   p1: [
     { id:'floor', emoji:'🏠', price:'from $3/sq ft' },
-    { id:'kitch', emoji:'🍳', price:'from $75/door' }
+    { id:'drywall', emoji:'🔧', price:'from $120' }
   ],
   p2: [
     { id:'floor', emoji:'🏠', price:'from $3/sq ft' },
-    { id:'kitch', emoji:'🍳', price:'from $75/door' }
+    { id:'drywall', emoji:'🔧', price:'from $120' }
   ],
   fl: [
     { id:'paint', emoji:'🎨', price:'from $3/sq ft' },
@@ -3380,16 +3586,15 @@ const CROSS_SELL = {
 
 /* Map cross-sell IDs to tab IDs for calculator tab switching */
 const XSELL_TAB_MAP = {
-  kitch:'kitch', furnp:'furnp', paint:'p1', floor:'fl',
+  paint:'p1', floor:'fl',
   tv:'tv', fur:'fur', art:'tv', plumb:'plumb', elec:'plumb',
-  trim:'linear', smart:'plumb', base:'linear'
+  trim:'linear', smart:'plumb', base:'linear', drywall:'fur'
 };
 
 function getXsellName(id) {
   const l = L();
   const nameMap = {
-    kitch: l.svcs?.find(s=>s.id==='kitch')?.name || 'Kitchen Cabinets',
-    furnp: l.svcs?.find(s=>s.id==='furnp')?.name || 'Furniture Painting',
+    drywall: 'Drywall Repair',
     paint: l.svcs?.find(s=>s.id==='paint')?.name || 'Interior Painting',
     floor: l.svcs?.find(s=>s.id==='floor')?.name || 'Flooring',
     tv:    l.svcs?.find(s=>s.id==='tv')?.name || 'TV Mounting',
@@ -3484,9 +3689,6 @@ function showCalcCrossSell(svcId, total) {
    COMBO PROMO — mini block under each service card
 ═══════════════════════════════════════════════ */
 const COMBO_PAIRS = {
-  /* Cluster 2: Paint & Refresh */
-  kitch: { partner: 'furnp', label: 'Kitchen Cabinets + Furniture Painting', save: 143 },
-  furnp: { partner: 'kitch', label: 'Furniture Painting + Kitchen Cabinets', save: 143 },
   /* Cluster 3: Renovation */
   paint: { partner: 'floor', label: 'Painting + Flooring',                   save: 275 },
   floor: { partner: 'paint', label: 'Flooring + Painting',                   save: 275 },
@@ -3534,10 +3736,9 @@ function injectComboPromos(){
    INTERACTIVE COMBO CALCULATOR
 ═══════════════════════════════════════════════ */
 function initComboCalc() {
-  const BASE = { tv:105, fur:75, art:95, paint:500, floor:500, kitch:500, furnp:200, curtain:75 };
+  const BASE = { tv:105, fur:75, art:95, paint:500, floor:500, curtain:75 };
   const LABELS = { tv:'TV Mounting', fur:'Furniture Assembly', art:'Art & Mirror Hanging',
-                   paint:'Interior Painting', floor:'Flooring', kitch:'Kitchen Cabinet Painting',
-                   furnp:'Furniture Painting', curtain:'Curtain Rods' };
+                   paint:'Interior Painting', floor:'Flooring', curtain:'Curtain Rods' };
   const IDS = Object.keys(BASE);
 
   function populate(sel, excludeId) {
