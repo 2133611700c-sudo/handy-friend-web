@@ -19,7 +19,7 @@ fi
 echo ""
 echo "2) Mac cron + local runtime"
 CRON_VIEW="$(crontab -l 2>/dev/null || true)"
-if echo "$CRON_VIEW" | grep -q "run-hunter-agent.sh"; then
+if echo "$CRON_VIEW" | grep -Eq "run-hunter-agent\.sh|fb-social-ingest\.sh|craigslist-social-ingest\.py"; then
   echo "PASS cron.entries.present"
 else
   echo "WARN cron.entries.missing"

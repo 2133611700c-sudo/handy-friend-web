@@ -12,11 +12,13 @@ case "$AGENT_KIND" in
   nextdoor)
     LOCK_NAME="nextdoor"
     PREFERRED_AGENT_ID="nextdoor"
+    SESSION_ID="hf-nextdoor"
     MESSAGE="Run nextdoor-hunter skill with service-specific templates and strict photo/text matching checks."
     ;;
   facebook)
     LOCK_NAME="facebook"
     PREFERRED_AGENT_ID="facebook"
+    SESSION_ID="hf-facebook"
     MESSAGE="Run facebook-hunter skill with service-specific templates and strict photo/text matching checks."
     ;;
   *)
@@ -62,7 +64,7 @@ fi
 cd "$ROOT_DIR"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] START $LOCK_NAME scan (agent=$OPENCLAW_AGENT_ID)" >> "$LOG_FILE"
 if command -v timeout >/dev/null 2>&1; then
-  timeout "$HUNTER_TIMEOUT_SECONDS" "$OPENCLAW_BIN" agent --agent "$OPENCLAW_AGENT_ID" --message "$MESSAGE" >> "$LOG_FILE" 2>&1 || {
+  timeout "$HUNTER_TIMEOUT_SECONDS" "$OPENCLAW_BIN" agent --agent "$OPENCLAW_AGENT_ID" --session-id "$SESSION_ID" --message "$MESSAGE" >> "$LOG_FILE" 2>&1 || {
     code=$?
     if [ "$code" -eq 124 ] || [ "$code" -eq 137 ]; then
       echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAIL $LOCK_NAME scan timeout=${HUNTER_TIMEOUT_SECONDS}s" >> "$LOG_FILE"
@@ -72,7 +74,7 @@ if command -v timeout >/dev/null 2>&1; then
     exit "$code"
   }
 else
-  "$OPENCLAW_BIN" agent --agent "$OPENCLAW_AGENT_ID" --message "$MESSAGE" >> "$LOG_FILE" 2>&1 || {
+  "$OPENCLAW_BIN" agent --agent "$OPENCLAW_AGENT_ID" --session-id "$SESSION_ID" --message "$MESSAGE" >> "$LOG_FILE" 2>&1 || {
     code=$?
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAIL $LOCK_NAME scan exit=$code" >> "$LOG_FILE"
     exit "$code"

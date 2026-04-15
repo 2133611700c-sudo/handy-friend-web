@@ -84,7 +84,7 @@ This is labor only — [mention material policy per service].
 
 Want to book? I can check availability for [today/tomorrow/this week].
 
-Our response guarantee: we reply within 1 hour, 8am-8pm PT, Mon-Sat.
+We reply within 1 hour, 8am-8pm PT, Mon-Sat.
 ```
 
 ---

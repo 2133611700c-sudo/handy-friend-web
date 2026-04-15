@@ -34,7 +34,7 @@ except ImportError:
 
 # ── Config ──────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).parent
-BROWSER_DATA = SCRIPT_DIR / ".browser-data"
+BROWSER_DATA = SCRIPT_DIR / ".browser-data-playwright"
 SEEN_FILE = SCRIPT_DIR / ".seen-posts.json"
 # SCREENSHOTS_DIR được override bởi --shots-dir argument.
 # Mặc định lưu trong script dir (fallback), nhưng agent NÊN truyền workspace path
@@ -146,12 +146,12 @@ EXTRACT_POST_JS = """(el) => {
     if (!postUrl) {
         for (const a of el.querySelectorAll('a[href*="/photo/"]')) {
             const photoHref = a.href || '';
-            const setMatch = photoHref.match(/[?&]set=(?:pcb|gm|pb|g)\.(\d+)/);
+            const setMatch = photoHref.match(/[?&]set=(?:pcb|gm|pb|g)\\.(\\d+)/);
             if (setMatch) {
                 // Extract group ID from any user link in the element
                 const groupLink = el.querySelector('a[href*="/groups/"][href*="/user/"]');
                 if (groupLink) {
-                    const grpMatch = groupLink.href.match(/\/groups\/(\d+)\//);
+                    const grpMatch = groupLink.href.match(/\\/groups\\/(\\d+)\\//);
                     if (grpMatch) {
                         postUrl = 'https://www.facebook.com/groups/' + grpMatch[1] + '/posts/' + setMatch[1] + '/';
                         break;
@@ -391,6 +391,7 @@ async def cmd_scrape(args):
 
     group_url = args.group_url
     limit = args.limit
+    include_seen = bool(args.include_seen)
     take_screenshots = not args.no_shots
     shots_dir = Path(args.shots_dir).expanduser()
     shots_dir.mkdir(parents=True, exist_ok=True)
@@ -478,6 +479,8 @@ async def cmd_scrape(args):
                 seen = set(list(seen)[-500:])
             save_seen_posts(seen)
 
+            output_posts = posts_data if include_seen else new_posts
+
             result_json(
                 True, "scrape",
                 group_name=group_name,
@@ -485,9 +488,10 @@ async def cmd_scrape(args):
                 total_scraped=len(posts_data),
                 new_count=len(new_posts),
                 feed_screenshot=feed_screenshot,
-                posts=new_posts,
+                posts=output_posts,
                 message=(
                     f"Tìm thấy {len(new_posts)} bài mới / {len(posts_data)} bài tổng cộng. "
+                    + ("(include_seen=1) " if include_seen else "")
                     + (f"Feed screenshot: {feed_screenshot}" if feed_screenshot else "Không có ảnh.")
                 )
             )
@@ -532,6 +536,11 @@ def main():
     scrape_p.add_argument("--limit", type=int, default=10, help="Số bài tối đa (default: 10)")
     scrape_p.add_argument("--no-shots", action="store_true",
                           help="Không chụp ảnh (nhanh hơn, dùng khi chỉ cần text)")
+    scrape_p.add_argument(
+        "--include-seen",
+        action="store_true",
+        help="Trả về cả bài đã thấy trước đó (không chỉ new posts)",
+    )
     scrape_p.add_argument(
         "--shots-dir",
         default=str(DEFAULT_SCREENSHOTS_DIR),

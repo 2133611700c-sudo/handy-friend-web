@@ -83,9 +83,14 @@
       "permanent": true
     },
     {
+      "source": "/pricing",
+      "destination": "/#calcBox",
+      "permanent": true
+    },
+    {
       "source": "/pricing/",
-      "destination": "/pricing",
-      "statusCode": 301
+      "destination": "/#calcBox",
+      "permanent": true
     },
     {
       "source": "/services/",
@@ -103,9 +108,14 @@
       "statusCode": 301
     },
     {
+      "source": "/cabinet-painting",
+      "destination": "/services",
+      "permanent": true
+    },
+    {
       "source": "/cabinet-painting/",
-      "destination": "/cabinet-painting",
-      "statusCode": 301
+      "destination": "/services",
+      "permanent": true
     },
     {
       "source": "/flooring/",
@@ -158,9 +168,14 @@
       "statusCode": 301
     },
     {
+      "source": "/furniture-painting",
+      "destination": "/services",
+      "permanent": true
+    },
+    {
       "source": "/furniture-painting/",
-      "destination": "/furniture-painting",
-      "statusCode": 301
+      "destination": "/services",
+      "permanent": true
     },
     {
       "source": "/reviews/",
@@ -190,10 +205,6 @@
   ],
   "rewrites": [
     {
-      "source": "/pricing",
-      "destination": "/pricing/index.html"
-    },
-    {
       "source": "/services",
       "destination": "/services/index.html"
     },
@@ -204,10 +215,6 @@
     {
       "source": "/furniture-assembly",
       "destination": "/furniture-assembly/index.html"
-    },
-    {
-      "source": "/cabinet-painting",
-      "destination": "/cabinet-painting/index.html"
     },
     {
       "source": "/flooring",
@@ -250,10 +257,6 @@
       "destination": "/backsplash/index.html"
     },
     {
-      "source": "/furniture-painting",
-      "destination": "/furniture-painting/index.html"
-    },
-    {
       "source": "/reviews",
       "destination": "/reviews/index.html"
     },
@@ -280,6 +283,10 @@
     {
       "source": "/blog/:slug",
       "destination": "/blog/:slug.html"
+    },
+    {
+      "source": "/la-neighborhoods",
+      "destination": "/la-neighborhoods/index.html"
     },
     {
       "source": "/la-neighborhoods/:slug",
