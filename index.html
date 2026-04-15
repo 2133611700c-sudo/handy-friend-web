@@ -8,9 +8,13 @@
 <title>Handy &amp; Friend | LA Handyman · TV Mount $150 · Drywall $120 · Same-Day</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" as="style">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/main.css?v=7">
+<!-- LCP boost: preload hero background image with high fetch priority (mobile LCP element) -->
+<link rel="preload" as="image" href="/assets/img/hero-bg.webp" type="image/webp" fetchpriority="high" media="(max-width:899px)">
+<link rel="preload" as="image" href="/assets/img/hero-bg.webp" type="image/webp" fetchpriority="high" media="(min-width:900px)">
+<!-- Fonts: non-blocking async load. Slimmed weights (Playfair 700 only; DM Sans 400/500/600/700). -->
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="assets/css/main.css?v=8">
 
 <meta name="description" id="metaDesc" content="LA handyman — TV mounting $150, drywall $120, furniture assembly $150. Flat prices, same-day response. Text a photo for a 15-min quote. Insured. Call (213) 361-1700.">
 <meta name="robots" content="index,follow">
