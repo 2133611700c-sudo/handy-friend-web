@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
-
 Sitemap: https://handyandfriend.com/sitemap.xml
+Disallow: /api/
+Allow: /blog/
+Allow: /la-neighborhoods/

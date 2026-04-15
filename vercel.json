@@ -171,6 +171,21 @@
       "source": "/book/",
       "destination": "/book",
       "statusCode": 301
+    },
+    {
+      "source": "/blog/",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/:slug/",
+      "destination": "/blog/:slug",
+      "statusCode": 301
+    },
+    {
+      "source": "/la-neighborhoods/:slug/",
+      "destination": "/la-neighborhoods/:slug",
+      "statusCode": 301
     }
   ],
   "rewrites": [
@@ -257,6 +272,18 @@
     {
       "source": "/terms",
       "destination": "/terms.html"
+    },
+    {
+      "source": "/blog",
+      "destination": "/blog/index.html"
+    },
+    {
+      "source": "/blog/:slug",
+      "destination": "/blog/:slug.html"
+    },
+    {
+      "source": "/la-neighborhoods/:slug",
+      "destination": "/la-neighborhoods/:slug.html"
     }
   ]
 }
