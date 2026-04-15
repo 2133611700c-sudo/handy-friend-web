@@ -168,3 +168,14 @@ ops/*.log
 
 # Legacy staging files
 handyfriend_10.html
+# Cron daily reports + live-close-sheets (auto-generated, not source)
+ops/reports/*-live-close-sheet.md
+# Python runtime artifacts
+**/__pycache__/
+*.pyc
+# Legacy backup files
+*.bak_*
+*.bak.*
+# Lighthouse output
+/tmp/lh-*.json
+lighthouse-*.html

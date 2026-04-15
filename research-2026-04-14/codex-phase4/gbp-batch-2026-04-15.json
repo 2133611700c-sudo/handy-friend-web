@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-04-15",
+  "source": "scripts/gbp-sync-prep.py",
+  "business": {
+    "name": "Handy & Friend",
+    "phone": "+12133611700",
+    "website": "https://handyandfriend.com/",
+    "hours": "Mon-Sat 8am-7pm PT"
+  },
+  "description_candidate": "LA handyman — TV mounting, drywall repair, furniture assembly, doors, painting, small plumbing and electrical. Flat upfront pricing, same-day response, insured. Trade-regulated work referred to a trade contractor. Serving central Los Angeles.",
+  "categories": {
+    "primary": "Handyman",
+    "additional": [
+      "Furniture assembly service",
+      "Door supplier",
+      "Home improvement service"
+    ]
+  },
+  "prices_from_registry": {
+    "tv_mounting": "150",
+    "furniture_assembly": "150",
+    "art_mirrors": "150",
+    "interior_painting": "3.0",
+    "flooring": "3.0",
+    "kitchen_cabinet_painting": "75",
+    "furniture_painting": "40",
+    "plumbing": "150",
+    "electrical": "150",
+    "drywall": "120",
+    "door_installation": "140",
+    "vanity_installation": "195",
+    "backsplash": "12"
+  },
+  "current_hero_h1": "TV Mount $150 · Drywall $120 · Assembly $150",
+  "service_areas": [],
+  "notes": [
+    "Owner must verify GBP in Google Business Profile UI before applying.",
+    "AggregateRating on site unlocks only after real reviews exist.",
+    "Use insured wording and referral language for trade-regulated scope."
+  ]
+}
