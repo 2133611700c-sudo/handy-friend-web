@@ -285,7 +285,7 @@ def classify_source_name(name: str) -> str:
 
 
 def get_social_leads(base_url: str, api_key: str, log_path: pathlib.Path) -> List[Dict[str, Any]]:
-    fields = "source,platform,lead_detected_at,created_at,stage,lead_quality"
+    fields = "source,platform,lead_detected_at,last_action_at,created_at,stage,lead_quality"
     query = f"social_leads?select={urllib.parse.quote(fields, safe=',')}&order=lead_detected_at.desc.nullslast,created_at.desc.nullslast&limit=400"
     url = f"{base_url}/rest/v1/{query}"
     status, payload = http_json("GET", url, supabase_headers(api_key))
@@ -298,11 +298,19 @@ def get_social_leads(base_url: str, api_key: str, log_path: pathlib.Path) -> Lis
 
 
 def source_key(row: Dict[str, Any]) -> str:
-    value = str(row.get("source") or row.get("platform") or "").strip()
+    source_val = str(row.get("source") or "").strip()
+    platform_val = str(row.get("platform") or "").strip()
+    # Legacy rows used source="scanner"; use platform to recover true channel.
+    if source_val.lower() in {"scanner", "social_scanner", "ingest"} and platform_val:
+        value = platform_val
+    else:
+        value = source_val or platform_val
     if not value:
         return "UNKNOWN"
     low = value.lower()
     if "nextdoor" in low:
+        return "ND"
+    if "facebook" in low or low in {"fb", "meta"}:
         return "ND"
     if "craigslist" in low or low.startswith("cl"):
         return "CL"
@@ -317,7 +325,7 @@ def compute_freshness(rows: List[Dict[str, Any]], thresholds: Thresholds) -> Dic
         k = source_key(r)
         if k not in latest:
             continue
-        ts = parse_iso(str(r.get("lead_detected_at") or r.get("created_at") or ""))
+        ts = parse_iso(str(r.get("last_action_at") or r.get("lead_detected_at") or r.get("created_at") or ""))
         if not ts:
             continue
         prev = latest.get(k)
@@ -371,31 +379,40 @@ def compute_rejection(rows: List[Dict[str, Any]], thresholds: Thresholds) -> Dic
     return out
 
 
-def process_recently_active(script_name: str, stale_minutes: int) -> Tuple[bool, str]:
+def process_recently_active(process_hints: List[str], stale_minutes: int, extra_logs: List[pathlib.Path] | None = None) -> Tuple[bool, str]:
     # Active process check
     try:
         ps = subprocess.run(["bash", "-lc", "ps aux"], capture_output=True, text=True, check=False)
-        if script_name in ps.stdout:
-            return True, "running process"
+        for hint in process_hints:
+            if hint and hint in ps.stdout:
+                return True, f"running process: {hint}"
     except Exception:
         pass
 
-    # Log freshness fallback
-    candidates = [
-        pathlib.Path(os.path.expanduser("~/handy-friend-ops/logs")) / f"{script_name.replace('.py','')}.log",
+    # Log freshness fallback (current runtime first, legacy paths second)
+    candidates: List[pathlib.Path] = []
+    if extra_logs:
+        candidates.extend(extra_logs)
+    candidates.extend([
+        pathlib.Path(os.path.expanduser("~/handy-friend-landing-v6/ops/social-scanner.log")),
+        pathlib.Path(os.path.expanduser("~/handy-friend-landing-v6/ops/fb-ingest.log")),
+        pathlib.Path(os.path.expanduser("~/handy-friend-landing-v6/ops/cl-ingest.log")),
         pathlib.Path(os.path.expanduser("~/handy-friend-ops/logs/hunter.log")),
         pathlib.Path("ops/hunter.log"),
-    ]
+    ])
 
     now_ts = utc_now().timestamp()
+    seen_any = False
     for p in candidates:
         if not p.exists():
             continue
+        seen_any = True
         age_min = (now_ts - p.stat().st_mtime) / 60.0
         if age_min <= stale_minutes:
             return True, f"fresh log {p} age={age_min:.1f}m"
-        return False, f"stale log {p} age={age_min:.1f}m"
 
+    if seen_any:
+        return False, "all candidate logs stale"
     return False, "no process and no log"
 
 
@@ -569,7 +586,25 @@ def write_incident_supabase(base_url: str, api_key: str, summary: str, details: 
     return False, "ops_incidents insert retries exceeded"
 
 
+def _load_env_file() -> None:
+    """Load env vars from ~/handy-friend-ops/.env if it exists and vars are not already set."""
+    env_file = pathlib.Path(os.path.expanduser("~/handy-friend-ops/.env"))
+    if not env_file.is_file():
+        return
+    with open(env_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, val = line.partition("=")
+            key = key.strip()
+            val = val.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = val
+
+
 def main() -> int:
+    _load_env_file()
     parser = argparse.ArgumentParser(description="OpenClaw health monitor for Handy & Friend")
     parser.add_argument("--test", action="store_true", help="Run checks without sending Telegram or writing incidents")
     parser.add_argument("--sources-path", default="", help="Path to nextdoor_sources.json")
@@ -617,8 +652,8 @@ def main() -> int:
         else:
             nd_feed_results.append({"name": "ND source file", "url": "N/A", "status": "DEAD", "detail": "nextdoor_sources.json not found"})
 
-        cl_ok, cl_reason = process_recently_active("cl_hunter.py", thresholds.process_stale_minutes)
-        nd_ok, nd_reason = process_recently_active("nextdoor_hunter.py", thresholds.process_stale_minutes)
+        cl_ok, cl_reason = process_recently_active(["craigslist-social-ingest.py", "social_scanner.py"], thresholds.process_stale_minutes, [pathlib.Path(os.path.expanduser("~/handy-friend-landing-v6/ops/cl-ingest.log")), pathlib.Path(os.path.expanduser("~/handy-friend-landing-v6/ops/social-scanner.log"))])
+        nd_ok, nd_reason = process_recently_active(["fb-social-ingest.sh", "social_scanner.py"], thresholds.process_stale_minutes, [pathlib.Path(os.path.expanduser("~/handy-friend-landing-v6/ops/fb-ingest.log")), pathlib.Path(os.path.expanduser("~/handy-friend-landing-v6/ops/social-scanner.log"))])
         scanner_ok = {"CL": (cl_ok, cl_reason), "ND": (nd_ok, nd_reason)}
 
         # Severity/status calculation
@@ -633,7 +668,10 @@ def main() -> int:
                 sev2_reasons.append(f"{k} freshness DEGRADED")
 
         if all(freshness.get(k, {}).get("status") in {"DEAD", "DEGRADED"} for k in ("ND", "CL")):
-            sev3_reasons.append("all sources degraded/dead")
+            if not all(v[0] for v in scanner_ok.values()):
+                sev3_reasons.append("all sources degraded/dead and scanner unhealthy")
+            else:
+                sev2_reasons.append("all sources stale but scanners running")
 
         for k in ("ND", "CL"):
             rstat = rejection.get(k, {}).get("status")
@@ -688,8 +726,11 @@ def main() -> int:
             log_line(log_path, f"incident_write: {ok_inc} {inc_msg}")
 
             if tg_token and tg_chat:
-                ok_tg, tg_msg = send_telegram(tg_token, tg_chat, digest)
-                log_line(log_path, f"telegram: {ok_tg} {tg_msg}")
+                if overall_status != "GREEN":
+                    ok_tg, tg_msg = send_telegram(tg_token, tg_chat, digest)
+                    log_line(log_path, f"telegram: {ok_tg} {tg_msg}")
+                else:
+                    log_line(log_path, "telegram skipped: status=GREEN, no alert needed")
             else:
                 log_line(log_path, "telegram skipped: TELEGRAM_BOT_TOKEN/TELEGRAM_WEBHOOK_SECRET or TELEGRAM_CHAT_ID missing")
 

@@ -1,0 +1,3 @@
+PRIMARY_PRODUCTION_ROOT=/Users/sergiikuropiatnyk/handy-friend-landing-v6
+TIMESTAMP=2026-04-08T17:18:55Z
+SECONDARY_RUNTIME=/Users/sergiikuropiatnyk/live-hf-runtime

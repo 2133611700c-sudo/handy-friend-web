@@ -29,6 +29,11 @@ function escapeHtml(text) {
   return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function hasValidPhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  return digits.length >= 10;
+}
+
 async function checkEventExists(leadId, eventType) {
   const url = `${supabaseUrl}/rest/v1/lead_events?select=id&lead_id=eq.${leadId}&event_type=eq.${eventType}&limit=1`;
   const resp = await fetch(url, { method: 'GET', headers });
@@ -39,15 +44,20 @@ async function checkEventExists(leadId, eventType) {
 
 async function logEvent(leadId, eventType, payload) {
   try {
-    await fetch(`${supabaseUrl}/rest/v1/lead_events`, {
+    const resp = await fetch(`${supabaseUrl}/rest/v1/lead_events`, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
       body: JSON.stringify({
         lead_id: leadId,
         event_type: eventType,
-        event_payload: payload
+        event_data: payload,
+        created_by: 'sla-check'
       })
     });
+    if (!resp.ok) {
+      const body = await resp.text();
+      console.error('[SLA] logEvent failed response:', resp.status, body);
+    }
   } catch (err) {
     console.error('[SLA] logEvent failed:', err.message);
   }
@@ -57,7 +67,7 @@ async function main() {
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   // Get all leads that are stage=new, not test, created in last 24h
-  const url = `${supabaseUrl}/rest/v1/leads?select=id,full_name,phone,service_type,created_at,stage&stage=eq.new&is_test=eq.false&created_at=gte.${twentyFourHoursAgo}&order=created_at.asc`;
+  const url = `${supabaseUrl}/rest/v1/leads?select=id,full_name,phone,service_type,created_at,stage,status,is_test,source,channel,attribution_source,problem_description&stage=eq.new&is_test=eq.false&created_at=gte.${twentyFourHoursAgo}&order=created_at.asc`;
   const resp = await fetch(url, { method: 'GET', headers });
 
   if (!resp.ok) {
@@ -85,7 +95,22 @@ async function main() {
   }
 
   // Filter to truly uncontacted leads
-  const uncontacted = staleLeads.filter(l => !contactedLeadIds.has(l.id));
+  const uncontacted = staleLeads.filter((l) => {
+    if (contactedLeadIds.has(l.id)) return false;
+    if (!hasValidPhone(l.phone)) return false;
+    const nm = String(l.full_name || '').toLowerCase();
+    const src = String(l.source || '').toLowerCase();
+    const ch = String(l.channel || '').toLowerCase();
+    const attr = String(l.attribution_source || '').toLowerCase();
+    const problem = String(l.problem_description || '').toLowerCase();
+    if (String(l.id || '').startsWith('social_')) return false;
+    if (nm.includes('synthetic') || nm.includes('test')) return false;
+    if (problem.includes('synthetic') || problem.includes('[e2e-synthetic]')) return false;
+    if (src === 'facebook' || src === 'nextdoor' || src === 'craigslist' || src === 'social') return false;
+    if (ch.includes('social')) return false;
+    if (attr.startsWith('social_leads:')) return false;
+    return true;
+  });
 
   if (!uncontacted.length) {
     console.log(`[SLA] ${staleLeads.length} stale leads, all contacted. No alerts needed.`);

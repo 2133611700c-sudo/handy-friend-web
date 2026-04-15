@@ -108,32 +108,6 @@ const ServiceCalcModal = {
 
   // Service configurations with pricing options
   configs: {
-    kitch: {
-      name: 'Kitchen Cabinet Painting',
-      icon: '🍳',
-      options: [
-        { id: 'doorFull', label: 'Full Package (2 sides + box + prep)', price: 75, unit: '/door', qty: 1 },
-        { id: 'door2side', label: '2-Side Spray', price: 70, unit: '/door', qty: 1 },
-        { id: 'door1side', label: '1-Side Spray', price: 40, unit: '/door', qty: 1 },
-        { id: 'doorRoller', label: 'Roller Finish (budget)', price: 7.25, unit: '/door', qty: 1 },
-      ],
-      addons: [
-        { id: 'drawerSmall', label: 'Drawer Front (small)', price: 25, unit: '/ea' },
-        { id: 'drawerLarge', label: 'Drawer Front (large)', price: 35, unit: '/ea' },
-        { id: 'endPanel', label: 'End Panel', price: 50, unit: '/ea' },
-        { id: 'island', label: 'Island', price: 175, unit: '/each' },
-      ],
-    },
-    furnp: {
-      name: 'Furniture Painting',
-      icon: '🎨',
-      options: [
-        { id: 'chair', label: 'Dining Chair', price: 40, unit: '/piece', qty: 1 },
-        { id: 'nightstand', label: 'Nightstand / Side Table', price: 65, unit: '/piece', qty: 1 },
-        { id: 'dresser', label: 'Dresser / Large Cabinet', price: 170, unit: '/piece', qty: 1 },
-        { id: 'diningTable', label: 'Dining Table', price: 130, unit: '/piece', qty: 1 },
-      ],
-    },
     paint: {
       name: 'Interior Painting',
       icon: '🎨',
