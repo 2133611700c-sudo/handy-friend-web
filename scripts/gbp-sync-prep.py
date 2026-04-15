@@ -26,6 +26,21 @@ def extract_prices() -> Dict[str, str]:
     return prices
 
 
+def extract_service_labels() -> Dict[str, str]:
+    registry_path = ROOT / "lib" / "price-registry.js"
+    text = registry_path.read_text(encoding="utf-8")
+    labels: Dict[str, str] = {}
+
+    for service_id, label in re.findall(
+        r"([a-z_]+)\s*:\s*\{[^}]*?label\s*:\s*'([^']+)'",
+        text,
+        re.DOTALL,
+    ):
+        labels[service_id] = label.strip()
+
+    return labels
+
+
 def extract_hero() -> str:
     html = (ROOT / "index.html").read_text(encoding="utf-8")
     match = re.search(r'<h1 class="hero-offer-title"[^>]*>([^<]+)</h1>', html)
@@ -41,7 +56,26 @@ def extract_neighborhoods() -> list[str]:
     return [chip.strip() for chip in chips]
 
 
+def extract_categories_from_research() -> list[str]:
+    research_path = ROOT / "research-2026-04-14" / "CONSOLIDATED_RESEARCH.md"
+    if not research_path.exists():
+        return []
+
+    text = research_path.read_text(encoding="utf-8")
+    match = re.search(r"Safe categories for GMB:\s*(.+)", text)
+    if not match:
+        return []
+
+    raw = match.group(1)
+    raw = raw.split("Avoid:", 1)[0]
+    raw = re.sub(r"\([^)]+\)", "", raw)
+    raw = raw.replace("**", "")
+    parts = [part.strip(" .") for part in raw.split(",")]
+    return [part for part in parts if part]
+
+
 def build_payload() -> Dict[str, object]:
+    service_labels = extract_service_labels()
     return {
         "generated_at": date.today().isoformat(),
         "source": "scripts/gbp-sync-prep.py",
@@ -65,9 +99,18 @@ def build_payload() -> Dict[str, object]:
                 "Home improvement service",
             ],
         },
+        "categories_candidate_from_research": extract_categories_from_research(),
         "prices_from_registry": extract_prices(),
+        "services_from_registry": service_labels,
         "current_hero_h1": extract_hero(),
         "service_areas": extract_neighborhoods(),
+        "photo_checklist": [
+            "Before/after TV mounting",
+            "Drywall patch texture matching close-up",
+            "Furniture assembly completion photos",
+            "Team-at-work safety and cleanup photo",
+            "Branded vehicle/tools context shot",
+        ],
         "notes": [
             "Owner must verify GBP in Google Business Profile UI before applying.",
             "AggregateRating on site unlocks only after real reviews exist.",

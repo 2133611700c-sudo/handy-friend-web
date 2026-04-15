@@ -28,11 +28,17 @@ def validate_review(review: Dict[str, object]) -> List[str]:
     if not review.get("author") or not review.get("text"):
         errors.append("missing author/text")
 
+    text = str(review.get("text") or "")
+    if len(text) < 30:
+        errors.append("review text too short (<30 chars)")
+    if len(text) > 500:
+        errors.append("review text too long (>500 chars)")
+
     rating = review.get("rating")
     if not isinstance(rating, int) or rating < 1 or rating > 5:
         errors.append("rating must be 1-5")
 
-    text_lower = str(review.get("text") or "").lower()
+    text_lower = text.lower()
     for word in BANNED:
         if word in text_lower:
             errors.append(f"banned word in customer text: {word}")

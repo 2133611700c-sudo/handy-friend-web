@@ -16,6 +16,11 @@
       "Home improvement service"
     ]
   },
+  "categories_candidate_from_research": [
+    "Handyman",
+    "Furniture assembly",
+    "Picture framing"
+  ],
   "prices_from_registry": {
     "tv_mounting": "150",
     "furniture_assembly": "150",
@@ -31,8 +36,30 @@
     "vanity_installation": "195",
     "backsplash": "12"
   },
+  "services_from_registry": {
+    "tv_mounting": "TV Mounting",
+    "furniture_assembly": "Furniture Assembly",
+    "art_mirrors": "Art & Mirror Hanging",
+    "interior_painting": "Interior Painting",
+    "flooring": "Flooring Installation",
+    "kitchen_cabinet_painting": "Kitchen Cabinet Painting",
+    "furniture_painting": "Furniture Painting",
+    "plumbing": "Plumbing",
+    "electrical": "Electrical",
+    "drywall": "Drywall Repair",
+    "door_installation": "Door Installation",
+    "vanity_installation": "Vanity Installation",
+    "backsplash": "Backsplash Installation"
+  },
   "current_hero_h1": "TV Mount $150 · Drywall $120 · Assembly $150",
   "service_areas": [],
+  "photo_checklist": [
+    "Before/after TV mounting",
+    "Drywall patch texture matching close-up",
+    "Furniture assembly completion photos",
+    "Team-at-work safety and cleanup photo",
+    "Branded vehicle/tools context shot"
+  ],
   "notes": [
     "Owner must verify GBP in Google Business Profile UI before applying.",
     "AggregateRating on site unlocks only after real reviews exist.",
