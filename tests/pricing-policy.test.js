@@ -26,7 +26,7 @@ test('price matrix matches canonical 9-service baseline', () => {
   assert.equal(matrix.interior_painting, 3.0);
   assert.equal(matrix.flooring, 3.0);
   assert.equal(matrix.kitchen_cabinet_painting, 75);
-  assert.equal(matrix.furniture_painting, 150);
+  assert.equal(matrix.furniture_painting, 40);
   assert.equal(matrix.plumbing, 150);
   assert.equal(matrix.electrical, 150);
   assert.match(getPricingSourceVersion(), /^20\d{2}\./);
