@@ -717,10 +717,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="rev-section">
   <div class="rev-wrap">
     <div class="rev-head">
-      <h2 class="rev-title" data-i18n="testimonialsTitle">What Our Customers Say</h2>
+      <h2 class="rev-title" data-i18n="testimonialsTitle">Sample Customer Experiences</h2>
       <div class="rev-summary">
         <span class="rev-stars-row">⭐⭐⭐⭐⭐</span>
-        <span class="rev-count" data-i18n="testimonialsSub">Trusted by local customers across Los Angeles</span>
+        <span class="rev-count" data-i18n="testimonialsSub">Illustrative only — real verified reviews coming with our Google Business launch.</span>
       </div>
     </div>
 
@@ -1080,24 +1080,14 @@ document.addEventListener('DOMContentLoaded', function() {
     <form id="leadForm" style="background:rgba(255,255,255,0.95);padding:28px;border-radius:16px;display:flex;flex-direction:column;gap:16px" onsubmit="handleLeadSubmit(event)">
       <input type="text" id="leadName" placeholder="Your Name" data-i18n-placeholder="leadNamePlaceholder" required style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit">
 
-      <input type="email" id="leadEmail" placeholder="Your Email (optional)" data-i18n-placeholder="leadEmailPlaceholder" style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit">
-
-      <input type="tel" id="leadPhone" placeholder="Phone Number (213-361-1700)" data-i18n-placeholder="leadPhonePlaceholder" required style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit">
-
-      <input type="text" id="leadZip" placeholder="ZIP Code (e.g. 90034)" style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit">
-
-      <select id="leadPreferredContact" style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit">
-        <option value="call">Preferred Contact: Call</option>
-        <option value="sms">Preferred Contact: SMS</option>
-        <option value="whatsapp">Preferred Contact: WhatsApp</option>
-      </select>
-
-      <input type="hidden" id="leadPlacementId" value="">
+      <input type="tel" id="leadPhone" placeholder="Phone Number (e.g. 310-555-0100)" data-i18n-placeholder="leadPhonePlaceholder" required style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit">
 
       <select id="leadService" required style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit">
         <option value="" data-i18n="leadServiceDefault">Select Service Needed</option>
         <option value="tv-mounting" data-i18n="leadServiceTv">📺 TV Mounting</option>
+        <option value="drywall" data-i18n="leadServiceDrywall">🧱 Drywall Repair</option>
         <option value="furniture-assembly" data-i18n="leadServiceFurniture">🛋️ Furniture Assembly</option>
+        <option value="door-installation" data-i18n="leadServiceDoor">🚪 Door Installation</option>
         <option value="painting" data-i18n="leadServicePainting">🎨 Painting & Walls</option>
         <option value="flooring" data-i18n="leadServiceFlooring">🏠 Flooring</option>
         <option value="plumbing" data-i18n="leadServicePlumbing">🚰 Plumbing</option>
@@ -1106,15 +1096,28 @@ document.addEventListener('DOMContentLoaded', function() {
         <option value="other" data-i18n="leadServiceOther">✋ Other Service</option>
       </select>
 
-      <textarea id="leadMessage" placeholder="Brief description of your project..." data-i18n-placeholder="leadProjectPlaceholder" style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit;min-height:80px;resize:none"></textarea>
+      <input type="hidden" id="leadPlacementId" value="">
 
-      <div id="leadPhotosBox" style="border:2px dashed var(--st);border-radius:10px;padding:16px;text-align:center;cursor:pointer" onclick="document.getElementById('leadPhotos').click()">
-        <input type="file" id="leadPhotos" accept="image/*" multiple style="display:none">
-        <p style="margin:0;font-size:14px;color:var(--ink2);font-weight:600">📸 Photos (optional -- helps us give a more accurate quote)</p>
-        <p style="margin:8px 0 0;font-size:12px;color:var(--ink3)">Click to upload photos of the job area</p>
-        <p style="margin:6px 0 0;font-size:11px;color:var(--ink3)">Up to 6 photos. Helps us give accurate quotes.</p>
-        <p id="leadPhotosStatus" style="margin:8px 0 0;font-size:12px;color:#2e7d32;display:none;font-weight:700"></p>
-      </div>
+      <details style="border-top:1px solid var(--st);padding-top:12px">
+        <summary style="cursor:pointer;font-size:13px;color:var(--ink2);font-weight:600;user-select:none" data-i18n="leadFormMoreDetails">+ Add more details (optional — faster quote)</summary>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+          <input type="email" id="leadEmail" placeholder="Your Email (optional)" data-i18n-placeholder="leadEmailPlaceholder" style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit">
+          <input type="text" id="leadZip" placeholder="ZIP Code (e.g. 90034)" style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit">
+          <select id="leadPreferredContact" style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit">
+            <option value="call">Preferred Contact: Call</option>
+            <option value="sms">Preferred Contact: SMS</option>
+            <option value="whatsapp">Preferred Contact: WhatsApp</option>
+          </select>
+          <textarea id="leadMessage" placeholder="Brief description of your project..." data-i18n-placeholder="leadProjectPlaceholder" style="padding:14px 16px;border:1px solid var(--st);border-radius:10px;font-size:15px;font-family:inherit;min-height:80px;resize:none"></textarea>
+          <div id="leadPhotosBox" style="border:2px dashed var(--st);border-radius:10px;padding:16px;text-align:center;cursor:pointer" onclick="document.getElementById('leadPhotos').click()">
+            <input type="file" id="leadPhotos" accept="image/*" multiple style="display:none">
+            <p style="margin:0;font-size:14px;color:var(--ink2);font-weight:600">📸 Photos (optional — helps us give a more accurate quote)</p>
+            <p style="margin:8px 0 0;font-size:12px;color:var(--ink3)">Click to upload photos of the job area</p>
+            <p style="margin:6px 0 0;font-size:11px;color:var(--ink3)">Up to 6 photos. Helps us give accurate quotes.</p>
+            <p id="leadPhotosStatus" style="margin:8px 0 0;font-size:12px;color:#2e7d32;display:none;font-weight:700"></p>
+          </div>
+        </div>
+      </details>
 
       <input type="text" name="website" style="display:none;position:absolute;left:-9999px" tabindex="-1" autocomplete="off">
       <button type="submit" style="padding:16px;background:linear-gradient(135deg,#1B2B4B 0%,#2B4A8C 100%);color:#fff;border:none;border-radius:999px;font-weight:700;font-size:16px;cursor:pointer;transition:all 200ms;box-shadow:0 8px 28px rgba(27,43,75,.40)" data-event="lead_submit">
