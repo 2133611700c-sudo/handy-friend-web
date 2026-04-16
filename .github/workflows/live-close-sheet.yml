@@ -38,6 +38,11 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          REPORT_FILE="$(ls ops/reports/*-live-close-sheet.md 2>/dev/null | head -n1 || true)"
+          if [ -n "${REPORT_FILE}" ] && git check-ignore -q "${REPORT_FILE}"; then
+            echo "Live close sheet reports are gitignored by policy; skipping commit."
+            exit 0
+          fi
           git add ops/reports/*-live-close-sheet.md
           if git diff --staged --quiet; then
             echo "No changes"
