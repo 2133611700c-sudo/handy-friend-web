@@ -18,6 +18,9 @@ on:
           - dry-run
           - smoke
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 permissions:
   contents: write
 
@@ -71,7 +74,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ops/reports/*.md
+          git add ops/reports/*.md ':!ops/reports/*-live-close-sheet.md'
           if git diff --staged --quiet; then
             echo "No new reports to commit"
             exit 0
