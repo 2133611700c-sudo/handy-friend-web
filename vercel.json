@@ -236,6 +236,21 @@
       "source": "/painting/los-angeles",
       "destination": "/interior-painting",
       "statusCode": 301
+    },
+    {
+      "source": "/flooring/los-angeles",
+      "destination": "/flooring",
+      "statusCode": 301
+    },
+    {
+      "source": "/doors/los-angeles",
+      "destination": "/door-installation",
+      "statusCode": 301
+    },
+    {
+      "source": "/backsplash/los-angeles",
+      "destination": "/backsplash",
+      "statusCode": 301
     }
   ],
   "rewrites": [
