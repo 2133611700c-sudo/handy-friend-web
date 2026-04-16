@@ -186,6 +186,16 @@
       "source": "/la-neighborhoods/:slug/",
       "destination": "/la-neighborhoods/:slug",
       "statusCode": 301
+    },
+    {
+      "source": "/la-neighborhoods/handyman",
+      "destination": "/la-neighborhoods",
+      "statusCode": 301
+    },
+    {
+      "source": "/services/:path*",
+      "destination": "/services",
+      "statusCode": 301
     }
   ],
   "rewrites": [
@@ -248,6 +258,18 @@
     {
       "source": "/book",
       "destination": "/book/index.html"
+    },
+    {
+      "source": "/cabinet-painting",
+      "destination": "/cabinet-painting/index.html"
+    },
+    {
+      "source": "/furniture-painting",
+      "destination": "/furniture-painting/index.html"
+    },
+    {
+      "source": "/pricing",
+      "destination": "/pricing/index.html"
     },
     {
       "source": "/review",
