@@ -11,6 +11,10 @@ env:
 permissions:
   contents: write
 
+concurrency:
+  group: live-close-sheet-main
+  cancel-in-progress: true
+
 jobs:
   update-sheet:
     runs-on: ubuntu-latest
@@ -39,14 +43,20 @@ jobs:
       - name: Commit updated sheet
         run: |
           set -euo pipefail
+          shopt -s nullglob
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          REPORT_FILE="$(ls ops/reports/*-live-close-sheet.md 2>/dev/null | head -n1 || true)"
+          REPORTS=(ops/reports/*-live-close-sheet.md)
+          REPORT_FILE="${REPORTS[0]:-}"
+          if [ -z "${REPORT_FILE}" ]; then
+            echo "No live-close-sheet reports found; nothing to commit."
+            exit 0
+          fi
           if [ -n "${REPORT_FILE}" ] && git check-ignore -q "${REPORT_FILE}"; then
             echo "Live close sheet reports are gitignored by policy; skipping commit."
             exit 0
           fi
-          git add ops/reports/*-live-close-sheet.md
+          git add "${REPORTS[@]}"
           if git diff --staged --quiet; then
             echo "No changes"
             exit 0

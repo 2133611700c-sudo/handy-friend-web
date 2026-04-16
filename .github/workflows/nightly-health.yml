@@ -13,6 +13,10 @@ permissions:
   actions: read
   issues: write
 
+concurrency:
+  group: nightly-health-main
+  cancel-in-progress: true
+
 jobs:
   nightly-audit:
     runs-on: ubuntu-latest

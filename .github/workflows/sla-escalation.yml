@@ -12,6 +12,10 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
+concurrency:
+  group: sla-escalation-main
+  cancel-in-progress: true
+
 jobs:
   sla-check:
     runs-on: ubuntu-latest
