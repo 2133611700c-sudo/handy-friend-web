@@ -193,8 +193,48 @@
       "statusCode": 301
     },
     {
-      "source": "/services/:path*",
+      "source": "/services/:path+",
       "destination": "/services",
+      "statusCode": 301
+    },
+    {
+      "source": "/tv-mounting/los-angeles",
+      "destination": "/tv-mounting",
+      "statusCode": 301
+    },
+    {
+      "source": "/assembly/los-angeles",
+      "destination": "/furniture-assembly",
+      "statusCode": 301
+    },
+    {
+      "source": "/furniture-assembly/los-angeles",
+      "destination": "/furniture-assembly",
+      "statusCode": 301
+    },
+    {
+      "source": "/drywall/los-angeles",
+      "destination": "/drywall",
+      "statusCode": 301
+    },
+    {
+      "source": "/vanity/los-angeles",
+      "destination": "/vanity-installation",
+      "statusCode": 301
+    },
+    {
+      "source": "/plumbing/los-angeles",
+      "destination": "/plumbing",
+      "statusCode": 301
+    },
+    {
+      "source": "/lighting/los-angeles",
+      "destination": "/electrical",
+      "statusCode": 301
+    },
+    {
+      "source": "/painting/los-angeles",
+      "destination": "/interior-painting",
       "statusCode": 301
     }
   ],
