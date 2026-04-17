@@ -15,6 +15,7 @@ const { getCanonicalPriceMatrix, getMessengerPostbackTexts, getPricingSourceVers
 const { checkMigration007 } = require('../lib/lead-pipeline.js');
 const { analyzeMessengerPricingPolicy } = require('../lib/pricing-policy.js');
 const { normalizeAttribution } = require('../lib/attribution.js');
+const { sendTelegramMessage } = require('../lib/telegram/send.js');
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -42,7 +43,85 @@ export default async function handler(req, res) {
   if (type === 'data_quality') return dataQualityHealth(req, res);
   if (type === 'outbox') return outboxHealth(req, res);
   if (type === 'telegram') return telegramHealth(req, res);
+  if (type === 'telegram_watchdog') return telegramWatchdog(req, res);
   return basicHealth(req, res);
+}
+
+/* ── Telegram watchdog (cron) ──
+ * GET /api/health?type=telegram_watchdog
+ * Auth: Authorization: Bearer <VERCEL_CRON_SECRET>
+ * Runs daily via vercel.json crons. Queries v_leads_without_telegram
+ * and fires ONE aggregated Telegram alert if any real lead in the last
+ * 7 days has zero telegram_proofs. Uses unified sender.
+ *
+ * Exists inside /api/health to stay under Hobby plan's 12-function cap.
+ */
+async function telegramWatchdog(req, res) {
+  const cronSecret = process.env.VERCEL_CRON_SECRET || '';
+  const auth = String(req.headers.authorization || '');
+  if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
+    return res.status(403).json({ ok: false, error: 'forbidden' });
+  }
+
+  const config = getConfig();
+  if (!config) return res.status(500).json({ ok: false, error: 'supabase_env_missing' });
+
+  let rows;
+  try {
+    const r = await fetch(
+      `${config.projectUrl}/rest/v1/v_leads_without_telegram?select=id,full_name,phone,source,service_type,minutes_since_created,telegram_proofs&order=created_at.desc&limit=50`,
+      { headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` } }
+    );
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      return res.status(502).json({ ok: false, error: `supabase_${r.status}`, details: t.slice(0, 300) });
+    }
+    rows = await r.json();
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: 'supabase_fetch_failed', details: String(err?.message || err).slice(0, 300) });
+  }
+
+  const missing = (Array.isArray(rows) ? rows : []).filter(r => Number(r.telegram_proofs) === 0);
+  const summary = {
+    ok: true,
+    checked_at: new Date().toISOString(),
+    total_real_leads_7d: Array.isArray(rows) ? rows.length : 0,
+    missing_telegram_proof: missing.length
+  };
+
+  if (missing.length === 0) {
+    return res.status(200).json({ ...summary, alert_sent: false });
+  }
+
+  const lines = missing.slice(0, 10).map(r => {
+    const mins = Math.round(Number(r.minutes_since_created || 0));
+    return ` • <code>${escapeHtmlBasic(String(r.id).slice(0, 40))}</code> | ${escapeHtmlBasic(r.source || '?')} | ${escapeHtmlBasic(r.service_type || '?')} | ${mins} min ago`;
+  });
+  const overflow = missing.length > 10 ? `\n(+ ${missing.length - 10} more)` : '';
+
+  const text = `🟠 <b>Watchdog: leads without Telegram proof</b>\n` +
+    `Missing: <b>${missing.length}</b> of ${summary.total_real_leads_7d} real leads in last 7 days\n\n` +
+    lines.join('\n') + overflow +
+    `\n\nView: <code>v_leads_without_telegram</code> (Supabase)`;
+
+  const send = await sendTelegramMessage({
+    source: 'watchdog',
+    text,
+    timeoutMs: 4000,
+    extra: { lead_ids_sample: missing.slice(0, 10).map(r => r.id) }
+  });
+
+  return res.status(200).json({
+    ...summary,
+    alert_sent: send.ok,
+    alert_message_id: send.messageId,
+    alert_telegram_send_id: send.telegramSendId,
+    alert_error: send.ok ? null : { code: send.errorCode, description: send.errorDescription }
+  });
+}
+
+function escapeHtmlBasic(text) {
+  return String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /* ── Telegram delivery dashboard ──
