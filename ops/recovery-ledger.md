@@ -17,7 +17,7 @@
 | Task ID | Owner | Status | Files touched | Evidence | Commit | Updated |
 |---|---|---|---|---|---|---|
 | 0.1 | Agent A | DONE | `ops/recovery-ledger.md` | this file | 0732ad1 | 2026-04-17T02:02 |
-| 0.2 | Agent A | READY | `vercel.json`, `scripts/daily_sales_pulse.py`, `scheduled-tasks` | — | — | — |
+| 0.2 | Agent A | DONE | `scripts/daily_sales_pulse.py`, `~/.claude/scheduled-tasks/handy-friend-daily-digest/SKILL.md` | classification table in PR body, disabled handy-friend-daily-digest | pending | 2026-04-17T02:15 |
 | 0.3 | Agent A | DONE | `docs/claim-policy.md`, `docs/release-gate.md`, `docs/decisions/0001-adopt-parallel-agent-workflow.md`, `.github/pull_request_template.md` | files committed, PR pending | pending | 2026-04-17T02:10 |
 | 1.1 | Agent A | BLOCKED_ON_P0 | `api/process-outbox.js`, maybe `vercel.json` | — | — | — |
 | 1.2 | Agent B | BLOCKED_ON_P0 | `supabase/migrations/20260417_035_recreate_followup_queue_view.sql` | — | — | — |
@@ -59,7 +59,26 @@ If any of these four cannot be produced, status must be `PARTIAL`, `SYNTHETIC`, 
 
 ## Open Risks
 
-(none yet — to be appended as risks surface)
+### 2026-04-17 — `ads_spend` signal unavailable (blocks replacement alert for Task 0.2)
+**Status:** UNKNOWN
+**Context:** Task 0.2 prescribes a replacement alert: "real_leads=0 AND ads_spend>0 for 48h".
+**Blocker:** `ads_spend` is not queryable from any currently-integrated source.
+- Google Ads API: no credentials in env.
+- Supabase: no `ads_spend_daily` table or column.
+- GA4→Ads link: present but not exposed to our backend.
+**Access required to close:** Google Ads API (developer token + OAuth refresh) OR a daily ads_spend push from a separate scheduled task using Chrome MCP to read the Ads UI.
+**Consequence while unresolved:** we cannot auto-distinguish "no leads because no ads traffic" from "no leads despite ads traffic". First is expected; second is P0.
+**Owner:** Sergii must decide between (a) supply Ads API creds or (b) authorize Chrome MCP ads-spend scrape task. Either path returns this risk to READY.
+
+### 2026-04-17 — Task 1.1 prerequisite: `/api/process-outbox` returns 403 on every call
+**Status:** FAIL (pre-existing, re-confirmed in critical audit)
+**Evidence:** Vercel runtime logs 2026-04-16 → 2026-04-17 show consistent 403 on GET+POST from cron and external. 7 `ga4_event` jobs stuck in `status=queued`.
+**Remediation:** Task 1.1 owned by Agent A. Blocked on P0 merge.
+
+### 2026-04-17 — Task 1.2 prerequisite: `followup_queue` view dropped, not recreated
+**Status:** FAIL (pre-existing, re-confirmed in critical audit)
+**Evidence:** `curl /rest/v1/followup_queue → HTTP 404 PGRST205`.
+**Remediation:** Task 1.2 owned by Agent B. Blocked on P0 merge.
 
 ## Decisions Log
 

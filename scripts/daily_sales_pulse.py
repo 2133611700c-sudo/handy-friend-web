@@ -2,8 +2,20 @@
 """
 Daily Sales Pulse — what's the business doing today?
 
-Runs at 08:57 local via handy-friend-daily-digest scheduled task.
-Outputs:
+STATUS 2026-04-17: DISABLED via Task 0.2 of recovery plan v2.
+The scheduled task "handy-friend-daily-digest" is disabled because the
+metrics this script reports are currently all-zero (0 real leads, $0
+revenue, 0 jobs). Daily zero-reports normalize failure and create
+monitoring fatigue (see ops/recovery-ledger.md row 0.2).
+
+Re-enable ONLY when:
+  1. There is a leads_positive signal (N real leads in 24h), AND
+  2. The script is modified to send only on actionable content
+     (revenue_7d > 0 OR errors > 0 OR leads_24h > 0).
+
+Handler code preserved for reuse. Do NOT delete.
+
+Outputs (when re-enabled):
   1. Terminal summary (for logs).
   2. JSON snapshot to ops/reports/sales-pulse/.
   3. Telegram message to owner with actionable next-steps for today.
