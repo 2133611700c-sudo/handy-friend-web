@@ -55,7 +55,9 @@ These are the ones that produce customer-facing side effects and still bypass `l
 Plus **1 sanctioned outbound** that IS through the unified sender (from my earlier Task-1.5 partial wave):
 - `api/ai-chat.js:573` — `unifiedTelegramSend()` call in `sendStrictSalesCard`. **PASS.** Only one of four sales-card paths.
 
-**13 of 14 runtime outbound sends bypass the unified sender.**
+**12 of 13 runtime outbound sends bypass the unified sender.**
+
+> **Correction note 2026-04-17T08:10** — original wording claimed "13 of 14". Recount from the table above: 3 (ai-chat) + 3 (alex-webhook) + 2 (ai-intake) + 2 (process-outbox) + 2 (lead-pipeline) = 12 bypass rows, plus 1 unified (ai-chat.js:573) = 13 total runtime outbound paths. The correct ratio is 12 of 13.
 
 ### 4. Ops scripts — out of Vercel function runtime (P2, lower priority)  — **13 references**
 
@@ -93,14 +95,14 @@ Recommend `git rm` these in a separate Task 2.6-adjacent cleanup.
 **Overall status: PARTIAL.**
 
 - Unified sender module exists and is wired. ✅
-- 1 of 14 runtime paths migrated to it (the `sendStrictSalesCard` path in `api/ai-chat.js`). ✅
-- **13 of 14 runtime outbound sends still bypass unified, so telegram_sends table remains blind for them.** ❌
+- 1 of 13 runtime paths migrated to it (the `sendStrictSalesCard` path in `api/ai-chat.js:573`). ✅
+- **12 of 13 runtime outbound sends still bypass unified, so telegram_sends table remains blind for them.** ❌
 - Ops scripts: 13 additional raw sends (P2, lower severity).
 - Backup files: 2 (P3).
 
-**Count of raw runtime outbound sends remaining: 13**
+**Count of raw runtime outbound sends remaining: 12**
 
-This means the earlier Task 1.5 claim "unified sender in place" was never fully delivered. The ledger has row 1.5 as `READY_PARTIAL`; this audit confirms that label is still accurate. A real Task 1.5 completion needs to route every one of those 13 lines through `sendTelegramMessage` / `sendTelegramPhoto` from `lib/telegram/send.js`.
+This means the earlier Task 1.5 claim "unified sender in place" was never fully delivered. The ledger has row 1.5 as `READY_PARTIAL`; this audit confirms that label is still accurate. A real Task 1.5 completion needs to route each of those 12 lines through `sendTelegramMessage` / `sendTelegramPhoto` from `lib/telegram/send.js`.
 
 ### Why this matters to ADR-0004
 
