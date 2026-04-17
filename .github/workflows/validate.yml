@@ -93,9 +93,35 @@ jobs:
           node ops/factory-guard.mjs
           echo "✅ Factory guard passed"
 
-      - name: Run production readiness audit (blocking)
+      # Task 1.7: On pull_request we want the audit to exercise the PR's
+      # Vercel preview deployment, not prod — otherwise a broken PR can
+      # piggyback on a healthy prod response and look green. Push builds
+      # against main keep the old behavior (audit prod after merge-deploy).
+      - name: Discover Vercel preview URL (pull_request only)
+        id: preview_url
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_WAIT_SEC: '180'
         run: |
-          bash scripts/audit.sh --skip-stats
+          url=$(bash scripts/ci/discover-preview-url.sh || true)
+          if [ -n "$url" ]; then
+            echo "Using preview URL: $url"
+            echo "site=$url" >> "$GITHUB_OUTPUT"
+          else
+            echo "No preview URL discovered in time — audit will target prod as fallback."
+          fi
+
+      - name: Run production readiness audit (blocking)
+        env:
+          PREVIEW_URL: ${{ steps.preview_url.outputs.site }}
+        run: |
+          if [ -n "${PREVIEW_URL:-}" ]; then
+            echo "[audit] targeting preview: $PREVIEW_URL"
+            bash scripts/audit.sh --skip-stats --site "$PREVIEW_URL"
+          else
+            bash scripts/audit.sh --skip-stats
+          fi
           echo "✅ Production readiness audit passed"
 
       - name: Guard against secrets in tracked files
