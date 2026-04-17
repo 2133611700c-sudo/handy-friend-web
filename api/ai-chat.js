@@ -12,6 +12,7 @@ const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
 const { createHash } = require('node:crypto');
 const { callAlex } = require('../lib/ai-fallback.js');
 const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
+const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/send.js');
 const { buildSystemPrompt, getGuardMode, GUARD_MODES, POLICY_VERSION } = require('../lib/alex-one-truth.js');
 const { getPricingSourceVersion } = require('../lib/price-registry.js');
 const {
@@ -566,24 +567,34 @@ async function sendStrictSalesCard({ sessionId, leadId, lang, userText, aiReply,
     `<b>User:</b> ${escapeHtml(String(userText || '').slice(0, 300))}\n` +
     `<b>Alex:</b> ${escapeHtml(String(aiReply || '').slice(0, 300))}`;
 
-  const msgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true })
+  // Unified sender — writes durable row to telegram_sends BEFORE we continue.
+  // (Previously this function opened a raw fetch; that path never wrote
+  // telegram_sends so owner delivery was un-provable.)
+  const send = await unifiedTelegramSend({
+    source: 'ai_chat',
+    leadId,
+    sessionId,
+    text,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    extra: { step: 'sales_card', estimateMode, photo_count: photoCount }
   });
-  const msgData = await msgRes.json().catch(() => ({}));
-  if (!msgRes.ok || !msgData.ok) {
+  if (!send.ok) {
     if (leadId) {
       await pipelineLogEvent(leadId, 'telegram_failed', {
         source: 'ai_chat',
         step: 'sendMessage',
         session_id: sessionId,
-        error: String(msgData?.description || `sendMessage_${msgRes.status}`).slice(0, 300)
+        error_code: send.errorCode,
+        error_description: send.errorDescription,
+        telegram_send_id: send.telegramSendId
       }).catch(() => {});
     }
-    throw new Error(msgData?.description || `sendMessage failed (${msgRes.status})`);
+    throw new Error(send.errorDescription || `sendMessage failed (${send.errorCode})`);
   }
 
+  const msgData = { ok: true, result: { message_id: send.messageId } };
   const sentPhotoIds = [];
   const failedPhotos = [];
 
@@ -593,7 +604,8 @@ async function sendStrictSalesCard({ sessionId, leadId, lang, userText, aiReply,
       await pipelineLogEvent(leadId, 'telegram_sent', {
         source: 'ai_chat',
         session_id: sessionId,
-        message_id: msgData?.result?.message_id || null,
+        message_id: send.messageId,
+        telegram_send_id: send.telegramSendId,
         photos_total: 0,
         photos_sent: 0
       }).catch(() => {});
