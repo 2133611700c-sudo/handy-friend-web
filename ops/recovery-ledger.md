@@ -20,17 +20,17 @@
 | 0.2 | Agent A | PASS | `scripts/daily_sales_pulse.py`, scheduled-tasks handy-friend-daily-digest disabled | classification table in PR #15 body | 5300e66 | 2026-04-17T07:15 |
 | 0.3 | Agent A | PASS | `docs/claim-policy.md`, `docs/release-gate.md`, `docs/decisions/0001-adopt-parallel-agent-workflow.md`, `.github/pull_request_template.md` | PR #15 merged | 5300e66 | 2026-04-17T07:15 |
 | 1.1 | Agent A | PASS | `api/process-outbox.js` auth block only | ADR-0002; queue_depth=0 post-drain; endpoint `ok:true` | 5300e66 | 2026-04-17T07:15 |
-| 1.2 | Agent B | DONE | `supabase/migrations/20260417093000_035_recreate_followup_queue_view.sql` | `supabase db push` applied; live `GET /rest/v1/followup_queue?select=...` HTTP 200 | pending merge | 2026-04-17T07:15 |
-| 1.3 | Agent A | READY | `api/health.js`, `lib/conversation.js` | — unblocked by 1.1 merge | — | — |
-| 1.4 | Agent A | BLOCKED_ON_1.3 | `api/health.js` auth block only | — | — | — |
+| 1.2 | Agent B | PASS | `supabase/migrations/20260417093000_035_recreate_followup_queue_view.sql` | PR #16 merged; live `GET /rest/v1/followup_queue` HTTP 200 | e7cacd2 | 2026-04-17T07:20 |
+| 1.3 | Agent A | DONE | `api/health.js:493, 545, 765`, `lib/conversation.js:83` | 2 SELECT strings switched to `event_data`; JS reads defensive-fallback `event_data → event_payload → default`. `node --check` OK both files. Grep confirms zero runtime `event_payload`-only reads. | pending PR | 2026-04-17T07:25 |
+| 1.4 | Agent A | READY | `api/health.js` auth block only | unblocked by 1.3 | — | — |
 | 1.5 | Agent A | READY_PARTIAL | `api/ai-chat.js`, `api/ai-intake.js`, `api/alex-webhook.js`, `api/process-outbox.js`, `lib/lead-pipeline.js`, `lib/telegram/send.js` | unblocked by 1.1 merge; awaits 2.1 for is_test flag through-wiring | — | — |
 | 1.6 | Sergii + Agent A | AWAITING_DECISION | `api/notify.js`, `assets/js/main.js` | see Open Risks | — | — |
 | 1.7 | Agent A | READY (added by ADR-0003) | `scripts/audit.sh` proper preview-URL targeting (longer-term hardening) | — | — | — |
-| 2.1 | Agent B | PARTIAL DONE | migration 036 + `scripts/e2e_alex_telegram.py` + `scripts/cleanup_test_rows.py` | 036 applied; e2e no longer self-cleans; `e2e_20260417_023501.json` PASS. vercel.json cron for cleanup deferred (Agent A ownership — to add after merge) | pending merge | 2026-04-17T07:15 |
+| 2.1 | Agent B | PARTIAL | migration 036 + `scripts/e2e_alex_telegram.py` + `scripts/cleanup_test_rows.py` | PR #16 merged; e2e no longer self-cleans. vercel.json cron for cleanup still deferred (Agent A owes follow-up) | e7cacd2 | 2026-04-17T07:20 |
 | 2.2 | Agent B | BLOCKED_ON_1.3+1.4 | migration adding `ai_conversations.channel_source` + `api/health.js` reporting sections + `v_real_leads_7d` view | — | — | — |
-| 2.3 | Agent B | DONE | `pricing/index.html`, `book/index.html` | local grep has Pixel init+noscript on both pages; live post-deploy pending | pending merge | 2026-04-17T07:15 |
+| 2.3 | Agent B | PASS | `pricing/index.html`, `book/index.html` | PR #16 merged; post-deploy Pixel verification pending | e7cacd2 | 2026-04-17T07:20 |
 | 2.4 | Agent B | BLOCKED_ON_2.1 | migration 037 `funnel_events` + `/api/funnel-event` + chat widget client JS | — | — | — |
-| 2.5 | Agent B | PARTIAL | `scripts/regression_alex.py`, `lib/alex-one-truth.js` | checker hardened + 10 probes. live regression still FAIL (`regression_alex_20260417_024716.json`: 11/16). Prompt-tuning follow-up needed. | pending merge | 2026-04-17T07:15 |
+| 2.5 | Agent B | PARTIAL | `scripts/regression_alex.py`, `lib/alex-one-truth.js` | checker hardened + 10 probes. live regression still FAIL (11/16). Prompt-tuning follow-up needed. | e7cacd2 | 2026-04-17T07:20 |
 | 2.6 | Agent B | BLOCKED_ON_1.2+2.1+2.4 | cleanup of untracked files + migrations 031/032 | — | — | — |
 | 3.1 | Sergii + any Agent via Chrome MCP | READY | `ops/reports/2026-04-17-ads-snapshot/` | unblocked by P0 merge | — | — |
 | 3.2 | Sergii + any Agent via Chrome MCP | READY | `ops/reports/2026-04-17-friction-map/` | unblocked by P0 merge | — | — |

@@ -490,7 +490,7 @@ async function policyHealth(_req, res) {
     const [events, conv] = await Promise.all([
       fetchSupabase(
         config,
-        `lead_events?select=event_type,event_payload,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&event_type=in.(policy_violation,cross_sell_policy_violation)&limit=2000`
+        `lead_events?select=event_type,event_data,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&event_type=in.(policy_violation,cross_sell_policy_violation)&limit=2000`
       ),
       fetchSupabase(
         config,
@@ -542,7 +542,7 @@ async function funnelHealth(req, res) {
 
   try {
     const [eventsRes, leadsRes] = await Promise.all([
-      fetchSupabase(config, `lead_events?select=event_type,event_payload,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=2000`),
+      fetchSupabase(config, `lead_events?select=event_type,event_data,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=2000`),
       fetchSupabase(config, `leads?select=id,created_at,status,source&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=2000`)
     ]);
 
@@ -759,7 +759,12 @@ function buildMetrics(events, leads) {
   for (const e of events) {
     const type = String(e?.event_type || 'unknown');
     byType[type] = (byType[type] || 0) + 1;
-    const payload = e?.event_payload && typeof e.event_payload === 'object' ? e.event_payload : {};
+    // DB column is `event_data` (migration 034 / ADR-001). Kept `event_payload`
+    // fallback for any stale row written before the column rename ran to
+    // completion — harmless on current rows, robust against replay.
+    const payload = (e?.event_data && typeof e.event_data === 'object')
+      ? e.event_data
+      : (e?.event_payload && typeof e.event_payload === 'object' ? e.event_payload : {});
     if (payload.stage === 'ai_chat_forward' && (type === 'telegram_sent' || type === 'telegram_failed')) {
       aiChatForwardEvents += 1;
       photosForwardedCount += Number(payload.photos_forwarded_count || 0);
