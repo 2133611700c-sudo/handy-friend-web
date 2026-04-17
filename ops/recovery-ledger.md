@@ -80,6 +80,18 @@ If any of these four cannot be produced, status must be `PARTIAL`, `SYNTHETIC`, 
 **Evidence:** `curl /rest/v1/followup_queue → HTTP 404 PGRST205`.
 **Remediation:** Task 1.2 owned by Agent B. Blocked on P0 merge.
 
+### 2026-04-17 — Task 1.6 data gathering: `/api/notify` callers enumerated
+**Status:** info block for Sergii decision (READY for Task 1.6)
+**Active callers of `/api/notify`:** exactly 1.
+- `assets/js/main.js:2229` — client-side `fetch('/api/notify', {method:'POST', body: JSON.stringify({type:'sms', ...})})` — sends SMS estimate from the pricing-calculator form.
+**Side effect of Agent A's prior hardening:** the secret-header check happens BEFORE the `type` branch. Since the client at `main.js:2229` cannot send `X-HF-Notify-Secret` (it is a browser request), the calculator SMS flow currently returns **HTTP 503 `notify_disabled`** for every real user.
+**This means:** the only active caller of `/api/notify` is a browser-side SMS send from pricing, and Agent A's previous hardening broke it. The 503 fail-closed is correct for abuse protection but also closes the legitimate path.
+**Decision required from Sergii (Task 1.6):**
+- **1.6A (delete route):** if calculator SMS is not used in practice (probe SMS-send count in runtime logs / billing). Remove route + `main.js:2229` caller. Simple.
+- **1.6B (keep route):** gate `type=telegram` with secret; keep `type=sms` open (but rate-limited + CAPTCHA) since it's a public form submission, not a server-to-server call. Requires refactoring the auth check to be type-aware.
+- **1.6C (delete just the Telegram branch):** remove telegram path entirely; keep SMS path public. Minimal risk of spam since SMS costs Twilio $, not Telegram-bot abuse.
+**No code change by Agent A until Sergii picks A/B/C.** Files recorded: `api/notify.js`, `assets/js/main.js:2229-2260`.
+
 ## Decisions Log
 
 See `docs/decisions/`. Each decision = one markdown file, append-only.
