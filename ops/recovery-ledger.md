@@ -16,7 +16,7 @@
 
 | Task ID | Owner | Status | Files touched | Evidence | Commit | Updated |
 |---|---|---|---|---|---|---|
-| 0.1 | Agent A | IN_PROGRESS | `ops/recovery-ledger.md` | this file | pending commit | 2026-04-17T02:00 |
+| 0.1 | Agent A | DONE | `ops/recovery-ledger.md` | this file | 0732ad1 | 2026-04-17T02:02 |
 | 0.2 | Agent A | READY | `vercel.json`, `scripts/daily_sales_pulse.py`, `scheduled-tasks` | — | — | — |
 | 0.3 | Agent A | READY | `docs/claim-policy.md`, `docs/release-gate.md`, `docs/decisions/0001-*.md`, `.github/PULL_REQUEST_TEMPLATE.md` | — | — | — |
 | 1.1 | Agent A | BLOCKED_ON_P0 | `api/process-outbox.js`, maybe `vercel.json` | — | — | — |
