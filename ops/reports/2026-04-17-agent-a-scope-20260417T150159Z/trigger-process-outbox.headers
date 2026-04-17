@@ -1,0 +1,12 @@
+HTTP/2 200 
+age: 0
+cache-control: public, max-age=0, must-revalidate
+content-type: application/json; charset=utf-8
+date: Fri, 17 Apr 2026 15:05:01 GMT
+etag: W/"23-YPzrwJhrq1THu8q6hU05uf1/TWg"
+server: Vercel
+strict-transport-security: max-age=63072000
+x-vercel-cache: MISS
+x-vercel-id: sfo1::iad1::5hwth-1776438300639-c1ed9cc04676
+content-length: 35
+

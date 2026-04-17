@@ -1,0 +1,15 @@
+HTTP/2 503 
+access-control-allow-headers: Content-Type, X-HF-Notify-Secret
+access-control-allow-methods: POST, OPTIONS
+access-control-allow-origin: https://handyandfriend.com
+cache-control: public, max-age=0, must-revalidate
+content-type: application/json; charset=utf-8
+date: Fri, 17 Apr 2026 15:03:01 GMT
+etag: W/"2b-64ozyu3gPz4NrEcM1hs7NA5VfDg"
+server: Vercel
+strict-transport-security: max-age=63072000
+vary: Origin
+x-vercel-cache: MISS
+x-vercel-id: sfo1::iad1::nc8vr-1776438181104-ceaac43eace0
+content-length: 43
+

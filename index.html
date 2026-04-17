@@ -1873,6 +1873,15 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
   var panelOpen = false;
   var badgeShown = false;
   var chatPhotos = [];
+  var funnelState = {
+    pageViewSent: false,
+    widgetSeenSent: false,
+    widgetOpenSent: false,
+    firstMessageSent: false,
+    phoneCapturedSent: false,
+    quoteShownSent: false,
+    handoffSent: false
+  };
 
   function getLang(){
     return (document.documentElement.lang||'en').slice(0,2)||'en';
@@ -1885,11 +1894,54 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
     return s;
   }
 
+  function detectChannelSource() {
+    var sid = getSession();
+    if (sid.indexOf('fb_') === 0) return 'fb_messenger';
+    if (sid.indexOf('probe_') === 0) return 'probe';
+    if (sid.indexOf('e2e_') === 0 || sid.indexOf('test_') === 0) return 'e2e';
+    return 'real_website_chat';
+  }
+
+  function emitFunnelEvent(eventName, metadata, opts) {
+    var options = opts || {};
+    var payload = {
+      session_id: getSession(),
+      event_name: eventName,
+      page_path: window.location.pathname || '/',
+      metadata: metadata || {},
+      is_test: !!window.__HF_TEST_TRAFFIC__,
+      channel_source: detectChannelSource()
+    };
+    var body = JSON.stringify(payload);
+    if (options.useBeacon && navigator.sendBeacon) {
+      try {
+        var blob = new Blob([body], { type: 'application/json' });
+        navigator.sendBeacon('/api/health?type=funnel_event', blob);
+        if (typeof gtag === 'function') gtag('event', eventName, { event_category: 'chat_funnel', page_path: payload.page_path });
+        return;
+      } catch (_err) {}
+    }
+    fetch('/api/health?type=funnel_event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      keepalive: !!options.keepalive,
+      body: body
+    }).catch(function () {});
+    if (typeof gtag === 'function') gtag('event', eventName, { event_category: 'chat_funnel', page_path: payload.page_path });
+  }
+
+  function markOnce(key, eventName, metadata, opts) {
+    if (funnelState[key]) return;
+    funnelState[key] = true;
+    emitFunnelEvent(eventName, metadata, opts);
+  }
+
   window.hfChatToggle = function(){
     panelOpen = !panelOpen;
     var panel = document.getElementById('hf-chat-panel');
     panel.classList.toggle('open', panelOpen);
     if(panelOpen){
+      markOnce('widgetOpenSent', 'widget_open', { via: 'chat_toggle' });
       hideBadge();
       if(!greeted) greet();
       setTimeout(function(){document.getElementById('hf-chat-input').focus();},200);
@@ -2023,6 +2075,10 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
     var input = document.getElementById('hf-chat-input');
     var text = (input.value||'').trim();
     if(!text && chatPhotos.length === 0) return;
+    markOnce('firstMessageSent', 'chat_first_message', {
+      has_text: !!text,
+      photo_count: chatPhotos.length
+    });
     input.value = '';
     input.style.height = '';
     var displayText = text || (chatPhotos.length > 0 ? '📷 ' + chatPhotos.length + ' photo' + (chatPhotos.length > 1 ? 's' : '') : '');
@@ -2075,8 +2131,13 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
         return;
       }
       if(data.reply) addMsg('bot', data.reply);
+      if (data.reply && /\$\d{2,4}/.test(String(data.reply)) && !funnelState.quoteShownSent) {
+        markOnce('quoteShownSent', 'quote_shown', { has_price_pattern: true });
+      }
       if(data.leadCaptured && !leadCaptured){
         leadCaptured = true;
+        markOnce('phoneCapturedSent', 'phone_captured', { source: 'ai_chat_lead_captured' });
+        markOnce('handoffSent', 'handoff_to_owner', { source: 'ai_chat_lead_captured' });
         setTimeout(function(){
           renderMsg('sys', LEAD_MSG[lang]||LEAD_MSG.en);
           // v11: Do NOT disable input -- conversation continues for booking/follow-up
@@ -2164,6 +2225,29 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
 
   // Show badge after 4s if user hasn't opened chat
   setTimeout(function(){if(!panelOpen) showBadge();}, 4000);
+
+  markOnce('pageViewSent', 'page_view', { lang: getLang() });
+
+  (function observeWidgetSeen(){
+    var btn = document.getElementById('hf-chat-btn');
+    if (!btn || !('IntersectionObserver' in window)) return;
+    var observer = new IntersectionObserver(function(entries){
+      for (var i = 0; i < entries.length; i++) {
+        if (entries[i].isIntersecting) {
+          markOnce('widgetSeenSent', 'widget_seen', { viewport: 'visible' });
+          observer.disconnect();
+          return;
+        }
+      }
+    }, { threshold: 0.2 });
+    observer.observe(btn);
+  })();
+
+  window.addEventListener('beforeunload', function(){
+    if (funnelState.widgetOpenSent && !funnelState.firstMessageSent) {
+      emitFunnelEvent('abandon', { reason: 'unload_before_first_message' }, { useBeacon: true, keepalive: true });
+    }
+  });
 })();
 </script>
 <script src="assets/js/exit-intent.js" defer></script>

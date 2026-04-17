@@ -89,6 +89,42 @@ Each script exits 0 on PASS, 1 on FAIL, writes JSON evidence.
 
 **After that:** I will autonomously `curl -X POST https://api.vercel.com/v10/projects/prj_cB1RFa7bfSuWpuhBZs76UiYvTLzg/env` to set `HF_NOTIFY_SECRET` + any future env vars, and trigger redeploys via REST API.
 
+### Task 1.6 manual enable path (works without API token)
+
+`/api/notify` is intentionally fail-closed while `HF_NOTIFY_SECRET` is missing.
+Current expected response:
+
+```bash
+curl -sS -X POST https://handyandfriend.com/api/notify \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"sms","phone":"2130000000"}'
+# {"success":false,"error":"notify_disabled"}   (HTTP 503)
+```
+
+Manual enable sequence:
+1. Vercel Dashboard -> Project `handy-friend-web` -> Settings -> Environment Variables
+2. Add `HF_NOTIFY_SECRET` (32+ random chars) for `Production` and `Preview`
+3. Redeploy (Deployments -> Redeploy latest)
+
+Post-enable verification:
+
+```bash
+# no header must stay blocked
+curl -sS -o /dev/null -w "%{http_code}\n" -X POST https://handyandfriend.com/api/notify \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"telegram","leadId":"manual-test"}'
+# expected: 401 or 403
+
+# with header should succeed
+curl -sS -X POST https://handyandfriend.com/api/notify \
+  -H "X-HF-Notify-Secret: <HF_NOTIFY_SECRET>" \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"telegram","leadId":"manual-test","phone":"2130000000"}'
+# expected: {"success":true,...} (HTTP 200)
+```
+
+Until these checks pass, Task 1.6 status remains `PARTIAL/BLOCKED_EXTERNAL`.
+
 ### 🔑 Google Ads API credentials — unlocks ad-campaign automation
 
 **Blocks:**

@@ -10,19 +10,36 @@
  *              response_time, chat, losses, reviews, capacity, pnl, repeat
  */
 
-const { getConfig } = require('./_lib/supabase-admin.js');
+const { getConfig, restInsert } = require('./_lib/supabase-admin.js');
 const { getCanonicalPriceMatrix, getMessengerPostbackTexts, getPricingSourceVersion } = require('../lib/price-registry.js');
 const { checkMigration007 } = require('../lib/lead-pipeline.js');
 const { analyzeMessengerPricingPolicy } = require('../lib/pricing-policy.js');
 const { normalizeAttribution } = require('../lib/attribution.js');
 const { sendTelegramMessage } = require('../lib/telegram/send.js');
 
+const FUNNEL_ALLOWED_EVENTS = new Set([
+  'page_view',
+  'widget_seen',
+  'widget_open',
+  'chat_first_message',
+  'phone_captured',
+  'quote_shown',
+  'handoff_to_owner',
+  'abandon'
+]);
+const FUNNEL_REQUEST_BUCKET = new Map();
+const FUNNEL_RATE_WINDOW_MS = 60 * 1000;
+const FUNNEL_RATE_LIMIT_PER_WINDOW = 60;
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  const type = String(req.query?.type || 'basic').toLowerCase();
+
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method === 'POST' && type === 'funnel_event') return funnelEventInHealth(req, res);
   if (req.method === 'HEAD') {
     const healthy = Boolean(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL);
     return res.status(healthy ? 200 : 503).end();
@@ -31,12 +48,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
   }
 
-  const type = String(req.query?.type || 'basic').toLowerCase();
-
   if (type === 'funnel') return funnelHealth(req, res);
   if (type === 'fb') return fbHealth(req, res);
   if (type === 'pricing') return pricingHealth(req, res);
   if (type === 'attribution') return attributionHealth(req, res);
+  if (type === 'traffic') return trafficHealth(req, res);
   if (type === 'lead_integrity') return leadIntegrityHealth(req, res);
   if (type === 'policy') return policyHealth(req, res);
   if (type === 'stats') return statsReport(req, res);
@@ -275,6 +291,113 @@ async function attributionHealth(req, res) {
     });
   } catch (err) {
     return res.status(500).json({ ok: false, error: String(err?.message || 'attribution_health_failed') });
+  }
+}
+
+/* ── channel taxonomy diagnostic ── */
+async function trafficHealth(req, res) {
+  const config = getConfig();
+  if (!config) return res.status(200).json({ ok: false, error: 'supabase_not_configured' });
+
+  const windowHours = clampHours(req.query?.hours || 168);
+  const sinceIso = new Date(Date.now() - windowHours * 60 * 60 * 1000).toISOString();
+
+  try {
+    const [leadsRows, convRows, real7dRows] = await Promise.all([
+      fetchSupabase(
+        config,
+        `leads?select=id,source,traffic_source,is_test,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=3000`
+      ),
+      fetchSupabase(
+        config,
+        `ai_conversations?select=session_id,channel_source,message_role,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=5000`
+      ),
+      fetchSupabase(config, 'v_real_leads_7d?select=id,traffic_source,created_at&limit=3000')
+    ]);
+
+    if (!leadsRows.ok || !convRows.ok || !real7dRows.ok) {
+      return res.status(502).json({
+        ok: false,
+        error: 'traffic_data_fetch_failed',
+        details: {
+          leads: leadsRows.error || null,
+          conversations: convRows.error || null,
+          v_real_leads_7d: real7dRows.error || null
+        }
+      });
+    }
+
+    const leadCounts = {
+      all_channels_including_test_and_probe: 0,
+      real_customer_channels_total: 0,
+      by_channel: {},
+      unknown: 0
+    };
+    for (const row of leadsRows.data || []) {
+      leadCounts.all_channels_including_test_and_probe += 1;
+      const channel = deriveLeadChannel(row);
+      leadCounts.by_channel[channel] = (leadCounts.by_channel[channel] || 0) + 1;
+      if (channel === 'unknown') {
+        leadCounts.unknown += 1;
+      }
+      const isTest = Boolean(row?.is_test);
+      if (!isTest && (channel === 'real_website_chat' || channel === 'fb_messenger')) {
+        leadCounts.real_customer_channels_total += 1;
+      }
+    }
+
+    const convCounts = {
+      messages_total: 0,
+      sessions_total: 0,
+      sessions_by_channel: {},
+      unknown_sessions: 0
+    };
+    const sessionChannel = new Map();
+    for (const row of convRows.data || []) {
+      convCounts.messages_total += 1;
+      const sid = String(row?.session_id || '');
+      if (!sid) continue;
+      const channel = deriveConversationChannel(row);
+      if (!sessionChannel.has(sid)) {
+        sessionChannel.set(sid, channel);
+      }
+    }
+
+    convCounts.sessions_total = sessionChannel.size;
+    for (const channel of sessionChannel.values()) {
+      convCounts.sessions_by_channel[channel] = (convCounts.sessions_by_channel[channel] || 0) + 1;
+      if (channel === 'unknown') convCounts.unknown_sessions += 1;
+    }
+
+    const real7dCounts = {};
+    for (const row of real7dRows.data || []) {
+      const channel = normalizeChannelValue(row?.traffic_source) || 'real_website_chat';
+      real7dCounts[channel] = (real7dCounts[channel] || 0) + 1;
+    }
+
+    return res.status(200).json({
+      ok: true,
+      window_hours: windowHours,
+      generated_at: new Date().toISOString(),
+      taxonomy_values: [
+        'real_website_chat',
+        'fb_messenger',
+        'test',
+        'probe',
+        'cron',
+        'e2e',
+        'internal_admin',
+        'unknown'
+      ],
+      leads: leadCounts,
+      conversations: convCounts,
+      real_leads_7d: {
+        total: (real7dRows.data || []).length,
+        by_channel: real7dCounts
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: String(err?.message || 'traffic_health_failed') });
   }
 }
 
@@ -843,6 +966,166 @@ function jsonLdHasExpected(indexHtml, serviceId, expectedPrice) {
   if (idx === -1) return false;
   const chunk = html.slice(idx, idx + 300);
   return chunk.includes(`\"price\":\"${Number(expectedPrice).toFixed(2)}\"`) || chunk.includes(`\"price\":\"${Number(expectedPrice)}\"`);
+}
+
+function normalizeChannelValue(value) {
+  const v = String(value || '').trim().toLowerCase();
+  if (!v) return '';
+  const allowed = new Set([
+    'real_website_chat',
+    'fb_messenger',
+    'test',
+    'probe',
+    'cron',
+    'e2e',
+    'internal_admin'
+  ]);
+  return allowed.has(v) ? v : '';
+}
+
+async function funnelEventInHealth(req, res) {
+  try {
+    const body = parseFunnelBody(req.body);
+    const sessionId = cleanFunnelText(body.session_id, 120);
+    const eventName = cleanFunnelText(body.event_name, 64);
+    const pagePath = cleanFunnelText(body.page_path || '/', 256);
+    if (!sessionId) return res.status(400).json({ ok: false, error: 'missing_session_id' });
+    if (!FUNNEL_ALLOWED_EVENTS.has(eventName)) return res.status(400).json({ ok: false, error: 'invalid_event_name' });
+
+    const bucketKey = `${sessionId}|${extractFunnelClientIp(req)}`;
+    if (!allowFunnelRate(bucketKey)) {
+      return res.status(429).json({ ok: false, error: 'rate_limited' });
+    }
+
+    const channelSource = normalizeChannelValue(body.channel_source) || inferFunnelChannelFromSession(sessionId);
+    const isTest = /^(test_|e2e_|probe_)/i.test(sessionId);
+    const payload = {
+      session_id: sessionId,
+      event_name: eventName,
+      page_path: pagePath,
+      metadata: sanitizeFunnelMetadata(body.metadata),
+      is_test: isTest,
+      channel_source: channelSource
+    };
+
+    const inserted = await restInsert('funnel_events', payload, { returning: false });
+    if (!inserted.ok) {
+      return res.status(502).json({
+        ok: false,
+        error: inserted.error || 'funnel_insert_failed',
+        details: String(inserted.details || '').slice(0, 240)
+      });
+    }
+
+    return res.status(200).json({ ok: true, event_name: eventName });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: String(err?.message || 'funnel_event_failed').slice(0, 240) });
+  }
+}
+
+function deriveLeadChannel(row) {
+  const explicit = normalizeChannelValue(row?.traffic_source);
+  if (explicit) return explicit;
+  const src = String(row?.source || '').toLowerCase();
+  if (src === 'messenger' || src === 'facebook_messenger') return 'fb_messenger';
+  if (src === 'test' || src === 'synthetic') return 'test';
+  if (src === 'cron' || src === 'scheduler') return 'cron';
+  if (src === 'internal_admin' || src === 'admin') return 'internal_admin';
+  if (src.includes('probe')) return 'probe';
+  if (src) return 'real_website_chat';
+  return 'unknown';
+}
+
+function deriveConversationChannel(row) {
+  const explicit = normalizeChannelValue(row?.channel_source);
+  if (explicit) return explicit;
+  const sid = String(row?.session_id || '').toLowerCase();
+  if (sid.startsWith('fb_')) return 'fb_messenger';
+  if (sid.startsWith('probe_') || sid.startsWith('audit_')) return 'probe';
+  if (sid.startsWith('e2e_') || sid.startsWith('test_') || sid.startsWith('reg-')) return 'e2e';
+  if (sid.startsWith('cron_')) return 'cron';
+  if (sid.startsWith('admin_')) return 'internal_admin';
+  if (sid) return 'real_website_chat';
+  return 'unknown';
+}
+
+function parseFunnelBody(raw) {
+  if (!raw) return {};
+  if (typeof raw === 'object') return raw;
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw);
+    } catch (_) {
+      return {};
+    }
+  }
+  return {};
+}
+
+function cleanFunnelText(value, maxLen) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  return text.slice(0, maxLen);
+}
+
+function sanitizeFunnelMetadata(raw) {
+  if (!raw || typeof raw !== 'object') return {};
+  const src = JSON.parse(JSON.stringify(raw));
+  const blocked = new Set(['phone', 'email', 'full_name', 'name', 'contact']);
+  const out = {};
+  for (const [key, value] of Object.entries(src)) {
+    const k = String(key || '').toLowerCase();
+    if (!k || blocked.has(k)) continue;
+    if (typeof value === 'string') {
+      if (value.length > 300) out[k] = value.slice(0, 300);
+      else if (!looksLikeFunnelPhoneOrEmail(value)) out[k] = value;
+      continue;
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') out[k] = value;
+  }
+  return out;
+}
+
+function looksLikeFunnelPhoneOrEmail(text) {
+  const s = String(text || '');
+  if (/[^\s@]+@[^\s@]+\.[^\s@]+/.test(s)) return true;
+  if (/(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/.test(s)) return true;
+  return false;
+}
+
+function extractFunnelClientIp(req) {
+  const raw = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  if (raw) return raw.slice(0, 64);
+  return 'unknown';
+}
+
+function inferFunnelChannelFromSession(sessionId) {
+  const sid = String(sessionId || '').toLowerCase();
+  if (sid.startsWith('fb_')) return 'fb_messenger';
+  if (sid.startsWith('probe_') || sid.startsWith('audit_')) return 'probe';
+  if (sid.startsWith('e2e_') || sid.startsWith('test_') || sid.startsWith('reg-')) return 'e2e';
+  if (sid.startsWith('cron_')) return 'cron';
+  if (sid.startsWith('admin_')) return 'internal_admin';
+  return 'real_website_chat';
+}
+
+function allowFunnelRate(bucketKey) {
+  const now = Date.now();
+  const current = FUNNEL_REQUEST_BUCKET.get(bucketKey);
+  if (!current || now - current.startAt > FUNNEL_RATE_WINDOW_MS) {
+    FUNNEL_REQUEST_BUCKET.set(bucketKey, { startAt: now, count: 1 });
+    gcFunnelBuckets(now);
+    return true;
+  }
+  current.count += 1;
+  FUNNEL_REQUEST_BUCKET.set(bucketKey, current);
+  return current.count <= FUNNEL_RATE_LIMIT_PER_WINDOW;
+}
+
+function gcFunnelBuckets(now) {
+  for (const [key, value] of FUNNEL_REQUEST_BUCKET.entries()) {
+    if (now - value.startAt > FUNNEL_RATE_WINDOW_MS * 3) FUNNEL_REQUEST_BUCKET.delete(key);
+  }
 }
 
 // ─── Outbox SLO Health ────────────────────────────────────────────────────────

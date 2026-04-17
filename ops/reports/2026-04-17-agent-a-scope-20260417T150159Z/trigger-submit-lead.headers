@@ -1,0 +1,14 @@
+HTTP/2 200 
+access-control-allow-headers: Content-Type
+access-control-allow-methods: POST, OPTIONS
+access-control-allow-origin: *
+cache-control: public, max-age=0, must-revalidate
+content-type: application/json; charset=utf-8
+date: Fri, 17 Apr 2026 15:04:53 GMT
+etag: W/"45-NmFR49KVVri/lA595VnotgX8W3s"
+server: Vercel
+strict-transport-security: max-age=63072000
+x-vercel-cache: MISS
+x-vercel-id: sfo1::iad1::8j52b-1776438290107-72cf3adda26b
+content-length: 69
+

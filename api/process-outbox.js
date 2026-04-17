@@ -22,6 +22,7 @@ const CRON_SECRET      = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECR
 const BATCH_SIZE       = 20;
 const LOCK_TTL_MINUTES = 5;
 const WORKER_ID        = `process-outbox:${process.pid}:${Math.random().toString(36).slice(2, 8)}`;
+const { sendTelegramMessage } = require('../lib/telegram/send.js');
 
 // Per-channel backoff tiers (base seconds), indexed by attempt_count (1-based, already incremented by claim)
 const CHANNEL_BACKOFF = {
@@ -462,7 +463,7 @@ async function processJob(job, result) {
 
 async function dispatchJob(job) {
   switch (job.job_type) {
-    case 'telegram_owner':  return deliverTelegramOwner(job.payload);
+    case 'telegram_owner':  return deliverTelegramOwner(job.payload, { leadId: job.lead_id, jobId: job.id });
     case 'resend_owner':    return deliverResendOwner(job.payload);
     case 'resend_customer': return deliverResendCustomer(job.payload);
     case 'ga4_event':       return deliverGA4Event(job.payload);
@@ -473,29 +474,30 @@ async function dispatchJob(job) {
 
 // ─── Telegram Owner ───────────────────────────────────────────────────────────
 
-async function deliverTelegramOwner(payload) {
+async function deliverTelegramOwner(payload, meta = {}) {
   const token  = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return { ok: false, error: 'TELEGRAM_BOT_TOKEN not set', error_code: 'ENV_MISSING' };
 
   const text = payload?.text || buildDefaultTelegramText(payload);
-  const res  = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
-      ...(payload?.reply_markup ? { reply_markup: payload.reply_markup } : {})
-    })
+  const send = await sendTelegramMessage({
+    source: 'process_outbox',
+    leadId: meta?.leadId ? String(meta.leadId) : (payload?.lead_id ? String(payload.lead_id) : null),
+    text,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    replyMarkup: payload?.reply_markup || undefined,
+    extra: {
+      job_type: 'telegram_owner',
+      job_id: meta?.jobId ? String(meta.jobId) : null
+    }
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.ok) {
-    const code = data.error_code ? `TG_${data.error_code}` : `TG_HTTP_${res.status}`;
-    return { ok: false, error: data.description || `HTTP ${res.status}`, error_code: code };
+  if (!send.ok) {
+    const code = send.errorCode?.startsWith('TG_') ? send.errorCode : `TG_${send.errorCode || 'UNKNOWN'}`;
+    return { ok: false, error: send.errorDescription || 'telegram_send_failed', error_code: code };
   }
-  return { ok: true, provider_message_id: String(data.result?.message_id || '') };
+  return { ok: true, provider_message_id: String(send.messageId || '') };
 }
 
 function buildDefaultTelegramText(payload) {
@@ -597,10 +599,18 @@ async function notifyDlqAlert(job, attempts, maxAttempts, lastError) {
     `Error: ${String(lastError || '').slice(0, 200)}\n` +
     `Replay: POST /api/process-outbox?action=replay_dlq&job_id=${encodeURIComponent(job.id)}`;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+  await sendTelegramMessage({
+    source: 'process_outbox',
+    leadId: job?.lead_id ? String(job.lead_id) : null,
+    text,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    extra: {
+      job_type: String(job?.job_type || ''),
+      step: 'dlq_alert',
+      job_id: String(job?.id || '')
+    }
   }).catch(() => {});
 }
 

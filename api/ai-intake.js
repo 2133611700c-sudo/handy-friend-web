@@ -164,75 +164,25 @@ ${photoLine}
 }
 
 /* ── Telegram helpers ── */
-async function sendText(text) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return false;
-
-  try {
-    const response = await fetch(
-      `https://api.telegram.org/bot${token}/sendMessage`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text,
-          parse_mode: 'HTML',
-          disable_web_page_preview: true
-        })
-      }
-    );
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.ok) {
-      throw new Error(data?.description || 'sendMessage failed');
-    }
-    return true;
-  } catch (err) {
-    console.error('[TELEGRAM_ERROR]', err.message);
-    return false;
-  }
-}
-
 async function sendPhoto(photo, caption) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return false;
-
   if (!photo || typeof photo.dataUrl !== 'string' || !photo.dataUrl.includes('base64')) {
     return false;
   }
 
   try {
-    const parts = photo.dataUrl.split(',');
-    if (parts.length !== 2) return false;
-
-    const [meta, b64] = parts;
-    const mimeMatch = /^data:(image\/[a-zA-Z0-9.+-]+);base64$/.exec(meta);
-    const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-
-    const buffer = Buffer.from(b64, 'base64');
-    if (!buffer.length) return false;
-
-    const form = new FormData();
-    form.append('chat_id', chatId);
-    form.append(
-      'caption',
-      `📸 ${escapeHtml(caption || 'AI search photo').slice(0, 200)}`
-    );
-    form.append(
-      'photo',
-      new Blob([buffer], { type: mimeType }),
-      sanitizeName(photo.name)
-    );
-
-    const response = await fetch(
-      `https://api.telegram.org/bot${token}/sendPhoto`,
-      { method: 'POST', body: form }
-    );
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.ok) {
-      console.error('[TELEGRAM_PHOTO_ERROR]', data?.description || response.statusText);
+    const result = await sendTelegramPhoto({
+      source: 'ai_intake',
+      leadId: null,
+      photo: {
+        dataUrl: photo.dataUrl,
+        name: sanitizeName(photo.name)
+      },
+      caption: `📸 ${escapeHtml(caption || 'AI search photo').slice(0, 200)}`,
+      timeoutMs: 4000,
+      extra: { step: 'ai_intake_photo' }
+    });
+    if (!result.ok) {
+      console.error('[TELEGRAM_PHOTO_ERROR]', result.errorDescription || result.errorCode);
       return false;
     }
     return true;
