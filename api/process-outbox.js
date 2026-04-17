@@ -463,7 +463,7 @@ async function processJob(job, result) {
 
 async function dispatchJob(job) {
   switch (job.job_type) {
-    case 'telegram_owner':  return deliverTelegramOwner(job.payload);
+    case 'telegram_owner':  return deliverTelegramOwner(job.payload, { leadId: job.lead_id, jobId: job.id });
     case 'resend_owner':    return deliverResendOwner(job.payload);
     case 'resend_customer': return deliverResendCustomer(job.payload);
     case 'ga4_event':       return deliverGA4Event(job.payload);
@@ -474,21 +474,31 @@ async function dispatchJob(job) {
 
 // ─── Telegram Owner ───────────────────────────────────────────────────────────
 
-async function deliverTelegramOwner(payload) {
+async function deliverTelegramOwner(payload, meta = {}) {
   const token  = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return { ok: false, error: 'TELEGRAM_BOT_TOKEN not set', error_code: 'ENV_MISSING' };
 
+  // P1 fix (Codex-audit follow-up): prefer `meta.leadId` (set from
+  // `job.lead_id` by dispatchJob) over `payload.lead_id` (which
+  // enqueueOutboundJob does NOT place in the payload). Without this, every
+  // outbox-dispatched telegram_sends row would lose lead attribution.
+  const leadId = meta?.leadId ? String(meta.leadId)
+    : (payload?.lead_id ? String(payload.lead_id) : null);
+
   const text = payload?.text || buildDefaultTelegramText(payload);
   const result = await unifiedTelegramSend({
     source: 'outbox:telegram_owner',
-    leadId: payload?.lead_id ? String(payload.lead_id) : null,
+    leadId,
     sessionId: payload?.session_id ? String(payload.session_id) : null,
     text,
     chatId,
     token,
     replyMarkup: payload?.reply_markup || null,
-    extra: { job_type: 'telegram_owner' }
+    extra: {
+      job_type: 'telegram_owner',
+      job_id:   meta?.jobId ? String(meta.jobId) : null
+    }
   });
   if (!result.ok) {
     // Preserve legacy `TG_<code>` / `ENV_MISSING` format used by outbound_jobs
