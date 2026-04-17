@@ -295,6 +295,50 @@ else
   fail "outbox dlq_total present"
 fi
 
+# ── Delivery evidence gate (non-tautological health) ──
+# ADR-0004 §Risk: queue_depth=0 is NOT delivery proof. A broken pipeline
+# where every job transitions queued→failed immediately would still report
+# ok:true. This block adds a second signal: sum of `sent_count` across the
+# metrics array, AND per-job_type failed vs sent ratios.
+#
+# Rules:
+#   - If ANY metric row shows sent_count > 0 in the window: PASS — real
+#     delivery evidence exists.
+#   - If the only non-zero counts are failed, and queue_depth=0: emit
+#     NO_DELIVERY signal. WARN on pull_request (current traffic is low,
+#     noisy signal); FAIL on main push (real absence of delivery).
+#   - If no rows at all: SYNTHETIC/NO_TRAFFIC → always WARN.
+delivery_sum=$(python3 -c '
+import json, sys
+try:
+    d = json.loads(sys.argv[1])
+    metrics = d.get("metrics") or []
+    sent = sum(int(m.get("sent_count") or 0) for m in metrics)
+    failed = sum(int(m.get("count") or 0) for m in metrics if m.get("status") == "failed")
+    total_rows = sum(int(m.get("count") or 0) for m in metrics)
+    print(f"{sent}|{failed}|{total_rows}")
+except Exception:
+    print("0|0|0")
+' "$outbox_json")
+sent_total=$(echo "$delivery_sum" | cut -d'|' -f1)
+failed_total=$(echo "$delivery_sum" | cut -d'|' -f2)
+total_metric_rows=$(echo "$delivery_sum" | cut -d'|' -f3)
+
+if [[ "$sent_total" =~ ^[0-9]+$ && "$sent_total" -gt 0 ]]; then
+  pass "outbox delivery evidence present (sent_count=$sent_total)"
+elif [[ "$failed_total" =~ ^[0-9]+$ && "$failed_total" -gt 0 ]]; then
+  # Queue is empty but we only see failed. Not delivery.
+  if [[ "$RELAX_OUTBOX" -eq 1 ]]; then
+    note "[WARN] outbox empty but delivery not proven (failed=$failed_total, sent=0) — relaxed on pull_request (low traffic); see ADR-0003, ADR-0004"
+  else
+    fail "outbox empty but delivery not proven (failed=$failed_total, sent=0)"
+  fi
+elif [[ "$total_metric_rows" == "0" ]]; then
+  note "[WARN] outbox NO_TRAFFIC — no jobs in window; cannot prove delivery"
+else
+  note "[WARN] outbox delivery evidence ambiguous (sent=$sent_total failed=$failed_total rows=$total_metric_rows)"
+fi
+
 slo_json=$(curl -sS "$SITE/api/process-outbox?action=slo" 2>/dev/null || echo '{}')
 slo_ok=$(json_bool ok "$slo_json")
 if [[ "$slo_ok" == "true" ]]; then
