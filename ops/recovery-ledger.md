@@ -18,7 +18,7 @@
 |---|---|---|---|---|---|---|
 | 0.1 | Agent A | DONE | `ops/recovery-ledger.md` | this file | 0732ad1 | 2026-04-17T02:02 |
 | 0.2 | Agent A | READY | `vercel.json`, `scripts/daily_sales_pulse.py`, `scheduled-tasks` | — | — | — |
-| 0.3 | Agent A | READY | `docs/claim-policy.md`, `docs/release-gate.md`, `docs/decisions/0001-*.md`, `.github/PULL_REQUEST_TEMPLATE.md` | — | — | — |
+| 0.3 | Agent A | DONE | `docs/claim-policy.md`, `docs/release-gate.md`, `docs/decisions/0001-adopt-parallel-agent-workflow.md`, `.github/pull_request_template.md` | files committed, PR pending | pending | 2026-04-17T02:10 |
 | 1.1 | Agent A | BLOCKED_ON_P0 | `api/process-outbox.js`, maybe `vercel.json` | — | — | — |
 | 1.2 | Agent B | BLOCKED_ON_P0 | `supabase/migrations/20260417_035_recreate_followup_queue_view.sql` | — | — | — |
 | 1.3 | Agent A | BLOCKED_ON_1.1 | `api/health.js`, `lib/conversation.js`, any other runtime `event_payload` reader | — | — | — |
