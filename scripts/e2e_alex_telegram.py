@@ -24,6 +24,10 @@ Usage:
   python3 scripts/e2e_alex_telegram.py
   python3 scripts/e2e_alex_telegram.py --base-url https://handyandfriend.com
   python3 scripts/e2e_alex_telegram.py --dry-run   # DB only, no HTTP
+
+Audit retention note:
+  This script no longer deletes synthetic rows on completion.
+  Cleanup is handled by scripts/cleanup_test_rows.py (30-day retention).
 """
 
 import argparse
@@ -86,20 +90,17 @@ def sb_get(path, token_key):
     return code, body
 
 
-def sb_delete(path, token_key):
+def sb_patch(path, token_key, payload):
     url = f"{os.environ['SUPABASE_URL']}/rest/v1/{path}"
-    h = {'apikey': token_key, 'Authorization': f'Bearer {token_key}'}
-    code, _, _ = http_json('DELETE', url, headers=h)
-    return code
+    h = {'apikey': token_key, 'Authorization': f'Bearer {token_key}', 'Prefer': 'return=representation'}
+    code, body, _ = http_json('PATCH', url, headers=h, body=payload)
+    return code, body
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--base-url', default='https://handyandfriend.com')
     ap.add_argument('--dry-run', action='store_true')
-    ap.add_argument('--cleanup', action='store_true', default=True,
-                    help='Delete the test lead and its events/sends after the run (default).')
-    ap.add_argument('--no-cleanup', dest='cleanup', action='store_false')
     args = ap.parse_args()
 
     load_env()
@@ -183,6 +184,14 @@ def main():
                         {'is_test': rows[0].get('is_test')})
             assert_true('lead.source == website_chat', rows[0].get('source') == 'website_chat',
                         {'source': rows[0].get('source')})
+            # Best-effort taxonomy update for evidence separation.
+            code_upd, upd_rows = sb_patch(
+                f"leads?id=eq.{urlparse_mod.quote(lead_id)}",
+                key,
+                {'is_test': True, 'traffic_source': 'e2e'}
+            )
+            artifact['evidence']['lead_taxonomy_update'] = {'http_status': code_upd, 'rows': upd_rows}
+            assert_true('lead taxonomy tagged traffic_source=e2e', code_upd in (200, 204), {'code': code_upd})
 
     # ──────────────── 3. ai_conversations has turns ─────────
     code, conv = sb_get(
@@ -196,7 +205,7 @@ def main():
     # ──────────────── 4. telegram_sends proof ──────────────
     if lead_id:
         code, sends = sb_get(
-            f"telegram_sends?select=id,ok,telegram_message_id,source,error_code,error_description,created_at"
+            f"telegram_sends?select=id,ok,telegram_message_id,source,error_code,error_description,created_at,is_test,traffic_source"
             f"&lead_id=eq.{urlparse_mod.quote(lead_id)}&order=created_at.desc",
             key
         )
@@ -228,14 +237,6 @@ def main():
     code, watchdog = sb_get('v_leads_without_telegram?select=id,telegram_proofs&limit=5', key)
     artifact['evidence']['watchdog_sample'] = {'http_status': code, 'rows': watchdog}
     assert_true('watchdog view v_leads_without_telegram queryable', code == 200)
-
-    # ──────────────── Cleanup ──────────────────────────────
-    if args.cleanup and lead_id:
-        d1 = sb_delete(f"telegram_sends?lead_id=eq.{urlparse_mod.quote(lead_id)}", key)
-        d2 = sb_delete(f"lead_events?lead_id=eq.{urlparse_mod.quote(lead_id)}", key)
-        d3 = sb_delete(f"ai_conversations?session_id=eq.{urlparse_mod.quote(session_id)}", key)
-        d4 = sb_delete(f"leads?id=eq.{urlparse_mod.quote(lead_id)}", key)
-        artifact['evidence']['cleanup'] = {'telegram_sends': d1, 'lead_events': d2, 'ai_conversations': d3, 'leads': d4}
 
     artifact['finished_at_utc'] = datetime.now(tz=timezone.utc).isoformat()
     artifact['result'] = 'PASS' if not fail else 'FAIL'
