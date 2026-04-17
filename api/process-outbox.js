@@ -211,6 +211,7 @@ module.exports = handler;
 // ─── Daily / Weekly Reports ───────────────────────────────────────────────────
 
 const { formatDailyDigest, formatWeeklyDigest } = require('../lib/alert-formats.js');
+const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/send.js');
 
 async function handleDailyReport() {
   const config = getConfig();
@@ -479,23 +480,23 @@ async function deliverTelegramOwner(payload) {
   if (!token || !chatId) return { ok: false, error: 'TELEGRAM_BOT_TOKEN not set', error_code: 'ENV_MISSING' };
 
   const text = payload?.text || buildDefaultTelegramText(payload);
-  const res  = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
-      ...(payload?.reply_markup ? { reply_markup: payload.reply_markup } : {})
-    })
+  const result = await unifiedTelegramSend({
+    source: 'outbox:telegram_owner',
+    leadId: payload?.lead_id ? String(payload.lead_id) : null,
+    sessionId: payload?.session_id ? String(payload.session_id) : null,
+    text,
+    chatId,
+    token,
+    replyMarkup: payload?.reply_markup || null,
+    extra: { job_type: 'telegram_owner' }
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.ok) {
-    const code = data.error_code ? `TG_${data.error_code}` : `TG_HTTP_${res.status}`;
-    return { ok: false, error: data.description || `HTTP ${res.status}`, error_code: code };
+  if (!result.ok) {
+    const code = result.errorCode
+      ? (typeof result.errorCode === 'number' ? `TG_${result.errorCode}` : String(result.errorCode))
+      : 'TG_UNKNOWN';
+    return { ok: false, error: result.errorDescription || 'telegram send failed', error_code: code };
   }
-  return { ok: true, provider_message_id: String(data.result?.message_id || '') };
+  return { ok: true, provider_message_id: String(result.messageId || '') };
 }
 
 function buildDefaultTelegramText(payload) {
@@ -597,10 +598,13 @@ async function notifyDlqAlert(job, attempts, maxAttempts, lastError) {
     `Error: ${String(lastError || '').slice(0, 200)}\n` +
     `Replay: POST /api/process-outbox?action=replay_dlq&job_id=${encodeURIComponent(job.id)}`;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+  await unifiedTelegramSend({
+    source: 'outbox:dlq_alert',
+    leadId: job.lead_id ? String(job.lead_id) : null,
+    text,
+    chatId,
+    token,
+    extra: { job_id: job.id, job_type: job.job_type, attempts, max_attempts: maxAttempts }
   }).catch(() => {});
 }
 

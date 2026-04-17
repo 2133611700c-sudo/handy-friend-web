@@ -12,7 +12,7 @@ const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
 const { createHash } = require('node:crypto');
 const { callAlex } = require('../lib/ai-fallback.js');
 const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
-const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/send.js');
+const { sendTelegramMessage: unifiedTelegramSend, sendTelegramPhoto: unifiedTelegramPhoto } = require('../lib/telegram/send.js');
 const { buildSystemPrompt, getGuardMode, GUARD_MODES, POLICY_VERSION } = require('../lib/alex-one-truth.js');
 const { getPricingSourceVersion } = require('../lib/price-registry.js');
 const {
@@ -429,20 +429,21 @@ async function sendLeadCapturedToTelegram({ sessionId, leadId, lang, userText, a
   const locationLine = safeLeadData.city || safeLeadData.zip || '--';
   const text = `🔔 <b>LEAD_CAPTURED</b>\nName: <b>${escapeHtml(safeLeadData.name || 'Unknown')}</b>\nContact: <code>${escapeHtml(contactLine)}</code>\nService: ${escapeHtml(safeLeadData.service || '--')}\nArea: ${escapeHtml(locationLine)}\nSession: <code>${escapeHtml(safeSession)}</code>\nLead: <code>${escapeHtml(safeLead)}</code>\nLang: ${escapeHtml(String(lang || 'en').toUpperCase())}\nPhotos: ${photoCount}\n\n<b>User intent:</b> ${escapeHtml(String(userText || '--').slice(0, 320))}\n<b>Alex reply:</b> ${escapeHtml(String(aiReply || '--').slice(0, 320))}`;
 
-  const msgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true
-    })
+  // Task 1.5 / Prompt 9: route through unified sender so telegram_sends gets
+  // a durable row per attempt (was raw fetch before — no audit trail).
+  const sendResult = await unifiedTelegramSend({
+    source: 'ai_chat:lead_card',
+    leadId: safeLead,
+    sessionId: safeSession,
+    text,
+    chatId,
+    token,
+    extra: { variant: 'lead_captured_card' }
   });
-  const msgData = await msgRes.json().catch(() => ({}));
-  if (!msgRes.ok || !msgData.ok) {
-    throw new Error(msgData?.description || `sendMessage failed (${msgRes.status})`);
+  if (!sendResult.ok) {
+    throw new Error(sendResult.errorDescription || `sendMessage failed (${sendResult.errorCode || 'unknown'})`);
   }
+  const msgData = { ok: true, result: { message_id: sendResult.messageId } };
 
   if (!photoCount) return;
 
@@ -521,10 +522,16 @@ async function sendPreLeadPhotoToTelegram({ sessionId, lang, userText, photos, s
     `Photos: ${photos.length}\n\n` +
     `<b>User:</b> ${escapeHtml(String(userText || '').slice(0, 400))}`;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true })
+  // Task 1.5 / Prompt 9: route through unified sender (durable audit row).
+  // Fire-and-forget behaviour preserved via .catch() — we don't want a
+  // pre-lead Telegram failure to block the user's /api/ai-chat response.
+  await unifiedTelegramSend({
+    source: 'ai_chat:pre_lead_photo',
+    sessionId: String(sessionId || 'unknown'),
+    text,
+    chatId,
+    token,
+    extra: { variant: 'pre_lead_inquiry_text' }
   }).catch(() => {});
 
   // Forward photos
@@ -648,60 +655,38 @@ async function sendStrictSalesCard({ sessionId, leadId, lang, userText, aiReply,
   }
 }
 
-async function sendTelegramPhotoWithRetry(token, chatId, photo, { caption = '' } = {}) {
-  const first = await sendTelegramPhoto(token, chatId, photo, { caption });
-  if (first.ok) return { ...first, attempts: 1 };
+/**
+ * Task 1.5 / Prompt 9: route every photo send through the unified sender
+ * (lib/telegram/send.js) so every attempt lands in telegram_sends with a
+ * durable audit row. Retry semantics preserved: 1 initial + 1 jittered retry.
+ *
+ * Extended options carry session/lead context so the audit row links back
+ * to the originating conversation.
+ */
+async function sendTelegramPhotoWithRetry(
+  token,
+  chatId,
+  photo,
+  { caption = '', source = 'ai_chat:photo', sessionId = null, leadId = null } = {}
+) {
+  const callUnified = () => unifiedTelegramPhoto({
+    source, sessionId, leadId,
+    token, chatId, photo, caption,
+    extra: { retry_wrapper: true }
+  });
+
+  const first = await callUnified();
+  if (first.ok) return { ok: true, messageId: first.messageId, attempts: 1 };
 
   const retryMs = randomInt(2000, 5000);
   await sleep(retryMs);
-  const second = await sendTelegramPhoto(token, chatId, photo, { caption });
-  if (second.ok) return { ...second, attempts: 2 };
+  const second = await callUnified();
+  if (second.ok) return { ok: true, messageId: second.messageId, attempts: 2 };
+
   return {
     ok: false,
     attempts: 2,
-    error: second.error || first.error || 'telegram_send_photo_failed'
-  };
-}
-
-async function sendTelegramPhoto(token, chatId, photo, { caption = '' } = {}) {
-  if (!photo || typeof photo.dataUrl !== 'string') {
-    return { ok: false, error: 'invalid_photo_payload' };
-  }
-  const parts = photo.dataUrl.split(',');
-  if (parts.length !== 2) {
-    return { ok: false, error: 'invalid_data_url' };
-  }
-  const [meta, b64] = parts;
-  const mimeMatch = /^data:(image\/[a-zA-Z0-9.+-]+);base64$/i.exec(meta);
-  const mimeType = mimeMatch ? mimeMatch[1].toLowerCase() : 'image/jpeg';
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) {
-    return { ok: false, error: 'unsupported_mime_type' };
-  }
-
-  const buffer = Buffer.from(b64, 'base64');
-  if (!buffer.length || buffer.length > 8 * 1024 * 1024) {
-    return { ok: false, error: 'invalid_or_large_buffer' };
-  }
-
-  const form = new FormData();
-  form.append('chat_id', chatId);
-  if (caption) form.append('caption', caption.slice(0, 900));
-  form.append('photo', new Blob([buffer], { type: mimeType }), sanitizeName(photo.name));
-
-  const response = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-    method: 'POST',
-    body: form
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data?.ok) {
-    return {
-      ok: false,
-      error: String(data?.description || `sendPhoto_${response.status}`).slice(0, 300)
-    };
-  }
-  return {
-    ok: true,
-    messageId: data?.result?.message_id || null
+    error: second.errorDescription || first.errorDescription || 'telegram_send_photo_failed'
   };
 }
 
