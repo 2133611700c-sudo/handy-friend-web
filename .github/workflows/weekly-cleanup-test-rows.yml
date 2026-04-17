@@ -1,0 +1,105 @@
+name: Weekly Cleanup Test Rows
+
+# Task 2.1 follow-up (owned by Agent A per ledger):
+# Deletes synthetic / is_test=true lead rows (and related telegram_sends,
+# lead_events, ai_conversations) older than 30 days. Runs Monday 13:00 UTC
+# (06:00 PT DST), well after the 04:00 UTC process-outbox cron and 05:00 UTC
+# telegram_watchdog cron so cleanup doesn't race active background work.
+#
+# Safety: dry-run when triggered without the execute input. Scheduled runs
+# default to execute=true — retention enforcement requires actual deletes.
+
+on:
+  schedule:
+    - cron: '0 13 * * 1'
+  workflow_dispatch:
+    inputs:
+      execute:
+        description: 'Set to "true" to perform deletes (default: dry-run)'
+        required: false
+        default: 'false'
+      days:
+        description: 'Retention window in days'
+        required: false
+        default: '30'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+concurrency:
+  group: weekly-cleanup-test-rows-main
+  cancel-in-progress: true
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Determine mode
+        id: mode
+        run: |
+          # Scheduled runs always execute. Manual dispatches respect input.
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "execute=true"  >> "$GITHUB_OUTPUT"
+            echo "days=30"        >> "$GITHUB_OUTPUT"
+          else
+            echo "execute=${{ github.event.inputs.execute }}" >> "$GITHUB_OUTPUT"
+            echo "days=${{ github.event.inputs.days }}"       >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run cleanup
+        id: cleanup
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          mkdir -p ops/reports/cleanup
+          stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          out="ops/reports/cleanup/cleanup_test_rows_${stamp}.json"
+          if [ "${{ steps.mode.outputs.execute }}" = "true" ]; then
+            python3 scripts/cleanup_test_rows.py --days "${{ steps.mode.outputs.days }}" --execute | tee "$out"
+          else
+            python3 scripts/cleanup_test_rows.py --days "${{ steps.mode.outputs.days }}"            | tee "$out"
+          fi
+          echo "report=$out" >> "$GITHUB_OUTPUT"
+
+      - name: Upload cleanup report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cleanup-test-rows-${{ github.run_id }}
+          path: ops/reports/cleanup/*.json
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Weekly cleanup_test_rows failed — ${new Date().toISOString().slice(0,10)}`,
+              body: [
+                'Weekly cleanup of synthetic test rows failed.',
+                '',
+                `- Run: ${runUrl}`,
+                `- Mode: execute=${{ steps.mode.outputs.execute }}  days=${{ steps.mode.outputs.days }}`,
+                '',
+                'Action required: open run logs, identify table / lead_id with 4xx/5xx DELETE response, fix root cause, re-run workflow_dispatch.'
+              ].join('\n'),
+              labels: ['ops', 'monitoring', 'incident']
+            });
