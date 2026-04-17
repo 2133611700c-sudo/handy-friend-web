@@ -19,7 +19,7 @@
 | 0.1 | Agent A | DONE | `ops/recovery-ledger.md` | this file | 0732ad1 | 2026-04-17T02:02 |
 | 0.2 | Agent A | DONE | `scripts/daily_sales_pulse.py`, `~/.claude/scheduled-tasks/handy-friend-daily-digest/SKILL.md` | classification table in PR body, disabled handy-friend-daily-digest | pending | 2026-04-17T02:15 |
 | 0.3 | Agent A | DONE | `docs/claim-policy.md`, `docs/release-gate.md`, `docs/decisions/0001-adopt-parallel-agent-workflow.md`, `.github/pull_request_template.md` | files committed, PR pending | pending | 2026-04-17T02:10 |
-| 1.1 | Agent A | BLOCKED_ON_P0 | `api/process-outbox.js`, maybe `vercel.json` | — | — | — |
+| 1.1 | Agent A | DONE | `api/process-outbox.js` auth block only | ADR-0002 + this commit | pending | 2026-04-17T02:45 |
 | 1.2 | Agent B | BLOCKED_ON_P0 | `supabase/migrations/20260417_035_recreate_followup_queue_view.sql` | — | — | — |
 | 1.3 | Agent A | BLOCKED_ON_1.1 | `api/health.js`, `lib/conversation.js`, any other runtime `event_payload` reader | — | — | — |
 | 1.4 | Agent A | BLOCKED_ON_1.3 | `api/health.js` auth block only | — | — | — |
@@ -70,10 +70,9 @@ If any of these four cannot be produced, status must be `PARTIAL`, `SYNTHETIC`, 
 **Consequence while unresolved:** we cannot auto-distinguish "no leads because no ads traffic" from "no leads despite ads traffic". First is expected; second is P0.
 **Owner:** Sergii must decide between (a) supply Ads API creds or (b) authorize Chrome MCP ads-spend scrape task. Either path returns this risk to READY.
 
-### 2026-04-17 — Task 1.1 prerequisite: `/api/process-outbox` returns 403 on every call
-**Status:** FAIL (pre-existing, re-confirmed in critical audit)
-**Evidence:** Vercel runtime logs 2026-04-16 → 2026-04-17 show consistent 403 on GET+POST from cron and external. 7 `ga4_event` jobs stuck in `status=queued`.
-**Remediation:** Task 1.1 owned by Agent A. Blocked on P0 merge.
+### 2026-04-17 — Task 1.1 auth deadlock
+**Status:** DONE on branch (awaiting merge + post-deploy PASS)
+**Resolution:** Task 1.1 brought forward into PR #15. See `docs/decisions/0002-task-1.1-brought-forward-for-ci.md`. CI required `/api/health?type=outbox` + `/api/process-outbox?action=slo` to return `ok:true`, which required Task 1.1 to land before P0 could merge. Auth block in `api/process-outbox.js` adjusted so `x-vercel-cron` header is accepted independently of `CRON_SECRET` state. External 403 guard preserved. Post-deploy verification pending: cron firing 04:00 UTC + queue drain SQL.
 
 ### 2026-04-17 — Task 1.2 prerequisite: `followup_queue` view dropped, not recreated
 **Status:** FAIL (pre-existing, re-confirmed in critical audit)
