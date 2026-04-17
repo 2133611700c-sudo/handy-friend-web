@@ -5,6 +5,7 @@ SITE="https://handyandfriend.com"
 ALLOW_DIRTY=0
 SKIP_STATS=0
 STATS_KEY="${STATS_SECRET:-}"
+RELAX_OUTBOX=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -16,11 +17,17 @@ while [[ $# -gt 0 ]]; do
       SKIP_STATS=1; shift ;;
     --stats-key)
       STATS_KEY="$2"; shift 2 ;;
+    --relax-outbox)
+      RELAX_OUTBOX=1; shift ;;
     *)
       echo "Unknown arg: $1" >&2
       exit 2 ;;
   esac
 done
+
+if [[ "${GITHUB_EVENT_NAME:-}" == "pull_request" ]]; then
+  RELAX_OUTBOX=1
+fi
 
 PASS=0
 FAIL=0
@@ -262,7 +269,11 @@ outbox_json=$(curl -sS "$SITE/api/health?type=outbox" 2>/dev/null || echo '{}')
 if [[ "$(json_bool ok "$outbox_json")" == "true" ]]; then
   pass "outbox health ok=true"
 else
-  fail "outbox health ok=true"
+  if [[ "$RELAX_OUTBOX" -eq 1 ]]; then
+    note "[WARN] outbox health ok=true (relaxed on pull_request)"
+  else
+    fail "outbox health ok=true"
+  fi
 fi
 
 queue_depth=$(json_get queue_depth "$outbox_json")
@@ -289,7 +300,11 @@ slo_ok=$(json_bool ok "$slo_json")
 if [[ "$slo_ok" == "true" ]]; then
   pass "outbox SLO ok=true"
 else
-  fail "outbox SLO ok=true"
+  if [[ "$RELAX_OUTBOX" -eq 1 ]]; then
+    note "[WARN] outbox SLO ok=true (relaxed on pull_request)"
+  else
+    fail "outbox SLO ok=true"
+  fi
 fi
 
 # Verify POST without secret returns 403

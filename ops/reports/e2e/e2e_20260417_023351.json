@@ -1,0 +1,168 @@
+{
+  "started_at_utc": "2026-04-17T09:33:35.182072+00:00",
+  "base_url": "https://handyandfriend.com",
+  "tag": "e2e-b3ce4a79f901",
+  "assertions": [
+    {
+      "name": "ai_chat http 200",
+      "ok": true,
+      "extra": {
+        "code": 200
+      }
+    },
+    {
+      "name": "ai_chat returned leadId",
+      "ok": true,
+      "extra": {
+        "lead_id": "lead_1776418424582_nw5z5b"
+      }
+    },
+    {
+      "name": "lead row exists in Supabase",
+      "ok": true
+    },
+    {
+      "name": "lead is marked is_test=true",
+      "ok": true,
+      "extra": {
+        "is_test": true
+      }
+    },
+    {
+      "name": "lead.source == website_chat",
+      "ok": true,
+      "extra": {
+        "source": "website_chat"
+      }
+    },
+    {
+      "name": "lead taxonomy tagged traffic_source=e2e",
+      "ok": false,
+      "extra": {
+        "code": 400
+      }
+    },
+    {
+      "name": "ai_conversations has >= 2 turns",
+      "ok": true,
+      "extra": {
+        "count": 2
+      }
+    },
+    {
+      "name": "at least one telegram_sends row for lead",
+      "ok": false,
+      "extra": {
+        "count": 0
+      }
+    },
+    {
+      "name": "lead_events has telegram_sent for lead",
+      "ok": true,
+      "extra": {
+        "event_types": [
+          "telegram_sent",
+          "ai_chat_capture"
+        ]
+      }
+    },
+    {
+      "name": "watchdog view v_leads_without_telegram queryable",
+      "ok": true
+    }
+  ],
+  "evidence": {
+    "ai_chat": {
+      "http_status": 200,
+      "response_excerpt": "{\"reply\":\"Hi Alice! Thanks for reaching out. For a standard 55\\\" TV mount, the labor cost is $150. This includes securely mounting your TV to a standard drywall or stud wall.\\n\\nTo hide the wires for a clean look, we can do that for an additional $35, making it $185 total.\\n\\nWe have availability this week. What day works best for you, and do you prefer a morning or afternoon appointment?\\n\\nAlso, while we're there, we can hang any art or mirrors you have for $150 (up to 5 pieces).\\n\\nTo confirm"
+    },
+    "lead_id": "lead_1776418424582_nw5z5b",
+    "leads_query": {
+      "http_status": 200,
+      "rows": [
+        {
+          "id": "lead_1776418424582_nw5z5b",
+          "phone": "1300008415",
+          "source": "website_chat",
+          "is_test": true,
+          "service_type": "tv_mounting",
+          "created_at": "2026-04-17T09:33:44.582+00:00"
+        }
+      ]
+    },
+    "lead_taxonomy_update": {
+      "http_status": 400,
+      "rows": {
+        "code": "PGRST204",
+        "details": null,
+        "hint": null,
+        "message": "Could not find the 'traffic_source' column of 'leads' in the schema cache"
+      }
+    },
+    "ai_conversations": {
+      "http_status": 200,
+      "rows": [
+        {
+          "session_id": "e2e-b3ce4a79f901",
+          "message_role": "user",
+          "created_at": "2026-04-17T09:33:45.460573+00:00"
+        },
+        {
+          "session_id": "e2e-b3ce4a79f901",
+          "message_role": "assistant",
+          "created_at": "2026-04-17T09:33:45.460573+00:00"
+        }
+      ]
+    },
+    "telegram_sends": {
+      "http_status": 400,
+      "rows": {
+        "code": "42703",
+        "details": null,
+        "hint": null,
+        "message": "column telegram_sends.is_test does not exist"
+      }
+    },
+    "lead_events": {
+      "http_status": 200,
+      "rows": [
+        {
+          "event_type": "telegram_sent",
+          "event_data": {
+            "source": "ai_chat",
+            "message_id": 4216,
+            "session_id": "e2e-b3ce4a79f901",
+            "photos_sent": 0,
+            "photos_total": 0,
+            "telegram_send_id": 7
+          },
+          "created_at": "2026-04-17T09:33:46.297118+00:00"
+        },
+        {
+          "event_type": "ai_chat_capture",
+          "event_data": {
+            "lang": "en",
+            "is_new": true,
+            "is_test": true,
+            "service": "tv_mounting",
+            "session_id": "e2e-b3ce4a79f901",
+            "correlation_id": "ai_chat:e2e-b3ce4a79f901",
+            "idempotency_key": "ai_chat_capture:e2e-b3ce4a79f901:lead_1776418424582_nw5z5b",
+            "conversation_summary": "[AI Chat | EN]\nClient: hi i need tv mounting in hollywood\nClient: name Alice, phone 21300008415, standard 55 inch TV, this week"
+          },
+          "created_at": "2026-04-17T09:33:45.060086+00:00"
+        }
+      ]
+    },
+    "watchdog_sample": {
+      "http_status": 200,
+      "rows": []
+    }
+  },
+  "finished_at_utc": "2026-04-17T09:33:51.160370+00:00",
+  "result": "FAIL",
+  "failures": [
+    "lead taxonomy tagged traffic_source=e2e",
+    "at least one telegram_sends row for lead"
+  ]
+}
