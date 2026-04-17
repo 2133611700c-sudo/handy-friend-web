@@ -41,7 +41,69 @@ export default async function handler(req, res) {
   if (type === 'stats') return statsReport(req, res);
   if (type === 'data_quality') return dataQualityHealth(req, res);
   if (type === 'outbox') return outboxHealth(req, res);
+  if (type === 'telegram') return telegramHealth(req, res);
   return basicHealth(req, res);
+}
+
+/* ── Telegram delivery dashboard ──
+ * GET /api/health?type=telegram
+ * Returns:
+ *   - last 10 sends
+ *   - failure counts (24h + 7d)
+ *   - count of leads without telegram proof (from v_leads_without_telegram)
+ *   - bot webhook info (live Telegram API, non-cached)
+ * Does not require auth — diagnostic, no sensitive payload.
+ */
+async function telegramHealth(req, res) {
+  const config = getConfig();
+  if (!config) return res.status(200).json({ ok: false, error: 'supabase_not_configured' });
+
+  const now = new Date();
+  const since24h = new Date(now.getTime() - 24 * 3600 * 1000).toISOString();
+  const since7d = new Date(now.getTime() - 7 * 86400 * 1000).toISOString();
+
+  async function sb(path) {
+    const r = await fetch(`${config.projectUrl}/rest/v1/${path}`, {
+      headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` }
+    });
+    if (!r.ok) return { _error: `supabase_${r.status}`, _body: (await r.text().catch(() => '')).slice(0, 300) };
+    return r.json();
+  }
+
+  const [last10, fails24h, fails7d, missingProof, botInfo] = await Promise.all([
+    sb('telegram_sends?select=id,created_at,source,ok,telegram_message_id,error_code,error_description,lead_id&order=created_at.desc&limit=10'),
+    sb(`telegram_sends?select=id&ok=eq.false&created_at=gte.${encodeURIComponent(since24h)}`),
+    sb(`telegram_sends?select=id&ok=eq.false&created_at=gte.${encodeURIComponent(since7d)}`),
+    sb('v_leads_without_telegram?select=id,source,minutes_since_created,telegram_proofs&order=created_at.desc&limit=20'),
+    (async () => {
+      const token = process.env.TELEGRAM_BOT_TOKEN;
+      if (!token) return { _error: 'token_missing' };
+      try {
+        const r = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
+        const j = await r.json().catch(() => null);
+        if (!j || !j.ok) return { _error: 'bot_api_failed' };
+        const { url, pending_update_count, last_error_date, last_error_message, allowed_updates } = j.result || {};
+        return { url, pending_update_count, last_error_date, last_error_message, allowed_updates };
+      } catch (e) {
+        return { _error: String(e?.message || 'bot_api_exception').slice(0, 200) };
+      }
+    })()
+  ]);
+
+  const leadsWithoutProof = Array.isArray(missingProof)
+    ? missingProof.filter(r => Number(r.telegram_proofs) === 0)
+    : [];
+
+  return res.status(200).json({
+    ok: true,
+    generated_at: now.toISOString(),
+    bot_webhook: botInfo,
+    sends_last_10: Array.isArray(last10) ? last10 : [],
+    failures_24h: Array.isArray(fails24h) ? fails24h.length : null,
+    failures_7d: Array.isArray(fails7d) ? fails7d.length : null,
+    leads_without_telegram_proof_7d: leadsWithoutProof.length,
+    leads_without_telegram_sample: leadsWithoutProof.slice(0, 5)
+  });
 }
 
 /* ── attribution integrity diagnostic ── */

@@ -179,3 +179,4 @@ ops/reports/*-live-close-sheet.md
 # Lighthouse output
 /tmp/lh-*.json
 lighthouse-*.html
+.secrets/

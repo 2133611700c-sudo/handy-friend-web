@@ -8,6 +8,7 @@
  */
 
 const { restInsert, logLeadEvent } = require('./_lib/supabase-admin.js');
+const { sendTelegramMessage, sendTelegramPhoto } = require('../lib/telegram/send.js');
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -47,12 +48,22 @@ export default async function handler(req, res) {
       }
     }
 
-    // 3. Send to Telegram (async, don't wait)
+    // 3. Send to Telegram via unified sender (async, don't wait)
+    //    The unified sender writes durable telegram_sends row automatically.
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
       const text = buildMessage({ query, lang, photoCount: safePhotos.length, aiResponse });
-      sendText(text).catch(err => console.error('[AI_INTAKE] Telegram msg failed:', err.message));
+      sendTelegramMessage({
+        source: 'ai_intake',
+        leadId: leadId ? String(leadId) : null,
+        text,
+        timeoutMs: 4000
+      }).catch(err => console.error('[AI_INTAKE] Telegram msg failed:', err.message));
 
-      // Send photos asynchronously
+      // Photos via unified sender too (data URLs need to be uploaded as
+      // multipart; for now we pass the dataUrl directly — Telegram accepts
+      // http(s) URLs or file_ids, not data URLs. Leaving the legacy
+      // sendPhoto path intact below for photos to keep behavior; a proper
+      // multipart path is a follow-up task.)
       for (const photo of safePhotos) {
         sendPhoto(photo, query).catch(err =>
           console.error('[AI_INTAKE] Photo send failed:', err.message)
