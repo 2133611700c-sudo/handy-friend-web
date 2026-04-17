@@ -12,7 +12,10 @@ const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
 const { createHash } = require('node:crypto');
 const { callAlex } = require('../lib/ai-fallback.js');
 const { createOrMergeLead, transitionLead, logEvent: pipelineLogEvent } = require('../lib/lead-pipeline.js');
-const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/send.js');
+const {
+  sendTelegramMessage: unifiedTelegramSend,
+  sendTelegramPhoto: unifiedTelegramPhoto
+} = require('../lib/telegram/send.js');
 const { buildSystemPrompt, getGuardMode, GUARD_MODES, POLICY_VERSION } = require('../lib/alex-one-truth.js');
 const { getPricingSourceVersion } = require('../lib/price-registry.js');
 const {
@@ -429,19 +432,18 @@ async function sendLeadCapturedToTelegram({ sessionId, leadId, lang, userText, a
   const locationLine = safeLeadData.city || safeLeadData.zip || '--';
   const text = `🔔 <b>LEAD_CAPTURED</b>\nName: <b>${escapeHtml(safeLeadData.name || 'Unknown')}</b>\nContact: <code>${escapeHtml(contactLine)}</code>\nService: ${escapeHtml(safeLeadData.service || '--')}\nArea: ${escapeHtml(locationLine)}\nSession: <code>${escapeHtml(safeSession)}</code>\nLead: <code>${escapeHtml(safeLead)}</code>\nLang: ${escapeHtml(String(lang || 'en').toUpperCase())}\nPhotos: ${photoCount}\n\n<b>User intent:</b> ${escapeHtml(String(userText || '--').slice(0, 320))}\n<b>Alex reply:</b> ${escapeHtml(String(aiReply || '--').slice(0, 320))}`;
 
-  const msgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true
-    })
+  const msgSend = await unifiedTelegramSend({
+    source: 'ai_chat',
+    leadId: safeLead,
+    sessionId: safeSession,
+    text,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    extra: { step: 'lead_captured', photo_count: photoCount }
   });
-  const msgData = await msgRes.json().catch(() => ({}));
-  if (!msgRes.ok || !msgData.ok) {
-    throw new Error(msgData?.description || `sendMessage failed (${msgRes.status})`);
+  if (!msgSend.ok) {
+    throw new Error(msgSend.errorDescription || `sendMessage failed (${msgSend.errorCode})`);
   }
 
   if (!photoCount) return;
@@ -521,10 +523,14 @@ async function sendPreLeadPhotoToTelegram({ sessionId, lang, userText, photos, s
     `Photos: ${photos.length}\n\n` +
     `<b>User:</b> ${escapeHtml(String(userText || '').slice(0, 400))}`;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true })
+  await unifiedTelegramSend({
+    source: 'ai_chat',
+    sessionId,
+    text,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    extra: { step: 'pre_lead_photo', service, confidence, photo_count: photos.length }
   }).catch(() => {});
 
   // Forward photos
@@ -667,41 +673,28 @@ async function sendTelegramPhoto(token, chatId, photo, { caption = '' } = {}) {
   if (!photo || typeof photo.dataUrl !== 'string') {
     return { ok: false, error: 'invalid_photo_payload' };
   }
-  const parts = photo.dataUrl.split(',');
-  if (parts.length !== 2) {
-    return { ok: false, error: 'invalid_data_url' };
-  }
-  const [meta, b64] = parts;
-  const mimeMatch = /^data:(image\/[a-zA-Z0-9.+-]+);base64$/i.exec(meta);
-  const mimeType = mimeMatch ? mimeMatch[1].toLowerCase() : 'image/jpeg';
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType)) {
-    return { ok: false, error: 'unsupported_mime_type' };
-  }
 
-  const buffer = Buffer.from(b64, 'base64');
-  if (!buffer.length || buffer.length > 8 * 1024 * 1024) {
-    return { ok: false, error: 'invalid_or_large_buffer' };
-  }
-
-  const form = new FormData();
-  form.append('chat_id', chatId);
-  if (caption) form.append('caption', caption.slice(0, 900));
-  form.append('photo', new Blob([buffer], { type: mimeType }), sanitizeName(photo.name));
-
-  const response = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-    method: 'POST',
-    body: form
+  const send = await unifiedTelegramPhoto({
+    source: 'ai_chat',
+    photo: {
+      dataUrl: photo.dataUrl,
+      name: sanitizeName(photo.name)
+    },
+    caption,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    extra: { step: 'chat_photo' }
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data?.ok) {
+  if (!send.ok) {
     return {
       ok: false,
-      error: String(data?.description || `sendPhoto_${response.status}`).slice(0, 300)
+      error: String(send.errorDescription || send.errorCode || 'sendPhoto_failed').slice(0, 300)
     };
   }
   return {
     ok: true,
-    messageId: data?.result?.message_id || null
+    messageId: send.messageId || null
   };
 }
 

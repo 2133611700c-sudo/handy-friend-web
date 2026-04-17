@@ -295,6 +295,44 @@ else
   fail "outbox dlq_total present"
 fi
 
+# Delivery evidence gate: queue_depth=0 alone is not enough.
+# We require proof of successful sends OR explicitly treat fail-only state as red.
+sent_1h=$(json_get "slo.sent_1h" "$outbox_json")
+if [[ -z "$sent_1h" || "$sent_1h" == "null" ]]; then sent_1h="0"; fi
+
+metrics_sent_total=$(python3 -c 'import json,sys
+try:
+ d=json.loads(sys.argv[1] or "{}")
+ rows=d.get("metrics") or []
+ print(sum(int(r.get("sent_count") or 0) for r in rows if isinstance(r,dict)))
+except Exception:
+ print(0)' "$outbox_json")
+
+metrics_failed_total=$(python3 -c 'import json,sys
+try:
+ d=json.loads(sys.argv[1] or "{}")
+ rows=d.get("metrics") or []
+ print(sum(int(r.get("count") or 0) for r in rows if isinstance(r,dict) and str(r.get("status",""))=="failed"))
+except Exception:
+ print(0)' "$outbox_json")
+
+delivery_sent=$(( sent_1h + metrics_sent_total ))
+if [[ "$delivery_sent" -gt 0 ]]; then
+  pass "outbox delivery evidence present (sent_1h=$sent_1h metrics_sent_total=$metrics_sent_total)"
+elif [[ "$metrics_failed_total" -gt 0 ]]; then
+  if [[ "$RELAX_OUTBOX" -eq 1 ]]; then
+    note "[WARN] outbox empty but delivery not proven (failed=$metrics_failed_total, sent=$delivery_sent)"
+  else
+    fail "outbox empty but delivery not proven (failed=$metrics_failed_total, sent=$delivery_sent)"
+  fi
+else
+  if [[ "$RELAX_OUTBOX" -eq 1 ]]; then
+    note "[WARN] outbox has no recent send evidence (sent=$delivery_sent, failed=$metrics_failed_total)"
+  else
+    fail "outbox has no recent send evidence (sent=$delivery_sent, failed=$metrics_failed_total)"
+  fi
+fi
+
 slo_json=$(curl -sS "$SITE/api/process-outbox?action=slo" 2>/dev/null || echo '{}')
 slo_ok=$(json_bool ok "$slo_json")
 if [[ "$slo_ok" == "true" ]]; then

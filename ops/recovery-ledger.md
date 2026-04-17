@@ -1,5 +1,5 @@
 # Handy & Friend — Recovery Ledger
-**Last updated:** 2026-04-17T07:44 local (UTC-7) — post PR #19 merge + Task 2.2 branch work
+**Last updated:** 2026-04-17T08:10 local (UTC-7) — Agent A scope execution (1.5/1.7/1.6 runbook)
 **Plan doc:** `ops/recovery-plan-v2.md` (to be added by Sergii if canonicalized)
 **Claim policy:** `docs/claim-policy.md` (created in Task 0.3)
 **Release gate:** `docs/release-gate.md` (created in Task 0.3)
@@ -23,9 +23,9 @@
 | 1.2 | Agent B | PASS | `supabase/migrations/20260417093000_035_recreate_followup_queue_view.sql` | PR #16 merged; live `GET /rest/v1/followup_queue` HTTP 200 | e7cacd2 | 2026-04-17T07:20 |
 | 1.3 | Agent A | PASS | `api/health.js:493, 545, 765`, `lib/conversation.js:83` | PR #17 merged; reads now prefer `event_data` with `event_payload` fallback for stale rows | 5cffd36 | 2026-04-17T07:40 |
 | 1.4 | Agent A | PASS | `api/health.js` telegramWatchdog auth block | Merged via PR #18 (commit 35e5db1). `x-vercel-cron` + bearer fallback preserved; external 403 guard retained. | 35e5db1 | 2026-04-17T07:44 |
-| 1.5 | Agent A | READY_PARTIAL | `api/ai-chat.js`, `api/ai-intake.js`, `api/alex-webhook.js`, `api/process-outbox.js`, `lib/lead-pipeline.js`, `lib/telegram/send.js` | unblocked by 1.1 merge; awaits 2.1 for is_test flag through-wiring | — | — |
-| 1.6 | Sergii + Agent A | AWAITING_DECISION | `api/notify.js`, `assets/js/main.js` | see Open Risks | — | — |
-| 1.7 | Agent A | READY (added by ADR-0003) | `scripts/audit.sh` proper preview-URL targeting (longer-term hardening) | — | — | — |
+| 1.5 | Agent A | PARTIAL (branch) | `api/ai-chat.js`, `api/ai-intake.js`, `api/alex-webhook.js`, `api/process-outbox.js`, `lib/lead-pipeline.js`, `lib/telegram/send.js` | static proof complete: zero raw Telegram URL hits in 5 target runtime files; live per-source SQL proof pending deploy | codex/task-2.2-channel-taxonomy (working tree) | 2026-04-17T08:10 |
+| 1.6 | Sergii + Agent A | PARTIAL/BLOCKED_EXTERNAL | `api/notify.js`, `ops/AUTONOMOUS-RUNBOOK.md` | fail-closed confirmed live (503 without env); manual enable + curl pair documented in runbook | codex/task-2.2-channel-taxonomy (working tree) | 2026-04-17T08:10 |
+| 1.7 | Agent A | DONE (branch) | `scripts/audit.sh` | delivery-evidence gate added: PR=warn, main=fail on sent=0+failed>0; logs in `ops/reports/2026-04-17-agent-a-scope-20260417T150159Z/` | codex/task-2.2-channel-taxonomy (working tree) | 2026-04-17T08:10 |
 | 2.1 | Agent B | PARTIAL | migration 036 + `scripts/e2e_alex_telegram.py` + `scripts/cleanup_test_rows.py` | PR #16 merged; e2e no longer self-cleans. vercel.json cron for cleanup still deferred (Agent A owes follow-up) | e7cacd2 | 2026-04-17T07:20 |
 | 2.2 | Agent B | DONE | `supabase/migrations/20260417113000_037_channel_source_taxonomy_reporting.sql`, `api/health.js` (`type=traffic`) | Added `ai_conversations.channel_source` taxonomy/backfill + `v_real_leads_7d` view + explicit per-channel traffic health output (`all_channels_including_test_and_probe` labeled). Pending merge/live validation. | codex/task-2.2-channel-taxonomy | 2026-04-17T07:44 |
 | 2.3 | Agent B | PASS | `pricing/index.html`, `book/index.html` | PR #16 merged; post-deploy Pixel verification pending | e7cacd2 | 2026-04-17T07:20 |
@@ -71,6 +71,13 @@ If any of these four cannot be produced, status must be `PARTIAL`, `SYNTHETIC`, 
 **Access required to close:** Google Ads API (developer token + OAuth refresh) OR a daily ads_spend push from a separate scheduled task using Chrome MCP to read the Ads UI.
 **Consequence while unresolved:** we cannot auto-distinguish "no leads because no ads traffic" from "no leads despite ads traffic". First is expected; second is P0.
 **Owner:** Sergii must decide between (a) supply Ads API creds or (b) authorize Chrome MCP ads-spend scrape task. Either path returns this risk to READY.
+
+### 2026-04-17 — Task 1.5 live proof blocked until branch deploy
+**Status:** PARTIAL
+**Context:** Agent A replaced raw Telegram runtime calls in the 5 scoped files and updated unified photo sender, but production still runs pre-change code.
+**What is proven now:** static grep in branch (`rg -n "api\\.telegram\\.org" api/ai-chat.js api/ai-intake.js api/alex-webhook.js api/process-outbox.js lib/lead-pipeline.js`) returns no hits.
+**What is pending:** live `telegram_sends` evidence per source (`ai_intake`, `alex_webhook`, `process_outbox`, `lead_pipeline`) requires deploy of this branch, then re-trigger + `/api/health?type=telegram` / SQL check.
+**Artifacts:** `ops/reports/2026-04-17-agent-a-scope-20260417T150159Z/summary.md`, trigger logs and health snapshots in same folder.
 
 ### 2026-04-17 — Task 1.1 auth deadlock → RESOLVED
 **Status:** PASS (via PR #15 merged as commit 5300e66)

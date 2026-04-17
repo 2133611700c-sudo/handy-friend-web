@@ -14,6 +14,7 @@
 const { restInsert, getConfig, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { callAlex } = require('../lib/ai-fallback.js');
 const { processInbound, transitionLead, logEvent: pipelineLogEvent, drainOutboxInline } = require('../lib/lead-pipeline.js');
+const { sendTelegramMessage, sendTelegramPhoto } = require('../lib/telegram/send.js');
 const { buildSystemPrompt, getGuardMode, GUARD_MODES } = require('../lib/alex-one-truth.js');
 const { getMessengerPostbackTexts, getPricingSourceVersion } = require('../lib/price-registry.js');
 const { inferServiceType: inferServiceTypeShared } = require('../lib/alex-policy-engine.js');
@@ -469,16 +470,23 @@ async function notifyTelegramFbLead({ leadId, sessionId, phone, service, userTex
     `<b>User:</b> ${esc(String(userText || '').slice(0, 300))}\n` +
     `<b>Alex:</b> ${esc(String(aiReply || '').slice(0, 300))}`;
 
-  const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+  const tgSend = await sendTelegramMessage({
+    source: 'alex_webhook',
+    leadId,
+    sessionId,
+    text,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    extra: { step: 'fb_lead_card' }
   });
-  const tgData = await tgRes.json().catch(() => ({}));
-  if (tgRes.ok && tgData.ok) {
-    console.log('[ALEX_WEBHOOK] Telegram notified, msg_id:', tgData.result?.message_id);
+  if (tgSend.ok) {
+    console.log('[ALEX_WEBHOOK] Telegram notified, msg_id:', tgSend.messageId);
   } else {
-    console.error('[ALEX_WEBHOOK] Telegram error:', JSON.stringify(tgData));
+    console.error('[ALEX_WEBHOOK] Telegram error:', JSON.stringify({
+      code: tgSend.errorCode,
+      description: tgSend.errorDescription
+    }));
   }
 }
 
@@ -494,22 +502,25 @@ async function forwardMessengerPhotosToTelegram(imageUrls, senderId, userText) {
     `Photos: ${imageUrls.length}\n` +
     `<b>Text:</b> ${esc(String(userText || '').slice(0, 300))}`;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'HTML' })
+  await sendTelegramMessage({
+    source: 'alex_webhook',
+    text: msg,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    extra: { step: 'fb_prelead_photos', sender_id: String(senderId || '') }
   }).catch(() => {});
 
   // Send each photo URL directly (Telegram can fetch from URL)
   for (const url of imageUrls) {
-    await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        photo: url,
-        caption: `FB Messenger photo (sender: fb_${String(senderId || '').slice(0, 20)})`
-      })
+    await sendTelegramPhoto({
+      source: 'alex_webhook',
+      photo: url,
+      caption: `FB Messenger photo (sender: fb_${String(senderId || '').slice(0, 20)})`,
+      token,
+      chatId,
+      timeoutMs: 4000,
+      extra: { step: 'fb_photo_forward', sender_id: String(senderId || '') }
     }).catch((e) => console.error('[ALEX_WEBHOOK] TG photo send error:', e.message));
   }
 }
