@@ -34,7 +34,7 @@
 | 2.6 | Agent B | BLOCKED_ON_1.2+2.1+2.4 | cleanup of untracked files + migrations 031/032 | — | — | — |
 | 3.1 | Sergii + any Agent via Chrome MCP | READY | `ops/reports/2026-04-17-ads-snapshot/` | unblocked by P0 merge | — | — |
 | 3.2 | Sergii + any Agent via Chrome MCP | READY | `ops/reports/2026-04-17-friction-map/` | unblocked by P0 merge | — | — |
-| 3.3 | Agent B | READY | `ops/reports/2026-04-17-cta-truth-table.md` | unblocked by P0 merge | — | — |
+| 3.3 | Agent B | DONE | `ops/reports/2026-04-17-cta-truth-table.md` | 10 CTA classes enumerated; 8 are "black holes" (no Supabase row on use). 3 real leads / 30d via Alex chat; form_submit=0 organic; phone/WA/email/review clicks untracked. Recommended follow-ups listed non-binding. | pending PR | 2026-04-17T07:50 |
 
 ## Status Vocabulary (see `docs/claim-policy.md`)
 
