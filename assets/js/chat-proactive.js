@@ -43,21 +43,31 @@
     bubble.style.cssText = 'position:fixed;right:20px;bottom:90px;max-width:300px;background:#fff;box-shadow:0 10px 28px rgba(0,0,0,0.18);border-radius:12px;padding:12px 36px 12px 12px;z-index:9500;color:#111;cursor:pointer;opacity:0;transition:opacity 220ms ease;';
     bubble.innerHTML = '' +
       '<button type="button" aria-label="Close message" id="hf-chat-proactive-close" style="position:absolute;top:8px;right:10px;border:none;background:transparent;font-size:18px;line-height:1;cursor:pointer;color:#666">&times;</button>' +
-      '<div style="font-size:14px;line-height:1.35">Hi! Need help choosing a service? I can give you a quick estimate</div>';
+      '<div style="font-size:14px;line-height:1.35">Hi! Need help choosing a service? Tap to chat with Alex.</div>';
 
     document.body.appendChild(bubble);
     requestAnimationFrame(function () { bubble.style.opacity = '1'; });
 
+    // Bubble text promises a chat. Open Alex (the chat panel) on click,
+    // not the scroll-to-form behaviour. If the chat widget isn't on the
+    // page, fall back to scrollToQuoteForm.
+    function openAlexOrFallback () {
+      if (typeof window.hfChatToggle === 'function') {
+        try { window.hfChatToggle(); return; } catch (_err) {}
+      }
+      scrollToQuoteForm();
+    }
+
     bubble.addEventListener('click', function (e) {
       if (e.target && e.target.id === 'hf-chat-proactive-close') return;
-      scrollToQuoteForm();
+      openAlexOrFallback();
       removeBubble();
     });
 
     bubble.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        scrollToQuoteForm();
+        openAlexOrFallback();
         removeBubble();
       }
     });

@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     await restInsert('lead_events', {
       lead_id: String(leadId),
       event_type: 'validation_failed',
-      event_payload: {
+      event_data: {
         stage: 'signed_url',
         error: result.error || 'sign_failed'
       }

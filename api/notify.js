@@ -14,14 +14,35 @@
 
 const { logLeadEvent } = require('./_lib/supabase-admin.js');
 const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
+const { sendTelegramMessage } = require('../lib/telegram/send.js');
+
+// /api/notify is a SERVER-SIDE helper. Must be invoked with the
+// X-HF-Notify-Secret header matching env HF_NOTIFY_SECRET. Public
+// browser callers have no business hitting this endpoint directly;
+// frontend SMS submit uses /api/submit-lead which calls this
+// internally with the secret.
+const NOTIFY_SECRET = process.env.HF_NOTIFY_SECRET || '';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Same-origin only: no wildcard CORS for privileged notify endpoint.
+  res.setHeader('Access-Control-Allow-Origin', 'https://handyandfriend.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-HF-Notify-Secret');
+  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method Not Allowed' });
+
+  // Enforce shared secret. If env is unset the endpoint is disabled
+  // (fail-closed) to prevent accidental public Telegram spam. Owner
+  // must set HF_NOTIFY_SECRET in Vercel env to activate.
+  if (!NOTIFY_SECRET) {
+    return res.status(503).json({ success: false, error: 'notify_disabled' });
+  }
+  const incoming = req.headers['x-hf-notify-secret'] || '';
+  if (incoming !== NOTIFY_SECRET) {
+    return res.status(403).json({ success: false, error: 'forbidden' });
+  }
 
   const ip = getClientIp(req);
   const body = req.body && typeof req.body === 'object' ? req.body : {};
@@ -44,47 +65,40 @@ export default async function handler(req, res) {
 // ─── Telegram ────────────────────────────────────────────────────────────────
 
 async function handleTelegram(req, res, lead) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!token || !chatId) {
-    return res.status(200).json({ success: true, mode: 'skipped', note: 'Telegram env not configured' });
-  }
-
   const leadId = String(lead.leadId || lead.id || 'unknown');
   const message = buildTelegramMessage(lead);
   const replyMarkup = buildTelegramMarkup(lead);
 
-  try {
-    const telegramRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-        reply_markup: replyMarkup
-      })
-    });
+  const r = await sendTelegramMessage({
+    source: 'notify',
+    leadId,
+    text: message,
+    replyMarkup,
+    extra: { via: 'api_notify' }
+  });
 
-    const data = await telegramRes.json().catch(() => ({}));
-    if (!telegramRes.ok || !data.ok) {
-      await logLeadEvent(leadId, 'telegram_failed', {
-        status: telegramRes.status,
-        description: data?.description || 'unknown_telegram_error'
-      });
-      return res.status(502).json({ success: false, error: 'Telegram request failed' });
-    }
-
-    await logLeadEvent(leadId, 'telegram_sent', { message_id: data?.result?.message_id || null });
-    return res.status(200).json({ success: true, messageId: data?.result?.message_id || null });
-  } catch (err) {
-    await logLeadEvent(leadId, 'telegram_failed', {
-      error: String(err?.message || 'telegram_exception').slice(0, 300)
+  // Dual-log into lead_events for backward compat with existing SLA queries.
+  if (r.ok) {
+    await logLeadEvent(leadId, 'telegram_sent', {
+      message_id: r.messageId,
+      source: 'notify',
+      telegram_send_id: r.telegramSendId
     });
-    return res.status(500).json({ success: false, error: 'Telegram delivery exception' });
+    return res.status(200).json({ success: true, messageId: r.messageId, telegramSendId: r.telegramSendId });
   }
+
+  await logLeadEvent(leadId, 'telegram_failed', {
+    error_code: r.errorCode,
+    error_description: r.errorDescription,
+    source: 'notify',
+    telegram_send_id: r.telegramSendId
+  });
+  const code = r.errorCode === 'env_missing' ? 200 : 502;
+  return res.status(code).json({
+    success: r.errorCode === 'env_missing',
+    error: r.errorDescription || 'telegram_failed',
+    mode: r.errorCode === 'env_missing' ? 'skipped' : undefined
+  });
 }
 
 function buildTelegramMessage(lead) {

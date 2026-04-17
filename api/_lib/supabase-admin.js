@@ -51,10 +51,12 @@ async function restInsert(table, rows, options = {}) {
 }
 
 async function logLeadEvent(leadId, eventType, eventPayload = {}) {
+  // NOTE: DB column is `event_data`, not `event_payload`. Writing to the
+  // wrong name silently failed with PGRST204 until 2026-04-17.
   return restInsert('lead_events', {
     lead_id: leadId || null,
     event_type: String(eventType || 'unknown_event'),
-    event_payload: sanitizeEventPayload(eventPayload)
+    event_data: sanitizeEventPayload(eventPayload)
   }, { returning: false });
 }
 
