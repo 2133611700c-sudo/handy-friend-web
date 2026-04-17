@@ -1916,12 +1916,12 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
     if (options.useBeacon && navigator.sendBeacon) {
       try {
         var blob = new Blob([body], { type: 'application/json' });
-        navigator.sendBeacon('/api/funnel-event', blob);
+        navigator.sendBeacon('/api/health?type=funnel_event', blob);
         if (typeof gtag === 'function') gtag('event', eventName, { event_category: 'chat_funnel', page_path: payload.page_path });
         return;
       } catch (_err) {}
     }
-    fetch('/api/funnel-event', {
+    fetch('/api/health?type=funnel_event', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       keepalive: !!options.keepalive,

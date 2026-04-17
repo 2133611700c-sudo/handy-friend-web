@@ -16,12 +16,11 @@ CREATE INDEX IF NOT EXISTS idx_ai_conversations_channel_source
 -- Backfill ai_conversations.channel_source from available source/session patterns.
 UPDATE public.ai_conversations
 SET channel_source = CASE
-  WHEN COALESCE(source, '') IN ('messenger', 'facebook_messenger') OR session_id LIKE 'fb_%' THEN 'fb_messenger'
-  WHEN session_id LIKE 'probe_%' OR LOWER(COALESCE(message_text, '')) LIKE '%material_probe%' THEN 'probe'
-  WHEN session_id LIKE 'e2e_%' OR session_id LIKE 'test_%' OR LOWER(COALESCE(message_text, '')) LIKE '%e2e%' THEN 'e2e'
-  WHEN COALESCE(source, '') IN ('cron', 'scheduler') THEN 'cron'
-  WHEN COALESCE(source, '') IN ('internal_admin', 'admin') THEN 'internal_admin'
-  WHEN COALESCE(source, '') IN ('test', 'synthetic') THEN 'test'
+  WHEN session_id LIKE 'fb_%' THEN 'fb_messenger'
+  WHEN session_id LIKE 'probe_%' OR session_id LIKE 'audit_%' OR LOWER(COALESCE(message_text, '')) LIKE '%material_probe%' THEN 'probe'
+  WHEN session_id LIKE 'e2e_%' OR session_id LIKE 'reg-%' OR session_id LIKE 'test_%' OR LOWER(COALESCE(message_text, '')) LIKE '%e2e%' THEN 'e2e'
+  WHEN session_id LIKE 'cron_%' THEN 'cron'
+  WHEN session_id LIKE 'admin_%' THEN 'internal_admin'
   ELSE 'real_website_chat'
 END
 WHERE channel_source IS NULL OR BTRIM(channel_source) = '';
