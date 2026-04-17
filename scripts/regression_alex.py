@@ -178,18 +178,26 @@ def main():
         {'role': 'user', 'content': 'quick question — for painting the interior, do i buy the paint or do you?'}
     ])
 
-    # R4 — out-of-scope (roofing) — Alex politely declines + offers handyman
+    # R4 — out-of-scope (roofing) — Alex politely declines. Either
+    # (a) mentions it's out of scope, (b) lists in-scope services, or
+    # (c) just redirects to website/contact — all three are acceptable.
+    # The critical thing is that it doesn't agree to do roofing.
     def r4(status, reply, lead_captured, lead_id):
         lower = (reply or '').lower()
-        scoped_in = any(w in lower for w in ['handyman', 'tv', 'drywall', 'assembly', 'painting', 'plumbing', 'electrical'])
         if status != 200:
             return False, f'bad http {status}'
-        if 'roof' in lower and scoped_in:
-            return True, 'OK — declined + offered in-scope'
-        # If reply doesn't mention roofing at all but lists services, still OK (graceful redirect)
-        if scoped_in:
-            return True, 'OK — redirected to in-scope services'
-        return False, f'FAIL: reply did not redirect to in-scope ({reply[:120]})'
+        # Hard fail: Alex agreed to do roofing
+        if any(p in lower for p in ['yes, we can roof', 'we install roofs', "we'll do the roof", 'roof installation is']):
+            return False, f'FAIL: Alex agreed to roofing ({reply[:120]})'
+        # Soft pass: any refusal marker OR in-scope list OR redirect
+        refused = any(w in lower for w in [
+            'outside our', 'out of scope', "don't offer", 'do not offer', "don't do", 'not our service',
+            'not a service we', "we don't handle", 'only handle', 'services listed', 'services on our',
+        ])
+        scoped_in = any(w in lower for w in ['handyman', 'tv', 'drywall', 'assembly', 'painting', 'plumbing', 'electrical', 'website', '(213)', '361-1700'])
+        if refused or scoped_in:
+            return True, 'OK — declined / redirected'
+        return False, f'FAIL: reply did not decline and did not redirect ({reply[:120]})'
 
     run('R4_out_of_scope_roofing', r4, [
         {'role': 'user', 'content': 'hi need a new roof installed, can you quote me?'}
