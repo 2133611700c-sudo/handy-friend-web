@@ -1,5 +1,5 @@
 # Handy & Friend — Recovery Ledger
-**Last updated:** 2026-04-17T08:10 local (UTC-7) — Agent A scope execution (1.5/1.7/1.6 runbook)
+**Last updated:** 2026-04-17T08:24 local (UTC-7) — Agent A P1 self-audit fixes applied
 **Plan doc:** `ops/recovery-plan-v2.md` (to be added by Sergii if canonicalized)
 **Claim policy:** `docs/claim-policy.md` (created in Task 0.3)
 **Release gate:** `docs/release-gate.md` (created in Task 0.3)
@@ -23,7 +23,7 @@
 | 1.2 | Agent B | PASS | `supabase/migrations/20260417093000_035_recreate_followup_queue_view.sql` | PR #16 merged; live `GET /rest/v1/followup_queue` HTTP 200 | e7cacd2 | 2026-04-17T07:20 |
 | 1.3 | Agent A | PASS | `api/health.js:493, 545, 765`, `lib/conversation.js:83` | PR #17 merged; reads now prefer `event_data` with `event_payload` fallback for stale rows | 5cffd36 | 2026-04-17T07:40 |
 | 1.4 | Agent A | PASS | `api/health.js` telegramWatchdog auth block | Merged via PR #18 (commit 35e5db1). `x-vercel-cron` + bearer fallback preserved; external 403 guard retained. | 35e5db1 | 2026-04-17T07:44 |
-| 1.5 | Agent A | PARTIAL (branch) | `api/ai-chat.js`, `api/ai-intake.js`, `api/alex-webhook.js`, `api/process-outbox.js`, `lib/lead-pipeline.js`, `lib/telegram/send.js` | static proof complete: zero raw Telegram URL hits in 5 target runtime files; live per-source SQL proof pending deploy | codex/task-2.2-channel-taxonomy (working tree) | 2026-04-17T08:10 |
+| 1.5 | Agent A | PARTIAL (branch) | `api/ai-chat.js`, `api/ai-intake.js`, `api/alex-webhook.js`, `api/process-outbox.js`, `lib/lead-pipeline.js`, `lib/telegram/send.js` | static proof complete: zero raw Telegram URL hits in 5 target runtime files; P1 self-audit fixes: outbox lead_id propagation + early-fail durable logging; live per-source SQL proof pending deploy | codex/task-2.2-channel-taxonomy (working tree) | 2026-04-17T08:24 |
 | 1.6 | Sergii + Agent A | PARTIAL/BLOCKED_EXTERNAL | `api/notify.js`, `ops/AUTONOMOUS-RUNBOOK.md` | fail-closed confirmed live (503 without env); manual enable + curl pair documented in runbook | codex/task-2.2-channel-taxonomy (working tree) | 2026-04-17T08:10 |
 | 1.7 | Agent A | DONE (branch) | `scripts/audit.sh` | delivery-evidence gate added: PR=warn, main=fail on sent=0+failed>0; logs in `ops/reports/2026-04-17-agent-a-scope-20260417T150159Z/` | codex/task-2.2-channel-taxonomy (working tree) | 2026-04-17T08:10 |
 | 2.1 | Agent B | PARTIAL | migration 036 + `scripts/e2e_alex_telegram.py` + `scripts/cleanup_test_rows.py` | PR #16 merged; e2e no longer self-cleans. vercel.json cron for cleanup still deferred (Agent A owes follow-up) | e7cacd2 | 2026-04-17T07:20 |
