@@ -455,7 +455,10 @@ async function sendLeadCapturedToTelegram({ sessionId, leadId, lang, userText, a
 
   for (let i = 0; i < photoQueue.length; i += 1) {
     const result = await sendTelegramPhotoWithRetry(token, chatId, photoQueue[i], {
-      caption: i === 0 ? `📸 Chat photos\nLead: ${safeLead}\nSession: ${safeSession}` : ''
+      caption: i === 0 ? `📸 Chat photos\nLead: ${safeLead}\nSession: ${safeSession}` : '',
+      source: 'ai_chat:lead_photo',
+      sessionId: safeSession,
+      leadId: safeLead
     });
 
     if (result.ok) {
@@ -538,7 +541,9 @@ async function sendPreLeadPhotoToTelegram({ sessionId, lang, userText, photos, s
   const dedup = filterDedupedPhotos(String(sessionId || 'unknown'), photos);
   for (let i = 0; i < dedup.photos.length; i++) {
     await sendTelegramPhotoWithRetry(token, chatId, dedup.photos[i], {
-      caption: i === 0 ? `📸 Pre-lead inquiry\nSession: ${String(sessionId || '').slice(0, 40)}` : ''
+      caption: i === 0 ? `📸 Pre-lead inquiry\nSession: ${String(sessionId || '').slice(0, 40)}` : '',
+      source: 'ai_chat:pre_lead_photo',
+      sessionId: String(sessionId || 'unknown')
     }).catch(() => {});
   }
 }
@@ -622,7 +627,10 @@ async function sendStrictSalesCard({ sessionId, leadId, lang, userText, aiReply,
   const dedup = filterDedupedPhotos(String(sessionId || 'unknown'), photos);
   for (let i = 0; i < dedup.photos.length; i++) {
     const result = await sendTelegramPhotoWithRetry(token, chatId, dedup.photos[i], {
-      caption: i === 0 ? `📸 Lead photos\nLead: ${String(leadId || '').slice(0, 40)}` : ''
+      caption: i === 0 ? `📸 Lead photos\nLead: ${String(leadId || '').slice(0, 40)}` : '',
+      source: 'ai_chat:sales_card_photo',
+      sessionId: String(sessionId || 'unknown'),
+      leadId: leadId ? String(leadId) : null
     }).catch((err) => ({ ok: false, error: String(err?.message || 'send_photo_error').slice(0, 300) }));
     if (result?.ok) sentPhotoIds.push(result.messageId || null);
     else failedPhotos.push({ i, error: result?.error || 'send_photo_failed' });

@@ -491,9 +491,14 @@ async function deliverTelegramOwner(payload) {
     extra: { job_type: 'telegram_owner' }
   });
   if (!result.ok) {
-    const code = result.errorCode
-      ? (typeof result.errorCode === 'number' ? `TG_${result.errorCode}` : String(result.errorCode))
-      : 'TG_UNKNOWN';
+    // Preserve legacy `TG_<code>` / `ENV_MISSING` format used by outbound_jobs
+    // telemetry and DLQ logs. Unified sender returns lowercase codes like
+    // 'env_missing', 'timeout', 'network', or HTTP status strings like '503'.
+    const raw = result.errorCode ? String(result.errorCode) : 'UNKNOWN';
+    const code = raw === 'env_missing' ? 'ENV_MISSING'
+      : raw === 'empty_text' ? 'EMPTY_TEXT'
+      : /^\d+$/.test(raw) ? `TG_HTTP_${raw}`
+      : `TG_${raw.toUpperCase()}`;
     return { ok: false, error: result.errorDescription || 'telegram send failed', error_code: code };
   }
   return { ok: true, provider_message_id: String(result.messageId || '') };
