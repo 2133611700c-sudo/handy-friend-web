@@ -88,6 +88,11 @@ jobs:
           node --test tests/ads-attribution.test.js
           echo "✅ Ads/attribution tests passed"
 
+      - name: Run telegram unified-sender invariant tests (hard fail)
+        run: |
+          node --test tests/telegram-send.test.js
+          echo "✅ Telegram send.js invariants passed"
+
       - name: Run mandatory factory guard (release gate)
         run: |
           node ops/factory-guard.mjs
