@@ -37,6 +37,7 @@ export default async function handler(req, res) {
   if (type === 'fb') return fbHealth(req, res);
   if (type === 'pricing') return pricingHealth(req, res);
   if (type === 'attribution') return attributionHealth(req, res);
+  if (type === 'traffic') return trafficHealth(req, res);
   if (type === 'lead_integrity') return leadIntegrityHealth(req, res);
   if (type === 'policy') return policyHealth(req, res);
   if (type === 'stats') return statsReport(req, res);
@@ -275,6 +276,113 @@ async function attributionHealth(req, res) {
     });
   } catch (err) {
     return res.status(500).json({ ok: false, error: String(err?.message || 'attribution_health_failed') });
+  }
+}
+
+/* ── channel taxonomy diagnostic ── */
+async function trafficHealth(req, res) {
+  const config = getConfig();
+  if (!config) return res.status(200).json({ ok: false, error: 'supabase_not_configured' });
+
+  const windowHours = clampHours(req.query?.hours || 168);
+  const sinceIso = new Date(Date.now() - windowHours * 60 * 60 * 1000).toISOString();
+
+  try {
+    const [leadsRows, convRows, real7dRows] = await Promise.all([
+      fetchSupabase(
+        config,
+        `leads?select=id,source,traffic_source,is_test,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=3000`
+      ),
+      fetchSupabase(
+        config,
+        `ai_conversations?select=session_id,source,channel_source,message_role,created_at&created_at=gte.${encodeURIComponent(sinceIso)}&order=created_at.desc&limit=5000`
+      ),
+      fetchSupabase(config, 'v_real_leads_7d?select=id,traffic_source,created_at&limit=3000')
+    ]);
+
+    if (!leadsRows.ok || !convRows.ok || !real7dRows.ok) {
+      return res.status(502).json({
+        ok: false,
+        error: 'traffic_data_fetch_failed',
+        details: {
+          leads: leadsRows.error || null,
+          conversations: convRows.error || null,
+          v_real_leads_7d: real7dRows.error || null
+        }
+      });
+    }
+
+    const leadCounts = {
+      all_channels_including_test_and_probe: 0,
+      real_customer_channels_total: 0,
+      by_channel: {},
+      unknown: 0
+    };
+    for (const row of leadsRows.data || []) {
+      leadCounts.all_channels_including_test_and_probe += 1;
+      const channel = deriveLeadChannel(row);
+      leadCounts.by_channel[channel] = (leadCounts.by_channel[channel] || 0) + 1;
+      if (channel === 'unknown') {
+        leadCounts.unknown += 1;
+      }
+      const isTest = Boolean(row?.is_test);
+      if (!isTest && (channel === 'real_website_chat' || channel === 'fb_messenger')) {
+        leadCounts.real_customer_channels_total += 1;
+      }
+    }
+
+    const convCounts = {
+      messages_total: 0,
+      sessions_total: 0,
+      sessions_by_channel: {},
+      unknown_sessions: 0
+    };
+    const sessionChannel = new Map();
+    for (const row of convRows.data || []) {
+      convCounts.messages_total += 1;
+      const sid = String(row?.session_id || '');
+      if (!sid) continue;
+      const channel = deriveConversationChannel(row);
+      if (!sessionChannel.has(sid)) {
+        sessionChannel.set(sid, channel);
+      }
+    }
+
+    convCounts.sessions_total = sessionChannel.size;
+    for (const channel of sessionChannel.values()) {
+      convCounts.sessions_by_channel[channel] = (convCounts.sessions_by_channel[channel] || 0) + 1;
+      if (channel === 'unknown') convCounts.unknown_sessions += 1;
+    }
+
+    const real7dCounts = {};
+    for (const row of real7dRows.data || []) {
+      const channel = normalizeChannelValue(row?.traffic_source) || 'real_website_chat';
+      real7dCounts[channel] = (real7dCounts[channel] || 0) + 1;
+    }
+
+    return res.status(200).json({
+      ok: true,
+      window_hours: windowHours,
+      generated_at: new Date().toISOString(),
+      taxonomy_values: [
+        'real_website_chat',
+        'fb_messenger',
+        'test',
+        'probe',
+        'cron',
+        'e2e',
+        'internal_admin',
+        'unknown'
+      ],
+      leads: leadCounts,
+      conversations: convCounts,
+      real_leads_7d: {
+        total: (real7dRows.data || []).length,
+        by_channel: real7dCounts
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: String(err?.message || 'traffic_health_failed') });
   }
 }
 
@@ -843,6 +951,48 @@ function jsonLdHasExpected(indexHtml, serviceId, expectedPrice) {
   if (idx === -1) return false;
   const chunk = html.slice(idx, idx + 300);
   return chunk.includes(`\"price\":\"${Number(expectedPrice).toFixed(2)}\"`) || chunk.includes(`\"price\":\"${Number(expectedPrice)}\"`);
+}
+
+function normalizeChannelValue(value) {
+  const v = String(value || '').trim().toLowerCase();
+  if (!v) return '';
+  const allowed = new Set([
+    'real_website_chat',
+    'fb_messenger',
+    'test',
+    'probe',
+    'cron',
+    'e2e',
+    'internal_admin'
+  ]);
+  return allowed.has(v) ? v : '';
+}
+
+function deriveLeadChannel(row) {
+  const explicit = normalizeChannelValue(row?.traffic_source);
+  if (explicit) return explicit;
+  const src = String(row?.source || '').toLowerCase();
+  if (src === 'messenger' || src === 'facebook_messenger') return 'fb_messenger';
+  if (src === 'test' || src === 'synthetic') return 'test';
+  if (src === 'cron' || src === 'scheduler') return 'cron';
+  if (src === 'internal_admin' || src === 'admin') return 'internal_admin';
+  if (src.includes('probe')) return 'probe';
+  if (src) return 'real_website_chat';
+  return 'unknown';
+}
+
+function deriveConversationChannel(row) {
+  const explicit = normalizeChannelValue(row?.channel_source);
+  if (explicit) return explicit;
+  const src = String(row?.source || '').toLowerCase();
+  const sid = String(row?.session_id || '').toLowerCase();
+  if (src === 'messenger' || src === 'facebook_messenger' || sid.startsWith('fb_')) return 'fb_messenger';
+  if (sid.startsWith('probe_') || src.includes('probe')) return 'probe';
+  if (sid.startsWith('e2e_') || sid.startsWith('test_') || src === 'test' || src === 'synthetic') return 'e2e';
+  if (src === 'cron' || src === 'scheduler') return 'cron';
+  if (src === 'internal_admin' || src === 'admin') return 'internal_admin';
+  if (src === 'website_chat' || src === 'web' || src === 'site' || !src) return 'real_website_chat';
+  return 'unknown';
 }
 
 // ─── Outbox SLO Health ────────────────────────────────────────────────────────
