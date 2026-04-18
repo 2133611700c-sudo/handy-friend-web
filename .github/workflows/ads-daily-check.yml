@@ -54,10 +54,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ops/ads-monitoring/ || true
           if ! git diff --staged --quiet; then
-            git commit -m "ops(ads): daily check $(date -u +%Y-%m-%d)
-
-Auto-generated via .github/workflows/ads-daily-check.yml" || true
-            git push origin HEAD:main || echo "Push failed (may be branch protected — artifact still available)"
+            DATE=$(date -u +%Y-%m-%d)
+            MSG="ops(ads): daily check ${DATE}"
+            git commit -m "${MSG}" -m "Auto-generated via .github/workflows/ads-daily-check.yml" || true
+            git push origin HEAD:main || echo "Push failed (may be branch protected - artifact still available)"
           else
             echo "No changes to commit"
           fi
