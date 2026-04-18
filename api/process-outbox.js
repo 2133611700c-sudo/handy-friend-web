@@ -211,6 +211,7 @@ module.exports = handler;
 // ─── Daily / Weekly Reports ───────────────────────────────────────────────────
 
 const { formatDailyDigest, formatWeeklyDigest } = require('../lib/alert-formats.js');
+const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/send.js');
 
 async function handleDailyReport() {
   const config = getConfig();
@@ -462,7 +463,7 @@ async function processJob(job, result) {
 
 async function dispatchJob(job) {
   switch (job.job_type) {
-    case 'telegram_owner':  return deliverTelegramOwner(job.payload);
+    case 'telegram_owner':  return deliverTelegramOwner(job.payload, { leadId: job.lead_id, jobId: job.id });
     case 'resend_owner':    return deliverResendOwner(job.payload);
     case 'resend_customer': return deliverResendCustomer(job.payload);
     case 'ga4_event':       return deliverGA4Event(job.payload);
@@ -473,29 +474,44 @@ async function dispatchJob(job) {
 
 // ─── Telegram Owner ───────────────────────────────────────────────────────────
 
-async function deliverTelegramOwner(payload) {
+async function deliverTelegramOwner(payload, meta = {}) {
   const token  = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return { ok: false, error: 'TELEGRAM_BOT_TOKEN not set', error_code: 'ENV_MISSING' };
 
+  // P1 fix (Codex-audit follow-up): prefer `meta.leadId` (set from
+  // `job.lead_id` by dispatchJob) over `payload.lead_id` (which
+  // enqueueOutboundJob does NOT place in the payload). Without this, every
+  // outbox-dispatched telegram_sends row would lose lead attribution.
+  const leadId = meta?.leadId ? String(meta.leadId)
+    : (payload?.lead_id ? String(payload.lead_id) : null);
+
   const text = payload?.text || buildDefaultTelegramText(payload);
-  const res  = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
-      ...(payload?.reply_markup ? { reply_markup: payload.reply_markup } : {})
-    })
+  const result = await unifiedTelegramSend({
+    source: 'outbox:telegram_owner',
+    leadId,
+    sessionId: payload?.session_id ? String(payload.session_id) : null,
+    text,
+    chatId,
+    token,
+    replyMarkup: payload?.reply_markup || null,
+    extra: {
+      job_type: 'telegram_owner',
+      job_id:   meta?.jobId ? String(meta.jobId) : null
+    }
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.ok) {
-    const code = data.error_code ? `TG_${data.error_code}` : `TG_HTTP_${res.status}`;
-    return { ok: false, error: data.description || `HTTP ${res.status}`, error_code: code };
+  if (!result.ok) {
+    // Preserve legacy `TG_<code>` / `ENV_MISSING` format used by outbound_jobs
+    // telemetry and DLQ logs. Unified sender returns lowercase codes like
+    // 'env_missing', 'timeout', 'network', or HTTP status strings like '503'.
+    const raw = result.errorCode ? String(result.errorCode) : 'UNKNOWN';
+    const code = raw === 'env_missing' ? 'ENV_MISSING'
+      : raw === 'empty_text' ? 'EMPTY_TEXT'
+      : /^\d+$/.test(raw) ? `TG_HTTP_${raw}`
+      : `TG_${raw.toUpperCase()}`;
+    return { ok: false, error: result.errorDescription || 'telegram send failed', error_code: code };
   }
-  return { ok: true, provider_message_id: String(data.result?.message_id || '') };
+  return { ok: true, provider_message_id: String(result.messageId || '') };
 }
 
 function buildDefaultTelegramText(payload) {
@@ -597,10 +613,13 @@ async function notifyDlqAlert(job, attempts, maxAttempts, lastError) {
     `Error: ${String(lastError || '').slice(0, 200)}\n` +
     `Replay: POST /api/process-outbox?action=replay_dlq&job_id=${encodeURIComponent(job.id)}`;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+  await unifiedTelegramSend({
+    source: 'outbox:dlq_alert',
+    leadId: job.lead_id ? String(job.lead_id) : null,
+    text,
+    chatId,
+    token,
+    extra: { job_id: job.id, job_type: job.job_type, attempts, max_attempts: maxAttempts }
   }).catch(() => {});
 }
 
