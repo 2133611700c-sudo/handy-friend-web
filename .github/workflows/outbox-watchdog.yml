@@ -1,0 +1,82 @@
+name: Outbox Watchdog
+
+on:
+  schedule:
+    # Every 3 hours at :07 past — check outbox backlog
+    - cron: '7 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: outbox-watchdog
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Probe /api/health?type=outbox
+        id: probe
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+
+          SITE="https://handyandfriend.com"
+          RESPONSE=$(curl -sS --max-time 20 "${SITE}/api/health?type=outbox" || echo '{}')
+
+          OK=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.loads(sys.stdin.read() or '{}'); print(d.get('ok', False))" || echo "False")
+          SLO_BREACHED=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.loads(sys.stdin.read() or '{}'); print(d.get('slo_breached', False))" || echo "True")
+          OLDEST_PENDING=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.loads(sys.stdin.read() or '{}'); v=d.get('oldest_pending_sec'); print(v if v is not None else 0)" || echo "0")
+          QUEUE_DEPTH=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.loads(sys.stdin.read() or '{}'); print(d.get('queue_depth', 0))" || echo "0")
+          DLQ_TOTAL=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.loads(sys.stdin.read() or '{}'); print(d.get('dlq_total', 0))" || echo "0")
+
+          echo "ok=${OK}"
+          echo "slo_breached=${SLO_BREACHED}"
+          echo "oldest_pending_sec=${OLDEST_PENDING}"
+          echo "queue_depth=${QUEUE_DEPTH}"
+          echo "dlq_total=${DLQ_TOTAL}"
+
+          # Write to step summary
+          {
+            echo "# Outbox Watchdog — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo ""
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| ok | ${OK} |"
+            echo "| slo_breached | ${SLO_BREACHED} |"
+            echo "| oldest_pending_sec | ${OLDEST_PENDING} |"
+            echo "| queue_depth | ${QUEUE_DEPTH} |"
+            echo "| dlq_total | ${DLQ_TOTAL} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Alert conditions:
+          # 1. ok != True
+          # 2. oldest pending > 7200s (2 hours)
+          # 3. dlq_total > 5
+          ALERT=""
+          if [ "$OK" != "True" ] && [ "$OK" != "true" ]; then
+            ALERT="${ALERT}🚨 Outbox ok=${OK}%0A"
+          fi
+          if [ "$OLDEST_PENDING" -gt 7200 ] 2>/dev/null; then
+            ALERT="${ALERT}⏰ oldest_pending=${OLDEST_PENDING}s (>2h)%0A"
+          fi
+          if [ "$DLQ_TOTAL" -gt 5 ] 2>/dev/null; then
+            ALERT="${ALERT}🗑️ DLQ=${DLQ_TOTAL} (>5)%0A"
+          fi
+
+          if [ -n "$ALERT" ] && [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
+            curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              -d "chat_id=${TELEGRAM_CHAT_ID}" \
+              -d "text=Outbox Watchdog ALERT:%0A${ALERT}%0AAction: POST /api/process-outbox?action=replay_dlq (requires CRON_SECRET)%0ARun: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+              > /dev/null
+            echo "ALERT sent to Telegram"
+            exit 1
+          fi
+
+          echo "OK — no alert"
