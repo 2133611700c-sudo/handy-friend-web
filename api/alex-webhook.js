@@ -18,6 +18,7 @@ const { buildSystemPrompt, getGuardMode, GUARD_MODES } = require('../lib/alex-on
 const { getMessengerPostbackTexts, getPricingSourceVersion } = require('../lib/price-registry.js');
 const { inferServiceType: inferServiceTypeShared } = require('../lib/alex-policy-engine.js');
 const { createEnvelope } = require('../lib/inbound-envelope.js');
+const { sendTelegramMessage, sendTelegramPhoto } = require('../lib/telegram/send.js');
 
 const FB_GRAPH_VERSION = process.env.FB_GRAPH_VERSION || 'v19.0';
 const MAX_HISTORY_TURNS = 16;
@@ -446,10 +447,6 @@ function inferServiceType(text) {
 
 // v11: Strict Sales Card for Messenger leads
 async function notifyTelegramFbLead({ leadId, sessionId, phone, service, userText, aiReply }) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
-
   const esc = (s) => String(s || '--').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
   const now = new Date();
   const slaDeadline = new Date(now.getTime() + 60 * 60 * 1000);
@@ -469,24 +466,24 @@ async function notifyTelegramFbLead({ leadId, sessionId, phone, service, userTex
     `<b>User:</b> ${esc(String(userText || '').slice(0, 300))}\n` +
     `<b>Alex:</b> ${esc(String(aiReply || '').slice(0, 300))}`;
 
-  const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+  const send = await sendTelegramMessage({
+    source: 'alex_webhook',
+    leadId,
+    sessionId,
+    text,
+    timeoutMs: 4000,
+    extra: { channel: 'fb_messenger', step: 'lead_card' }
   });
-  const tgData = await tgRes.json().catch(() => ({}));
-  if (tgRes.ok && tgData.ok) {
-    console.log('[ALEX_WEBHOOK] Telegram notified, msg_id:', tgData.result?.message_id);
+  if (send.ok) {
+    console.log('[ALEX_WEBHOOK] Telegram notified, msg_id:', send.messageId);
   } else {
-    console.error('[ALEX_WEBHOOK] Telegram error:', JSON.stringify(tgData));
+    console.error('[ALEX_WEBHOOK] Telegram error:', send.errorDescription || send.errorCode || 'unknown');
   }
 }
 
 // v11: Forward Messenger photos to Telegram immediately (pre-lead)
 async function forwardMessengerPhotosToTelegram(imageUrls, senderId, userText) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId || !imageUrls.length) return;
+  if (!imageUrls.length) return;
 
   const esc = (s) => String(s || '').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
   const msg = `📷 <b>FB_MESSENGER_PHOTO</b> (no phone yet)\n` +
@@ -494,23 +491,27 @@ async function forwardMessengerPhotosToTelegram(imageUrls, senderId, userText) {
     `Photos: ${imageUrls.length}\n` +
     `<b>Text:</b> ${esc(String(userText || '').slice(0, 300))}`;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'HTML' })
+  await sendTelegramMessage({
+    source: 'alex_webhook',
+    sessionId: `fb_${String(senderId || '')}`.slice(0, 128),
+    text: msg,
+    timeoutMs: 4000,
+    extra: { channel: 'fb_messenger', step: 'pre_lead_photos_intro', photos_count: imageUrls.length }
   }).catch(() => {});
 
   // Send each photo URL directly (Telegram can fetch from URL)
   for (const url of imageUrls) {
-    await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        photo: url,
-        caption: `FB Messenger photo (sender: fb_${String(senderId || '').slice(0, 20)})`
-      })
-    }).catch((e) => console.error('[ALEX_WEBHOOK] TG photo send error:', e.message));
+    const send = await sendTelegramPhoto({
+      source: 'alex_webhook',
+      sessionId: `fb_${String(senderId || '')}`.slice(0, 128),
+      caption: `FB Messenger photo (sender: fb_${String(senderId || '').slice(0, 20)})`,
+      photo: String(url),
+      timeoutMs: 4000,
+      extra: { channel: 'fb_messenger', step: 'pre_lead_photo' }
+    }).catch((e) => ({ ok: false, errorDescription: e.message }));
+    if (!send?.ok) {
+      console.error('[ALEX_WEBHOOK] TG photo send error:', send?.errorDescription || send?.errorCode || 'unknown');
+    }
   }
 }
 

@@ -1,5 +1,5 @@
 # Handy & Friend — Recovery Ledger
-**Last updated:** 2026-04-17T07:15 local (UTC-7) — post PR #15 merge
+**Last updated:** 2026-04-19T10:47 local (UTC-7) — Agent A Task 1.5/1.7 update on `codex/telegram-truth-unify-20260419`
 **Plan doc:** `ops/recovery-plan-v2.md` (to be added by Sergii if canonicalized)
 **Claim policy:** `docs/claim-policy.md` (created in Task 0.3)
 **Release gate:** `docs/release-gate.md` (created in Task 0.3)
@@ -23,9 +23,9 @@
 | 1.2 | Agent B | PASS | `supabase/migrations/20260417093000_035_recreate_followup_queue_view.sql` | PR #16 merged; live `GET /rest/v1/followup_queue` HTTP 200 | e7cacd2 | 2026-04-17T07:20 |
 | 1.3 | Agent A | PASS | `api/health.js:493, 545, 765`, `lib/conversation.js:83` | PR #17 merged; reads now prefer `event_data` with `event_payload` fallback for stale rows | 5cffd36 | 2026-04-17T07:40 |
 | 1.4 | Agent A | DONE | `api/health.js` telegramWatchdog auth block | Mirrored the Task 1.1 auth model: `x-vercel-cron` header accepted unconditionally (Vercel-edge-stripped, cannot be spoofed); manual callers can still authenticate with `Bearer <CRON_SECRET>` (or legacy `VERCEL_CRON_SECRET`). External 403 guard preserved. `node --check` OK. | pending PR | 2026-04-17T07:45 |
-| 1.5 | Agent A | READY_PARTIAL | `api/ai-chat.js`, `api/ai-intake.js`, `api/alex-webhook.js`, `api/process-outbox.js`, `lib/lead-pipeline.js`, `lib/telegram/send.js` | unblocked by 1.1 merge; awaits 2.1 for is_test flag through-wiring | — | — |
+| 1.5 | Agent A | PARTIAL | `api/ai-chat.js`, `api/ai-intake.js`, `api/alex-webhook.js`, `api/process-outbox.js`, `lib/lead-pipeline.js`, `lib/telegram/send.js` | Raw runtime Telegram sends removed from target paths; `rg -n \"https://api\\.telegram\\.org\" api lib` now leaves only `api/telegram-webhook.js` (inbound), `api/health.js` (webhook info), and `lib/telegram/send.js`; syntax checks pass. Live per-path SQL proof still pending controlled triggers. See report `ops/reports/2026-04-19-agent-a-telegram-truth.md`. | local branch | 2026-04-19T10:47 |
 | 1.6 | Sergii + Agent A | AWAITING_DECISION | `api/notify.js`, `assets/js/main.js` | see Open Risks | — | — |
-| 1.7 | Agent A | READY (added by ADR-0003) | `scripts/audit.sh` proper preview-URL targeting (longer-term hardening) | — | — | — |
+| 1.7 | Agent A | DONE | `scripts/audit.sh` delivery-evidence gate | Added delivery check (sent vs failed evidence). Verified behavior: `pull_request` => WARN, `main` => FAIL when `sent=0`. See `ops/reports/2026-04-19-agent-a-telegram-truth.md`. | local branch | 2026-04-19T10:47 |
 | 2.1 | Agent B | PARTIAL | migration 036 + `scripts/e2e_alex_telegram.py` + `scripts/cleanup_test_rows.py` | PR #16 merged; e2e no longer self-cleans. vercel.json cron for cleanup still deferred (Agent A owes follow-up) | e7cacd2 | 2026-04-17T07:20 |
 | 2.2 | Agent B | BLOCKED_ON_1.4 | migration adding `ai_conversations.channel_source` + `api/health.js` reporting sections + `v_real_leads_7d` view | 1.3 merged; awaits 1.4 merge | — | — |
 | 2.3 | Agent B | PASS | `pricing/index.html`, `book/index.html` | PR #16 merged; post-deploy Pixel verification pending | e7cacd2 | 2026-04-17T07:20 |
@@ -90,6 +90,7 @@ If any of these four cannot be produced, status must be `PARTIAL`, `SYNTHETIC`, 
 - **1.6B (keep route):** gate `type=telegram` with secret; keep `type=sms` open (but rate-limited + CAPTCHA) since it's a public form submission. Requires refactoring the auth check to be type-aware.
 - **1.6C (delete just the Telegram branch):** remove telegram path entirely; keep SMS path public. Minimal risk of spam.
 **No code change until Sergii picks A/B/C.**
+**Runbook added (2026-04-19):** `docs/runbook-notify-secret.md` with exact Vercel/env + curl verification steps.
 
 ### 2026-04-17 — CI audit targets prod, not PR preview (follow-up, logged as Task 1.7)
 **Status:** Mitigated by Codex's 01520d4 (outbox check relaxed on pull_request). Longer-term hardening (Task 1.7) to explicitly target the PR's preview deployment URL instead of prod — Agent A, low priority.
