@@ -70,6 +70,9 @@ def http_json(url, headers=None, timeout=10):
 
 
 def send_telegram(text):
+    enabled = os.environ.get('AUTONOMOUS_WATCHDOG_TELEGRAM_ENABLED', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+    if not enabled:
+        return False, 'disabled_by_env'
     token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
     chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
     if not token or not chat_id:

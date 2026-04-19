@@ -37,8 +37,7 @@ const ENV = {
   REPORT_EMAIL_FROM:         cleanEnv(process.env.REPORT_EMAIL_FROM) || 'Handy & Friend Reports <leads@handyandfriend.com>',
 };
 
-function validateEnv() {
-  const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'RESEND_API_KEY'];
+function validateEnv(required) {
   const missing = required.filter(k => !ENV[k]);
   if (missing.length) {
     throw new Error(`Missing required ENV vars: ${missing.join(', ')}`);
@@ -520,6 +519,24 @@ function generateAlerts(d7, d30) {
   return alerts;
 }
 
+function shouldDeliverReport(kpi) {
+  const policy = String(process.env.REPORT_DELIVERY_POLICY || 'signal_only').toLowerCase();
+  const force = ['1', 'true', 'yes', 'on'].includes(String(process.env.FORCE_SEND_REPORT || '').toLowerCase());
+  const { d7, d30 } = kpi;
+  const actionableAlerts = generateAlerts(d7, d30).filter(a => a.level === 'critical' || a.level === 'warning').length;
+  const hasSignal =
+    Number(d7.leads_total || 0) > 0 ||
+    Number(d7.revenue || 0) > 0 ||
+    Number(d7.jobs_completed || 0) > 0 ||
+    Number(d30.stale_leads || 0) > 0 ||
+    actionableAlerts > 0;
+
+  if (force) return { deliver: true, reason: 'forced_by_env' };
+  if (policy === 'always') return { deliver: true, reason: 'policy_always' };
+  if (!hasSignal) return { deliver: false, reason: 'no_actionable_signal' };
+  return { deliver: true, reason: 'signal_detected' };
+}
+
 // ── Report Formatting: Telegram ──────────────────────────────
 
 function formatTelegram(kpi) {
@@ -923,7 +940,7 @@ async function run(mode = 'full') {
 
   // Smoke test — just ping Telegram
   if (mode === 'smoke') {
-    validateEnv();
+    validateEnv(['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'RESEND_API_KEY']);
     const msgId = await sendTelegram(`🔍 <b>Smoke Test</b>\n\nDaily report system is alive.\n${fmtTime()} PT`);
     await sendEmail(
       `[Smoke Test] Daily Report — ${fmtDate()}`,
@@ -933,10 +950,16 @@ async function run(mode = 'full') {
     return;
   }
 
-  validateEnv();
+  validateEnv(['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']);
 
   // 1. Fetch data
   const kpi = await fetchAllKPI();
+  const deliveryDecision = shouldDeliverReport(kpi);
+
+  if (mode === 'full' && !deliveryDecision.deliver) {
+    log('info', 'Daily report delivery skipped by policy', { reason: deliveryDecision.reason });
+    return;
+  }
 
   // 2. Format reports
   const telegramText = formatTelegram(kpi);
@@ -957,6 +980,8 @@ async function run(mode = 'full') {
     log('info', 'Dry run complete — no messages sent');
     return;
   }
+
+  validateEnv(['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'RESEND_API_KEY']);
 
   // 3. Send Telegram
   let telegramOk = false;
@@ -1013,6 +1038,11 @@ const mode = args.includes('--dry-run') ? 'dry-run'
 run(mode).catch(err => {
   log('error', 'Fatal error in daily report', { error: err.message, stack: err.stack });
   // Last-resort Telegram alert
+  const fatalTgEnabled = ['1', 'true', 'yes', 'on'].includes(String(process.env.REPORT_FATAL_TELEGRAM_ENABLED || '').toLowerCase());
+  if (!fatalTgEnabled) {
+    process.exit(1);
+    return;
+  }
   sendTelegramAlert(`FATAL: Daily report crashed.\n<code>${err.message}</code>`).finally(() => {
     process.exit(1);
   });

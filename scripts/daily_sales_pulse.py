@@ -58,6 +58,9 @@ def sb_get(path):
 
 
 def send_telegram(text):
+    enabled = os.environ.get('SALES_PULSE_TELEGRAM_ENABLED', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+    if not enabled:
+        return False
     import urllib.request
     data = json.dumps({
         'chat_id': os.environ['TELEGRAM_CHAT_ID'],
@@ -156,7 +159,9 @@ def main():
     (out_dir / f'{now.strftime("%Y%m%d_%H%M")}.json').write_text(json.dumps(snap, indent=2, default=str))
 
     print(msg.replace('<b>', '').replace('</b>', ''))
-    send_telegram(msg)
+    sent = send_telegram(msg)
+    if not sent:
+        print('telegram_delivery=skipped')
     return 0
 
 

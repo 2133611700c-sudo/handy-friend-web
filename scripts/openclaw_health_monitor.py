@@ -514,6 +514,10 @@ def should_send_telegram_alert(overall_status: str, sev3_reasons: List[str], dig
     return True, "eligible"
 
 
+def should_send_fatal_telegram() -> bool:
+    return os.getenv("OPENCLAW_HEALTH_TG_FATAL_ENABLED", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def write_incident_supabase(base_url: str, api_key: str, summary: str, details: Dict[str, Any], status: str, log_path: pathlib.Path) -> Tuple[bool, str]:
     sev = "SEV3" if status == "RED" else ("SEV2" if status == "YELLOW" else "INFO")
     endpoint = f"{base_url}/rest/v1/ops_incidents"
@@ -806,7 +810,7 @@ def main() -> int:
 
         tg_token = telegram_token_from_env()
         tg_chat = os.getenv("TELEGRAM_CHAT_ID", "").strip()
-        if tg_token and tg_chat:
+        if tg_token and tg_chat and should_send_fatal_telegram():
             try:
                 send_telegram(tg_token, tg_chat, f"SOURCE HEALTH REPORT\nStatus: RED\nError: {err}")
             except Exception:
