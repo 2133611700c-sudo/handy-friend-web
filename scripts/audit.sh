@@ -295,6 +295,53 @@ else
   fail "outbox dlq_total present"
 fi
 
+# Delivery evidence gate: queue_depth=0 alone can be false-green if rows were
+# drained to failed without any successful dispatch.
+delivery_counts=$(python3 -c 'import json,sys
+raw=sys.argv[1] if len(sys.argv)>1 else "{}"
+sent=0
+failed=0
+try:
+  obj=json.loads(raw)
+except Exception:
+  obj={}
+slo=obj.get("slo") if isinstance(obj.get("slo"),dict) else {}
+if isinstance(slo.get("sent_1h"), (int,float)):
+  sent += int(slo.get("sent_1h") or 0)
+metrics=obj.get("metrics")
+if isinstance(metrics,list):
+  for row in metrics:
+    if not isinstance(row,dict):
+      continue
+    for k in ("sent_count","sent","sends_ok","ok_count"):
+      if isinstance(row.get(k),(int,float)):
+        sent += int(row.get(k) or 0)
+        break
+    for k in ("failed_count","failed","error_count"):
+      if isinstance(row.get(k),(int,float)):
+        failed += int(row.get(k) or 0)
+        break
+print(f"{sent} {failed}")' "$outbox_json")
+delivery_sent=$(printf '%s' "$delivery_counts" | awk '{print $1}')
+delivery_failed=$(printf '%s' "$delivery_counts" | awk '{print $2}')
+delivery_sent=${delivery_sent:-0}
+delivery_failed=${delivery_failed:-0}
+if [[ "$delivery_sent" =~ ^[0-9]+$ ]] && [[ "$delivery_sent" -gt 0 ]]; then
+  pass "outbox delivery evidence present (sent=$delivery_sent failed=$delivery_failed)"
+elif [[ "$delivery_failed" =~ ^[0-9]+$ ]] && [[ "$delivery_failed" -gt 0 ]]; then
+  if [[ "$RELAX_OUTBOX" -eq 1 ]]; then
+    note "[WARN] outbox empty but delivery not proven (sent=$delivery_sent failed=$delivery_failed)"
+  else
+    fail "outbox empty but delivery not proven (sent=$delivery_sent failed=$delivery_failed)"
+  fi
+else
+  if [[ "$RELAX_OUTBOX" -eq 1 ]]; then
+    note "[WARN] outbox delivery evidence missing (sent=$delivery_sent failed=$delivery_failed)"
+  else
+    fail "outbox delivery evidence missing (sent=$delivery_sent failed=$delivery_failed)"
+  fi
+fi
+
 slo_json=$(curl -sS "$SITE/api/process-outbox?action=slo" 2>/dev/null || echo '{}')
 slo_ok=$(json_bool ok "$slo_json")
 if [[ "$slo_ok" == "true" ]]; then
