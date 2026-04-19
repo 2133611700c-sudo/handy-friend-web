@@ -23,6 +23,37 @@ IGNORE_KEYWORDS = [
     "kitchen remodel", "bathroom addition", "room addition", "load bearing wall", "licensed contractor only",
 ]
 
+JOB_POST_PATTERNS = [
+    "hiring",
+    "helper wanted",
+    "part-time",
+    "full-time",
+    "position available",
+    "salary",
+    "pay depending",
+    "own tools",
+    "crew needed",
+    "subcontractor needed",
+]
+
+NON_LA_PATTERNS = [
+    "ohio",
+    "ontario",
+    "brampton",
+    "chattanooga",
+    "hamilton county",
+    "clermont",
+    "brown county",
+]
+
+TRADE_EXCLUDE_PATTERNS = [
+    "stucco",
+    "siding",
+    "roofing",
+    "flooring",
+    "concrete",
+]
+
 HOT_KEYWORDS = [
     "need handyman", "looking for handyman", "need help with",
     "tv mount", "tv mounting", "mount tv", "hang tv",
@@ -61,6 +92,12 @@ def classify_post(text: str) -> Classification:
     txt = (text or "").lower()
     if any(k in txt for k in IGNORE_KEYWORDS):
         return Classification("COLD", "ignore_keyword", 0, False)
+    if any(k in txt for k in JOB_POST_PATTERNS):
+        return Classification("COLD", "job_post", 0, False)
+    if any(k in txt for k in NON_LA_PATTERNS):
+        return Classification("COLD", "non_la_geo", 0, False)
+    if any(k in txt for k in TRADE_EXCLUDE_PATTERNS):
+        return Classification("COLD", "out_of_scope_trade", 0, False)
     if _looks_like_vendor_offer(txt):
         return Classification("COLD", "vendor_self_promo", 0, False)
 

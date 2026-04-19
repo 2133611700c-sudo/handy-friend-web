@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic social scanner -> social_leads + telegram alerts."""
+"""Deterministic social scanner -> social_leads candidate queue."""
 
 from __future__ import annotations
 
@@ -20,8 +20,6 @@ LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
-BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -131,85 +129,6 @@ def insert_social(post: dict[str, Any], cls: Any, source: str) -> tuple[str | No
     return (data[0].get("id") if data else None), True
 
 
-def mark_telegram_delivery(lead_id: str, source: str, message_id: str | None) -> None:
-    payload = {
-        "last_action_at": utcnow(),
-        "escalation_reason": f"telegram_sent:{source}:{message_id or 'unknown'}",
-    }
-    requests.patch(
-        f"{SUPABASE_URL}/rest/v1/social_leads?id=eq.{lead_id}",
-        headers=headers(),
-        json=payload,
-        timeout=20,
-    )
-
-
-def already_sent_to_telegram(lead_id: str) -> bool:
-    if not lead_id:
-        return False
-    try:
-        resp = requests.get(
-            f"{SUPABASE_URL}/rest/v1/social_leads",
-            headers=headers(),
-            params={"select": "id,escalation_reason", "id": f"eq.{lead_id}", "limit": "1"},
-            timeout=20,
-        )
-        if resp.status_code != 200:
-            return False
-        rows = resp.json() if isinstance(resp.json(), list) else []
-        if not rows:
-            return False
-        reason = str(rows[0].get("escalation_reason") or "")
-        return reason.startswith("telegram_sent:")
-    except Exception:
-        return False
-
-
-def send_telegram(post: dict[str, Any], cls: Any, lead_id: str | None, source: str) -> None:
-    if not BOT_TOKEN or not CHAT_ID:
-        return
-    if lead_id and already_sent_to_telegram(lead_id):
-        log_incident(
-            f"Duplicate Telegram prevented lead_id={lead_id} source={source}",
-            severity=3,
-            issue_type="telegram_dedupe",
-        )
-        return
-    msg = (
-        f"🔔 {cls.cls} LEAD [{source}]\n"
-        f"Author: {post.get('author', 'unknown')}\n"
-        f"Text: {(post.get('text') or '')[:180]}\n"
-        f"Lead ID: {lead_id or 'n/a'}"
-    )
-    resp = requests.post(
-        f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-        json={"chat_id": CHAT_ID, "text": msg},
-        timeout=20,
-    )
-    if resp.status_code >= 300:
-        log_incident(
-            f"telegram send failed lead_id={lead_id or 'n/a'} status={resp.status_code} body={resp.text[:180]}",
-            severity=2,
-            issue_type="telegram_send",
-        )
-        return
-    if lead_id:
-        try:
-            data = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {}
-            ok = bool(data.get("ok")) if isinstance(data, dict) else False
-            message_id = str(data.get("result", {}).get("message_id")) if isinstance(data, dict) else None
-            if not ok:
-                log_incident(
-                    f"telegram send not-ok lead_id={lead_id} body={str(data)[:180]}",
-                    severity=2,
-                    issue_type="telegram_send",
-                )
-                return
-            mark_telegram_delivery(lead_id, source, message_id)
-        except Exception as exc:
-            log_incident(f"telegram mark failed lead_id={lead_id}: {exc}", severity=2, issue_type="telegram_mark")
-
-
 def run(feed_path: str, source: str, dry_run: bool) -> int:
     try:
         posts = json.loads(Path(feed_path).read_text())
@@ -218,7 +137,7 @@ def run(feed_path: str, source: str, dry_run: bool) -> int:
         print(f"ERROR feed_read {exc}", file=sys.stderr)
         return 2
 
-    stats = {"total": 0, "hot": 0, "warm": 0, "cold": 0, "errors": 0}
+    stats = {"total": 0, "hot": 0, "warm": 0, "cold": 0, "errors": 0, "inserted": 0}
     for post in posts:
         stats["total"] += 1
         text = (post.get("text") or "").strip()
@@ -236,9 +155,9 @@ def run(feed_path: str, source: str, dry_run: bool) -> int:
             continue
         if cls.send_to_telegram and not dry_run:
             try:
-                lead_id, is_new = insert_social(post, cls, source)
+                _, is_new = insert_social(post, cls, source)
                 if is_new:
-                    send_telegram(post, cls, lead_id, source)
+                    stats["inserted"] += 1
             except Exception as exc:
                 stats["errors"] += 1
                 log_incident(f"scan insert/send failed: {exc}", severity=2, issue_type="scan_write")

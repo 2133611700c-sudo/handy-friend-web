@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import pathlib
@@ -461,6 +462,62 @@ def send_telegram(token: str, chat_id: str, text: str) -> Tuple[bool, str]:
     return False, f"telegram failed status={status} body={body}"
 
 
+def _alert_state_path() -> pathlib.Path:
+    return pathlib.Path(os.path.expanduser("~/handy-friend-ops/logs/openclaw_health_alert_state.json"))
+
+
+def load_alert_state() -> Dict[str, Any]:
+    path = _alert_state_path()
+    try:
+        if path.exists():
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                return data
+    except Exception:
+        pass
+    return {}
+
+
+def save_alert_state(state: Dict[str, Any]) -> None:
+    path = _alert_state_path()
+    ensure_log_path(path)
+    path.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def should_send_telegram_alert(overall_status: str, sev3_reasons: List[str], digest: str) -> Tuple[bool, str]:
+    mode = os.getenv("OPENCLAW_HEALTH_TG_MODE", "critical_only").strip().lower()
+    cooldown_min = int(os.getenv("OPENCLAW_HEALTH_TG_COOLDOWN_MIN", "180"))
+    repeat_same_digest_min = int(os.getenv("OPENCLAW_HEALTH_TG_REPEAT_SAME_DIGEST_MIN", "720"))
+
+    if mode == "off":
+        return False, "telegram disabled by OPENCLAW_HEALTH_TG_MODE=off"
+    if mode == "critical_only" and (overall_status != "RED" or not sev3_reasons):
+        return False, "not critical (requires RED + sev3 reasons)"
+    if mode not in {"critical_only", "all_non_green"} and overall_status == "GREEN":
+        return False, "green status"
+    if mode == "all_non_green" and overall_status == "GREEN":
+        return False, "green status"
+
+    state = load_alert_state()
+    last_sent_ts = parse_iso(str(state.get("last_sent_at") or ""))
+    last_hash = str(state.get("last_digest_hash") or "")
+    digest_hash = hashlib.sha256(digest.encode("utf-8")).hexdigest()
+    now = utc_now()
+
+    if last_sent_ts:
+        age_min = (now - last_sent_ts).total_seconds() / 60.0
+        if last_hash == digest_hash and age_min < repeat_same_digest_min:
+            return False, f"digest unchanged ({age_min:.1f}m<{repeat_same_digest_min}m repeat window)"
+        if age_min < cooldown_min:
+            return False, f"cooldown active ({age_min:.1f}m<{cooldown_min}m)"
+
+    return True, "eligible"
+
+
+def should_send_fatal_telegram() -> bool:
+    return os.getenv("OPENCLAW_HEALTH_TG_FATAL_ENABLED", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def write_incident_supabase(base_url: str, api_key: str, summary: str, details: Dict[str, Any], status: str, log_path: pathlib.Path) -> Tuple[bool, str]:
     sev = "SEV3" if status == "RED" else ("SEV2" if status == "YELLOW" else "INFO")
     endpoint = f"{base_url}/rest/v1/ops_incidents"
@@ -726,11 +783,20 @@ def main() -> int:
             log_line(log_path, f"incident_write: {ok_inc} {inc_msg}")
 
             if tg_token and tg_chat:
-                if overall_status != "GREEN":
+                allow_tg, tg_reason = should_send_telegram_alert(overall_status, sev3_reasons, digest)
+                if allow_tg:
                     ok_tg, tg_msg = send_telegram(tg_token, tg_chat, digest)
                     log_line(log_path, f"telegram: {ok_tg} {tg_msg}")
+                    if ok_tg:
+                        save_alert_state(
+                            {
+                                "last_sent_at": utc_now().isoformat(),
+                                "last_status": overall_status,
+                                "last_digest_hash": hashlib.sha256(digest.encode("utf-8")).hexdigest(),
+                            }
+                        )
                 else:
-                    log_line(log_path, "telegram skipped: status=GREEN, no alert needed")
+                    log_line(log_path, f"telegram skipped: {tg_reason}")
             else:
                 log_line(log_path, "telegram skipped: TELEGRAM_BOT_TOKEN/TELEGRAM_WEBHOOK_SECRET or TELEGRAM_CHAT_ID missing")
 
@@ -744,7 +810,7 @@ def main() -> int:
 
         tg_token = telegram_token_from_env()
         tg_chat = os.getenv("TELEGRAM_CHAT_ID", "").strip()
-        if tg_token and tg_chat:
+        if tg_token and tg_chat and should_send_fatal_telegram():
             try:
                 send_telegram(tg_token, tg_chat, f"SOURCE HEALTH REPORT\nStatus: RED\nError: {err}")
             except Exception:
