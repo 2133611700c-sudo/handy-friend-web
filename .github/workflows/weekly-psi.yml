@@ -1,0 +1,51 @@
+name: Weekly PageSpeed Insights
+
+on:
+  schedule:
+    # Monday 10:00 UTC (~02:00 PT) — fresh perf snapshot every week
+    - cron: '0 10 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-psi
+  cancel-in-progress: false
+
+jobs:
+  psi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run PSI probes
+        env:
+          PSI_API_KEY: ${{ secrets.PSI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: bash scripts/psi_weekly.sh
+
+      - name: Commit report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ops/psi-reports/ || true
+          if ! git diff --staged --quiet; then
+            DATE=$(date -u +%Y-%m-%d)
+            git commit -m "ops(psi): weekly report ${DATE}" -m "Auto-generated via .github/workflows/weekly-psi.yml"
+            git push origin HEAD:main || echo "Push failed (branch protected) - artifact still uploaded"
+          fi
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: psi-report-${{ github.run_id }}
+          path: ops/psi-reports/*.md
+          retention-days: 180

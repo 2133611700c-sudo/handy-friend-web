@@ -53,6 +53,52 @@
   })();
   </script>
   <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=741929941112529&ev=PageView&noscript=1"/></noscript>
+
+  <!-- JSON-LD: BreadcrumbList + HomeAndConstructionBusiness @id reference + OfferCatalog -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type":"ListItem","position":1,"name":"Home","item":"https://handyandfriend.com/"},
+          {"@type":"ListItem","position":2,"name":"Pricing","item":"https://handyandfriend.com/pricing"}
+        ]
+      },
+      {
+        "@type":"WebPage",
+        "name":"Handy & Friend Pricing — Los Angeles",
+        "url":"https://handyandfriend.com/pricing",
+        "description":"Flat-rate labor-only pricing for handyman services across Los Angeles. TV mounting from $150, drywall repair from $120, furniture assembly from $150, and more.",
+        "isPartOf":{"@id":"https://handyandfriend.com/#business"},
+        "mainEntity":{
+          "@type":"OfferCatalog",
+          "name":"Handyman Services — Flat-Rate Pricing",
+          "provider":{"@id":"https://handyandfriend.com/#business"},
+          "itemListElement":[
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"TV Mounting — Standard"},"price":"150","priceCurrency":"USD","priceSpecification":{"@type":"PriceSpecification","minPrice":"150","priceCurrency":"USD"},"availability":"https://schema.org/InStock"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"TV Mounting — Hidden Wire"},"price":"185","priceCurrency":"USD"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Drywall Repair — Small Patch"},"price":"120","priceCurrency":"USD","priceSpecification":{"@type":"PriceSpecification","minPrice":"120","priceCurrency":"USD"}},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Furniture Assembly — Small"},"price":"150","priceCurrency":"USD"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Furniture Assembly — Dresser"},"price":"200","priceCurrency":"USD"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Furniture Assembly — Bed Frame"},"price":"275","priceCurrency":"USD"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Art & Mirror Hanging — Up to 5 Pieces"},"price":"150","priceCurrency":"USD"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Plumbing — Faucet Install"},"price":"150","priceCurrency":"USD"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Plumbing — Toilet Install"},"price":"165","priceCurrency":"USD"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Electrical — Light Fixture"},"price":"150","priceCurrency":"USD"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Electrical — Outlet Replacement"},"price":"150","priceCurrency":"USD"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Door Installation — Prehung"},"price":"140","priceCurrency":"USD"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Vanity Installation — Single"},"price":"195","priceCurrency":"USD"},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Interior Painting — per sq ft"},"priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"3.00","priceCurrency":"USD","unitCode":"FTK","unitText":"per sq ft"}},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Flooring — LVP / Laminate per sq ft"},"priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"3.00","priceCurrency":"USD","unitCode":"FTK","unitText":"per sq ft"}},
+            {"@type":"Offer","itemOffered":{"@type":"Service","name":"Backsplash Installation — tile per sq ft"},"priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"20","priceCurrency":"USD","unitCode":"FTK","unitText":"per sq ft"}}
+          ]
+        }
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->

@@ -9,6 +9,22 @@
   function gtag(){ dataLayer.push(arguments); }
   window.gtag = gtag;
 
+  /* ── 1a. Consent Mode V2 defaults (runs BEFORE any third-party tag) ──
+     Owner directive: site is CCPA/GDPR-aware. We grant analytics by default
+     (legitimate interest under CCPA for a US local business) and keep
+     ad_storage/ad_personalization/ad_user_data denied-by-default. If a
+     cookie banner is added later, call gtag('consent','update', …) there. */
+  gtag('consent', 'default', {
+    'ad_storage':             'denied',
+    'ad_user_data':           'denied',
+    'ad_personalization':     'denied',
+    'analytics_storage':      'granted',
+    'functionality_storage':  'granted',
+    'security_storage':       'granted',
+    'personalization_storage':'denied',
+    'wait_for_update':        500
+  });
+
   /* ── 2. Load third-party scripts (deferred) ── */
   function idle(fn){
     if ('requestIdleCallback' in window) requestIdleCallback(fn, {timeout: 3500});
@@ -315,4 +331,34 @@
       }
     });
   }
+
+  /* ── N. Core Web Vitals → GA4 (real-user monitoring) ──
+     Loads web-vitals UMD build from CDN after idle. Sends LCP, INP, CLS,
+     FCP, TTFB as GA4 events with metric_rating (good/needs-improvement/poor)
+     so we can filter in the Events explorer and build a Looker dashboard.
+     Version 3.5.2 ships an INP implementation that matches Chrome's official
+     calculation. Total size ~3KB gzipped. */
+  idle(function(){
+    loadScript('https://unpkg.com/web-vitals@3.5.2/dist/web-vitals.iife.js', function(){
+      if (!window.webVitals) return;
+      function send(metric){
+        if (typeof gtag !== 'function') return;
+        gtag('event', metric.name, {
+          event_category:        'Web Vitals',
+          event_label:           metric.id,
+          value:                 Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
+          metric_value:          metric.value,
+          metric_rating:         metric.rating,
+          metric_delta:          metric.delta,
+          metric_navigation_type: metric.navigationType,
+          non_interaction:       true
+        });
+      }
+      webVitals.onLCP(send);
+      webVitals.onINP(send);
+      webVitals.onCLS(send);
+      webVitals.onFCP(send);
+      webVitals.onTTFB(send);
+    });
+  });
 })();
