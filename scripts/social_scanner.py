@@ -22,6 +22,12 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+SOCIAL_SCANNER_TELEGRAM_ENABLED = os.environ.get("SOCIAL_SCANNER_TELEGRAM_ENABLED", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 
 logging.basicConfig(
     level=logging.INFO,
@@ -211,6 +217,8 @@ def send_telegram(post: dict[str, Any], cls: Any, lead_id: str | None, source: s
 
 
 def run(feed_path: str, source: str, dry_run: bool) -> int:
+    if not SOCIAL_SCANNER_TELEGRAM_ENABLED:
+        log.info("social scanner telegram forwarding is disabled (SOCIAL_SCANNER_TELEGRAM_ENABLED=0)")
     try:
         posts = json.loads(Path(feed_path).read_text())
     except Exception as exc:
@@ -218,7 +226,7 @@ def run(feed_path: str, source: str, dry_run: bool) -> int:
         print(f"ERROR feed_read {exc}", file=sys.stderr)
         return 2
 
-    stats = {"total": 0, "hot": 0, "warm": 0, "cold": 0, "errors": 0}
+    stats = {"total": 0, "hot": 0, "warm": 0, "cold": 0, "errors": 0, "inserted": 0, "telegram_sent": 0, "telegram_skipped": 0}
     for post in posts:
         stats["total"] += 1
         text = (post.get("text") or "").strip()
@@ -238,7 +246,12 @@ def run(feed_path: str, source: str, dry_run: bool) -> int:
             try:
                 lead_id, is_new = insert_social(post, cls, source)
                 if is_new:
+                    stats["inserted"] += 1
+                if is_new and SOCIAL_SCANNER_TELEGRAM_ENABLED:
                     send_telegram(post, cls, lead_id, source)
+                    stats["telegram_sent"] += 1
+                elif is_new:
+                    stats["telegram_skipped"] += 1
             except Exception as exc:
                 stats["errors"] += 1
                 log_incident(f"scan insert/send failed: {exc}", severity=2, issue_type="scan_write")

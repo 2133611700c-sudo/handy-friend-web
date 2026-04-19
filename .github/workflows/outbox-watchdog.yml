@@ -21,9 +21,6 @@ jobs:
     steps:
       - name: Probe /api/health?type=outbox
         id: probe
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           set -euo pipefail
 
@@ -70,12 +67,11 @@ jobs:
             ALERT="${ALERT}🗑️ DLQ=${DLQ_TOTAL} (>5)%0A"
           fi
 
-          if [ -n "$ALERT" ] && [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
-            curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-              -d "chat_id=${TELEGRAM_CHAT_ID}" \
-              -d "text=Outbox Watchdog ALERT:%0A${ALERT}%0AAction: POST /api/process-outbox?action=replay_dlq (requires CRON_SECRET)%0ARun: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-              > /dev/null
-            echo "ALERT sent to Telegram"
+          if [ -n "$ALERT" ]; then
+            echo "ALERT detected:"
+            echo "$ALERT"
+            echo "Action: POST /api/process-outbox?action=replay_dlq (requires CRON_SECRET)"
+            echo "Run URL: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             exit 1
           fi
 
