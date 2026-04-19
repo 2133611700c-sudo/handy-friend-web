@@ -213,6 +213,69 @@
     ]
   }
   </script>
+
+  <!-- LocalBusiness schema (HomeAndConstructionBusiness) — enables knowledge panel, call button in SERP, local pack eligibility -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HomeAndConstructionBusiness",
+    "name": "Handy & Friend",
+    "url": "https://handyandfriend.com/services",
+    "telephone": "+12133611700",
+    "email": "hello@handyandfriend.com",
+    "priceRange": "$$",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "1213 Gordon St",
+      "addressLocality": "Los Angeles",
+      "addressRegion": "CA",
+      "postalCode": "90038",
+      "addressCountry": "US"
+    },
+    "areaServed": [
+      {"@type":"City","name":"Los Angeles","containedInPlace":{"@type":"State","name":"California"}},
+      {"@type":"Place","name":"Hollywood"},
+      {"@type":"Place","name":"West Hollywood"},
+      {"@type":"Place","name":"Silver Lake"},
+      {"@type":"Place","name":"Echo Park"},
+      {"@type":"Place","name":"Los Feliz"},
+      {"@type":"Place","name":"Koreatown"},
+      {"@type":"Place","name":"Mid-City"},
+      {"@type":"Place","name":"Beverly Grove"},
+      {"@type":"Place","name":"Santa Monica"},
+      {"@type":"Place","name":"Culver City"},
+      {"@type":"Place","name":"Sherman Oaks"},
+      {"@type":"Place","name":"Studio City"},
+      {"@type":"Place","name":"Glendale"},
+      {"@type":"Place","name":"Burbank"},
+      {"@type":"Place","name":"Downtown Los Angeles"}
+    ],
+    "serviceArea": {
+      "@type": "GeoCircle",
+      "geoMidpoint": {"@type":"GeoCoordinates","latitude":34.0837,"longitude":-118.3413},
+      "geoRadius": "20000"
+    },
+    "logo": "https://handyandfriend.com/assets/img/og.jpg",
+    "image": ["https://handyandfriend.com/assets/img/og.jpg"],
+    "sameAs": [
+      "https://www.facebook.com/profile.php?id=61588215297678",
+      "https://nextdoor.com/page/handy-friend/",
+      "https://www.bingplaces.com/business/165279e3-e9da-4c09-b925-0c1f1b080031"
+    ],
+    "hasMap": "https://www.google.com/maps/search/?api=1&query=Handy+%26+Friend+1213+Gordon+St+Los+Angeles+CA+90038",
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+        "opens": "08:00",
+        "closes": "19:00"
+      }
+    ],
+    "paymentAccepted": "Cash, Credit Card, Debit Card, Zelle, Venmo",
+    "currenciesAccepted": "USD",
+    "knowsLanguage": ["en","es","ru","he"]
+  }
+  </script>
 </head>
 <body>
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NQTL3S6Q" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
