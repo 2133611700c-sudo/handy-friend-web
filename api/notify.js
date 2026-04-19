@@ -33,20 +33,31 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method Not Allowed' });
 
-  // Enforce shared secret. If env is unset the endpoint is disabled
-  // (fail-closed) to prevent accidental public Telegram spam. Owner
-  // must set HF_NOTIFY_SECRET in Vercel env to activate.
-  if (!NOTIFY_SECRET) {
-    return res.status(503).json({ success: false, error: 'notify_disabled' });
-  }
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  const type = String(body.type || 'telegram').toLowerCase();
   const incoming = req.headers['x-hf-notify-secret'] || '';
-  if (incoming !== NOTIFY_SECRET) {
-    return res.status(403).json({ success: false, error: 'forbidden' });
+  const trustedOrigin = isTrustedOrigin(req);
+
+  // Auth policy:
+  // - telegram: strict secret required; fail-closed when secret missing.
+  // - sms: allow only from trusted same-site origin/referrer OR valid secret.
+  if (type === 'telegram') {
+    if (!NOTIFY_SECRET) {
+      return res.status(503).json({ success: false, error: 'notify_disabled' });
+    }
+    if (incoming !== NOTIFY_SECRET) {
+      return res.status(403).json({ success: false, error: 'forbidden' });
+    }
+  } else if (type === 'sms') {
+    const secretOk = NOTIFY_SECRET && incoming === NOTIFY_SECRET;
+    if (!trustedOrigin && !secretOk) {
+      return res.status(403).json({ success: false, error: 'forbidden' });
+    }
+  } else {
+    return res.status(400).json({ success: false, error: 'unsupported_type' });
   }
 
   const ip = getClientIp(req);
-  const body = req.body && typeof req.body === 'object' ? req.body : {};
-  const type = String(body.type || 'telegram').toLowerCase();
 
   const rateKey = `notify:${type}:${ip}`;
   const rate = checkRateLimit({ key: rateKey, limit: 20, windowMs: 60 * 1000 });
@@ -60,6 +71,19 @@ export default async function handler(req, res) {
   }
 
   return handleTelegram(req, res, body);
+}
+
+function isTrustedOrigin(req) {
+  const origin = String(req.headers.origin || '').trim();
+  const referer = String(req.headers.referer || '').trim();
+  const trustedHosts = [
+    'https://handyandfriend.com',
+    'https://www.handyandfriend.com'
+  ];
+
+  const originTrusted = trustedHosts.some((h) => origin === h);
+  const refererTrusted = trustedHosts.some((h) => referer.startsWith(h + '/')) || trustedHosts.includes(referer);
+  return originTrusted || refererTrusted;
 }
 
 // ─── Telegram ────────────────────────────────────────────────────────────────
