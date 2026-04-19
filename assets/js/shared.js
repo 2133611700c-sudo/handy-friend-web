@@ -62,6 +62,47 @@
     if (typeof dataLayer !== 'undefined') dataLayer.push(Object.assign({ event: eventName }, payload));
   };
 
+  function getOrCreateSessionId() {
+    try {
+      var k = 'hf_session_id';
+      var existing = localStorage.getItem(k);
+      if (existing) return existing;
+      var created = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem(k, created);
+      return created;
+    } catch (e) {
+      return 'sess_' + Date.now();
+    }
+  }
+
+  function postCtaEvent(eventName, extra) {
+    try {
+      var payload = {
+        session_id: getOrCreateSessionId(),
+        event_name: eventName,
+        page_path: window.location.pathname || '/',
+        channel_source: 'real_website_chat',
+        is_test: false,
+        metadata: Object.assign({ ts: new Date().toISOString() }, extra || {})
+      };
+      if (typeof window.hfPostCtaEvent === 'function') {
+        window.hfPostCtaEvent(eventName, extra || {});
+        return;
+      }
+      if (navigator.sendBeacon) {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        navigator.sendBeacon('/api/health?type=cta_event', blob);
+        return;
+      }
+      fetch('/api/health?type=cta_event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify(payload)
+      }).catch(function(){});
+    } catch (e) {}
+  }
+
   /* ── 5. Phone / email / WhatsApp click tracking ──
      DISABLED on root landing page (index.html ships its own richer listener
      at ~line 595 that also fires Google Ads phone_call conversion + beacon
@@ -77,11 +118,14 @@
 
     if (href.indexOf('tel:') === 0) {
       emitCoreEvent('phone_click', { link_url: href, link_text: text });
+      postCtaEvent('phone_click', { link_url: href, link_text: text });
       if (typeof fbq !== 'undefined') fbq('trackCustom', 'phone_click', { link_url: href });
     } else if (href.indexOf('mailto:') === 0) {
       emitCoreEvent('email_click', { link_url: href, link_text: text });
+      postCtaEvent('email_click', { link_url: href, link_text: text });
     } else if (href.indexOf('wa.me') > -1 || href.indexOf('whatsapp') > -1) {
       emitCoreEvent('whatsapp_click', { link_url: href, link_text: text });
+      postCtaEvent('whatsapp_click', { link_url: href, link_text: text });
       if (typeof fbq !== 'undefined') fbq('trackCustom', 'whatsapp_click', { link_url: href });
     }
   });

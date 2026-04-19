@@ -11,6 +11,7 @@
  */
 
 const { getConfig } = require('./_lib/supabase-admin.js');
+const { getClientIp, checkRateLimit } = require('./_lib/rate-limit.js');
 const { getCanonicalPriceMatrix, getMessengerPostbackTexts, getPricingSourceVersion } = require('../lib/price-registry.js');
 const { checkMigration007 } = require('../lib/lead-pipeline.js');
 const { analyzeMessengerPricingPolicy } = require('../lib/pricing-policy.js');
@@ -19,7 +20,7 @@ const { sendTelegramMessage } = require('../lib/telegram/send.js');
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -27,11 +28,11 @@ export default async function handler(req, res) {
     const healthy = Boolean(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL);
     return res.status(healthy ? 200 : 503).end();
   }
+  const type = String(req.query?.type || 'basic').toLowerCase();
+  if (req.method === 'POST' && type === 'cta_event') return ctaEventIngest(req, res);
   if (req.method !== 'GET') {
     return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
   }
-
-  const type = String(req.query?.type || 'basic').toLowerCase();
 
   if (type === 'funnel') return funnelHealth(req, res);
   if (type === 'fb') return fbHealth(req, res);
@@ -45,6 +46,97 @@ export default async function handler(req, res) {
   if (type === 'telegram') return telegramHealth(req, res);
   if (type === 'telegram_watchdog') return telegramWatchdog(req, res);
   return basicHealth(req, res);
+}
+
+async function ctaEventIngest(req, res) {
+  const config = getConfig();
+  if (!config) return res.status(500).json({ ok: false, error: 'supabase_not_configured' });
+
+  const ip = getClientIp(req);
+  const rate = checkRateLimit({ key: `cta_event:${ip}`, limit: 90, windowMs: 60 * 1000 });
+  if (!rate.ok) {
+    res.setHeader('Retry-After', String(rate.retryAfterSec || 30));
+    return res.status(429).json({ ok: false, error: 'rate_limited' });
+  }
+
+  const origin = String(req.headers.origin || '').trim();
+  const referer = String(req.headers.referer || '').trim();
+  if (origin && !isTrustedHealthOrigin(origin, referer)) {
+    return res.status(403).json({ ok: false, error: 'forbidden_origin' });
+  }
+
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  const eventName = String(body.event_name || '').trim().toLowerCase();
+  const allowed = new Set([
+    'widget_seen', 'widget_open', 'chat_first_message', 'phone_click',
+    'whatsapp_click', 'email_click', 'messenger_click', 'phone_captured',
+    'quote_shown', 'handoff_to_owner', 'abandon'
+  ]);
+  if (!allowed.has(eventName)) {
+    return res.status(400).json({ ok: false, error: 'invalid_event_name' });
+  }
+
+  const sessionId = String(body.session_id || '').trim().slice(0, 128);
+  if (!sessionId) {
+    return res.status(400).json({ ok: false, error: 'session_id_required' });
+  }
+
+  const pagePath = String(body.page_path || '/').trim().slice(0, 260);
+  const channelSource = String(body.channel_source || 'real_website_chat').trim().slice(0, 80);
+  const isTest = Boolean(body.is_test);
+  const metadata = sanitizeMeta(body.metadata);
+
+  const payload = {
+    session_id: sessionId,
+    event_name: eventName,
+    page_path: pagePath,
+    metadata,
+    is_test: isTest,
+    channel_source: channelSource
+  };
+
+  const insertResp = await fetch(`${config.projectUrl}/rest/v1/funnel_events`, {
+    method: 'POST',
+    headers: {
+      apikey: config.serviceRoleKey,
+      Authorization: `Bearer ${config.serviceRoleKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!insertResp.ok) {
+    const text = await insertResp.text().catch(() => '');
+    if (insertResp.status === 404 || text.includes('relation "public.funnel_events" does not exist')) {
+      return res.status(202).json({ ok: true, stored: false, reason: 'funnel_events_missing' });
+    }
+    return res.status(502).json({ ok: false, stored: false, error: `postgrest_${insertResp.status}`, details: text.slice(0, 220) });
+  }
+
+  const rows = await insertResp.json().catch(() => []);
+  const row = Array.isArray(rows) && rows[0] ? rows[0] : null;
+  return res.status(200).json({ ok: true, stored: true, id: row?.id || null });
+}
+
+function sanitizeMeta(value) {
+  if (!value || typeof value !== 'object') return {};
+  const copy = JSON.parse(JSON.stringify(value));
+  const blocked = new Set(['phone', 'email', 'full_name', 'name', 'contact']);
+  Object.keys(copy).forEach((k) => {
+    if (blocked.has(k.toLowerCase())) delete copy[k];
+    const v = copy[k];
+    if (typeof v === 'string' && (/@/.test(v) || /\d{3}[\s().-]?\d{3}[\s.-]?\d{4}/.test(v))) {
+      copy[k] = '[redacted]';
+    }
+  });
+  return copy;
+}
+
+function isTrustedHealthOrigin(origin, referer) {
+  const trusted = ['https://handyandfriend.com', 'https://www.handyandfriend.com'];
+  if (trusted.includes(origin)) return true;
+  return trusted.some((h) => referer.startsWith(h + '/')) || trusted.includes(referer);
 }
 
 /* ── Telegram watchdog (cron) ──
