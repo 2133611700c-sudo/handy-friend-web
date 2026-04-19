@@ -36,6 +36,13 @@ Close same-day leadgen blockers: SMS path recovery + CTA-to-DB ingestion path.
 - Prod DB insert proof for `funnel_events` requires migration application in Supabase.
 - Live behavior change on `/api/notify` and `/api/health?type=cta_event` requires deploy.
 
+## Live ops executed
+- `supabase db push --include-all` executed successfully.
+  - Applied: `20260419110000_037_funnel_events.sql`
+  - Verified with `supabase migration list`: local=remote for `20260419110000`.
+- `vercel --prod --yes` failed due auth:
+  - Error: `The specified token is not valid. Use vercel login to generate a new token.`
+
 ## Next required actions
 1. Deploy branch.
 2. Apply migration `20260419110000_037_funnel_events.sql` to prod Supabase.
