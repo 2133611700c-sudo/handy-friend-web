@@ -73,23 +73,28 @@ def send_telegram(text):
     enabled = os.environ.get('AUTONOMOUS_WATCHDOG_TELEGRAM_ENABLED', '').strip().lower() in {'1', 'true', 'yes', 'on'}
     if not enabled:
         return False, 'disabled_by_env'
-    token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
-    chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
-    if not token or not chat_id:
-        return False, 'env_missing'
     try:
-        import urllib.request
-        data = json.dumps({
-            'chat_id': chat_id, 'text': text, 'parse_mode': 'HTML',
-            'disable_web_page_preview': True
-        }).encode()
-        req = urllib.request.Request(
-            f'https://api.telegram.org/bot{token}/sendMessage',
-            data=data, headers={'Content-Type': 'application/json'}, method='POST'
+        proc = subprocess.run(
+            [
+                'node',
+                'scripts/send-telegram.mjs',
+                '--source', 'autonomous_watchdog',
+                '--category', 'watchdog_alert',
+                '--actionable', '1',
+                '--stdin',
+            ],
+            cwd=str(ROOT),
+            input=text.encode('utf-8', errors='replace'),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=10,
+            check=False,
         )
-        with urllib.request.urlopen(req, timeout=5) as r:
-            j = json.loads(r.read())
-            return j.get('ok', False), j.get('result', {}).get('message_id')
+        if proc.returncode != 0:
+            err = proc.stderr.decode('utf-8', errors='replace').strip()
+            return False, err[:200] if err else 'send_telegram_failed'
+        payload = json.loads(proc.stdout.decode('utf-8', errors='replace') or '{}')
+        return bool(payload.get('ok') is True), payload.get('messageId') or payload.get('telegramSendId')
     except Exception as e:
         return False, str(e)[:200]
 

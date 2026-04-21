@@ -454,12 +454,37 @@ def build_digest(
 
 
 def send_telegram(token: str, chat_id: str, text: str) -> Tuple[bool, str]:
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {"chat_id": chat_id, "text": text}
-    status, body = http_json("POST", url, headers={}, body=payload)
-    if status < 300 and isinstance(body, dict) and body.get("ok"):
-        return True, "sent"
-    return False, f"telegram failed status={status} body={body}"
+    try:
+        proc = subprocess.run(
+            [
+                "node",
+                "scripts/send-telegram.mjs",
+                "--source",
+                "openclaw_health_monitor",
+                "--category",
+                "source_health_report",
+                "--actionable",
+                "1",
+                "--token",
+                token,
+                "--chat-id",
+                chat_id,
+                "--text",
+                text,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+        if proc.returncode != 0:
+            return False, f"telegram failed exit={proc.returncode} err={proc.stderr.strip()[:200]}"
+        payload = json.loads(proc.stdout.strip() or "{}")
+        if payload.get("ok") is True:
+            return True, "sent"
+        return False, f"telegram not ok: {str(payload)[:200]}"
+    except Exception as exc:
+        return False, f"telegram exception: {str(exc)[:200]}"
 
 
 def _alert_state_path() -> pathlib.Path:

@@ -1,12 +1,10 @@
 #!/bin/bash
 # Usage: bash scripts/tg-alert.sh "message text"
-source "$(dirname "$0")/../.env.production" 2>/dev/null
-if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-  echo "ERROR: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set"
-  exit 1
-fi
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+source "$ROOT/.env.production" 2>/dev/null || true
+source "$ROOT/.env.local" 2>/dev/null || true
 MESSAGE="${1:-Test alert from Handy and Friend Lead Hunter}"
-curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-  -d chat_id="${TELEGRAM_CHAT_ID}" \
-  -d text="${MESSAGE}" > /dev/null 2>&1
+printf '%s\n' "$MESSAGE" \
+  | node "$ROOT/scripts/send-telegram.mjs" --source tg_alert --category manual_alert --actionable 1 --stdin > /dev/null
 echo "Alert sent."

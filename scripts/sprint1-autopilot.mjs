@@ -7,6 +7,10 @@
  *
  * Uses: Supabase REST + Resend + Telegram
  */
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/send.js');
 
 function clean(v) {
   return String(v || '').trim().replace(/\\n$/, '');
@@ -80,21 +84,27 @@ async function sbInsert(table, body) {
 
 async function sendTelegramHtml(html) {
   if (!ENV.TELEGRAM_BOT_TOKEN || !ENV.TELEGRAM_CHAT_ID) return { ok: false, skipped: true };
-  const resp = await fetch(`https://api.telegram.org/bot${ENV.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: ENV.TELEGRAM_CHAT_ID,
-      text: html,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
-    }),
+  const send = await unifiedTelegramSend({
+    source: 'sprint1_autopilot',
+    text: html,
+    token: ENV.TELEGRAM_BOT_TOKEN,
+    chatId: ENV.TELEGRAM_CHAT_ID,
+    timeoutMs: 8000,
+    extra: {
+      category: 'sprint1_autopilot',
+      actionable: true,
+    },
   });
-  const json = await resp.json().catch(() => ({}));
-  if (!json.ok) {
-    return { ok: false, error: json };
+  if (!send.ok) {
+    return {
+      ok: false,
+      error: {
+        code: send.errorCode || 'unknown',
+        description: send.errorDescription || 'send_failed',
+      },
+    };
   }
-  return json;
+  return send;
 }
 
 async function sendOwnerEmail(subject, html) {

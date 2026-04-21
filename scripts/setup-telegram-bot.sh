@@ -38,11 +38,14 @@ fi
 echo ""
 echo "Sending test message..."
 
-RESPONSE=$(curl -s -X POST \
-  "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-  -d "chat_id=${TELEGRAM_CHAT_ID}" \
-  -d "text=Lead Hunter connected! System ready. Run 'bash exo.sh leads health' to check status." \
-  -d "parse_mode=HTML")
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+RESPONSE=$(node "$ROOT/scripts/send-telegram.mjs" \
+  --source setup_telegram_bot \
+  --category setup_test \
+  --actionable 0 \
+  --token "$TELEGRAM_BOT_TOKEN" \
+  --chat-id "$TELEGRAM_CHAT_ID" \
+  --text "Lead Hunter connected! System ready. Run 'bash exo.sh leads health' to check status." 2>/dev/null || true)
 
 if echo "$RESPONSE" | grep -q '"ok":true'; then
   echo "Test message sent successfully!"

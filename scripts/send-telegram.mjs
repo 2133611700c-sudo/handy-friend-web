@@ -6,7 +6,7 @@ const require = createRequire(import.meta.url);
 const { sendTelegramMessage } = require('../lib/telegram/send.js');
 
 function usage() {
-  console.error('Usage: node scripts/send-telegram.mjs --source <source> [--category <category>] [--actionable 0|1] [--lead-id <id>] [--stdin | --text <text>]');
+  console.error('Usage: node scripts/send-telegram.mjs --source <source> [--category <category>] [--actionable 0|1] [--lead-id <id>] [--token <token>] [--chat-id <chatId>] [--stdin | --text <text>]');
   process.exit(2);
 }
 
@@ -18,6 +18,8 @@ function parseArgs(argv) {
     leadId: '',
     text: '',
     stdin: false,
+    token: '',
+    chatId: '',
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -28,6 +30,8 @@ function parseArgs(argv) {
     else if (arg === '--actionable') out.actionable = ['1', 'true', 'yes', 'on'].includes(String(argv[++i] || '').toLowerCase());
     else if (arg === '--text') out.text = String(argv[++i] || '');
     else if (arg === '--stdin') out.stdin = true;
+    else if (arg === '--token') out.token = String(argv[++i] || '');
+    else if (arg === '--chat-id') out.chatId = String(argv[++i] || '');
     else if (arg === '--help' || arg === '-h') usage();
     else usage();
   }
@@ -50,6 +54,8 @@ async function main() {
     source: args.source,
     leadId: args.leadId || null,
     text: args.text.trim(),
+    token: args.token || undefined,
+    chatId: args.chatId || undefined,
     timeoutMs: 8000,
     extra: {
       category: args.category || null,
