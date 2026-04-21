@@ -85,6 +85,35 @@ function calculatePriority(postText, area) {
   return 'cool';
 }
 
+function shouldEnqueueHunterAlert(input) {
+  const platform = String(input.platform || '').trim().toLowerCase();
+  const authorName = String(input.author_name || '').trim().toLowerCase();
+  const scope = String(input.scope || '').trim().toUpperCase();
+  const priority = String(input.priority || '').trim().toLowerCase();
+  const service = String(input.service_detected || '').trim().toLowerCase();
+  const commentsCount = Number(input.comments_count) || 0;
+
+  if (!['nextdoor', 'facebook'].includes(platform)) {
+    return { notify: false, reason: 'non_customer_platform' };
+  }
+  if (!authorName || ['test', 'test user', 'unknown'].includes(authorName)) {
+    return { notify: false, reason: 'test_or_unknown_author' };
+  }
+  if (!service || service === 'test' || service === 'unknown') {
+    return { notify: false, reason: 'service_not_detected' };
+  }
+  if (scope !== 'GREEN') {
+    return { notify: false, reason: 'scope_not_green' };
+  }
+  if (!['hot', 'warm'].includes(priority)) {
+    return { notify: false, reason: 'priority_not_hot_or_warm' };
+  }
+  if (commentsCount >= 20) {
+    return { notify: false, reason: 'too_many_comments' };
+  }
+  return { notify: true, reason: 'qualified_hunter_signal' };
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 const HUNTER_SECRET = process.env.HUNTER_API_SECRET || process.env.CRON_SECRET || '';
@@ -172,32 +201,51 @@ async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 
-  // Enqueue Telegram owner alert via outbox
-  try {
-    const alertText = formatHunterAlert({
-      ...post,
-      author_name:       author_name,
-      author_area:       author_area,
-      service_detected:  service_detected,
-      platform,
-      post_text,
-      post_url,
-      priority:          finalPriority,
-      response_template: template_used
-    });
+  const alertDecision = shouldEnqueueHunterAlert({
+    platform,
+    author_name,
+    service_detected,
+    scope,
+    priority: finalPriority,
+    comments_count
+  });
 
-    await sbInsertOutboundJob(config, { text: alertText, lead_id: null });
+  // Enqueue Telegram owner alert via outbox only for qualified hunter signals.
+  try {
+    if (alertDecision.notify) {
+      const alertText = formatHunterAlert({
+        ...post,
+        author_name:       author_name,
+        author_area:       author_area,
+        service_detected:  service_detected,
+        platform,
+        post_text,
+        post_url,
+        priority:          finalPriority,
+        response_template: template_used
+      });
+
+      await sbInsertOutboundJob(config, {
+        text: alertText,
+        lead_id: null,
+        category: 'hunter_signal',
+        severity: finalPriority === 'hot' ? 'P2' : 'P3',
+        actionable: finalPriority === 'hot'
+      });
+    }
   } catch (err) {
     // Non-fatal: post saved, alert failed
     console.warn('[HUNTER_LEAD] Alert enqueue failed:', err.message);
   }
 
-  console.log(`[HUNTER_LEAD] Saved ${platform} post ${post?.id} — priority: ${finalPriority}`);
+  console.log(`[HUNTER_LEAD] Saved ${platform} post ${post?.id} — priority: ${finalPriority} — alert: ${alertDecision.notify ? 'queued' : `suppressed:${alertDecision.reason}`}`);
 
   return res.status(200).json({
     status:  'ok',
     post_id: post?.id || null,
-    priority: finalPriority
+    priority: finalPriority,
+    telegram_alert: alertDecision.notify ? 'queued' : 'suppressed',
+    alert_reason: alertDecision.reason
   });
 }
 

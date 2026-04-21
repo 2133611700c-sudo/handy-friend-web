@@ -18,9 +18,12 @@
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
+const require = createRequire(import.meta.url);
+const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/send.js');
 
 // ── ENV ──────────────────────────────────────────────────────
 
@@ -857,36 +860,30 @@ function formatArchiveMD(kpi) {
 
 async function sendTelegram(text) {
   log('info', 'Sending Telegram report...');
-  const url = `https://api.telegram.org/bot${ENV.TELEGRAM_BOT_TOKEN}/sendMessage`;
-  const res = await fetchWithRetry(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: ENV.TELEGRAM_CHAT_ID,
-      text,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
-    }),
+  const send = await unifiedTelegramSend({
+    source: 'daily_report',
+    text,
+    token: ENV.TELEGRAM_BOT_TOKEN,
+    chatId: ENV.TELEGRAM_CHAT_ID,
+    timeoutMs: 8000,
+    extra: { category: 'daily_report', actionable: false }
   });
-  const data = await res.json();
-  if (!data.ok) {
-    throw new Error(`Telegram error: ${data.error_code} ${data.description}`);
+  if (!send.ok) {
+    throw new Error(`Telegram error: ${send.errorCode} ${send.errorDescription}`);
   }
-  log('info', 'Telegram sent', { message_id: data.result.message_id });
-  return data.result.message_id;
+  log('info', 'Telegram sent', { message_id: send.messageId, telegram_send_id: send.telegramSendId });
+  return send.messageId;
 }
 
 async function sendTelegramAlert(text) {
   try {
-    const url = `https://api.telegram.org/bot${ENV.TELEGRAM_BOT_TOKEN}/sendMessage`;
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: ENV.TELEGRAM_CHAT_ID,
-        text: `⚠️ <b>Daily Report Alert</b>\n\n${text}`,
-        parse_mode: 'HTML',
-      }),
+    await unifiedTelegramSend({
+      source: 'daily_report',
+      text: `⚠️ <b>Daily Report Alert</b>\n\n${text}`,
+      token: ENV.TELEGRAM_BOT_TOKEN,
+      chatId: ENV.TELEGRAM_CHAT_ID,
+      timeoutMs: 8000,
+      extra: { category: 'daily_report_alert', actionable: true }
     });
   } catch (e) {
     console.error('CRITICAL: Telegram alert also failed:', e.message);
