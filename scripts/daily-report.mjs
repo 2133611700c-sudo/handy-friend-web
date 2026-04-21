@@ -1029,13 +1029,14 @@ async function run(mode = 'full') {
   }
 
   // 3. Send Telegram
-  let telegramOk = false;
+  let telegramState = 'failed';
   if (skipTelegramReason) {
     log('info', 'Telegram send skipped by digest dedup', { reason: skipTelegramReason, digest: reportDigest });
+    telegramState = 'skipped';
   } else {
     try {
       await sendTelegram(telegramText, { digest_hash: reportDigest });
-      telegramOk = true;
+      telegramState = 'sent';
     } catch (err) {
       log('error', 'Telegram send failed', { error: err.message });
     }
@@ -1049,7 +1050,7 @@ async function run(mode = 'full') {
   } catch (err) {
     log('error', 'Email send failed', { error: err.message });
     // Fallback: alert via Telegram
-    if (telegramOk) {
+    if (telegramState === 'sent') {
       await sendTelegramAlert(`Email delivery failed: ${err.message}\nReport was sent to Telegram only.`);
     }
   }
@@ -1063,14 +1064,14 @@ async function run(mode = 'full') {
   }
 
   // 6. If Telegram also failed, try one more alert
-  if (!telegramOk && !emailOk) {
+  if (telegramState !== 'sent' && !emailOk) {
     log('error', 'CRITICAL: Both Telegram and Email failed');
     await sendTelegramAlert('CRITICAL: Both Telegram and Email delivery failed for daily report.');
   }
 
   const elapsed = Date.now() - startTime;
   log('info', 'Daily report complete', {
-    telegram: telegramOk ? 'sent' : 'FAILED',
+    telegram: telegramState,
     email: emailOk ? 'sent' : 'FAILED',
     archive: archivePath || 'FAILED',
     elapsed_ms: elapsed,
