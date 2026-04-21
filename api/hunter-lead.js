@@ -85,6 +85,45 @@ function calculatePriority(postText, area) {
   return 'cool';
 }
 
+function priorityRank(level) {
+  if (level === 'hot') return 3;
+  if (level === 'warm') return 2;
+  return 1;
+}
+
+function parsePositiveInt(value, fallback) {
+  const n = Number.parseInt(String(value || ''), 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+async function shouldEnqueueHunterAlert(config, postData) {
+  const minPriority = String(process.env.HUNTER_ALERT_MIN_PRIORITY || 'hot').toLowerCase();
+  const cooldownMin = parsePositiveInt(process.env.HUNTER_ALERT_COOLDOWN_MIN, 180);
+  const maxPerWindow = parsePositiveInt(process.env.HUNTER_ALERT_MAX_PER_WINDOW, 2);
+
+  const currentRank = priorityRank(postData.priority);
+  const minRank = priorityRank(minPriority);
+  if (currentRank < minRank) {
+    return { notify: false, reason: `priority_below_threshold:${postData.priority}<${minPriority}` };
+  }
+
+  const cutoffIso = new Date(Date.now() - cooldownMin * 60 * 1000).toISOString();
+  const recent = await sbGet(config, 'hunter_posts', {
+    select: 'id',
+    platform: `eq.${postData.platform}`,
+    author_name: `eq.${postData.author_name || ''}`,
+    responded_at: `gte.${cutoffIso}`,
+    order: 'responded_at.desc',
+    limit: String(maxPerWindow)
+  }).catch(() => []);
+
+  if (Array.isArray(recent) && recent.length >= maxPerWindow) {
+    return { notify: false, reason: `author_cooldown:${recent.length}/${maxPerWindow}` };
+  }
+
+  return { notify: true, reason: 'enqueued' };
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 const HUNTER_SECRET = process.env.HUNTER_API_SECRET || process.env.CRON_SECRET || '';
@@ -172,9 +211,9 @@ async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 
-  // Enqueue Telegram owner alert via outbox
+  // Enqueue Telegram owner alert via outbox (quality-gated to avoid noisy fake leads)
   try {
-    const alertText = formatHunterAlert({
+    const alertPayload = {
       ...post,
       author_name:       author_name,
       author_area:       author_area,
@@ -184,9 +223,13 @@ async function handler(req, res) {
       post_url,
       priority:          finalPriority,
       response_template: template_used
-    });
-
-    await sbInsertOutboundJob(config, { text: alertText, lead_id: null });
+    };
+    const decision = await shouldEnqueueHunterAlert(config, alertPayload);
+    if (decision.notify) {
+      const alertText = formatHunterAlert(alertPayload);
+      await sbInsertOutboundJob(config, { text: alertText, lead_id: null });
+    }
+    post._alert_decision = decision;
   } catch (err) {
     // Non-fatal: post saved, alert failed
     console.warn('[HUNTER_LEAD] Alert enqueue failed:', err.message);
@@ -197,7 +240,9 @@ async function handler(req, res) {
   return res.status(200).json({
     status:  'ok',
     post_id: post?.id || null,
-    priority: finalPriority
+    priority: finalPriority,
+    alert_enqueued: post?._alert_decision?.notify === true,
+    alert_reason: post?._alert_decision?.reason || 'unknown'
   });
 }
 
