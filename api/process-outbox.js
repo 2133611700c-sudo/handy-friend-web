@@ -82,6 +82,7 @@ async function handler(req, res) {
 
   // Auth: Vercel cron jobs are secured with Authorization: Bearer <CRON_SECRET>.
   // Do not treat x-vercel-cron as sufficient auth from external requests.
+  const isVercelCron = Boolean(req.headers['x-vercel-cron']) && Boolean(CRON_SECRET);
   const secret  = req.headers['x-cron-secret'] || String(req.headers['authorization'] || '').replace('Bearer ', '');
   const secretMatches = CRON_SECRET && secret === CRON_SECRET;
   const authorized = Boolean(CRON_SECRET) && secretMatches;
