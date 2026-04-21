@@ -17,6 +17,8 @@ URLS=(
   "https://handyandfriend.com/drywall"
 )
 STRATS=(mobile desktop)
+UNKNOWN_COUNT=0
+ERROR_COUNT=0
 
 {
   echo "# PageSpeed Insights — ${DATE}"
@@ -31,7 +33,7 @@ KEY_PARAM=""
 for URL in "${URLS[@]}"; do
   for STRAT in "${STRATS[@]}"; do
     RESP=$(curl -s --max-time 90 "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${URL}&strategy=${STRAT}&category=performance&category=seo&category=accessibility&category=best-practices${KEY_PARAM}" || echo '{}')
-    LINE=$(URL_ARG="$URL" STRAT_ARG="$STRAT" python3 -c "
+    PARSED=$(URL_ARG="$URL" STRAT_ARG="$STRAT" python3 -c "
 import json, sys, os
 raw = sys.stdin.read()
 try:
@@ -41,6 +43,8 @@ except Exception:
 lr = d.get('lighthouseResult', {}) if isinstance(d, dict) else {}
 cats = lr.get('categories', {})
 audits = lr.get('audits', {})
+err = d.get('error', {}) if isinstance(d, dict) else {}
+err_msg = str(err.get('message','')).strip() if isinstance(err, dict) else ''
 def score(k):
     v = cats.get(k, {}).get('score')
     return int(round(v*100)) if isinstance(v,(int,float)) else '?'
@@ -48,10 +52,22 @@ perf, seo, a11y, bp = score('performance'), score('seo'), score('accessibility')
 def dv(k):
     return audits.get(k, {}).get('displayValue','?')
 lcp, cls, tbt, fcp = dv('largest-contentful-paint'), dv('cumulative-layout-shift'), dv('total-blocking-time'), dv('first-contentful-paint')
-print(f\"| {os.environ['URL_ARG']} | {os.environ['STRAT_ARG']} | {perf} | {seo} | {a11y} | {bp} | {lcp} | {cls} | {tbt} | {fcp} |\")
+unknown = int(perf == '?' or seo == '?' or a11y == '?' or bp == '?' or lcp == '?' or cls == '?' or tbt == '?' or fcp == '?')
+line = f\"| {os.environ['URL_ARG']} | {os.environ['STRAT_ARG']} | {perf} | {seo} | {a11y} | {bp} | {lcp} | {cls} | {tbt} | {fcp} |\"
+print(json.dumps({'line': line, 'unknown': unknown, 'error': err_msg[:180]}))
 " <<< "$RESP")
+    LINE=$(python3 -c "import json,sys; obj=json.loads(sys.stdin.read()); print(obj['line'])" <<< "$PARSED")
+    IS_UNKNOWN=$(python3 -c "import json,sys; obj=json.loads(sys.stdin.read()); print(obj['unknown'])" <<< "$PARSED")
+    ERR_MSG=$(python3 -c "import json,sys; obj=json.loads(sys.stdin.read()); print(obj['error'])" <<< "$PARSED")
     echo "$LINE" >> "$REPORT"
     echo "$LINE"
+    if [ "$IS_UNKNOWN" = "1" ]; then
+      UNKNOWN_COUNT=$((UNKNOWN_COUNT+1))
+      if [ -n "$ERR_MSG" ]; then
+        ERROR_COUNT=$((ERROR_COUNT+1))
+        echo "- ${URL} (${STRAT}) error: ${ERR_MSG}" >> "$REPORT"
+      fi
+    fi
   done
 done
 
@@ -66,5 +82,20 @@ if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
   fi
 fi
 
+if [ "$UNKNOWN_COUNT" -gt 0 ]; then
+  {
+    echo ""
+    echo "## Status"
+    echo "FAIL — ${UNKNOWN_COUNT} rows returned unknown PSI metrics."
+    [ "$ERROR_COUNT" -gt 0 ] && echo "Provider/API errors detected in ${ERROR_COUNT} row(s)."
+  } >> "$REPORT"
+fi
+
 echo "report=${REPORT}"
 [ -n "${GITHUB_STEP_SUMMARY:-}" ] && cat "$REPORT" >> "$GITHUB_STEP_SUMMARY"
+
+# Fail-fast: do not allow green CI with unknown PSI values.
+if [ "$UNKNOWN_COUNT" -gt 0 ]; then
+  echo "PSI validation failed: unknown rows=${UNKNOWN_COUNT}" >&2
+  exit 1
+fi
