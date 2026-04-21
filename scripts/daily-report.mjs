@@ -19,6 +19,7 @@ import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -146,6 +147,40 @@ async function queryTableAll(table, query = '', { pageSize = 1000, maxPages = 20
     if (rows.length < pageSize) break;
   }
   return out;
+}
+
+function hashText(text) {
+  return createHash('sha256').update(String(text || '')).digest('hex').slice(0, 16);
+}
+
+function normalizeExtra(extra) {
+  if (!extra) return {};
+  if (typeof extra === 'object') return extra;
+  try {
+    return JSON.parse(String(extra));
+  } catch {
+    return {};
+  }
+}
+
+async function getLatestDailyReportDigest() {
+  try {
+    const rows = await queryTable(
+      'telegram_sends',
+      'select=id,created_at,extra&source=eq.daily_report&ok=eq.true&order=created_at.desc&limit=1'
+    );
+    const row = Array.isArray(rows) && rows[0] ? rows[0] : null;
+    if (!row) return null;
+    const extra = normalizeExtra(row.extra);
+    return {
+      id: row.id || null,
+      created_at: row.created_at || null,
+      digest_hash: extra.digest_hash || null,
+    };
+  } catch (err) {
+    log('warn', 'Failed to fetch latest daily_report digest', { error: err.message });
+    return null;
+  }
 }
 
 function defaultDashboardStats(days = 30) {
@@ -858,7 +893,7 @@ function formatArchiveMD(kpi) {
 
 // ── Delivery: Telegram ───────────────────────────────────────
 
-async function sendTelegram(text) {
+async function sendTelegram(text, extra = {}) {
   log('info', 'Sending Telegram report...');
   const send = await unifiedTelegramSend({
     source: 'daily_report',
@@ -866,7 +901,7 @@ async function sendTelegram(text) {
     token: ENV.TELEGRAM_BOT_TOKEN,
     chatId: ENV.TELEGRAM_CHAT_ID,
     timeoutMs: 8000,
-    extra: { category: 'daily_report', actionable: false }
+    extra: { category: 'daily_report', actionable: false, ...extra }
   });
   if (!send.ok) {
     throw new Error(`Telegram error: ${send.errorCode} ${send.errorDescription}`);
@@ -980,13 +1015,30 @@ async function run(mode = 'full') {
 
   validateEnv(['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'RESEND_API_KEY']);
 
+  const reportDigest = hashText(telegramText);
+  const forceSend = ['1', 'true', 'yes', 'on'].includes(String(process.env.FORCE_SEND_REPORT || '').toLowerCase());
+  let skipTelegramReason = null;
+  if (mode === 'full' && !forceSend) {
+    const lastDigest = await getLatestDailyReportDigest();
+    if (lastDigest?.digest_hash === reportDigest && lastDigest?.created_at) {
+      const ageMs = Date.now() - new Date(lastDigest.created_at).getTime();
+      if (Number.isFinite(ageMs) && ageMs < 24 * 60 * 60 * 1000) {
+        skipTelegramReason = `dedup_same_digest_${Math.round(ageMs / 60000)}m`;
+      }
+    }
+  }
+
   // 3. Send Telegram
   let telegramOk = false;
-  try {
-    await sendTelegram(telegramText);
-    telegramOk = true;
-  } catch (err) {
-    log('error', 'Telegram send failed', { error: err.message });
+  if (skipTelegramReason) {
+    log('info', 'Telegram send skipped by digest dedup', { reason: skipTelegramReason, digest: reportDigest });
+  } else {
+    try {
+      await sendTelegram(telegramText, { digest_hash: reportDigest });
+      telegramOk = true;
+    } catch (err) {
+      log('error', 'Telegram send failed', { error: err.message });
+    }
   }
 
   // 4. Send Email
