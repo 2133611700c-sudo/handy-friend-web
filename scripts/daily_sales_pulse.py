@@ -26,6 +26,7 @@ Pulls from production Supabase (read-only) and /api/health.
 import json
 import os
 import sys
+import subprocess
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib import request as urlreq
@@ -61,22 +62,29 @@ def send_telegram(text):
     enabled = os.environ.get('SALES_PULSE_TELEGRAM_ENABLED', '').strip().lower() in {'1', 'true', 'yes', 'on'}
     if not enabled:
         return False
-    import urllib.request
-    data = json.dumps({
-        'chat_id': os.environ['TELEGRAM_CHAT_ID'],
-        'text': text,
-        'parse_mode': 'HTML',
-        'disable_web_page_preview': True
-    }).encode()
-    req = urllib.request.Request(
-        f'https://api.telegram.org/bot{os.environ["TELEGRAM_BOT_TOKEN"]}/sendMessage',
-        data=data, headers={'Content-Type': 'application/json'}, method='POST'
+    proc = subprocess.run(
+        [
+            'node',
+            'scripts/send-telegram.mjs',
+            '--source', 'sales_pulse',
+            '--category', 'daily_sales_pulse',
+            '--actionable', '1',
+            '--stdin',
+        ],
+        cwd=str(ROOT),
+        input=text.encode('utf-8', errors='replace'),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=10,
+        check=False,
     )
+    if proc.returncode != 0:
+        return False
     try:
-        with urllib.request.urlopen(req, timeout=5) as r:
-            return json.loads(r.read()).get('ok', False)
+        payload = json.loads(proc.stdout.decode('utf-8', errors='replace') or '{}')
     except Exception:
         return False
+    return bool(payload.get('ok') is True)
 
 
 def main():
