@@ -23,10 +23,6 @@ const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/se
 const BATCH_SIZE       = 20;
 const LOCK_TTL_MINUTES = 5;
 const WORKER_ID        = `process-outbox:${process.pid}:${Math.random().toString(36).slice(2, 8)}`;
-const OUTBOX_AUTO_DAILY_REPORT_ENABLED = ['1', 'true', 'yes', 'on']
-  .includes(String(process.env.OUTBOX_AUTO_DAILY_REPORT_ENABLED || '').toLowerCase());
-const OUTBOX_AUTO_WEEKLY_REPORT_ENABLED = ['1', 'true', 'yes', 'on']
-  .includes(String(process.env.OUTBOX_AUTO_WEEKLY_REPORT_ENABLED || '').toLowerCase());
 
 // Per-channel backoff tiers (base seconds), indexed by attempt_count (1-based, already incremented by claim)
 const CHANNEL_BACKOFF = {
@@ -82,7 +78,6 @@ async function handler(req, res) {
 
   // Auth: Vercel cron jobs are secured with Authorization: Bearer <CRON_SECRET>.
   // Do not treat x-vercel-cron as sufficient auth from external requests.
-  const isVercelCron = Boolean(req.headers['x-vercel-cron']) && Boolean(CRON_SECRET);
   const secret  = req.headers['x-cron-secret'] || String(req.headers['authorization'] || '').replace('Bearer ', '');
   const secretMatches = CRON_SECRET && secret === CRON_SECRET;
   const authorized = Boolean(CRON_SECRET) && secretMatches;
@@ -196,21 +191,6 @@ async function handler(req, res) {
       `Duration: ${duration}ms\n\n` +
       `Replay: <code>POST /api/process-outbox?action=replay_dlq&amp;job_id=JOB_ID</code>`;
     deliverTelegramOwner({ text: alertText }).catch(() => {});
-  }
-
-  // Auto reports are opt-in only to prevent duplicate/noisy digest streams.
-  // Keep explicit action endpoints (?action=daily_report / weekly_report) available.
-  if (isVercelCron) {
-    if (OUTBOX_AUTO_DAILY_REPORT_ENABLED) {
-      handleDailyReport().catch(err => console.error('[OUTBOX] Auto daily report error:', err.message));
-    }
-    if (OUTBOX_AUTO_WEEKLY_REPORT_ENABLED) {
-      // Weekly report on Sundays (PT): UTC day 1 (Mon) at 04:00 = Sun 9pm PT
-      const utcDay = new Date().getUTCDay();
-      if (utcDay === 1) {
-        handleWeeklyReport().catch(err => console.error('[OUTBOX] Auto weekly report error:', err.message));
-      }
-    }
   }
 
   return res.status(200).json({ ok: true, duration_ms: duration, ...result });
