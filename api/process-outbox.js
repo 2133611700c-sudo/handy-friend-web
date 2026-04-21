@@ -19,9 +19,14 @@
  */
 
 const CRON_SECRET      = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECRET || '';
+const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/send.js');
 const BATCH_SIZE       = 20;
 const LOCK_TTL_MINUTES = 5;
 const WORKER_ID        = `process-outbox:${process.pid}:${Math.random().toString(36).slice(2, 8)}`;
+const OUTBOX_AUTO_DAILY_REPORT_ENABLED = ['1', 'true', 'yes', 'on']
+  .includes(String(process.env.OUTBOX_AUTO_DAILY_REPORT_ENABLED || '').toLowerCase());
+const OUTBOX_AUTO_WEEKLY_REPORT_ENABLED = ['1', 'true', 'yes', 'on']
+  .includes(String(process.env.OUTBOX_AUTO_WEEKLY_REPORT_ENABLED || '').toLowerCase());
 
 // Per-channel backoff tiers (base seconds), indexed by attempt_count (1-based, already incremented by claim)
 const CHANNEL_BACKOFF = {
@@ -29,6 +34,7 @@ const CHANNEL_BACKOFF = {
   resend_owner:    [0,  60, 180, 600, 1800],
   resend_customer: [0, 120, 480],
   ga4_event:       [0,  60],
+  meta_capi:       [0,  60, 300, 1200],
 };
 
 // ─── Circuit Breaker (per batch, in-memory) ──────────────────────────────────
@@ -185,7 +191,7 @@ async function handler(req, res) {
 
   // SLO alert: if DLQ spiked during this batch, notify owner immediately
   if (result.dlq > 0) {
-    const alertText = `⚠️ <b>Outbox DLQ Alert</b>\n\n` +
+    const alertText = `🚨 <b>[P1 BLOCKING] Outbox DLQ Alert</b>\n\n` +
       `${result.dlq} job(s) moved to DLQ this batch.\n` +
       `Sent: ${result.sent} | Retried: ${result.retried} | Circuit-skipped: ${result.circuit_skipped}\n` +
       `Duration: ${duration}ms\n\n` +
@@ -193,13 +199,18 @@ async function handler(req, res) {
     deliverTelegramOwner({ text: alertText }).catch(() => {});
   }
 
-  // Auto-trigger reports when invoked by Vercel cron (cron fires at 04:00 UTC = 9pm PT)
+  // Auto reports are opt-in only to prevent duplicate/noisy digest streams.
+  // Keep explicit action endpoints (?action=daily_report / weekly_report) available.
   if (isVercelCron) {
-    handleDailyReport().catch(err => console.error('[OUTBOX] Auto daily report error:', err.message));
-    // Weekly report on Sundays (PT): UTC day 1 (Mon) at 04:00 = Sun 9pm PT
-    const utcDay = new Date().getUTCDay();
-    if (utcDay === 1) {
-      handleWeeklyReport().catch(err => console.error('[OUTBOX] Auto weekly report error:', err.message));
+    if (OUTBOX_AUTO_DAILY_REPORT_ENABLED) {
+      handleDailyReport().catch(err => console.error('[OUTBOX] Auto daily report error:', err.message));
+    }
+    if (OUTBOX_AUTO_WEEKLY_REPORT_ENABLED) {
+      // Weekly report on Sundays (PT): UTC day 1 (Mon) at 04:00 = Sun 9pm PT
+      const utcDay = new Date().getUTCDay();
+      if (utcDay === 1) {
+        handleWeeklyReport().catch(err => console.error('[OUTBOX] Auto weekly report error:', err.message));
+      }
     }
   }
 
@@ -217,9 +228,9 @@ async function handleDailyReport() {
   if (!config) { console.warn('[OUTBOX] Daily report: Supabase not configured'); return; }
 
   const stats = await gatherDailyStats(config);
-  const text  = formatDailyDigest(stats);
+  const text  = `ℹ️ <b>[P3 INFO] Daily Digest</b>\n` + formatDailyDigest(stats);
 
-  const result = await deliverTelegramOwner({ text });
+  const result = await deliverTelegramOwner({ text, severity: 'P3', actionable: false, category: 'daily_digest' });
   if (!result.ok) throw new Error(result.error);
   console.log('[OUTBOX] Daily report sent');
 }
@@ -229,9 +240,9 @@ async function handleWeeklyReport() {
   if (!config) { console.warn('[OUTBOX] Weekly report: Supabase not configured'); return; }
 
   const stats = await gatherWeeklyStats(config);
-  const text  = formatWeeklyDigest(stats);
+  const text  = `ℹ️ <b>[P3 INFO] Weekly Digest</b>\n` + formatWeeklyDigest(stats);
 
-  const result = await deliverTelegramOwner({ text });
+  const result = await deliverTelegramOwner({ text, severity: 'P3', actionable: false, category: 'weekly_digest' });
   if (!result.ok) throw new Error(result.error);
   console.log('[OUTBOX] Weekly report sent');
 }
@@ -466,6 +477,7 @@ async function dispatchJob(job) {
     case 'resend_owner':    return deliverResendOwner(job.payload);
     case 'resend_customer': return deliverResendCustomer(job.payload);
     case 'ga4_event':       return deliverGA4Event(job.payload);
+    case 'meta_capi':       return deliverMetaCapi(job.payload);
     default:
       return { ok: false, error: `Unknown job_type: ${job.job_type}`, error_code: 'UNKNOWN_JOB_TYPE' };
   }
@@ -479,23 +491,26 @@ async function deliverTelegramOwner(payload) {
   if (!token || !chatId) return { ok: false, error: 'TELEGRAM_BOT_TOKEN not set', error_code: 'ENV_MISSING' };
 
   const text = payload?.text || buildDefaultTelegramText(payload);
-  const res  = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
-      ...(payload?.reply_markup ? { reply_markup: payload.reply_markup } : {})
-    })
+  const send = await unifiedTelegramSend({
+    source: 'process_outbox',
+    leadId: payload?.lead_id || null,
+    text,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    replyMarkup: payload?.reply_markup,
+    extra: {
+      job_type: 'telegram_owner',
+      category: payload?.category || null,
+      severity: payload?.severity || null,
+      actionable: payload?.actionable === true
+    }
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.ok) {
-    const code = data.error_code ? `TG_${data.error_code}` : `TG_HTTP_${res.status}`;
-    return { ok: false, error: data.description || `HTTP ${res.status}`, error_code: code };
+  if (!send.ok) {
+    const code = String(send.errorCode || 'TG_UNKNOWN');
+    return { ok: false, error: send.errorDescription || code, error_code: code };
   }
-  return { ok: true, provider_message_id: String(data.result?.message_id || '') };
+  return { ok: true, provider_message_id: String(send.messageId || '') };
 }
 
 function buildDefaultTelegramText(payload) {
@@ -597,10 +612,20 @@ async function notifyDlqAlert(job, attempts, maxAttempts, lastError) {
     `Error: ${String(lastError || '').slice(0, 200)}\n` +
     `Replay: POST /api/process-outbox?action=replay_dlq&job_id=${encodeURIComponent(job.id)}`;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+  await unifiedTelegramSend({
+    source: 'process_outbox',
+    leadId: job?.lead_id || null,
+    text,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    extra: {
+      category: 'outbox_dlq',
+      job_id: job?.id || null,
+      job_type: job?.job_type || null,
+      attempts,
+      maxAttempts
+    }
   }).catch(() => {});
 }
 
