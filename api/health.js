@@ -17,6 +17,7 @@ const { checkMigration007 } = require('../lib/lead-pipeline.js');
 const { analyzeMessengerPricingPolicy } = require('../lib/pricing-policy.js');
 const { normalizeAttribution } = require('../lib/attribution.js');
 const { sendTelegramMessage } = require('../lib/telegram/send.js');
+const { createHash } = require('crypto');
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -182,15 +183,46 @@ async function telegramWatchdog(req, res) {
   }
 
   const missing = (Array.isArray(rows) ? rows : []).filter(r => Number(r.telegram_proofs) === 0);
+  const digestIds = missing
+    .map(r => String(r.id || '').trim())
+    .filter(Boolean)
+    .sort();
+  const digestHash = createHash('sha256').update(JSON.stringify(digestIds)).digest('hex').slice(0, 24);
+
   const summary = {
     ok: true,
     checked_at: new Date().toISOString(),
     total_real_leads_7d: Array.isArray(rows) ? rows.length : 0,
-    missing_telegram_proof: missing.length
+    missing_telegram_proof: missing.length,
+    digest_hash: digestHash
   };
 
   if (missing.length === 0) {
     return res.status(200).json({ ...summary, alert_sent: false });
+  }
+
+  // Dedup: same unresolved lead-set hash at most once per 24h.
+  const since24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  let recentWatchdogEvents = [];
+  try {
+    const r = await fetch(
+      `${config.projectUrl}/rest/v1/lead_events?select=id,created_at,event_data&event_type=eq.watchdog_telegram_sent&lead_id=eq.watchdog_system&created_at=gte.${encodeURIComponent(since24h)}&order=created_at.desc&limit=50`,
+      { headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` } }
+    );
+    if (r.ok) recentWatchdogEvents = await r.json().catch(() => []);
+  } catch (_) {}
+
+  const duplicateSeen = Array.isArray(recentWatchdogEvents) && recentWatchdogEvents.some((e) => {
+    const d = e?.event_data || {};
+    return String(d?.digest_hash || '') === digestHash;
+  });
+  if (duplicateSeen) {
+    return res.status(200).json({
+      ...summary,
+      alert_sent: false,
+      dedup_skipped: true,
+      dedup_window_hours: 24
+    });
   }
 
   const lines = missing.slice(0, 10).map(r => {
@@ -199,7 +231,7 @@ async function telegramWatchdog(req, res) {
   });
   const overflow = missing.length > 10 ? `\n(+ ${missing.length - 10} more)` : '';
 
-  const text = `🟠 <b>Watchdog: leads without Telegram proof</b>\n` +
+  const text = `⚠️ <b>[P2 ACTION REQUIRED] Watchdog: leads without Telegram proof</b>\n` +
     `Missing: <b>${missing.length}</b> of ${summary.total_real_leads_7d} real leads in last 7 days\n\n` +
     lines.join('\n') + overflow +
     `\n\nView: <code>v_leads_without_telegram</code> (Supabase)`;
@@ -208,14 +240,48 @@ async function telegramWatchdog(req, res) {
     source: 'watchdog',
     text,
     timeoutMs: 4000,
-    extra: { lead_ids_sample: missing.slice(0, 10).map(r => r.id) }
+    extra: {
+      severity: 'P2',
+      actionable: true,
+      category: 'lead_delivery_proof_gap',
+      digest_hash: digestHash,
+      lead_ids_sample: missing.slice(0, 10).map(r => r.id)
+    }
   });
+
+  // Audit trail for dedup logic.
+  try {
+    const eventType = send.ok ? 'watchdog_telegram_sent' : 'watchdog_telegram_failed';
+    const payload = {
+      lead_id: 'watchdog_system',
+      event_type: eventType,
+      event_data: {
+        digest_hash: digestHash,
+        missing_count: missing.length,
+        message_id: send.messageId || null,
+        telegram_send_id: send.telegramSendId || null,
+        error_code: send.errorCode || null
+      },
+      created_by: 'telegram_watchdog'
+    };
+    await fetch(`${config.projectUrl}/rest/v1/lead_events`, {
+      method: 'POST',
+      headers: {
+        apikey: config.serviceRoleKey,
+        Authorization: `Bearer ${config.serviceRoleKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch (_) {}
 
   return res.status(200).json({
     ...summary,
     alert_sent: send.ok,
     alert_message_id: send.messageId,
     alert_telegram_send_id: send.telegramSendId,
+    dedup_skipped: false,
     alert_error: send.ok ? null : { code: send.errorCode, description: send.errorDescription }
   });
 }

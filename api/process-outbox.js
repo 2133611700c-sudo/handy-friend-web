@@ -22,6 +22,10 @@ const CRON_SECRET      = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECR
 const BATCH_SIZE       = 20;
 const LOCK_TTL_MINUTES = 5;
 const WORKER_ID        = `process-outbox:${process.pid}:${Math.random().toString(36).slice(2, 8)}`;
+const OUTBOX_AUTO_DAILY_REPORT_ENABLED = ['1', 'true', 'yes', 'on']
+  .includes(String(process.env.OUTBOX_AUTO_DAILY_REPORT_ENABLED || '').toLowerCase());
+const OUTBOX_AUTO_WEEKLY_REPORT_ENABLED = ['1', 'true', 'yes', 'on']
+  .includes(String(process.env.OUTBOX_AUTO_WEEKLY_REPORT_ENABLED || '').toLowerCase());
 
 // Per-channel backoff tiers (base seconds), indexed by attempt_count (1-based, already incremented by claim)
 const CHANNEL_BACKOFF = {
@@ -185,7 +189,7 @@ async function handler(req, res) {
 
   // SLO alert: if DLQ spiked during this batch, notify owner immediately
   if (result.dlq > 0) {
-    const alertText = `⚠️ <b>Outbox DLQ Alert</b>\n\n` +
+    const alertText = `🚨 <b>[P1 BLOCKING] Outbox DLQ Alert</b>\n\n` +
       `${result.dlq} job(s) moved to DLQ this batch.\n` +
       `Sent: ${result.sent} | Retried: ${result.retried} | Circuit-skipped: ${result.circuit_skipped}\n` +
       `Duration: ${duration}ms\n\n` +
@@ -193,13 +197,18 @@ async function handler(req, res) {
     deliverTelegramOwner({ text: alertText }).catch(() => {});
   }
 
-  // Auto-trigger reports when invoked by Vercel cron (cron fires at 04:00 UTC = 9pm PT)
+  // Auto reports are opt-in only to prevent duplicate/noisy digest streams.
+  // Keep explicit action endpoints (?action=daily_report / weekly_report) available.
   if (isVercelCron) {
-    handleDailyReport().catch(err => console.error('[OUTBOX] Auto daily report error:', err.message));
-    // Weekly report on Sundays (PT): UTC day 1 (Mon) at 04:00 = Sun 9pm PT
-    const utcDay = new Date().getUTCDay();
-    if (utcDay === 1) {
-      handleWeeklyReport().catch(err => console.error('[OUTBOX] Auto weekly report error:', err.message));
+    if (OUTBOX_AUTO_DAILY_REPORT_ENABLED) {
+      handleDailyReport().catch(err => console.error('[OUTBOX] Auto daily report error:', err.message));
+    }
+    if (OUTBOX_AUTO_WEEKLY_REPORT_ENABLED) {
+      // Weekly report on Sundays (PT): UTC day 1 (Mon) at 04:00 = Sun 9pm PT
+      const utcDay = new Date().getUTCDay();
+      if (utcDay === 1) {
+        handleWeeklyReport().catch(err => console.error('[OUTBOX] Auto weekly report error:', err.message));
+      }
     }
   }
 
@@ -217,9 +226,9 @@ async function handleDailyReport() {
   if (!config) { console.warn('[OUTBOX] Daily report: Supabase not configured'); return; }
 
   const stats = await gatherDailyStats(config);
-  const text  = formatDailyDigest(stats);
+  const text  = `ℹ️ <b>[P3 INFO] Daily Digest</b>\n` + formatDailyDigest(stats);
 
-  const result = await deliverTelegramOwner({ text });
+  const result = await deliverTelegramOwner({ text, severity: 'P3', actionable: false, category: 'daily_digest' });
   if (!result.ok) throw new Error(result.error);
   console.log('[OUTBOX] Daily report sent');
 }
@@ -229,9 +238,9 @@ async function handleWeeklyReport() {
   if (!config) { console.warn('[OUTBOX] Weekly report: Supabase not configured'); return; }
 
   const stats = await gatherWeeklyStats(config);
-  const text  = formatWeeklyDigest(stats);
+  const text  = `ℹ️ <b>[P3 INFO] Weekly Digest</b>\n` + formatWeeklyDigest(stats);
 
-  const result = await deliverTelegramOwner({ text });
+  const result = await deliverTelegramOwner({ text, severity: 'P3', actionable: false, category: 'weekly_digest' });
   if (!result.ok) throw new Error(result.error);
   console.log('[OUTBOX] Weekly report sent');
 }
