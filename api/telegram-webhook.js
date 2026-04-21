@@ -19,6 +19,7 @@ const { buildSystemPrompt, getGuardMode } = require('../lib/alex-one-truth.js');
 const { getPricingSourceVersion } = require('../lib/price-registry.js');
 const { inferServiceType: inferServiceTypeShared } = require('../lib/alex-policy-engine.js');
 const { createEnvelope } = require('../lib/inbound-envelope.js');
+const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/send.js');
 
 const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const OWNER_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
@@ -190,17 +191,24 @@ async function processMessage({ chatId, fromId, userName, text, updateId }) {
 // ─── Telegram API ─────────────────────────────────────────────────────────────
 
 async function sendTelegramMessage(chatId, text) {
-  if (!TG_TOKEN) throw new Error('TELEGRAM_BOT_TOKEN not set');
-  const url = `https://api.telegram.org/bot${TG_TOKEN}/sendMessage`;
-  const body = JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' });
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body
+  const send = await unifiedTelegramSend({
+    source: 'telegram_webhook',
+    text,
+    token: TG_TOKEN,
+    chatId: String(chatId || ''),
+    timeoutMs: 4000,
+    extra: { channel: 'telegram_inbound_reply' }
   });
-  const data = await res.json();
-  if (!data.ok) console.error('[TG_WEBHOOK] sendMessage error:', JSON.stringify(data));
-  return data;
+  if (!send.ok) {
+    const data = {
+      ok: false,
+      error_code: send.errorCode,
+      description: send.errorDescription
+    };
+    console.error('[TG_WEBHOOK] sendMessage error:', JSON.stringify(data));
+    return data;
+  }
+  return { ok: true, result: { message_id: send.messageId } };
 }
 
 async function notifyOwner({ lead, userName, chatId, text, service }) {

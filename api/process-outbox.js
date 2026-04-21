@@ -19,6 +19,7 @@
  */
 
 const CRON_SECRET      = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECRET || '';
+const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/send.js');
 const BATCH_SIZE       = 20;
 const LOCK_TTL_MINUTES = 5;
 const WORKER_ID        = `process-outbox:${process.pid}:${Math.random().toString(36).slice(2, 8)}`;
@@ -33,6 +34,7 @@ const CHANNEL_BACKOFF = {
   resend_owner:    [0,  60, 180, 600, 1800],
   resend_customer: [0, 120, 480],
   ga4_event:       [0,  60],
+  meta_capi:       [0,  60, 300, 1200],
 };
 
 // ─── Circuit Breaker (per batch, in-memory) ──────────────────────────────────
@@ -475,6 +477,7 @@ async function dispatchJob(job) {
     case 'resend_owner':    return deliverResendOwner(job.payload);
     case 'resend_customer': return deliverResendCustomer(job.payload);
     case 'ga4_event':       return deliverGA4Event(job.payload);
+    case 'meta_capi':       return deliverMetaCapi(job.payload);
     default:
       return { ok: false, error: `Unknown job_type: ${job.job_type}`, error_code: 'UNKNOWN_JOB_TYPE' };
   }
@@ -488,23 +491,26 @@ async function deliverTelegramOwner(payload) {
   if (!token || !chatId) return { ok: false, error: 'TELEGRAM_BOT_TOKEN not set', error_code: 'ENV_MISSING' };
 
   const text = payload?.text || buildDefaultTelegramText(payload);
-  const res  = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
-      ...(payload?.reply_markup ? { reply_markup: payload.reply_markup } : {})
-    })
+  const send = await unifiedTelegramSend({
+    source: 'process_outbox',
+    leadId: payload?.lead_id || null,
+    text,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    replyMarkup: payload?.reply_markup,
+    extra: {
+      job_type: 'telegram_owner',
+      category: payload?.category || null,
+      severity: payload?.severity || null,
+      actionable: payload?.actionable === true
+    }
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.ok) {
-    const code = data.error_code ? `TG_${data.error_code}` : `TG_HTTP_${res.status}`;
-    return { ok: false, error: data.description || `HTTP ${res.status}`, error_code: code };
+  if (!send.ok) {
+    const code = String(send.errorCode || 'TG_UNKNOWN');
+    return { ok: false, error: send.errorDescription || code, error_code: code };
   }
-  return { ok: true, provider_message_id: String(data.result?.message_id || '') };
+  return { ok: true, provider_message_id: String(send.messageId || '') };
 }
 
 function buildDefaultTelegramText(payload) {
@@ -606,10 +612,20 @@ async function notifyDlqAlert(job, attempts, maxAttempts, lastError) {
     `Error: ${String(lastError || '').slice(0, 200)}\n` +
     `Replay: POST /api/process-outbox?action=replay_dlq&job_id=${encodeURIComponent(job.id)}`;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' })
+  await unifiedTelegramSend({
+    source: 'process_outbox',
+    leadId: job?.lead_id || null,
+    text,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    extra: {
+      category: 'outbox_dlq',
+      job_id: job?.id || null,
+      job_type: job?.job_type || null,
+      attempts,
+      maxAttempts
+    }
   }).catch(() => {});
 }
 
