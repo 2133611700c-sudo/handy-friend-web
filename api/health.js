@@ -142,12 +142,10 @@ function isTrustedHealthOrigin(origin, referer) {
 
 /* ── Telegram watchdog (cron) ──
  * GET /api/health?type=telegram_watchdog
- * Auth: Vercel's own cron infrastructure sets the x-vercel-cron header
- * on scheduled invocations. External callers cannot spoof it — Vercel
- * strips incoming x-vercel-cron at the edge. External/manual callers
- * may authenticate with Authorization: Bearer <CRON_SECRET> (or the
- * legacy alias VERCEL_CRON_SECRET). This matches api/process-outbox.js
- * auth after Task 1.1.
+ * Auth: Vercel cron jobs send Authorization: Bearer <CRON_SECRET> when
+ * CRON_SECRET is configured. External/manual callers may use the same
+ * Bearer secret (or the legacy alias VERCEL_CRON_SECRET). Do not trust
+ * x-vercel-cron from external requests.
  * Runs daily via vercel.json crons. Queries v_leads_without_telegram
  * and fires ONE aggregated Telegram alert if any real lead in the last
  * 7 days has zero telegram_proofs. Uses unified sender.
@@ -156,10 +154,12 @@ function isTrustedHealthOrigin(origin, referer) {
  */
 async function telegramWatchdog(req, res) {
   const cronSecret = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECRET || '';
-  const isVercelCron = Boolean(req.headers['x-vercel-cron']);
   const authHeader = String(req.headers.authorization || '');
   const secretMatches = cronSecret && authHeader === `Bearer ${cronSecret}`;
-  const authorized = isVercelCron || secretMatches;
+  const authorized = Boolean(cronSecret) && secretMatches;
+  if (!cronSecret) {
+    return res.status(503).json({ ok: false, error: 'cron_secret_missing' });
+  }
   if (!authorized) {
     return res.status(403).json({ ok: false, error: 'forbidden' });
   }

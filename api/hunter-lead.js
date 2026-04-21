@@ -126,14 +126,16 @@ async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // Auth: require secret header or Vercel cron header
+  // Auth: require a shared secret header or Bearer token.
+  // This endpoint is not a Vercel cron target and must not trust
+  // x-vercel-cron from the open internet.
   const secret = req.headers['x-hunter-secret'] || req.headers['x-cron-secret']
     || String(req.headers['authorization'] || '').replace('Bearer ', '');
-  const isVercelCron = Boolean(req.headers['x-vercel-cron']);
-  if (!isVercelCron) {
-    if (!HUNTER_SECRET || secret !== HUNTER_SECRET) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
+  if (!HUNTER_SECRET) {
+    return res.status(503).json({ error: 'hunter_secret_missing' });
+  }
+  if (secret !== HUNTER_SECRET) {
+    return res.status(403).json({ error: 'Forbidden' });
   }
 
   const config = getConfig();

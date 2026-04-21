@@ -80,16 +80,11 @@ async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // Auth: Vercel's own cron infrastructure always sends x-vercel-cron header
-  // on scheduled invocations. External callers cannot spoof it — Vercel
-  // strips this header from incoming requests at the edge. See:
-  // https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs
-  // In addition, manual external invocations can authenticate with
-  // x-cron-secret or Authorization: Bearer <CRON_SECRET>.
-  const isVercelCron = Boolean(req.headers['x-vercel-cron']);
+  // Auth: Vercel cron jobs are secured with Authorization: Bearer <CRON_SECRET>.
+  // Do not treat x-vercel-cron as sufficient auth from external requests.
   const secret  = req.headers['x-cron-secret'] || String(req.headers['authorization'] || '').replace('Bearer ', '');
   const secretMatches = CRON_SECRET && secret === CRON_SECRET;
-  const authorized = isVercelCron || secretMatches;
+  const authorized = Boolean(CRON_SECRET) && secretMatches;
 
   const action = String(req.query?.action || '').toLowerCase();
 
@@ -105,6 +100,9 @@ async function handler(req, res) {
   }
 
   // ── ALL other actions require authorization ────────────────────────────────
+  if (!CRON_SECRET) {
+    return res.status(503).json({ error: 'cron_secret_missing' });
+  }
   if (!authorized) {
     return res.status(403).json({ error: 'Forbidden' });
   }
