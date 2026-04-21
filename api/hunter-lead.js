@@ -116,7 +116,10 @@ function shouldEnqueueHunterAlert(input) {
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
-const HUNTER_SECRET = process.env.HUNTER_API_SECRET || process.env.CRON_SECRET || '';
+const HUNTER_SECRET = process.env.HUNTER_API_SECRET
+  || process.env.CRON_SECRET
+  || process.env.VERCEL_CRON_SECRET
+  || '';
 
 async function handler(req, res) {
   if (req.method !== 'POST') {
