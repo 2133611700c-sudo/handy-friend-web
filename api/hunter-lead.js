@@ -116,10 +116,11 @@ function shouldEnqueueHunterAlert(input) {
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
-const HUNTER_SECRET = process.env.HUNTER_API_SECRET
-  || process.env.CRON_SECRET
-  || process.env.VERCEL_CRON_SECRET
-  || '';
+const HUNTER_SECRETS = [
+  process.env.HUNTER_API_SECRET,
+  process.env.CRON_SECRET,
+  process.env.VERCEL_CRON_SECRET,
+].map(v => String(v || '').trim()).filter(Boolean);
 
 async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -131,10 +132,10 @@ async function handler(req, res) {
   // x-vercel-cron from the open internet.
   const secret = req.headers['x-hunter-secret'] || req.headers['x-cron-secret']
     || String(req.headers['authorization'] || '').replace('Bearer ', '');
-  if (!HUNTER_SECRET) {
+  if (HUNTER_SECRETS.length === 0) {
     return res.status(503).json({ error: 'hunter_secret_missing' });
   }
-  if (secret !== HUNTER_SECRET) {
+  if (!HUNTER_SECRETS.includes(String(secret || '').trim())) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
