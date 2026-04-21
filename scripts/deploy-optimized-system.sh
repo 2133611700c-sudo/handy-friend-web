@@ -137,25 +137,14 @@ cat > scripts/send-alert.sh << 'EOF'
 
 ALERT_TYPE=$1
 MESSAGE=$2
-TELEGRAM_CONFIG=".env.production"
-
-if [ -f "$TELEGRAM_CONFIG" ]; then
-  # Extract Telegram config
-  CHAT_ID=$(grep "TELEGRAM_CHAT_ID" "$TELEGRAM_CONFIG" | cut -d= -f2)
-  BOT_TOKEN=$(grep "TELEGRAM_BOT_TOKEN" "$TELEGRAM_CONFIG" | cut -d= -f2)
-  
-  if [ -n "$CHAT_ID" ] && [ -n "$BOT_TOKEN" ]; then
-    curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-      -d "chat_id=${CHAT_ID}" \
-      -d "text=🚨 ${ALERT_TYPE}: ${MESSAGE}" \
-      -d "parse_mode=Markdown" > /dev/null
-    echo "✅ Alert sent to Telegram"
-  else
-    echo "⚠️  Telegram config incomplete"
-  fi
-else
-  echo "⚠️  Telegram config not found"
-fi
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+TEXT="ALERT: ${ALERT_TYPE}: ${MESSAGE}"
+printf '%s\n' "$TEXT" \
+  | node "$ROOT_DIR/scripts/send-telegram.mjs" \
+    --source deploy_optimized_system \
+    --category deployment_alert \
+    --actionable 1 \
+    --stdin > /dev/null && echo "✅ Alert sent to Telegram" || echo "⚠️  Telegram alert failed"
 EOF
 
 chmod +x scripts/send-alert.sh
