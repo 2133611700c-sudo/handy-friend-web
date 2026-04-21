@@ -8,6 +8,7 @@ No free generation; templates are fixed in this file.
 from __future__ import annotations
 
 import os
+import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -109,17 +110,29 @@ def send_telegram(text: str) -> None:
         log_incident("followup_scheduler", 2, "Telegram env missing: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID")
         return
     try:
-        resp = requests.post(
-            f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-            json={"chat_id": CHAT_ID, "text": text},
-            timeout=20,
+        script_path = Path(__file__).parent / "send-telegram.mjs"
+        resp = subprocess.run(
+            [
+                "node",
+                str(script_path),
+                "--source",
+                "followup_scheduler",
+                "--category",
+                "followup_pending",
+                "--actionable",
+                "1",
+                "--stdin",
+            ],
+            input=text,
+            text=True,
+            capture_output=True,
+            timeout=30,
+            check=False,
         )
-        if resp.status_code >= 300:
-            log_incident("followup_scheduler", 2, f"Telegram send HTTP {resp.status_code}: {resp.text[:180]}")
+        if resp.returncode != 0:
+            stderr = (resp.stderr or resp.stdout or "").strip()
+            log_incident("followup_scheduler", 2, f"Telegram send failed: {stderr[:180]}")
             return
-        data = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {}
-        if isinstance(data, dict) and not data.get("ok", False):
-            log_incident("followup_scheduler", 2, f"Telegram send not-ok: {str(data)[:180]}")
     except Exception as exc:  # noqa: BLE001
         log_incident("followup_scheduler", 2, f"Telegram send failed: {exc}")
 
