@@ -8,6 +8,11 @@
  * Required ENV: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
  */
 
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { sendTelegramMessage } = require('../lib/telegram/send.js');
+
 const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN || '';
@@ -168,24 +173,27 @@ async function main() {
       `<a href="tel:${phone}">📞 Call</a>` +
       (safePhone ? ` • <a href="https://wa.me/${safePhone}">💬 WhatsApp</a>` : '');
 
-    const tgResp = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: telegramChatId,
-        text: message,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-      })
+    const tgData = await sendTelegramMessage({
+      source: 'sla_check',
+      leadId: lead.id,
+      text: message,
+      token: telegramToken,
+      chatId: telegramChatId,
+      timeoutMs: 8000,
+      extra: {
+        category: 'sla_escalation',
+        actionable: true,
+        escalation_event: eventType,
+        age_min: ageMin
+      }
     });
-
-    const tgData = await tgResp.json().catch(() => ({}));
 
     // Log escalation event (prevents re-alerting)
     await logEvent(lead.id, eventType, {
       age_min: ageMin,
       telegram_ok: tgData.ok || false,
-      message_id: tgData.result?.message_id || null
+      message_id: tgData.messageId || null,
+      telegram_send_id: tgData.telegramSendId || null
     });
 
     if (tgData.ok) alertsSent++;

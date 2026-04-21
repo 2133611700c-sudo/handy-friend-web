@@ -127,8 +127,7 @@ if [[ "${OUTBOX_OK}" == "False" ]]; then
 fi
 
 if [[ -n "$ALERT_MSG" ]] && [[ -n "${TELEGRAM_BOT_TOKEN:-}" ]] && [[ -n "${TELEGRAM_CHAT_ID:-}" ]]; then
-  curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-    -d "chat_id=${TELEGRAM_CHAT_ID}" \
-    -d "text=Ads daily check ${TODAY}:%0A${ALERT_MSG}Report: ${OUT_FILE}" > /dev/null
+  printf 'Ads daily check %s:\n%sReport: %s\n' "$TODAY" "$(printf '%b' "${ALERT_MSG//%0A/\\n}")" "$OUT_FILE" \
+    | node scripts/send-telegram.mjs --source ads_daily_check --category ads_daily_check_alert --actionable 1 --stdin > /dev/null
   echo "📢 Telegram alert sent"
 fi

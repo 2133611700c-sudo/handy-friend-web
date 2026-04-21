@@ -59,10 +59,11 @@ done
 if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
   LOW=$(grep -E "\\| mobile \\|" "$REPORT" | awk -F'|' '{gsub(/ /,"",$4); if ($4 != "?" && $4 + 0 < 50) print $2}' | head -5)
   if [ -n "$LOW" ]; then
-    MSG="PSI ALERT ${DATE}%0Amobile Performance < 50 on:%0A${LOW//$'\n'/%0A}"
-    curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-      -d "chat_id=${TELEGRAM_CHAT_ID}" \
-      --data-urlencode "text=${MSG}" > /dev/null || true
+    {
+      printf 'PSI ALERT %s\n' "$DATE"
+      printf 'mobile Performance < 50 on:\n'
+      printf '%s\n' "$LOW"
+    } | node scripts/send-telegram.mjs --source psi_weekly --category psi_alert --actionable 1 --stdin > /dev/null || true
   fi
 fi
 
