@@ -213,7 +213,7 @@ async function handleDailyReport() {
   const digestHash = computeDigestHash(text);
   const since20h = new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString();
   const recent = await sbGet(config, 'telegram_sends', {
-    select: 'id,created_at,extra',
+    select: 'id,created_at,source,ok,extra',
     source: 'eq.process_outbox',
     ok: 'eq.true',
     created_at: `gte.${since20h}`,
