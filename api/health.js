@@ -17,7 +17,7 @@ const { checkMigration007 } = require('../lib/lead-pipeline.js');
 const { analyzeMessengerPricingPolicy } = require('../lib/pricing-policy.js');
 const { normalizeAttribution } = require('../lib/attribution.js');
 const { sendTelegramMessage } = require('../lib/telegram/send.js');
-const { isOwnerDeliveryProof } = require('../lib/telegram-proof.js');
+const { buildOwnerProofCounts } = require('../lib/telegram-proof.js');
 const { createHash } = require('crypto');
 
 export default async function handler(req, res) {
@@ -288,7 +288,7 @@ function escapeHtmlBasic(text) {
  * Returns:
  *   - last 10 sends
  *   - failure counts (24h + 7d)
- *   - count of leads without telegram proof (from v_leads_without_telegram)
+ *   - count of leads without telegram proof (telegram_sends OR lead_events.telegram_sent)
  *   - bot webhook info (live Telegram API, non-cached)
  * Does not require auth — diagnostic, no sensitive payload.
  */
@@ -345,13 +345,17 @@ async function telegramHealth(req, res) {
 async function fetchLeadsWithoutOwnerProof(config, limit = 50) {
   const now = Date.now();
   const since7d = new Date(now - 7 * 86400 * 1000).toISOString();
-  const [leadsResp, sendsResp] = await Promise.all([
+  const [leadsResp, sendsResp, eventsResp] = await Promise.all([
     fetch(
       `${config.projectUrl}/rest/v1/leads?select=id,full_name,phone,source,service_type,is_test,created_at&is_test=eq.false&created_at=gte.${encodeURIComponent(since7d)}&order=created_at.desc&limit=${encodeURIComponent(String(limit))}`,
       { headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` } }
     ),
     fetch(
       `${config.projectUrl}/rest/v1/telegram_sends?select=lead_id,source,ok,telegram_message_id,extra,created_at&ok=eq.true&telegram_message_id=not.is.null&created_at=gte.${encodeURIComponent(since7d)}&order=created_at.desc&limit=2000`,
+      { headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` } }
+    ),
+    fetch(
+      `${config.projectUrl}/rest/v1/lead_events?select=lead_id,event_type,event_data,created_at&event_type=eq.telegram_sent&created_at=gte.${encodeURIComponent(since7d)}&order=created_at.desc&limit=2000`,
       { headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` } }
     )
   ]);
@@ -364,17 +368,15 @@ async function fetchLeadsWithoutOwnerProof(config, limit = 50) {
     const t = await sendsResp.text().catch(() => '');
     throw new Error(`supabase_sends_${sendsResp.status}:${t.slice(0, 160)}`);
   }
+  if (!eventsResp.ok) {
+    const t = await eventsResp.text().catch(() => '');
+    throw new Error(`supabase_events_${eventsResp.status}:${t.slice(0, 160)}`);
+  }
 
   const leads = await leadsResp.json().catch(() => []);
   const sends = await sendsResp.json().catch(() => []);
-  const proofCounts = new Map();
-
-  for (const row of sends) {
-    if (!isOwnerDeliveryProof(row)) continue;
-    const leadId = String(row.lead_id || '').trim();
-    if (!leadId) continue;
-    proofCounts.set(leadId, (proofCounts.get(leadId) || 0) + 1);
-  }
+  const events = await eventsResp.json().catch(() => []);
+  const proofCounts = buildOwnerProofCounts(sends, events);
 
   return (Array.isArray(leads) ? leads : [])
     .map((lead) => {

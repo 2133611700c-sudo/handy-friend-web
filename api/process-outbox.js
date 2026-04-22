@@ -20,7 +20,7 @@
 
 const CRON_SECRET      = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECRET || '';
 const { sendTelegramMessage: unifiedTelegramSend } = require('../lib/telegram/send.js');
-const { computeDigestHash } = require('../lib/telegram-proof.js');
+const { computeDigestHash, getLosAngelesDayKey, hasRecentReportDay } = require('../lib/telegram-proof.js');
 const BATCH_SIZE       = 20;
 const LOCK_TTL_MINUTES = 5;
 const WORKER_ID        = `process-outbox:${process.pid}:${Math.random().toString(36).slice(2, 8)}`;
@@ -209,6 +209,7 @@ async function handleDailyReport() {
 
   const stats = await gatherDailyStats(config);
   const text  = `ℹ️ <b>[P3 INFO] Daily Digest</b>\n` + formatDailyDigest(stats);
+  const reportDayKey = getLosAngelesDayKey(Date.now());
   const digestHash = computeDigestHash(text);
   const since20h = new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString();
   const recent = await sbGet(config, 'telegram_sends', {
@@ -219,13 +220,10 @@ async function handleDailyReport() {
     order: 'created_at.desc',
     limit: '50'
   });
-  const duplicate = Array.isArray(recent) && recent.some((row) => {
-    const extra = row?.extra && typeof row.extra === 'object' ? row.extra : {};
-    return String(extra.category || '') === 'daily_digest' && String(extra.digest_hash || '') === digestHash;
-  });
+  const duplicate = hasRecentReportDay(recent, 'daily_digest', reportDayKey);
   if (duplicate) {
-    console.log('[OUTBOX] Daily report skipped (dedup digest match in 20h window)');
-    return { skipped: true, reason: 'duplicate_digest' };
+    console.log(`[OUTBOX] Daily report skipped (already sent for PT day ${reportDayKey})`);
+    return { skipped: true, reason: 'already_sent_today' };
   }
 
   const result = await deliverTelegramOwner({
@@ -233,7 +231,8 @@ async function handleDailyReport() {
     severity: 'P3',
     actionable: false,
     category: 'daily_digest',
-    digest_hash: digestHash
+    digest_hash: digestHash,
+    report_day_key: reportDayKey
   });
   if (!result.ok) throw new Error(result.error);
   console.log('[OUTBOX] Daily report sent');
@@ -507,6 +506,7 @@ async function deliverTelegramOwner(payload) {
       job_type: 'telegram_owner',
       category: payload?.category || null,
       digest_hash: payload?.digest_hash || null,
+      report_day_key: payload?.report_day_key || null,
       severity: payload?.severity || null,
       actionable: payload?.actionable === true
     }
