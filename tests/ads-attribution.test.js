@@ -11,6 +11,22 @@ test('attribution maps gclid traffic to google_ads_search', () => {
   assert.equal(a.channel, 'google_ads_search');
 });
 
+test('attribution accepts legacy top-level click ids (backward compatibility)', () => {
+  const a = normalizeAttribution({ gclid: 'legacy123', fbclid: 'fbx' });
+  assert.equal(a.clickId.gclid, 'legacy123');
+  assert.equal(a.clickId.fbclid, 'fbx');
+  assert.equal(a.channel, 'google_ads_search');
+});
+
+test('attribution keeps canonical clickId fields from shared forms', () => {
+  const a = normalizeAttribution({
+    clickId: { gclid: 'g1', twclid: 'tw1', li_fat_id: 'li1' }
+  });
+  assert.equal(a.clickId.gclid, 'g1');
+  assert.equal(a.clickId.twclid, 'tw1');
+  assert.equal(a.clickId.li_fat_id, 'li1');
+});
+
 test('attribution maps google lsa campaign to google_lsa', () => {
   const a = normalizeAttribution({
     utmSource: 'google',

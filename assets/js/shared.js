@@ -65,7 +65,7 @@
   try {
     var p = new URLSearchParams(window.location.search || '');
     ['utm_source','utm_medium','utm_campaign','utm_content','utm_term',
-     'gclid','fbclid','gbraid','wbraid','msclkid','ttclid'].forEach(function(k){
+     'gclid','fbclid','gbraid','wbraid','msclkid','ttclid','twclid','li_fat_id'].forEach(function(k){
       var v = p.get(k);
       if (v) sessionStorage.setItem('hf_' + k, v);
     });
@@ -150,16 +150,23 @@
   window.collectAttribution = function(){
     var params = new URLSearchParams(window.location.search || '');
     function getParam(k){ return params.get(k) || (function(){ try{ return sessionStorage.getItem('hf_'+k)||''; }catch(e){ return ''; } })(); }
+    var clickId = {
+      gclid: getParam('gclid'),
+      fbclid: getParam('fbclid'),
+      msclkid: getParam('msclkid'),
+      ttclid: getParam('ttclid'),
+      gbraid: getParam('gbraid'),
+      wbraid: getParam('wbraid'),
+      twclid: getParam('twclid'),
+      li_fat_id: getParam('li_fat_id')
+    };
     return {
       utmSource: getParam('utm_source'),
       utmMedium: getParam('utm_medium'),
       utmCampaign: getParam('utm_campaign'),
       utmContent: getParam('utm_content'),
       utmTerm: getParam('utm_term'),
-      gclid: getParam('gclid'),
-      fbclid: getParam('fbclid'),
-      gbraid: getParam('gbraid'),
-      wbraid: getParam('wbraid'),
+      clickId: clickId,
       pageUrl: window.location.href,
       referrer: document.referrer,
       ga4ClientId: (function(){ try{ return (document.cookie.match(/_ga=([^;]+)/)||[])[1]||''; }catch(e){ return ''; } })()
