@@ -30,8 +30,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${CRON_SECRET}" ]; then
-            echo "::error::CRON_SECRET secret not configured; cannot call authorised endpoint."
-            exit 1
+            echo "::warning::CRON_SECRET secret not configured — workflow is dormant. Set with 'gh secret set CRON_SECRET' (value from Vercel env). Skipping without failure."
+            exit 0
           fi
           response=$(curl -sS --max-time 60 \
             -H "x-cron-secret: ${CRON_SECRET}" \
