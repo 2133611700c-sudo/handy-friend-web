@@ -65,6 +65,15 @@ test('isOwnerDeliveryEvent accepts telegram_sent with message_id evidence', () =
   assert.equal(ok, true);
 });
 
+test('isOwnerDeliveryEvent accepts sla escalation event with telegram_ok evidence', () => {
+  const ok = isOwnerDeliveryEvent({
+    lead_id: 'lead_sla',
+    event_type: 'sla_escalation_5',
+    event_data: { telegram_ok: true, message_id: 999 }
+  });
+  assert.equal(ok, true);
+});
+
 test('isOwnerDeliveryEvent rejects watchdog/system rows', () => {
   const no = isOwnerDeliveryEvent({
     lead_id: 'watchdog_system',
