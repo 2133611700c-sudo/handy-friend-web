@@ -108,6 +108,7 @@ test('process-outbox daily_report path uses deterministic day-key idempotency', 
   const src = fs.readFileSync(path.join(__dirname, '..', 'api', 'process-outbox.js'), 'utf8');
   assert.ok(src.includes('getLosAngelesDayKey'), 'must compute PT day key');
   assert.ok(src.includes('hasRecentReportDay'), 'must use day-key helper for dedup');
+  assert.ok(src.includes("select: 'id,created_at,source,ok,extra'"), 'dedup query must select source+ok for helper checks');
   assert.ok(src.includes("reason: 'already_sent_today'"), 'must return deterministic skip reason');
   assert.ok(src.includes('report_day_key: payload?.report_day_key'), 'must persist day-key in telegram_sends.extra');
 });
