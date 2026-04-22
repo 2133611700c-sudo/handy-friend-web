@@ -1,0 +1,45 @@
+name: Outbox Processor
+
+# Vercel Hobby plan limits cron to once per day, but the outbox SLO window
+# is 2 hours. This workflow runs /api/process-outbox every 15 minutes via
+# GitHub Actions so queued jobs are picked up promptly.
+#
+# Requires secret: CRON_SECRET — copy the value from Vercel env var of the
+# same name (Project → Settings → Environment Variables).
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: outbox-processor
+  cancel-in-progress: false
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Invoke /api/process-outbox
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "::error::CRON_SECRET secret not configured; cannot call authorised endpoint."
+            exit 1
+          fi
+          response=$(curl -sS --max-time 60 \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -X POST \
+            "https://handyandfriend.com/api/process-outbox")
+          echo "$response"
+          ok=$(printf '%s' "$response" | python3 -c "import json,sys;d=json.loads(sys.stdin.read() or '{}');print(d.get('ok', False))")
+          if [ "$ok" != "True" ] && [ "$ok" != "true" ]; then
+            echo "::error::Processor returned ok=$ok"
+            exit 1
+          fi
