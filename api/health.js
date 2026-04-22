@@ -355,7 +355,7 @@ async function fetchLeadsWithoutOwnerProof(config, limit = 50) {
       { headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` } }
     ),
     fetch(
-      `${config.projectUrl}/rest/v1/lead_events?select=lead_id,event_type,event_data,created_at&event_type=eq.telegram_sent&created_at=gte.${encodeURIComponent(since7d)}&order=created_at.desc&limit=2000`,
+      `${config.projectUrl}/rest/v1/lead_events?select=lead_id,event_type,event_data,created_at&event_type=in.(telegram_sent,sla_escalation_5,sla_escalation_15,sla_escalation_30)&created_at=gte.${encodeURIComponent(since7d)}&order=created_at.desc&limit=2000`,
       { headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` } }
     )
   ]);
