@@ -17,6 +17,7 @@ const { checkMigration007 } = require('../lib/lead-pipeline.js');
 const { analyzeMessengerPricingPolicy } = require('../lib/pricing-policy.js');
 const { normalizeAttribution } = require('../lib/attribution.js');
 const { sendTelegramMessage } = require('../lib/telegram/send.js');
+const { isOwnerDeliveryProof } = require('../lib/telegram-proof.js');
 const { createHash } = require('crypto');
 
 export default async function handler(req, res) {
@@ -169,20 +170,12 @@ async function telegramWatchdog(req, res) {
 
   let rows;
   try {
-    const r = await fetch(
-      `${config.projectUrl}/rest/v1/v_leads_without_telegram?select=id,full_name,phone,source,service_type,minutes_since_created,telegram_proofs&order=created_at.desc&limit=50`,
-      { headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` } }
-    );
-    if (!r.ok) {
-      const t = await r.text().catch(() => '');
-      return res.status(502).json({ ok: false, error: `supabase_${r.status}`, details: t.slice(0, 300) });
-    }
-    rows = await r.json();
+    rows = await fetchLeadsWithoutOwnerProof(config);
   } catch (err) {
     return res.status(500).json({ ok: false, error: 'supabase_fetch_failed', details: String(err?.message || err).slice(0, 300) });
   }
 
-  const missing = (Array.isArray(rows) ? rows : []).filter(r => Number(r.telegram_proofs) === 0);
+  const missing = Array.isArray(rows) ? rows : [];
   const digestIds = missing
     .map(r => String(r.id || '').trim())
     .filter(Boolean)
@@ -319,7 +312,7 @@ async function telegramHealth(req, res) {
     sb('telegram_sends?select=id,created_at,source,ok,telegram_message_id,error_code,error_description,lead_id&order=created_at.desc&limit=10'),
     sb(`telegram_sends?select=id&ok=eq.false&created_at=gte.${encodeURIComponent(since24h)}`),
     sb(`telegram_sends?select=id&ok=eq.false&created_at=gte.${encodeURIComponent(since7d)}`),
-    sb('v_leads_without_telegram?select=id,source,minutes_since_created,telegram_proofs&order=created_at.desc&limit=20'),
+    fetchLeadsWithoutOwnerProof(config, 20),
     (async () => {
       const token = process.env.TELEGRAM_BOT_TOKEN;
       if (!token) return { _error: 'token_missing' };
@@ -335,9 +328,7 @@ async function telegramHealth(req, res) {
     })()
   ]);
 
-  const leadsWithoutProof = Array.isArray(missingProof)
-    ? missingProof.filter(r => Number(r.telegram_proofs) === 0)
-    : [];
+  const leadsWithoutProof = Array.isArray(missingProof) ? missingProof : [];
 
   return res.status(200).json({
     ok: true,
@@ -349,6 +340,58 @@ async function telegramHealth(req, res) {
     leads_without_telegram_proof_7d: leadsWithoutProof.length,
     leads_without_telegram_sample: leadsWithoutProof.slice(0, 5)
   });
+}
+
+async function fetchLeadsWithoutOwnerProof(config, limit = 50) {
+  const now = Date.now();
+  const since7d = new Date(now - 7 * 86400 * 1000).toISOString();
+  const [leadsResp, sendsResp] = await Promise.all([
+    fetch(
+      `${config.projectUrl}/rest/v1/leads?select=id,full_name,phone,source,service_type,is_test,created_at&is_test=eq.false&created_at=gte.${encodeURIComponent(since7d)}&order=created_at.desc&limit=${encodeURIComponent(String(limit))}`,
+      { headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` } }
+    ),
+    fetch(
+      `${config.projectUrl}/rest/v1/telegram_sends?select=lead_id,source,ok,telegram_message_id,extra,created_at&ok=eq.true&telegram_message_id=not.is.null&created_at=gte.${encodeURIComponent(since7d)}&order=created_at.desc&limit=2000`,
+      { headers: { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` } }
+    )
+  ]);
+
+  if (!leadsResp.ok) {
+    const t = await leadsResp.text().catch(() => '');
+    throw new Error(`supabase_leads_${leadsResp.status}:${t.slice(0, 160)}`);
+  }
+  if (!sendsResp.ok) {
+    const t = await sendsResp.text().catch(() => '');
+    throw new Error(`supabase_sends_${sendsResp.status}:${t.slice(0, 160)}`);
+  }
+
+  const leads = await leadsResp.json().catch(() => []);
+  const sends = await sendsResp.json().catch(() => []);
+  const proofCounts = new Map();
+
+  for (const row of sends) {
+    if (!isOwnerDeliveryProof(row)) continue;
+    const leadId = String(row.lead_id || '').trim();
+    if (!leadId) continue;
+    proofCounts.set(leadId, (proofCounts.get(leadId) || 0) + 1);
+  }
+
+  return (Array.isArray(leads) ? leads : [])
+    .map((lead) => {
+      const createdAt = Date.parse(String(lead.created_at || ''));
+      const minutes = Number.isFinite(createdAt) ? (now - createdAt) / 60000 : null;
+      const proofs = proofCounts.get(String(lead.id || '')) || 0;
+      return {
+        id: lead.id,
+        full_name: lead.full_name || null,
+        phone: lead.phone || null,
+        source: lead.source || null,
+        service_type: lead.service_type || null,
+        telegram_proofs: proofs,
+        minutes_since_created: minutes
+      };
+    })
+    .filter((lead) => Number(lead.telegram_proofs) === 0);
 }
 
 /* ── attribution integrity diagnostic ── */
