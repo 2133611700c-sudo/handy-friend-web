@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const crypto = require('crypto');
 
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'service-role-for-tests';
@@ -25,6 +26,12 @@ async function invoke(req) {
   const res = mockRes();
   await handler(req, res);
   return { status: res.statusCode, payload: res.payload };
+}
+
+function signBody(body, secret) {
+  const raw = JSON.stringify(body);
+  const digest = crypto.createHmac('sha256', secret).update(Buffer.from(raw)).digest('hex');
+  return `sha256=${digest}`;
 }
 
 test('GET webhook verification accepts WHATSAPP_VERIFY_TOKEN', async () => {
@@ -106,5 +113,69 @@ test('POST webhook accepts WhatsApp status callbacks', async () => {
   assert.equal(result.status, 200);
   assert.equal(result.payload.ok, true);
   assert.equal(result.payload.processed_statuses, 1);
+  assert.equal(result.payload.duplicate_statuses, 0);
 });
 
+test('POST webhook rejects invalid WhatsApp signature when app secret is set', async () => {
+  process.env.WHATSAPP_APP_SECRET = 'wa-test-secret';
+  const body = {
+    object: 'whatsapp_business_account',
+    entry: [{ changes: [{ value: { metadata: { phone_number_id: 'pnid' }, statuses: [{ id: `wamid.out.${Date.now()}`, status: 'sent' }] } }] }]
+  };
+  const result = await invoke({
+    method: 'POST',
+    headers: { 'x-hub-signature-256': 'sha256=badbadbad' },
+    body
+  });
+  assert.equal(result.status, 401);
+  assert.equal(result.payload.ok, false);
+});
+
+test('POST webhook accepts valid WhatsApp signature when app secret is set', async () => {
+  process.env.WHATSAPP_APP_SECRET = 'wa-test-secret';
+  const body = {
+    object: 'whatsapp_business_account',
+    entry: [{ changes: [{ value: { metadata: { phone_number_id: 'pnid' }, statuses: [{ id: `wamid.out.${Date.now()}`, status: 'sent' }] } }] }]
+  };
+  const result = await invoke({
+    method: 'POST',
+    headers: { 'x-hub-signature-256': signBody(body, process.env.WHATSAPP_APP_SECRET) },
+    body
+  });
+  assert.equal(result.status, 200);
+  assert.equal(result.payload.ok, true);
+});
+
+test('POST webhook dedupes duplicate status callbacks', async () => {
+  process.env.WHATSAPP_APP_SECRET = '';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = '';
+  const statusId = `wamid.status.${Date.now()}`;
+  const payload = {
+    method: 'POST',
+    body: {
+      object: 'whatsapp_business_account',
+      entry: [{
+        changes: [{
+          value: {
+            metadata: { phone_number_id: 'pnid' },
+            statuses: [{
+              id: statusId,
+              recipient_id: '12135551234',
+              status: 'delivered',
+              timestamp: String(Math.floor(Date.now() / 1000))
+            }]
+          }
+        }]
+      }]
+    }
+  };
+
+  const first = await invoke(payload);
+  const second = await invoke(payload);
+  assert.equal(first.status, 200);
+  assert.equal(first.payload.processed_statuses, 1);
+  assert.equal(first.payload.duplicate_statuses, 0);
+  assert.equal(second.status, 200);
+  assert.equal(second.payload.processed_statuses, 0);
+  assert.equal(second.payload.duplicate_statuses, 1);
+});
