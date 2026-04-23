@@ -302,8 +302,13 @@ def main():
     if fb_real_gap:
         issues.append(f'FB Messenger: {real_fb_sessions_7d} real sessions in 7d → 0 leads/pre-leads (phone gate blocking capture)')
     # Scanner staleness — Nextdoor (7-day threshold), CL + FB (2-day threshold)
+    # ND note: ops_incidents shows scanner IS running (CL:OK, ND:OK) — so ND threshold means
+    # "zero HOT/WARM yield for N days", not "scanner offline".
     if isinstance(nd_last_row_age_h, float) and nd_last_row_age_h > 168:
-        issues.append(f'Nextdoor scanner: last post {round(nd_last_row_age_h/24,1)}d ago — scanner may be stale or ND yield is zero')
+        issues.append(
+            f'Nextdoor HOT/WARM yield zero: last signal {round(nd_last_row_age_h/24,1)}d ago'
+            f' — scanner is running but all recent ND posts are COLD (check classifier or ND content)'
+        )
     if isinstance(cl_last_row_age_h, float) and cl_last_row_age_h > 48:
         issues.append(f'CL scanner: last post {round(cl_last_row_age_h,1)}h ago — scanner may be stale')
     if isinstance(fb_scanner_age_h, float) and fb_scanner_age_h > 48:

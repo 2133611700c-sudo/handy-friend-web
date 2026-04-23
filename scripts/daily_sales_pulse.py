@@ -243,6 +243,8 @@ def main():
     def _fmt_age(h, label, threshold_h):
         if h is None:
             return f'  ⚠️ {label}: NO ROWS EVER — scanner not collecting'
+        if label == 'Nextdoor' and h > threshold_h:
+            return f'  ⚠️ {label}: last HOT/WARM {round(h/24,1)}d ago — scanner running but yield COLD'
         if h > threshold_h:
             return f'  ⚠️ {label}: last post {round(h,1)}h ago — stale'
         return f'  ✓ {label}: last post {round(h,1)}h ago'
