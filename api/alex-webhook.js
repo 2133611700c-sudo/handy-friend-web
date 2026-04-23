@@ -78,7 +78,7 @@ async function handler(req, res) {
           continue;
         }
         const contactName = value.contacts?.[0]?.profile?.name || 'Unknown';
-        const phoneNumberId = value.metadata?.phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID || '';
+        const phoneNumberId = (value.metadata?.phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID || '').trim();
         for (const msg of value.messages || []) {
           if (isWaDuplicate(msg.id)) {
             console.log('[WA_WEBHOOK] Dedup skip:', msg.id);
@@ -831,9 +831,10 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
 }
 
 async function sendWhatsAppReply(phoneNumberId, to, text, replyToMessageId) {
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN || '';
+  const accessToken = (process.env.WHATSAPP_ACCESS_TOKEN || '').trim();
   if (!accessToken) throw Object.assign(new Error('WHATSAPP_ACCESS_TOKEN not configured'), { code: 'missing_token' });
-  if (!phoneNumberId) throw Object.assign(new Error('WHATSAPP_PHONE_NUMBER_ID not configured'), { code: 'missing_phone_id' });
+  const cleanPhoneNumberId = (String(phoneNumberId || '')).trim();
+  if (!cleanPhoneNumberId) throw Object.assign(new Error('WHATSAPP_PHONE_NUMBER_ID not configured'), { code: 'missing_phone_id' });
 
   const payload = {
     messaging_product: 'whatsapp',
@@ -844,7 +845,7 @@ async function sendWhatsAppReply(phoneNumberId, to, text, replyToMessageId) {
   };
   if (replyToMessageId) payload.context = { message_id: replyToMessageId };
 
-  const resp = await fetch(`https://graph.facebook.com/${WA_GRAPH_VERSION}/${phoneNumberId}/messages`, {
+  const resp = await fetch(`https://graph.facebook.com/${WA_GRAPH_VERSION}/${cleanPhoneNumberId}/messages`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
