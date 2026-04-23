@@ -11,7 +11,7 @@ Channels covered:
   - Facebook Messenger (real leads + pre_leads)
   - Social scanner HOT/WARM signals (craigslist, nextdoor, facebook groups)
   - Stuck social_leads backlog
-  - Dark channels: Nextdoor inbox (manual), Craigslist mailbox (manual)
+  - Dark channels: Nextdoor inbox (manual), Meta Page inbox (manual)
 
 Required env:
   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -195,7 +195,7 @@ def main():
     lines.append('')
     lines.append('<b>🌑 Dark channels (manual required):</b>')
     lines.append('  • Nextdoor inbox — check nextdoor.com/page/handy-friend/ messages')
-    lines.append('  • Craigslist email relay — check Gmail for CL reply notifications')
+    lines.append('  • Craigslist — scanner only (no relay email exists); check scanner staleness in watchdog')
     lines.append('  • Meta Page inbox — check facebook.com inbox for unread messages')
 
     # System health
