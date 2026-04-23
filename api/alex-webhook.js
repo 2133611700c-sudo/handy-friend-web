@@ -66,6 +66,39 @@ async function handler(req, res) {
   }
 
   const body = req.body || {};
+
+  // ── WhatsApp Business ────────────────────────────────────────────────────────
+  if (body.object === 'whatsapp_business_account') {
+    const errors = [];
+    for (const entry of body.entry || []) {
+      for (const change of entry.changes || []) {
+        const value = change?.value || {};
+        if (value.statuses?.length) {
+          console.log('[WA_WEBHOOK] Status callback:', JSON.stringify(value.statuses[0]));
+          continue;
+        }
+        const contactName = value.contacts?.[0]?.profile?.name || 'Unknown';
+        const phoneNumberId = value.metadata?.phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID || '';
+        for (const msg of value.messages || []) {
+          if (isWaDuplicate(msg.id)) {
+            console.log('[WA_WEBHOOK] Dedup skip:', msg.id);
+            continue;
+          }
+          try {
+            await handleWhatsAppMessage(msg, contactName, phoneNumberId);
+          } catch (err) {
+            const errMsg = String(err?.message || err || 'Unknown error');
+            errors.push(errMsg);
+            console.error('[WA_WEBHOOK] Processing error:', errMsg);
+          }
+        }
+      }
+    }
+    if (errors.length) console.error('[WA_WEBHOOK] Completed with errors:', errors.slice(0, 3));
+    return res.status(200).send('EVENT_RECEIVED');
+  }
+
+  // ── Facebook Messenger ───────────────────────────────────────────────────────
   if (body.object !== 'page') {
     return res.status(404).json({ error: 'Unsupported webhook object' });
   }
@@ -669,4 +702,165 @@ async function maybeCreateFbPreLead(senderId, sessionId, messages) {
     timeoutMs: 4000,
     extra: { channel: 'fb_messenger', kind: 'pre_lead_alert', sender_id: String(senderId || '') }
   }).catch((e) => console.error('[ALEX_WEBHOOK] pre_lead TG alert error:', e.message));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WhatsApp Cloud API — handler + helpers
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const WA_GRAPH_VERSION = 'v19.0';
+
+// WhatsApp dedup (separate store from Messenger)
+const waSeen = globalThis.__HF_WA_WEBHOOK_SEEN || new Map();
+globalThis.__HF_WA_WEBHOOK_SEEN = waSeen;
+
+function isWaDuplicate(msgId) {
+  if (!msgId) return false;
+  const now = Date.now();
+  if (waSeen.size > 500) { for (const [k, t] of waSeen) { if (now - t > WEBHOOK_SEEN_TTL) waSeen.delete(k); } }
+  if (waSeen.has(msgId)) return true;
+  waSeen.set(msgId, now);
+  return false;
+}
+
+function isSyntheticWaMessage(from, msgId) {
+  if (!from) return false;
+  if (from === '19991234567') return true;
+  if (/^1555/.test(from)) return true;
+  if (msgId && /e2e|test|probe|synthetic/i.test(msgId)) return true;
+  return false;
+}
+
+async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
+  const from = String(msg?.from || '');
+  const msgId = String(msg?.id || '');
+  const msgType = String(msg?.type || '');
+  if (!from) return;
+
+  const inboundText = msgType === 'text' ? String(msg?.text?.body || '').trim() : '';
+  if (!inboundText) {
+    console.log('[WA_WEBHOOK] Skip non-text type=%s from=%s', msgType, from);
+    return;
+  }
+
+  const synthetic = isSyntheticWaMessage(from, msgId);
+  const sessionId = `wa_${from}`;
+  console.log('[WA_WEBHOOK] from=%s msgId=%s synthetic=%s text=%s', from, msgId, synthetic, inboundText.slice(0, 80));
+
+  // Log inbound
+  await logLeadEvent(null, 'whatsapp_inbound', {
+    from, msg_id: msgId, session_id: sessionId, synthetic, text_preview: inboundText.slice(0, 100), phone_number_id: phoneNumberId
+  }).catch(() => {});
+
+  // Load history + classify
+  const history = await loadConversationHistory(sessionId);
+  const messages = [...history, { role: 'user', content: inboundText }].slice(-20);
+  const userMsgCount = messages.filter((m) => m.role === 'user').length;
+  const sessionCtx = await fetchSessionLeadContext(sessionId);
+  const hasPhone = sessionCtx.hasPhone || hasPhoneCapture(messages);
+  const hasContact = hasPhone || sessionCtx.hasContact;
+
+  await logLeadEvent(null, 'whatsapp_visibility_classification', {
+    from, session_id: sessionId, synthetic, user_msg_count: userMsgCount, has_phone: hasContact
+  }).catch(() => {});
+
+  if (synthetic) {
+    console.log('[WA_WEBHOOK] Synthetic probe — logging only, no reply');
+    await saveTurns(sessionId, null, inboundText, '[SYNTHETIC_PROBE_NO_REPLY]');
+    return;
+  }
+
+  // Alex
+  const guardMode = getGuardMode({ hasContact, hasPhone });
+  const systemPrompt = buildSystemPrompt({ guardMode });
+  const alexResult = await callAlex(messages, systemPrompt);
+  let reply = stripLeadPayloadBlock(String(alexResult.reply || '').trim());
+  reply = stripMarkdownArtifacts(reply).slice(0, 1000);
+  if (!reply) reply = 'Hi! Please share your project details and best phone number 📲';
+
+  await saveTurns(sessionId, null, inboundText, reply);
+
+  // Lead capture
+  let createdLeadId = null;
+  const inferredLead = inferLeadFromConversation(messages);
+  if (inferredLead) {
+    try {
+      const waEnvelope = createEnvelope({
+        source:            'whatsapp',
+        source_user_id:    from,
+        source_message_id: msgId,
+        source_thread_id:  sessionId,
+        lead_phone:        inferredLead.phone || from,
+        lead_email:        '',
+        lead_name:         contactName !== 'Unknown' ? contactName : (inferredLead.name || 'Unknown'),
+        raw_text:          inferredLead.problem_description || inboundText,
+        service_hint:      inferredLead.service_type || '',
+        meta:              { wa_from: from, session_id: sessionId, pricing_version: getPricingSourceVersion() }
+      });
+      const created = await processInbound(waEnvelope);
+      createdLeadId = created?.id || null;
+      await transitionLead(created.id, 'contacted', { contacted_at: new Date().toISOString() }).catch(() => {});
+      console.log('[WA_WEBHOOK] Lead id=%s phone=%s', createdLeadId, inferredLead.phone);
+    } catch (err) {
+      console.error('[WA_WEBHOOK] Lead error:', err.message);
+    }
+  }
+
+  // Send reply
+  try {
+    const sendResult = await sendWhatsAppReply(phoneNumberId, from, reply, msgId);
+    console.log('[WA_WEBHOOK] Reply sent ok=%s outbound_id=%s', sendResult.ok, sendResult.messageId);
+    await logLeadEvent(createdLeadId, 'whatsapp_ai_reply_sent', {
+      from, session_id: sessionId, outbound_msg_id: sendResult.messageId, reply_preview: reply.slice(0, 100)
+    }).catch(() => {});
+  } catch (err) {
+    console.error('[WA_WEBHOOK] Reply failed:', err.message);
+    await logLeadEvent(createdLeadId, 'whatsapp_ai_reply_failed', {
+      from, session_id: sessionId, error: err.message, error_code: err.code || 'unknown'
+    }).catch(() => {});
+  }
+
+  // Telegram alert on lead
+  if (createdLeadId) {
+    await notifyTelegramWaLead({ leadId: createdLeadId, sessionId, from, contactName, service: inferredLead?.service_type || 'unknown', userText: inboundText, aiReply: reply })
+      .catch((e) => console.error('[WA_WEBHOOK] TG alert error:', e.message));
+  }
+}
+
+async function sendWhatsAppReply(phoneNumberId, to, text, replyToMessageId) {
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN || '';
+  if (!accessToken) throw Object.assign(new Error('WHATSAPP_ACCESS_TOKEN not configured'), { code: 'missing_token' });
+  if (!phoneNumberId) throw Object.assign(new Error('WHATSAPP_PHONE_NUMBER_ID not configured'), { code: 'missing_phone_id' });
+
+  const payload = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: String(to),
+    type: 'text',
+    text: { body: String(text || '').slice(0, 4096) }
+  };
+  if (replyToMessageId) payload.context = { message_id: replyToMessageId };
+
+  const resp = await fetch(`https://graph.facebook.com/${WA_GRAPH_VERSION}/${phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const respBody = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    const code = respBody?.error?.code || resp.status;
+    const errMsg = respBody?.error?.message || `HTTP ${resp.status}`;
+    throw Object.assign(new Error(`WA send failed (${code}): ${errMsg}`), { code: String(code) });
+  }
+  return { ok: true, messageId: respBody?.messages?.[0]?.id || null };
+}
+
+async function notifyTelegramWaLead({ leadId, sessionId, from, contactName, service, userText, aiReply }) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+  const esc = (s) => String(s || '--').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+  const slaTime = new Date(Date.now() + 3600000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Los_Angeles' });
+  const text = `🟢 <b>WHATSAPP_LEAD</b>\n━━━━━━━━━━━━━━━━━━━━\n📱 Phone: <code>+${esc(from)}</code>\n👤 Name: ${esc(contactName)}\n🔧 Service: ${esc(service)}\n🌐 Channel: WhatsApp Business\n━━━━━━━━━━━━━━━━━━━━\n⏰ <b>SLA:</b> ${slaTime} PT\n━━━━━━━━━━━━━━━━━━━━\n<b>User:</b> ${esc(String(userText || '').slice(0, 300))}\n<b>Alex:</b> ${esc(String(aiReply || '').slice(0, 300))}\n<i>Session: ${esc(sessionId)}</i>`;
+  await unifiedTelegramSend({ source: 'alex_webhook', leadId, sessionId, text, token, chatId, timeoutMs: 4000, extra: { channel: 'whatsapp', kind: 'lead_capture', wa_from: from } });
 }
