@@ -27,7 +27,11 @@ const { detectLanguage } = require('../lib/alex-v8-system.js');
 const PHOTO_DEDUP_WINDOW_MS = Number(process.env.TELEGRAM_PHOTO_DEDUP_MS || 10 * 60 * 1000);
 const PHOTO_DEDUP_CACHE = globalThis.__HF_CHAT_PHOTO_DEDUP || new Map();
 globalThis.__HF_CHAT_PHOTO_DEDUP = PHOTO_DEDUP_CACHE;
-const TEST_SESSION_PREFIXES = ['qa_', 'test_', 'matrix_', 'mtrx_', 'hardened_', 'debug_', 'smoke_', 'dev_'];
+const TEST_SESSION_PREFIXES = [
+  'qa_', 'test_', 'matrix_', 'mtrx_', 'hardened_', 'debug_', 'smoke_', 'dev_',
+  // Regression-runner prefixes (e.g. reg-xxxx_R5_phone_c, scope_test_xxxx)
+  'reg-', 'scope_test_', 'e2e-', 'regression_',
+];
 
 // Prompt source of truth is lib/alex-one-truth.js
 
@@ -300,7 +304,7 @@ async function createLead(leadData, sessionId, lang, messages, attributionInput,
       message: String(description || '').slice(0, 2000),
       source: 'website_chat',
       source_details: attributionInput && typeof attributionInput === 'object' ? attributionInput : undefined,
-      is_test: Boolean(isTestTraffic),
+      is_test: Boolean(isTestTraffic) || isSyntheticPhone(phone),
       session_id: sessionId
     });
 
@@ -314,7 +318,7 @@ async function createLead(leadData, sessionId, lang, messages, attributionInput,
       correlation_id: `ai_chat:${sessionId}`,
       idempotency_key: `ai_chat_capture:${sessionId}:${leadId}`,
       is_new: pipelineResult.isNew,
-      is_test: Boolean(isTestTraffic),
+      is_test: Boolean(isTestTraffic) || isSyntheticPhone(phone),
       conversation_summary: buildSummary(messages, lang).slice(0, 500)
     }).catch(err => console.error('[PIPELINE_LOG]', err.message));
     await transitionLead(leadId, 'contacted', {
@@ -351,7 +355,7 @@ async function createLead(leadData, sessionId, lang, messages, attributionInput,
       problem_description: String(description || '').slice(0, 2000),
       ai_summary: buildSummary(messages, lang).slice(0, 2000),
       source_details: { session_id: sessionId, lang, channel: 'chat_widget', is_test_signal: Boolean(isTestTraffic) },
-      is_test: Boolean(isTestTraffic)
+      is_test: Boolean(isTestTraffic) || isSyntheticPhone(phone)
     };
 
     const result = await restInsert('leads', record, { returning: false });
@@ -821,6 +825,19 @@ function isLikelyTestTraffic(sessionId, attribution) {
   const hasDebugMarker = sid.includes('_qa_') || sid.includes('test_run') || sid.includes('debug');
   const hasTestAttribution = /(qa|test|debug|smoke|staging)/.test(`${source} ${campaign}`);
   return hasTestPrefix || hasDebugMarker || hasTestAttribution;
+}
+
+/**
+ * Secondary guard: detect known synthetic phone patterns.
+ * Phones starting with 130000 are injected by the regression suite.
+ * Use this to force is_test=true even if session prefix slipped through.
+ */
+function isSyntheticPhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  // 130000xxxxx = regression suite synthetic phones
+  // 2130006xxxx = scope_test synthetic phones (213 area + 000 exchange)
+  // 0000000000  = zero phone
+  return digits.startsWith('130000') || digits.startsWith('2130006') || digits === '0000000000';
 }
 
 /**

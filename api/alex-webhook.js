@@ -224,6 +224,14 @@ async function handleMessagingEvent(event) {
     }
   }
 
+  // P0-3: PRE_LEAD visibility — alert owner after ≥3 user turns with no phone captured.
+  // Fires once per session (idempotent check inside). Non-blocking — errors logged, never thrown.
+  if (!inferredLead && userMsgCount >= 3) {
+    maybeCreateFbPreLead(senderId, sessionId, messages).catch((err) =>
+      console.error('[ALEX_WEBHOOK] pre_lead error:', err.message)
+    );
+  }
+
   await sendFacebookMessage(senderId, reply);
 
   // Drain outbox inline (compensates for Hobby plan daily-only cron)
@@ -551,4 +559,113 @@ function stripMarkdownArtifacts(text) {
     .replace(/^\s{0,3}>\s?/gm, '')
     .replace(/[ \t]+\n/g, '\n')
     .trim();
+}
+
+// P0-3: Create a pre_lead row + owner Telegram alert when engagement ≥ threshold but no phone yet.
+// Idempotent: skips if any lead row already exists for this session_id.
+async function maybeCreateFbPreLead(senderId, sessionId, messages) {
+  const config = getConfig();
+  if (!config) return;
+
+  // Guard: skip if ANY lead row (real or pre_lead) already exists for this session
+  const checkQuery = new URLSearchParams({
+    select: 'id',
+    session_id: `eq.${sessionId}`,
+    limit: '1'
+  }).toString();
+  const checkResp = await fetch(`${config.projectUrl}/rest/v1/leads?${checkQuery}`, {
+    headers: {
+      apikey: config.serviceRoleKey,
+      Authorization: `Bearer ${config.serviceRoleKey}`,
+      Accept: 'application/json'
+    }
+  });
+  if (checkResp.ok) {
+    const existing = await checkResp.json().catch(() => []);
+    if (Array.isArray(existing) && existing.length > 0) {
+      console.log('[ALEX_WEBHOOK] pre_lead skip — lead row exists for session:', sessionId);
+      return;
+    }
+  }
+
+  // Infer service from conversation text
+  const allUserText = messages.filter((m) => m.role === 'user').map((m) => m.content).join('\n');
+  const serviceInference = inferServiceTypeShared(allUserText);
+  const service = serviceInference.serviceId || 'unclear';
+  const userMsgs = messages.filter((m) => m.role === 'user');
+  const lastMsg = String(userMsgs[userMsgs.length - 1]?.content || '').slice(0, 500);
+
+  // Insert pre_lead row (status='new'; source_details flags it as pre_lead)
+  const now = new Date().toISOString();
+  const preleadRowId = `lead_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  const payload = {
+    id: preleadRowId,
+    source: 'facebook',
+    channel: 'messenger',
+    full_name: `FB:${senderId}`,
+    phone: null,
+    email: null,
+    service_type: service !== 'unclear' ? service : null,
+    problem_description: `FB Messenger pre-lead: ${userMsgs.length} turns, no phone. Last: ${lastMsg.slice(0, 200)}`,
+    status: 'new',
+    stage: 'new',
+    session_id: sessionId,
+    is_test: false,
+    created_at: now,
+    updated_at: now,
+    source_details: { pre_lead: true, fb_sender_id: senderId, turns: userMsgs.length }
+  };
+
+  let preleadId = null;
+  try {
+    const insertResp = await fetch(`${config.projectUrl}/rest/v1/leads`, {
+      method: 'POST',
+      headers: {
+        apikey: config.serviceRoleKey,
+        Authorization: `Bearer ${config.serviceRoleKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation'
+      },
+      body: JSON.stringify(payload)
+    });
+    if (insertResp.ok) {
+      const data = await insertResp.json().catch(() => []);
+      preleadId = Array.isArray(data) && data.length ? data[0]?.id : null;
+      console.log('[ALEX_WEBHOOK] pre_lead created id=%s session=%s service=%s', preleadId, sessionId, service);
+    } else {
+      const errText = await insertResp.text().catch(() => '');
+      console.error('[ALEX_WEBHOOK] pre_lead insert failed %d: %s', insertResp.status, errText.slice(0, 200));
+    }
+  } catch (err) {
+    console.error('[ALEX_WEBHOOK] pre_lead insert error:', err.message);
+  }
+
+  // Send owner Telegram alert (non-blocking — errors already caught by caller)
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+
+  const esc = (s) => String(s || '').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+  const alertText =
+    `👁 <b>FB_PRE_LEAD — Check Messenger Inbox</b>\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `📍 Channel: Facebook Messenger\n` +
+    `🔧 Service: ${esc(service)}\n` +
+    `💬 Turns: ${userMsgs.length} messages — no phone captured yet\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `<b>Last message:</b>\n${esc(lastMsg.slice(0, 300))}\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n` +
+    `<i>Session: ${esc(sessionId)}</i>\n` +
+    `<i>→ Reply in FB Messenger or call to capture phone</i>`;
+
+  await unifiedTelegramSend({
+    source: 'alex_webhook',
+    leadId: preleadId,
+    sessionId,
+    text: alertText,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    extra: { channel: 'fb_messenger', kind: 'pre_lead_alert', sender_id: String(senderId || '') }
+  }).catch((e) => console.error('[ALEX_WEBHOOK] pre_lead TG alert error:', e.message));
 }

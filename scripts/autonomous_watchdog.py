@@ -94,6 +94,16 @@ def send_telegram(text):
         return False, str(e)[:200]
 
 
+def sb_get(path: str, timeout: int = 10):
+    """Simple Supabase REST GET. Returns (status_code, data)."""
+    url = os.environ.get('SUPABASE_URL', '').rstrip('/')
+    key = os.environ.get('SUPABASE_SERVICE_ROLE_KEY') or os.environ.get('SUPABASE_SERVICE_KEY', '')
+    if not url or not key:
+        return -1, {'error': 'supabase_env_missing'}
+    h = {'apikey': key, 'Authorization': f'Bearer {key}', 'Accept': 'application/json'}
+    return http_json(f'{url}/rest/v1/{path}', headers=h, timeout=timeout)
+
+
 def main():
     load_env()
     now = datetime.now(tz=timezone.utc)
@@ -123,6 +133,32 @@ def main():
         r_e2e = run_script('scripts/e2e_alex_telegram.py', timeout=120)
         snapshot['e2e'] = r_e2e
 
+    # 4) Social leads stuck check — HOT/WARM signals sitting in status='new' for >24h
+    # Use Z suffix (not +00:00) — urllib raises on 4xx, and raw + in URLs can corrupt timestamps.
+    from datetime import timedelta
+    cutoff_24h = (now - timedelta(hours=24)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    sc_code, sc_data = sb_get(
+        f'social_leads?select=id&status=eq.new&intent_type=in.(HOT,WARM)'
+        f'&created_at=lt.{cutoff_24h}&limit=50'
+    )
+    social_stuck = len(sc_data) if sc_code == 200 and isinstance(sc_data, list) else None
+    snapshot['social_leads_stuck'] = {'http': sc_code, 'count': social_stuck}
+
+    # 5) FB Messenger orphan sessions — chat sessions in last 7d that never became leads
+    cutoff_7d = (now - timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    sessions_code, sessions_data = sb_get(
+        f'ai_conversations?select=session_id&session_id=like.fb_%25'
+        f'&created_at=gte.{cutoff_7d}&limit=500'
+    )
+    fb_leads_code, fb_leads_data = sb_get(
+        f'leads?select=id&source=eq.facebook&is_test=eq.false'
+        f'&created_at=gte.{cutoff_7d}&limit=500'
+    )
+    fb_sessions_7d = len({r['session_id'] for r in sessions_data if isinstance(r, dict) and r.get('session_id')}) \
+        if sessions_code == 200 and isinstance(sessions_data, list) else None
+    fb_leads_7d = len(fb_leads_data) if fb_leads_code == 200 and isinstance(fb_leads_data, list) else None
+    snapshot['fb_messenger'] = {'sessions_7d': fb_sessions_7d, 'leads_7d': fb_leads_7d}
+
     # Decide alerts
     issues = []
     if r_urls.get('exit') != 0:
@@ -140,6 +176,10 @@ def main():
         issues.append(f'{td["leads_without_proof"]} real leads without Telegram proof')
     if snapshot.get('e2e') and snapshot['e2e'].get('exit') != 0:
         issues.append('E2E Alex chain FAILED')
+    if isinstance(social_stuck, int) and social_stuck > 0:
+        issues.append(f'{social_stuck} HOT/WARM social leads stuck >24h in status=new (check Telegram alerts)')
+    if isinstance(fb_sessions_7d, int) and fb_sessions_7d > 0 and isinstance(fb_leads_7d, int) and fb_leads_7d == 0:
+        issues.append(f'FB Messenger: {fb_sessions_7d} sessions in 7d → 0 leads (phone gate blocking capture)')
 
     snapshot['issues'] = issues
     snapshot['result'] = 'RED' if issues else 'GREEN'
