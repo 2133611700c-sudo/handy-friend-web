@@ -46,6 +46,7 @@ export default async function handler(req, res) {
   if (type === 'data_quality') return dataQualityHealth(req, res);
   if (type === 'outbox') return outboxHealth(req, res);
   if (type === 'telegram') return telegramHealth(req, res);
+  if (type === 'whatsapp') return whatsappHealth(req, res);
   if (type === 'telegram_watchdog') return telegramWatchdog(req, res);
   return basicHealth(req, res);
 }
@@ -339,6 +340,86 @@ async function telegramHealth(req, res) {
     failures_7d: Array.isArray(fails7d) ? fails7d.length : null,
     leads_without_telegram_proof_7d: leadsWithoutProof.length,
     leads_without_telegram_sample: leadsWithoutProof.slice(0, 5)
+  });
+}
+
+/* ── WhatsApp reliability snapshot ──
+ * GET /api/health?type=whatsapp
+ * Operational view for WhatsApp path only.
+ */
+async function whatsappHealth(_req, res) {
+  const config = getConfig();
+  if (!config) return res.status(200).json({ ok: false, error: 'supabase_not_configured' });
+
+  const now = Date.now();
+  const since24h = new Date(now - 24 * 3600 * 1000).toISOString();
+  const headers = { apikey: config.serviceRoleKey, Authorization: `Bearer ${config.serviceRoleKey}` };
+
+  async function sb(path) {
+    const r = await fetch(`${config.projectUrl}/rest/v1/${path}`, { headers });
+    if (!r.ok) return { _error: `supabase_${r.status}`, _body: (await r.text().catch(() => '')).slice(0, 300) };
+    return r.json();
+  }
+
+  const [leadsRows, eventsRows, sendsRows] = await Promise.all([
+    sb(`leads?select=id,status,is_test,source,created_at&source=eq.whatsapp&created_at=gte.${encodeURIComponent(since24h)}&order=created_at.desc&limit=2000`),
+    sb(`lead_events?select=id,lead_id,event_type,event_data,created_at&event_type=ilike.whatsapp%25&created_at=gte.${encodeURIComponent(since24h)}&order=created_at.desc&limit=5000`),
+    sb(`telegram_sends?select=id,lead_id,source,ok,created_at&created_at=gte.${encodeURIComponent(since24h)}&order=created_at.desc&limit=5000`)
+  ]);
+
+  if (!Array.isArray(leadsRows) || !Array.isArray(eventsRows) || !Array.isArray(sendsRows)) {
+    return res.status(502).json({
+      ok: false,
+      error: 'whatsapp_snapshot_fetch_failed',
+      details: {
+        leads: leadsRows?._error || null,
+        events: eventsRows?._error || null,
+        sends: sendsRows?._error || null
+      }
+    });
+  }
+
+  const leads24h = leadsRows.filter((r) => !r.is_test);
+  const preLeads24h = leads24h.filter((r) => String(r.status || '').toLowerCase() === 'partial');
+  const realLeads24h = Math.max(0, leads24h.length - preLeads24h.length);
+
+  const inboundEvents = eventsRows.filter((e) => e.event_type === 'whatsapp_inbound_received');
+  const replySentEvents = eventsRows.filter((e) => e.event_type === 'whatsapp_ai_reply_sent');
+  const replyFailedEvents = eventsRows.filter((e) => e.event_type === 'whatsapp_ai_reply_failed');
+  const statusEvents = eventsRows.filter((e) => e.event_type === 'whatsapp_status');
+  const duplicateSuppressed = eventsRows.filter((e) =>
+    e.event_type === 'whatsapp_duplicate_inbound_suppressed' ||
+    e.event_type === 'whatsapp_duplicate_status_suppressed'
+  );
+
+  const outboundIds = new Set(
+    replySentEvents
+      .map((e) => String(e?.event_data?.wa_outbound_message_id || '').trim())
+      .filter(Boolean)
+  );
+  const matchedStatusCount = statusEvents.filter((e) => {
+    const id = String(e?.event_data?.wa_outbound_message_id || '').trim();
+    return id && outboundIds.has(id);
+  }).length;
+  const unmatchedCallbacks = Math.max(0, statusEvents.length - matchedStatusCount);
+
+  const whatsappTelegramProofs = sendsRows.filter((s) => String(s.source || '').includes('whatsapp'));
+  const lastProofTs = statusEvents[0]?.created_at || replySentEvents[0]?.created_at || inboundEvents[0]?.created_at || null;
+
+  return res.status(200).json({
+    ok: true,
+    generated_at: new Date().toISOString(),
+    window_hours: 24,
+    inbound_count_24h: inboundEvents.length,
+    real_leads_24h: realLeads24h,
+    pre_leads_24h: preLeads24h.length,
+    outbound_reply_success_24h: replySentEvents.length,
+    outbound_reply_failed_24h: replyFailedEvents.length,
+    status_callbacks_24h: statusEvents.length,
+    unmatched_callbacks_24h: unmatchedCallbacks,
+    duplicate_suppression_24h: duplicateSuppressed.length,
+    owner_alert_rows_24h: whatsappTelegramProofs.length,
+    last_real_whatsapp_proof_ts: lastProofTs
   });
 }
 

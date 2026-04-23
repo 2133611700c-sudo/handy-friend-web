@@ -25,6 +25,8 @@ const {
   normalizeWhatsAppInbound,
   classifyLeadVisibility,
   isLikelySyntheticWhatsApp,
+  resolveWebhookAppSecret,
+  verifyMetaSignature,
   sendWhatsAppText
 } = require('../lib/whatsapp-cloud.js');
 
@@ -37,6 +39,8 @@ const webhookSeen = globalThis.__HF_FB_WEBHOOK_SEEN || new Map();
 globalThis.__HF_FB_WEBHOOK_SEEN = webhookSeen;
 const whatsappDeduper = globalThis.__HF_WA_WEBHOOK_SEEN || createMessageDeduper();
 globalThis.__HF_WA_WEBHOOK_SEEN = whatsappDeduper;
+const whatsappStatusDeduper = globalThis.__HF_WA_STATUS_WEBHOOK_SEEN || createMessageDeduper();
+globalThis.__HF_WA_STATUS_WEBHOOK_SEEN = whatsappStatusDeduper;
 
 function webhookDedupKey(event) {
   const mid = event?.message?.mid || '';
@@ -105,6 +109,20 @@ async function handler(req, res) {
     return res.status(200).send('EVENT_RECEIVED');
   }
 
+  const signatureCheck = verifyWhatsAppWebhookSignature(req);
+  if (!signatureCheck.ok) {
+    await logLeadEvent(null, 'whatsapp_signature_rejected', {
+      source: 'meta_whatsapp',
+      reason: signatureCheck.reason
+    }).catch(() => {});
+    return res.status(401).json({
+      ok: false,
+      channel: 'whatsapp',
+      error: 'invalid_signature',
+      reason: signatureCheck.reason
+    });
+  }
+
   try {
     const result = await handleWhatsAppWebhook(body);
     return res.status(200).json({ ok: true, channel: 'whatsapp', ...result });
@@ -116,6 +134,15 @@ async function handler(req, res) {
       error: String(err?.message || err || 'unknown_error').slice(0, 300)
     });
   }
+}
+
+function verifyWhatsAppWebhookSignature(req) {
+  const appSecret = resolveWebhookAppSecret();
+  if (!appSecret) {
+    // Operate in permissive mode until app secret is provided.
+    return { ok: true, reason: 'app_secret_not_configured' };
+  }
+  return verifyMetaSignature(req, appSecret);
 }
 
 module.exports = handler;
@@ -277,6 +304,7 @@ async function handleWhatsAppWebhook(body) {
   let processedMessages = 0;
   let processedStatuses = 0;
   let duplicateMessages = 0;
+  let duplicateStatuses = 0;
   let syntheticMessages = 0;
 
   for (const payload of parsed.messages) {
@@ -284,6 +312,10 @@ async function handleWhatsAppWebhook(body) {
     if (!normalized.waMessageId || !normalized.waFrom) continue;
     if (whatsappDeduper.hasSeen(normalized.waMessageId)) {
       duplicateMessages += 1;
+      await logLeadEvent(null, 'whatsapp_duplicate_inbound_suppressed', {
+        source: 'meta_whatsapp',
+        wa_message_id: normalized.waMessageId
+      }).catch(() => {});
       continue;
     }
 
@@ -298,8 +330,12 @@ async function handleWhatsAppWebhook(body) {
 
   for (const payload of parsed.statuses) {
     try {
-      await handleWhatsAppStatusUpdate(payload);
-      processedStatuses += 1;
+      const statusResult = await handleWhatsAppStatusUpdate(payload);
+      if (statusResult?.duplicate) {
+        duplicateStatuses += 1;
+      } else {
+        processedStatuses += 1;
+      }
     } catch (err) {
       console.error('[ALEX_WEBHOOK] WhatsApp status error:', err?.message || err);
     }
@@ -308,6 +344,7 @@ async function handleWhatsAppWebhook(body) {
   return {
     processed_messages: processedMessages,
     processed_statuses: processedStatuses,
+    duplicate_statuses: duplicateStatuses,
     duplicate_messages: duplicateMessages,
     synthetic_messages: syntheticMessages
   };
@@ -399,6 +436,7 @@ async function handleWhatsAppInboundMessage(normalized, payload) {
   await pipelineLogEvent(leadId, 'whatsapp_visibility_classification', {
     kind: visibility.kind,
     reason: visibility.reason,
+    wa_thread_id: sessionId,
     wa_message_id: normalized.waMessageId,
     source: 'meta_whatsapp',
     idempotency_key: `wa_visibility:${normalized.waMessageId}`
@@ -414,6 +452,7 @@ async function handleWhatsAppInboundMessage(normalized, payload) {
 
   await logLeadEvent(leadId, waSend.ok ? 'whatsapp_ai_reply_sent' : 'whatsapp_ai_reply_failed', {
     source: 'meta_whatsapp',
+    wa_thread_id: sessionId,
     wa_message_id: normalized.waMessageId,
     wa_from: normalized.waFrom,
     wa_outbound_message_id: waSend.messageId || null,
@@ -429,8 +468,17 @@ async function handleWhatsAppStatusUpdate(payload) {
   const status = payload?.status || {};
   const messageId = String(status.id || '').trim();
   if (!messageId) return;
+  const dedupeKey = `${messageId}:${String(status.status || 'unknown')}:${String(status.timestamp || '')}`;
+  if (whatsappStatusDeduper.hasSeen(dedupeKey)) {
+    await logLeadEvent(null, 'whatsapp_duplicate_status_suppressed', {
+      source: 'meta_whatsapp',
+      wa_outbound_message_id: messageId,
+      wa_status: String(status.status || 'unknown')
+    }).catch(() => {});
+    return { duplicate: true };
+  }
   const recipient = String(status.recipient_id || '').trim();
-  const leadId = await findLeadIdByPhone(recipient);
+  const leadId = await findLeadIdByOutboundWaMessageId(messageId) || await findLeadIdByPhone(recipient);
 
   await logLeadEvent(leadId, 'whatsapp_status', {
     source: 'meta_whatsapp',
@@ -441,6 +489,36 @@ async function handleWhatsAppStatusUpdate(payload) {
     conversation: status.conversation || null,
     pricing: status.pricing || null
   }).catch(() => {});
+  return { duplicate: false };
+}
+
+async function findLeadIdByOutboundWaMessageId(messageId) {
+  const config = getConfig();
+  const outboundId = String(messageId || '').trim();
+  if (!config || !outboundId) return null;
+
+  try {
+    const query = new URLSearchParams({
+      select: 'lead_id',
+      event_type: 'in.(whatsapp_ai_reply_sent,whatsapp_ai_reply_failed)',
+      'event_data->>wa_outbound_message_id': `eq.${outboundId}`,
+      order: 'created_at.desc',
+      limit: '1'
+    }).toString();
+    const resp = await fetch(`${config.projectUrl}/rest/v1/lead_events?${query}`, {
+      method: 'GET',
+      headers: {
+        apikey: config.serviceRoleKey,
+        Authorization: `Bearer ${config.serviceRoleKey}`,
+        Accept: 'application/json'
+      }
+    });
+    if (!resp.ok) return null;
+    const rows = await resp.json().catch(() => []);
+    return Array.isArray(rows) && rows[0]?.lead_id ? String(rows[0].lead_id) : null;
+  } catch (_) {
+    return null;
+  }
 }
 
 async function findLeadIdByPhone(phoneRaw) {

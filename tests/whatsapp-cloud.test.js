@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const crypto = require('crypto');
 
 const {
   createMessageDeduper,
@@ -7,6 +8,7 @@ const {
   normalizeWhatsAppInbound,
   classifyLeadVisibility,
   isLikelySyntheticWhatsApp,
+  verifyMetaSignature,
   sendWhatsAppText
 } = require('../lib/whatsapp-cloud.js');
 
@@ -112,4 +114,28 @@ test('sendWhatsAppText returns error details on API failure', async () => {
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+test('verifyMetaSignature validates x-hub-signature-256', () => {
+  const secret = 'app-secret-123';
+  const payload = { object: 'whatsapp_business_account', entry: [] };
+  const raw = JSON.stringify(payload);
+  const digest = crypto.createHmac('sha256', secret).update(Buffer.from(raw)).digest('hex');
+
+  const ok = verifyMetaSignature({
+    headers: { 'x-hub-signature-256': `sha256=${digest}` },
+    body: payload
+  }, secret);
+  assert.equal(ok.ok, true);
+});
+
+test('verifyMetaSignature rejects invalid signature', () => {
+  const secret = 'app-secret-123';
+  const payload = { object: 'whatsapp_business_account', entry: [] };
+  const bad = verifyMetaSignature({
+    headers: { 'x-hub-signature-256': 'sha256=deadbeef' },
+    body: payload
+  }, secret);
+  assert.equal(bad.ok, false);
+  assert.equal(bad.reason, 'signature_mismatch');
 });
