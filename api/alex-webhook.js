@@ -225,9 +225,10 @@ async function handleMessagingEvent(event) {
   }
 
   // P0-3: PRE_LEAD visibility — alert owner after ≥3 user turns with no phone captured.
-  // Fires once per session (idempotent check inside). Non-blocking — errors logged, never thrown.
+  // Awaited BEFORE sendFacebookMessage to prevent Vercel serverless cut-off.
+  // Fires once per session (idempotent guard inside). Errors logged, never thrown.
   if (!inferredLead && userMsgCount >= 3) {
-    maybeCreateFbPreLead(senderId, sessionId, messages).catch((err) =>
+    await maybeCreateFbPreLead(senderId, sessionId, messages).catch((err) =>
       console.error('[ALEX_WEBHOOK] pre_lead error:', err.message)
     );
   }

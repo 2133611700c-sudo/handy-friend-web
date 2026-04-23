@@ -159,6 +159,32 @@ def main():
     fb_leads_7d = len(fb_leads_data) if fb_leads_code == 200 and isinstance(fb_leads_data, list) else None
     snapshot['fb_messenger'] = {'sessions_7d': fb_sessions_7d, 'leads_7d': fb_leads_7d}
 
+    # 6) Nextdoor scanner staleness — last ND social_lead age
+    # "ALIVE" in ops_incidents = source URL reachable, NOT "posts collected".
+    # ND yield of 0 rows for >7 days is an operational blind spot regardless.
+    nd_code, nd_data = sb_get(
+        'social_leads?select=id,created_at&platform=eq.nextdoor'
+        '&order=created_at.desc&limit=1'
+    )
+    nd_last_row_age_h = None
+    nd_last_row_at = None
+    if nd_code == 200 and isinstance(nd_data, list) and nd_data:
+        try:
+            from datetime import timezone as tz
+            nd_last_row_at = nd_data[0].get('created_at', '')
+            # Parse ISO with Z or +00:00 suffix
+            ts_str = nd_last_row_at.replace('Z', '+00:00')
+            import datetime as _dt
+            nd_ts = _dt.datetime.fromisoformat(ts_str)
+            nd_last_row_age_h = round((now - nd_ts).total_seconds() / 3600, 1)
+        except Exception:
+            pass
+    snapshot['nextdoor_scanner'] = {
+        'http': nd_code,
+        'last_row_at': nd_last_row_at,
+        'age_hours': nd_last_row_age_h,
+    }
+
     # Decide alerts
     issues = []
     if r_urls.get('exit') != 0:
@@ -180,6 +206,9 @@ def main():
         issues.append(f'{social_stuck} HOT/WARM social leads stuck >24h in status=new (check Telegram alerts)')
     if isinstance(fb_sessions_7d, int) and fb_sessions_7d > 0 and isinstance(fb_leads_7d, int) and fb_leads_7d == 0:
         issues.append(f'FB Messenger: {fb_sessions_7d} sessions in 7d → 0 leads (phone gate blocking capture)')
+    # Nextdoor scanner yield: flag if last ND social_lead is older than 7 days
+    if isinstance(nd_last_row_age_h, float) and nd_last_row_age_h > 168:
+        issues.append(f'Nextdoor scanner: last post {round(nd_last_row_age_h/24,1)}d ago — scanner may be stale or ND yield is zero')
 
     snapshot['issues'] = issues
     snapshot['result'] = 'RED' if issues else 'GREEN'
