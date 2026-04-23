@@ -254,11 +254,13 @@ def main():
     fb_scanner_age_h = snapshot['facebook_scanner']['age_hours']
 
     # 7) Scanner proof gap — if scanner is active (recent rows) but writes NO telegram_sends proof rows,
-    # Dell-side social_scanner.py is running unpatched (missing log_telegram_send_proof call).
-    # tg_msg_id=88888 is the synthetic test row; exclude it.
+    # Dell-side hunters are unpatched (missing log_proof_sync call).
+    # Exclude the known synthetic test row (id=35, tg_msg_id=88888).
+    # NOTE: telegram_message_id=neq.88888 excludes NULL rows in SQL (NULL!=X evaluates to NULL).
+    # Use id=neq.35 to exclude the specific synthetic row and include all real proof rows (even those with null message_id).
     pf_code, pf_data = sb_get(
         'telegram_sends?select=id,created_at&source=eq.social_scanner'
-        '&telegram_message_id=neq.88888&order=created_at.desc&limit=1'
+        '&id=neq.35&order=created_at.desc&limit=1'
     )
     scanner_proof_age_h = _row_age_h(pf_data) if pf_code == 200 and isinstance(pf_data, list) and pf_data else None
     scanner_is_active = (
@@ -307,7 +309,7 @@ def main():
     if isinstance(nd_last_row_age_h, float) and nd_last_row_age_h > 168:
         issues.append(
             f'Nextdoor HOT/WARM yield zero: last signal {round(nd_last_row_age_h/24,1)}d ago'
-            f' — scanner is running but all recent ND posts are COLD (check classifier or ND content)'
+            f' — ND hunter runs but reads from manual JSON feed files (all 3 currently empty, no live scraping)'
         )
     if isinstance(cl_last_row_age_h, float) and cl_last_row_age_h > 48:
         issues.append(f'CL scanner: last post {round(cl_last_row_age_h,1)}h ago — scanner may be stale')

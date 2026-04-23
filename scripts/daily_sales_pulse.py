@@ -182,8 +182,10 @@ def main():
             scanner_status[plat] = None  # no rows ever
 
     # ── 5d. Scanner proof gap ────────────────────────────────────────────────
+    # NOTE: telegram_message_id=neq.88888 excludes NULL rows (SQL NULL!=X = NULL).
+    # Use id=neq.35 to exclude only the known synthetic test row, include all real proof rows.
     c3, pf_data = sb_get(
-        'telegram_sends?select=id&source=eq.social_scanner&telegram_message_id=neq.88888&limit=1'
+        'telegram_sends?select=id&source=eq.social_scanner&id=neq.35&limit=1'
     )
     scanner_proof_exists = c3 == 200 and isinstance(pf_data, list) and len(pf_data) > 0
     scanner_active = any(
@@ -244,7 +246,7 @@ def main():
         if h is None:
             return f'  ⚠️ {label}: NO ROWS EVER — scanner not collecting'
         if label == 'Nextdoor' and h > threshold_h:
-            return f'  ⚠️ {label}: last HOT/WARM {round(h/24,1)}d ago — scanner running but yield COLD'
+            return f'  ⚠️ {label}: last HOT/WARM {round(h/24,1)}d ago — hunter reads manual JSON feeds (all 3 empty, no live scraping)'
         if h > threshold_h:
             return f'  ⚠️ {label}: last post {round(h,1)}h ago — stale'
         return f'  ✓ {label}: last post {round(h,1)}h ago'
