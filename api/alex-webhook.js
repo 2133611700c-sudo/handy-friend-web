@@ -13,7 +13,7 @@
 
 const { restInsert, getConfig, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { callAlex } = require('../lib/ai-fallback.js');
-const { processInbound, transitionLead, logEvent: pipelineLogEvent, drainOutboxInline } = require('../lib/lead-pipeline.js');
+const { processInbound, transitionLead, logEvent: pipelineLogEvent, drainOutboxInline, enqueueOutboundJob } = require('../lib/lead-pipeline.js');
 const { buildSystemPrompt, getGuardMode, GUARD_MODES } = require('../lib/alex-one-truth.js');
 const { getMessengerPostbackTexts, getPricingSourceVersion } = require('../lib/price-registry.js');
 const { inferServiceType: inferServiceTypeShared } = require('../lib/alex-policy-engine.js');
@@ -501,9 +501,7 @@ async function markLeadPartial(leadId, reason) {
 }
 
 async function sendWhatsAppPreLeadReviewAlert({ leadId, waFrom, message, reason }) {
-  const token = process.env.TELEGRAM_BOT_TOKEN || '';
-  const chatId = process.env.TELEGRAM_CHAT_ID || '';
-  if (!token || !chatId || !leadId) return;
+  if (!leadId) return;
   const esc = (v) => String(v || '').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
   const text = `⚠️ <b>PRE_LEAD_REVIEW</b>\n` +
     `Source: WhatsApp\n` +
@@ -512,16 +510,23 @@ async function sendWhatsAppPreLeadReviewAlert({ leadId, waFrom, message, reason 
     `Action: check WhatsApp thread and qualify\n` +
     `Lead: <code>${esc(leadId)}</code>\n\n` +
     `${esc(String(message || '').slice(0, 280))}`;
-
-  await unifiedTelegramSend({
-    source: 'alex_webhook_whatsapp',
-    leadId,
-    text,
-    token,
-    chatId,
-    timeoutMs: 4000,
-    extra: { channel: 'meta_whatsapp', kind: 'pre_lead_review' }
-  }).catch(() => {});
+  const hour = Math.floor(Date.now() / 3600000);
+  const dedupKey = `wa_pre_lead_review:${leadId}:${hour}`;
+  await enqueueOutboundJob('telegram_owner', leadId, { text }, dedupKey).catch(async () => {
+    // Fallback to direct sender only if outbox unavailable.
+    const token = process.env.TELEGRAM_BOT_TOKEN || '';
+    const chatId = process.env.TELEGRAM_CHAT_ID || '';
+    if (!token || !chatId) return;
+    await unifiedTelegramSend({
+      source: 'alex_webhook_whatsapp',
+      leadId,
+      text,
+      token,
+      chatId,
+      timeoutMs: 4000,
+      extra: { channel: 'meta_whatsapp', kind: 'pre_lead_review', fallback: true }
+    }).catch(() => {});
+  });
 }
 
 function normalizeInboundText(event) {
