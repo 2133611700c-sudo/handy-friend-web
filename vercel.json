@@ -259,6 +259,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/whatsapp-webhook",
+      "destination": "/api/alex-webhook"
+    },
+    {
       "source": "/services",
       "destination": "/services/index.html"
     },

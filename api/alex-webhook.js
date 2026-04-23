@@ -17,8 +17,16 @@ const { processInbound, transitionLead, logEvent: pipelineLogEvent, drainOutboxI
 const { buildSystemPrompt, getGuardMode, GUARD_MODES } = require('../lib/alex-one-truth.js');
 const { getMessengerPostbackTexts, getPricingSourceVersion } = require('../lib/price-registry.js');
 const { inferServiceType: inferServiceTypeShared } = require('../lib/alex-policy-engine.js');
-const { createEnvelope } = require('../lib/inbound-envelope.js');
+const { createEnvelope, normalizePhone } = require('../lib/inbound-envelope.js');
 const { sendTelegramMessage: unifiedTelegramSend, sendTelegramPhoto: unifiedTelegramPhotoSend } = require('../lib/telegram/send.js');
+const {
+  createMessageDeduper,
+  parseWhatsAppWebhook,
+  normalizeWhatsAppInbound,
+  classifyLeadVisibility,
+  isLikelySyntheticWhatsApp,
+  sendWhatsAppText
+} = require('../lib/whatsapp-cloud.js');
 
 const FB_GRAPH_VERSION = process.env.FB_GRAPH_VERSION || 'v19.0';
 const MAX_HISTORY_TURNS = 16;
@@ -27,6 +35,8 @@ const MAX_HISTORY_TURNS = 16;
 const WEBHOOK_SEEN_TTL = 5 * 60 * 1000; // 5 minutes
 const webhookSeen = globalThis.__HF_FB_WEBHOOK_SEEN || new Map();
 globalThis.__HF_FB_WEBHOOK_SEEN = webhookSeen;
+const whatsappDeduper = globalThis.__HF_WA_WEBHOOK_SEEN || createMessageDeduper();
+globalThis.__HF_WA_WEBHOOK_SEEN = whatsappDeduper;
 
 function webhookDedupKey(event) {
   const mid = event?.message?.mid || '';
@@ -66,39 +76,52 @@ async function handler(req, res) {
   }
 
   const body = req.body || {};
-  if (body.object !== 'page') {
+  if (body.object !== 'page' && body.object !== 'whatsapp_business_account') {
     return res.status(404).json({ error: 'Unsupported webhook object' });
   }
 
-  const errors = [];
-  for (const entry of body.entry || []) {
-    for (const event of entry.messaging || []) {
-      if (isWebhookDuplicate(event)) {
-        console.log('[ALEX_WEBHOOK] Dedup skip:', webhookDedupKey(event));
-        continue;
-      }
-      try {
-        await handleMessagingEvent(event);
-      } catch (err) {
-        const msg = String(err?.message || err || 'Unknown error');
-        errors.push(msg);
-        console.error('[ALEX_WEBHOOK] Event processing error:', msg);
+  if (body.object === 'page') {
+    const errors = [];
+    for (const entry of body.entry || []) {
+      for (const event of entry.messaging || []) {
+        if (isWebhookDuplicate(event)) {
+          console.log('[ALEX_WEBHOOK] Dedup skip:', webhookDedupKey(event));
+          continue;
+        }
+        try {
+          await handleMessagingEvent(event);
+        } catch (err) {
+          const msg = String(err?.message || err || 'Unknown error');
+          errors.push(msg);
+          console.error('[ALEX_WEBHOOK] Event processing error:', msg);
+        }
       }
     }
+
+    if (errors.length) {
+      // Always ack the webhook to avoid repeated delivery loops from Meta.
+      console.error('[ALEX_WEBHOOK] Completed with errors:', errors.slice(0, 5));
+    }
+    return res.status(200).send('EVENT_RECEIVED');
   }
 
-  if (errors.length) {
-    // Always ack the webhook to avoid repeated delivery loops from Meta.
-    console.error('[ALEX_WEBHOOK] Completed with errors:', errors.slice(0, 5));
+  try {
+    const result = await handleWhatsAppWebhook(body);
+    return res.status(200).json({ ok: true, channel: 'whatsapp', ...result });
+  } catch (err) {
+    console.error('[ALEX_WEBHOOK] WhatsApp processing error:', err?.message || err);
+    return res.status(200).json({
+      ok: false,
+      channel: 'whatsapp',
+      error: String(err?.message || err || 'unknown_error').slice(0, 300)
+    });
   }
-
-  return res.status(200).send('EVENT_RECEIVED');
 }
 
 module.exports = handler;
 
 function verifyWebhook(req, res) {
-  const verifyToken = String(process.env.FB_VERIFY_TOKEN || '').trim();
+  const verifyToken = resolveWebhookVerifyToken(req);
   const query = req.query && typeof req.query === 'object' ? req.query : {};
   const urlQuery = parseUrlQuery(req?.url || '');
 
@@ -107,13 +130,24 @@ function verifyWebhook(req, res) {
   const challenge = firstNonEmpty(query['hub.challenge'], urlQuery.get('hub.challenge'));
 
   if (!verifyToken) {
-    return res.status(500).send('FB_VERIFY_TOKEN is not configured');
+    return res.status(500).send('VERIFY_TOKEN is not configured');
   }
 
   if (mode === 'subscribe' && token === verifyToken) {
     return res.status(200).send(String(challenge || 'ok'));
   }
   return res.status(403).send('Forbidden');
+}
+
+function resolveWebhookVerifyToken(req) {
+  const query = req.query && typeof req.query === 'object' ? req.query : {};
+  const urlQuery = parseUrlQuery(req?.url || '');
+  const incoming = firstNonEmpty(query['hub.verify_token'], urlQuery.get('hub.verify_token')).trim();
+  const fb = String(process.env.FB_VERIFY_TOKEN || '').trim();
+  const wa = String(process.env.WHATSAPP_VERIFY_TOKEN || '').trim();
+  if (incoming && incoming === wa) return wa;
+  if (incoming && incoming === fb) return fb;
+  return fb || wa || '';
 }
 
 function parseUrlQuery(url) {
@@ -236,6 +270,258 @@ async function handleMessagingEvent(event) {
       session_id: sessionId
     }).catch(() => {});
   }
+}
+
+async function handleWhatsAppWebhook(body) {
+  const parsed = parseWhatsAppWebhook(body);
+  let processedMessages = 0;
+  let processedStatuses = 0;
+  let duplicateMessages = 0;
+  let syntheticMessages = 0;
+
+  for (const payload of parsed.messages) {
+    const normalized = normalizeWhatsAppInbound(payload);
+    if (!normalized.waMessageId || !normalized.waFrom) continue;
+    if (whatsappDeduper.hasSeen(normalized.waMessageId)) {
+      duplicateMessages += 1;
+      continue;
+    }
+
+    try {
+      const wasSynthetic = await handleWhatsAppInboundMessage(normalized, payload);
+      if (wasSynthetic) syntheticMessages += 1;
+      processedMessages += 1;
+    } catch (err) {
+      console.error('[ALEX_WEBHOOK] WhatsApp message error:', err?.message || err);
+    }
+  }
+
+  for (const payload of parsed.statuses) {
+    try {
+      await handleWhatsAppStatusUpdate(payload);
+      processedStatuses += 1;
+    } catch (err) {
+      console.error('[ALEX_WEBHOOK] WhatsApp status error:', err?.message || err);
+    }
+  }
+
+  return {
+    processed_messages: processedMessages,
+    processed_statuses: processedStatuses,
+    duplicate_messages: duplicateMessages,
+    synthetic_messages: syntheticMessages
+  };
+}
+
+async function handleWhatsAppInboundMessage(normalized, payload) {
+  const waText = String(normalized.text || '').trim();
+  const inboundText = waText || `Customer sent ${normalized.type || 'message'} in WhatsApp`;
+  const synthetic = isLikelySyntheticWhatsApp({
+    text: inboundText,
+    waFrom: normalized.waFrom,
+    profileName: normalized.profileName
+  });
+  if (synthetic) {
+    await logLeadEvent(null, 'whatsapp_synthetic_ignored', {
+      wa_message_id: normalized.waMessageId,
+      wa_from: normalized.waFrom,
+      source: 'meta_whatsapp'
+    }).catch(() => {});
+    return true;
+  }
+
+  const sessionId = `wa_${normalized.waFrom}`;
+  const history = await loadConversationHistory(sessionId);
+  const messages = [...history, { role: 'user', content: inboundText }].slice(-20);
+  const context = await fetchSessionLeadContext(sessionId);
+  const hasPhone = context.hasPhone || Boolean(normalized.waFrom);
+  const hasContact = hasPhone || context.hasContact;
+  const guardMode = getGuardMode({ hasContact, hasPhone });
+  const systemPrompt = buildSystemPrompt({ guardMode });
+  let alexResult;
+  try {
+    alexResult = await callAlex(messages, systemPrompt);
+  } catch (err) {
+    console.error('[ALEX_WEBHOOK] callAlex failed for WhatsApp:', err?.message || err);
+    alexResult = {
+      reply: 'Thanks for your message. We received it and will respond with project details shortly.'
+    };
+  }
+  let reply = stripLeadPayloadBlock(String(alexResult.reply || '').trim());
+  reply = stripMarkdownArtifacts(reply).slice(0, 1500);
+  if (!reply) reply = 'Thanks for reaching out. Share your project details and we will help right away.';
+
+  const serviceInference = inferServiceTypeShared(messages.map((m) => m.content).join('\n'));
+  const visibility = classifyLeadVisibility({
+    text: inboundText,
+    serviceHint: serviceInference.serviceId || ''
+  });
+
+  await saveTurns(sessionId, null, inboundText, reply);
+
+  let leadId = null;
+  const envelope = createEnvelope({
+    source: 'whatsapp',
+    source_user_id: normalized.waFrom,
+    source_message_id: normalized.waMessageId,
+    source_thread_id: sessionId,
+    lead_phone: normalized.waFrom,
+    lead_name: normalized.profileName || 'WhatsApp Customer',
+    raw_text: inboundText,
+    service_hint: serviceInference.serviceId || '',
+    attachments: normalized.attachments || [],
+    meta: {
+      channel: 'meta_whatsapp',
+      wa_from: normalized.waFrom,
+      wa_message_id: normalized.waMessageId,
+      wa_type: normalized.type || 'unknown',
+      referral: normalized.referral || null
+    }
+  });
+
+  const created = await processInbound(envelope);
+  leadId = created.id;
+
+  if (visibility.kind === 'pre_lead') {
+    await markLeadPartial(leadId, visibility.reason);
+    await sendWhatsAppPreLeadReviewAlert({
+      leadId,
+      waFrom: normalized.waFrom,
+      message: inboundText,
+      reason: visibility.reason
+    });
+  } else {
+    await transitionLead(leadId, 'contacted', {
+      contacted_at: new Date().toISOString()
+    }).catch(() => {});
+  }
+
+  await pipelineLogEvent(leadId, 'whatsapp_visibility_classification', {
+    kind: visibility.kind,
+    reason: visibility.reason,
+    wa_message_id: normalized.waMessageId,
+    source: 'meta_whatsapp',
+    idempotency_key: `wa_visibility:${normalized.waMessageId}`
+  }).catch(() => {});
+
+  const waSend = await sendWhatsAppText({
+    accessToken: process.env.WHATSAPP_ACCESS_TOKEN || process.env.FB_PAGE_ACCESS_TOKEN || '',
+    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
+    to: normalized.waFrom,
+    text: reply,
+    replyToMessageId: normalized.waMessageId
+  });
+
+  await logLeadEvent(leadId, waSend.ok ? 'whatsapp_ai_reply_sent' : 'whatsapp_ai_reply_failed', {
+    source: 'meta_whatsapp',
+    wa_message_id: normalized.waMessageId,
+    wa_from: normalized.waFrom,
+    wa_outbound_message_id: waSend.messageId || null,
+    error_code: waSend.errorCode || null,
+    error_description: waSend.errorDescription || null
+  }).catch(() => {});
+
+  drainOutboxInline();
+  return synthetic;
+}
+
+async function handleWhatsAppStatusUpdate(payload) {
+  const status = payload?.status || {};
+  const messageId = String(status.id || '').trim();
+  if (!messageId) return;
+  const recipient = String(status.recipient_id || '').trim();
+  const leadId = await findLeadIdByPhone(recipient);
+
+  await logLeadEvent(leadId, 'whatsapp_status', {
+    source: 'meta_whatsapp',
+    wa_outbound_message_id: messageId,
+    wa_status: String(status.status || 'unknown'),
+    wa_recipient_id: recipient || null,
+    wa_timestamp: status.timestamp ? String(status.timestamp) : null,
+    conversation: status.conversation || null,
+    pricing: status.pricing || null
+  }).catch(() => {});
+}
+
+async function findLeadIdByPhone(phoneRaw) {
+  const config = getConfig();
+  const normalized = normalizePhone(phoneRaw);
+  if (!config || !normalized) return null;
+
+  try {
+    const query = new URLSearchParams({
+      select: 'id',
+      phone: `eq.${normalized}`,
+      limit: '1'
+    }).toString();
+    const resp = await fetch(`${config.projectUrl}/rest/v1/leads?${query}`, {
+      method: 'GET',
+      headers: {
+        apikey: config.serviceRoleKey,
+        Authorization: `Bearer ${config.serviceRoleKey}`,
+        Accept: 'application/json'
+      }
+    });
+    if (!resp.ok) return null;
+    const rows = await resp.json().catch(() => []);
+    return Array.isArray(rows) && rows[0]?.id ? String(rows[0].id) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function markLeadPartial(leadId, reason) {
+  const config = getConfig();
+  if (!config || !leadId) return;
+  const now = new Date().toISOString();
+  const payload = {
+    status: 'partial',
+    updated_at: now,
+    source_details: {
+      pre_lead_reason: reason,
+      channel: 'meta_whatsapp',
+      updated_at: now
+    }
+  };
+  try {
+    const query = new URLSearchParams({ id: `eq.${leadId}` }).toString();
+    await fetch(`${config.projectUrl}/rest/v1/leads?${query}`, {
+      method: 'PATCH',
+      headers: {
+        apikey: config.serviceRoleKey,
+        Authorization: `Bearer ${config.serviceRoleKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch (_) {
+    // Best effort only.
+  }
+}
+
+async function sendWhatsAppPreLeadReviewAlert({ leadId, waFrom, message, reason }) {
+  const token = process.env.TELEGRAM_BOT_TOKEN || '';
+  const chatId = process.env.TELEGRAM_CHAT_ID || '';
+  if (!token || !chatId || !leadId) return;
+  const esc = (v) => String(v || '').replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+  const text = `⚠️ <b>PRE_LEAD_REVIEW</b>\n` +
+    `Source: WhatsApp\n` +
+    `Phone: <code>${esc(normalizePhone(waFrom) || waFrom)}</code>\n` +
+    `Reason: ${esc(reason)}\n` +
+    `Action: check WhatsApp thread and qualify\n` +
+    `Lead: <code>${esc(leadId)}</code>\n\n` +
+    `${esc(String(message || '').slice(0, 280))}`;
+
+  await unifiedTelegramSend({
+    source: 'alex_webhook_whatsapp',
+    leadId,
+    text,
+    token,
+    chatId,
+    timeoutMs: 4000,
+    extra: { channel: 'meta_whatsapp', kind: 'pre_lead_review' }
+  }).catch(() => {});
 }
 
 function normalizeInboundText(event) {
