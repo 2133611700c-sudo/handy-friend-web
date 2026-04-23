@@ -139,14 +139,56 @@ def main():
     n_stuck = count_list(c, stuck) or 0
 
     # ── 5. FB Messenger sessions last 7d vs leads ────────────────────────────
+    # Only count REAL sessions (numeric sender IDs ≥10 digits); exclude test sessions.
+    import re as _re
+    REAL_FB_SESSION = _re.compile(r'^fb_\d{10,}$')
     c, fb_sessions = sb_get(
         f'ai_conversations?select=session_id'
         f'&session_id=like.fb_%25&created_at=gte.{since_7d}&limit=500'
     )
     n_fb_sessions_7d = None
     if c == 200 and isinstance(fb_sessions, list):
-        n_fb_sessions_7d = len({r.get('session_id') for r in fb_sessions if r.get('session_id')})
+        all_sessions = {r.get('session_id') for r in fb_sessions if r.get('session_id')}
+        n_fb_sessions_7d = len({s for s in all_sessions if REAL_FB_SESSION.match(s)})
     n_fb_leads_7d = n_real_leads_7d  # use overall as proxy (source breakdown not needed here)
+
+    # ── 5b. Social signal lifecycle breakdown ────────────────────────────────
+    c, sl_all = sb_get('social_leads?select=status,intent_type&limit=2000')
+    sl_lifecycle = {'new': 0, 'reviewed': 0, 'contacted': 0, 'converted': 0}
+    if c == 200 and isinstance(sl_all, list):
+        for row in sl_all:
+            if row.get('intent_type') in ('HOT', 'WARM') and row.get('status') in sl_lifecycle:
+                sl_lifecycle[row['status']] += 1
+
+    # ── 5c. Scanner staleness ────────────────────────────────────────────────
+    import re as _re2
+    def _parse_ts2(ts_str):
+        if not ts_str: return None
+        ts = _re2.sub(r'\.\d+', '', str(ts_str)).replace('Z', '+00:00')
+        from datetime import datetime, timezone
+        return datetime.fromisoformat(ts)
+
+    scanner_status = {}
+    for plat in ('craigslist', 'facebook', 'nextdoor'):
+        c2, d2 = sb_get(f'social_leads?select=created_at&platform=eq.{plat}&order=created_at.desc&limit=1')
+        if c2 == 200 and isinstance(d2, list) and d2:
+            try:
+                ts = _parse_ts2(d2[0].get('created_at', ''))
+                age_h = round((now - ts).total_seconds()/3600, 1) if ts else None
+                scanner_status[plat] = age_h
+            except Exception:
+                scanner_status[plat] = None
+        else:
+            scanner_status[plat] = None  # no rows ever
+
+    # ── 5d. Scanner proof gap ────────────────────────────────────────────────
+    c3, pf_data = sb_get(
+        'telegram_sends?select=id&source=eq.social_scanner&telegram_message_id=neq.88888&limit=1'
+    )
+    scanner_proof_exists = c3 == 200 and isinstance(pf_data, list) and len(pf_data) > 0
+    scanner_active = any(
+        isinstance(h, float) and h < 48 for plat, h in scanner_status.items() if plat != 'nextdoor'
+    )
 
     # ── 6. Telegram delivery health ──────────────────────────────────────────
     c, tg_fails = sb_get(
@@ -159,8 +201,11 @@ def main():
     # ── 7. Outbox health ────────────────────────────────────────────────────
     c, outbox_pending = sb_get('outbound_jobs?select=id&status=eq.pending&limit=50')
     n_outbox_pending = count_list(c, outbox_pending) or 0
-    c, outbox_failed = sb_get('outbound_jobs?select=id&status=eq.failed&limit=50')
+    # Critical failures only (non-ga4) — ga4_event failures are analytics, not lead-capture
+    c, outbox_failed = sb_get('outbound_jobs?select=id&status=eq.failed&job_type=neq.ga4_event&limit=50')
     n_outbox_failed = count_list(c, outbox_failed) or 0
+    c, outbox_failed_ga4 = sb_get('outbound_jobs?select=id&status=eq.failed&job_type=eq.ga4_event&limit=50')
+    n_outbox_failed_ga4 = count_list(c, outbox_failed_ga4) or 0
 
     # ── Build Telegram message ───────────────────────────────────────────────
     date_str = now.strftime('%Y-%m-%d')
@@ -176,7 +221,8 @@ def main():
     if n_preleads > 0:
         lines.append(f'👁 <b>FB pre-leads (no phone):</b> {n_preleads} — check Messenger inbox')
     else:
-        lines.append(f'💬 FB Messenger: {n_fb_sessions_7d or "?"} sessions (7d) → {n_preleads} pre-leads captured')
+        real_sess = n_fb_sessions_7d if n_fb_sessions_7d is not None else '?'
+        lines.append(f'💬 FB Messenger: {real_sess} real sessions (7d) → {n_preleads} pre-leads captured (0 organic)')
 
     # Social signals
     lines.append('')
@@ -187,15 +233,33 @@ def main():
     else:
         lines.append(f'  HOT/WARM today: 0')
     if n_stuck > 0:
-        lines.append(f'  ⚠️ Stuck backlog (>24h, no action): {n_stuck} — review Telegram history')
+        lines.append(f'  ⚠️ Stuck backlog (>24h): {n_stuck} — review Telegram history')
+        lc = sl_lifecycle
+        lines.append(f'  📋 Lifecycle: new={lc["new"]} reviewed={lc["reviewed"]} contacted={lc["contacted"]} converted={lc["converted"]}')
     else:
-        lines.append(f'  Stuck HOT/WARM backlog: {n_stuck} ✓')
+        lines.append(f'  Stuck HOT/WARM backlog: 0 ✓')
+
+    # Scanner staleness
+    def _fmt_age(h, label, threshold_h):
+        if h is None:
+            return f'  ⚠️ {label}: NO ROWS EVER — scanner not collecting'
+        if h > threshold_h:
+            return f'  ⚠️ {label}: last post {round(h,1)}h ago — stale'
+        return f'  ✓ {label}: last post {round(h,1)}h ago'
+
+    lines.append('')
+    lines.append('<b>🔍 Scanner activity:</b>')
+    lines.append(_fmt_age(scanner_status.get('craigslist'), 'CL', 48))
+    lines.append(_fmt_age(scanner_status.get('facebook'), 'FB Groups', 48))
+    lines.append(_fmt_age(scanner_status.get('nextdoor'), 'Nextdoor', 168))
+    if scanner_active and not scanner_proof_exists:
+        lines.append('  ⚠️ Scanner proof gap: HOT alerts fire but write NO telegram_sends rows (Dell sync needed)')
 
     # Dark channels
     lines.append('')
     lines.append('<b>🌑 Dark channels (manual required):</b>')
     lines.append('  • Nextdoor inbox — check nextdoor.com/page/handy-friend/ messages')
-    lines.append('  • Craigslist — scanner only (no relay email exists); check scanner staleness in watchdog')
+    lines.append('  • Craigslist — scanner only (no relay email exists)')
     lines.append('  • Meta Page inbox — check facebook.com inbox for unread messages')
 
     # System health
@@ -206,7 +270,9 @@ def main():
     if n_outbox_pending > 5:
         lines.append(f'  ⚠️ Outbox backlog: {n_outbox_pending} pending jobs')
     if n_outbox_failed > 0:
-        lines.append(f'  ⚠️ Outbox failed (DLQ): {n_outbox_failed} jobs')
+        lines.append(f'  ⚠️ Outbox failed (critical): {n_outbox_failed} jobs')
+    if n_outbox_failed_ga4 > 0:
+        lines.append(f'  ℹ️ GA4 analytics events failed: {n_outbox_failed_ga4} (non-critical)')
     if errors:
         lines.append(f'  ❌ Query errors: {"; ".join(errors)}')
 
@@ -220,6 +286,8 @@ def main():
         actions.append(f'📲 {n_preleads} FB conversations need phone capture — reply in Messenger')
     if isinstance(n_tg_fails_24h, int) and n_tg_fails_24h > 3:
         actions.append(f'⚠️ {n_tg_fails_24h} Telegram failures — check bot token')
+    if scanner_active and not scanner_proof_exists:
+        actions.append('🔧 Dell sync needed: scanner runs but writes no proof rows — SSH dell + git pull')
 
     if actions:
         lines.append('')
@@ -234,13 +302,17 @@ def main():
         'real_leads_24h': n_real_leads_24h,
         'real_leads_7d': n_real_leads_7d,
         'fb_preleads': n_preleads,
-        'fb_sessions_7d': n_fb_sessions_7d,
+        'fb_real_sessions_7d': n_fb_sessions_7d,
         'hot_signals_today': n_hot_today,
         'hot_by_platform': hot_by_platform,
         'stuck_hot_warm_backlog': n_stuck,
+        'social_leads_lifecycle': sl_lifecycle,
+        'scanner_status_age_h': scanner_status,
+        'scanner_proof_gap': scanner_active and not scanner_proof_exists,
         'tg_fails_24h': n_tg_fails_24h,
         'outbox_pending': n_outbox_pending,
         'outbox_failed': n_outbox_failed,
+        'outbox_failed_ga4': n_outbox_failed_ga4,
         'actions': actions,
         'errors': errors,
     }
