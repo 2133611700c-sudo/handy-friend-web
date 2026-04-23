@@ -131,19 +131,22 @@ async function handler(req, res) {
 module.exports = handler;
 
 function verifyWebhook(req, res) {
-  const verifyToken = String(process.env.FB_VERIFY_TOKEN || '').trim();
+  // Accept either FB_VERIFY_TOKEN (Messenger) or WHATSAPP_VERIFY_TOKEN (WhatsApp)
+  const fbToken  = String(process.env.FB_VERIFY_TOKEN        || '').trim();
+  const waToken  = String(process.env.WHATSAPP_VERIFY_TOKEN  || '').trim();
   const query = req.query && typeof req.query === 'object' ? req.query : {};
   const urlQuery = parseUrlQuery(req?.url || '');
 
-  const mode = firstNonEmpty(query['hub.mode'], urlQuery.get('hub.mode'));
-  const token = firstNonEmpty(query['hub.verify_token'], urlQuery.get('hub.verify_token')).trim();
-  const challenge = firstNonEmpty(query['hub.challenge'], urlQuery.get('hub.challenge'));
+  const mode      = firstNonEmpty(query['hub.mode'],         urlQuery.get('hub.mode'));
+  const token     = firstNonEmpty(query['hub.verify_token'], urlQuery.get('hub.verify_token')).trim();
+  const challenge = firstNonEmpty(query['hub.challenge'],    urlQuery.get('hub.challenge'));
 
-  if (!verifyToken) {
-    return res.status(500).send('FB_VERIFY_TOKEN is not configured');
+  if (!fbToken && !waToken) {
+    return res.status(500).send('Verify token not configured');
   }
 
-  if (mode === 'subscribe' && token === verifyToken) {
+  const valid = (fbToken && token === fbToken) || (waToken && token === waToken);
+  if (mode === 'subscribe' && valid) {
     return res.status(200).send(String(challenge || 'ok'));
   }
   return res.status(403).send('Forbidden');
