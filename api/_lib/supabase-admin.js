@@ -53,8 +53,14 @@ async function restInsert(table, rows, options = {}) {
 async function logLeadEvent(leadId, eventType, eventPayload = {}) {
   // NOTE: DB column is `event_data`, not `event_payload`. Writing to the
   // wrong name silently failed with PGRST204 until 2026-04-17.
+  // NOTE: lead_id has NOT NULL constraint — skip DB insert when no leadId yet;
+  // still log to console so the event is visible in Vercel logs.
+  if (!leadId) {
+    console.log('[LEAD_EVENT_NOLEAD] type=%s data=%s', eventType, JSON.stringify(sanitizeEventPayload(eventPayload)).slice(0, 300));
+    return { ok: true, skipped: true, reason: 'no_lead_id' };
+  }
   return restInsert('lead_events', {
-    lead_id: leadId || null,
+    lead_id: leadId,
     event_type: String(eventType || 'unknown_event'),
     event_data: sanitizeEventPayload(eventPayload)
   }, { returning: false });

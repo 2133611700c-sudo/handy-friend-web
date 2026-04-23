@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import sys
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -70,6 +71,116 @@ def log_incident(summary: str, severity: int = 2, issue_type: str = "scanner") -
         requests.post(f"{SUPABASE_URL}/rest/v1/ops_incidents", headers=headers(), json=payload, timeout=20)
     except Exception:
         pass
+
+
+def send_hot_signal_alert(post: dict[str, Any], cls: Any, source: str, social_id: str | None) -> bool:
+    """Send immediate Telegram alert to owner when a new HOT/WARM social signal is inserted.
+    Only fires for new inserts (not deduped rows). Silently skips if env vars missing.
+
+    Architecture note: This is a scanner-layer fast-path alert (runs in Python, outside the
+    Node.js unified outbox). It MUST write a proof row to telegram_sends via
+    log_telegram_send_proof() to satisfy the owner-alert proof contract.
+    Class: HOT_SOCIAL_SIGNAL.
+    """
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+    if not token or not chat_id:
+        return False
+
+    esc = lambda s: str(s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    priority_emoji = "🔥" if cls.cls == "HOT" else "⚡"
+    platform_label = {"facebook": "Facebook Group", "craigslist": "Craigslist", "nextdoor": "Nextdoor"}.get(source, source)
+    post_url = post.get("url") or ""
+    url_line = f'\n🔗 <a href="{esc(post_url)}">View post</a>' if post_url else ""
+
+    text = (
+        f"{priority_emoji} <b>HOT_SOCIAL_SIGNAL [{platform_label}]</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"👤 Author: {esc(post.get('author', '?'))}\n"
+        f"🔧 Service: {esc(detect_service(post.get('text', '')))}\n"
+        f"📋 Intent: {esc(cls.cls)} (score={cls.score})\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"📝 {esc(str(post.get('text', ''))[:280])}"
+        f"{url_line}\n"
+        f"<i>social_id: {esc(social_id)} — manual follow-up required</i>"
+    )
+    ok = False
+    tg_message_id = None
+    error_desc = None
+    try:
+        payload = json.dumps({
+            "chat_id": chat_id, "text": text, "parse_mode": "HTML",
+            "disable_web_page_preview": True
+        }).encode()
+        req = urllib.request.Request(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            data=payload, headers={"Content-Type": "application/json"}, method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=6) as r:
+            resp = json.loads(r.read())
+            ok = resp.get("ok", False)
+            if ok and isinstance(resp.get("result"), dict):
+                tg_message_id = resp["result"].get("message_id")
+    except Exception as exc:
+        log.warning("Telegram hot-signal alert failed: %s", exc)
+        error_desc = str(exc)[:300]
+
+    # Proof contract: write telegram_sends row so alert is auditable (not a silent fire-and-forget).
+    log_telegram_send_proof(
+        social_id=social_id,
+        chat_id=chat_id,
+        ok=ok,
+        tg_message_id=tg_message_id,
+        error_desc=error_desc,
+        request_excerpt=text[:200],
+        source_platform=source,
+        intent_cls=cls.cls,
+    )
+    return ok
+
+
+def log_telegram_send_proof(
+    social_id: str | None,
+    chat_id: str,
+    ok: bool,
+    tg_message_id: int | None,
+    error_desc: str | None,
+    request_excerpt: str,
+    source_platform: str,
+    intent_cls: str,
+) -> None:
+    """Write proof row to telegram_sends after a social scanner HOT_SOCIAL_SIGNAL alert.
+
+    lead_id is intentionally null — social_leads IDs are UUIDs and telegram_sends.lead_id
+    references leads.id (text type). The social_lead reference lives in extra.social_lead_id.
+    """
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return
+    proof = {
+        "source": "social_scanner",
+        "lead_id": None,  # social_leads is not the leads table — ref stored in extra
+        "chat_id": chat_id,
+        "ok": ok,
+        "telegram_message_id": tg_message_id,
+        "error_code": None if ok else "send_failed",
+        "error_description": error_desc,
+        "request_excerpt": request_excerpt,
+        "extra": {
+            "alert_class": "HOT_SOCIAL_SIGNAL",
+            "social_lead_id": social_id,
+            "platform": source_platform,
+            "intent": intent_cls,
+        },
+    }
+    try:
+        requests.post(
+            f"{SUPABASE_URL}/rest/v1/telegram_sends",
+            headers=headers(),
+            json=proof,
+            timeout=10,
+        )
+    except Exception as exc:
+        log.warning("telegram_sends proof write failed: %s", exc)
 
 
 def detect_service(text: str) -> str:
@@ -155,9 +266,13 @@ def run(feed_path: str, source: str, dry_run: bool) -> int:
             continue
         if cls.send_to_telegram and not dry_run:
             try:
-                _, is_new = insert_social(post, cls, source)
+                social_id, is_new = insert_social(post, cls, source)
                 if is_new:
                     stats["inserted"] += 1
+                    # Immediately alert owner for new HOT or WARM signals.
+                    if cls.cls in ("HOT", "WARM"):
+                        alerted = send_hot_signal_alert(post, cls, source, social_id)
+                        log.info("hot_signal_alert sent=%s social_id=%s cls=%s", alerted, social_id, cls.cls)
             except Exception as exc:
                 stats["errors"] += 1
                 log_incident(f"scan insert/send failed: {exc}", severity=2, issue_type="scan_write")

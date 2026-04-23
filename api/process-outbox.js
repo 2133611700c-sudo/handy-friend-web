@@ -476,7 +476,7 @@ async function processJob(job, result) {
 
 async function dispatchJob(job) {
   switch (job.job_type) {
-    case 'telegram_owner':  return deliverTelegramOwner(job.payload);
+    case 'telegram_owner':  return deliverTelegramOwner(job.payload, job.lead_id);
     case 'resend_owner':    return deliverResendOwner(job.payload);
     case 'resend_customer': return deliverResendCustomer(job.payload);
     case 'ga4_event':       return deliverGA4Event(job.payload);
@@ -488,7 +488,7 @@ async function dispatchJob(job) {
 
 // ─── Telegram Owner ───────────────────────────────────────────────────────────
 
-async function deliverTelegramOwner(payload) {
+async function deliverTelegramOwner(payload, leadId) {
   const token  = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return { ok: false, error: 'TELEGRAM_BOT_TOKEN not set', error_code: 'ENV_MISSING' };
@@ -496,7 +496,7 @@ async function deliverTelegramOwner(payload) {
   const text = payload?.text || buildDefaultTelegramText(payload);
   const send = await unifiedTelegramSend({
     source: 'process_outbox',
-    leadId: payload?.lead_id || null,
+    leadId: leadId || payload?.lead_id || null,
     text,
     token,
     chatId,
