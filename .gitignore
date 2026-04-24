@@ -180,3 +180,6 @@ ops/reports/*-live-close-sheet.md
 /tmp/lh-*.json
 lighthouse-*.html
 .secrets/
+case-eos-2844939/
+case-pricing-audit/baseline/
+ops/reports/migration-drift-2026-04-24.md
