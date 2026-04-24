@@ -1,6 +1,11 @@
 # Handy & Friend — 4-Week Post Queue (Copy-Paste Ready)
 ## March 16 → April 12, 2026 | Rotation: A → B → C → D
 
+> **DEPRECATED — PRICING IN THIS FILE IS OUTDATED.**
+> All specific prices below have been superseded by the canonical one-price-150 model (effective 2026-03-25-v2).
+> Use `post_nextdoor_all.js` or `post_nextdoor_cdp.js` for current auto-posting.
+> If editing manually, refer to ops/posts/nextdoor-posts.md and ops/posts/fb-sales-posts.md for current copy.
+
 ---
 
 # ═══════════════════════════════════════════
@@ -13,8 +18,7 @@ Your TV Deserves a Wall, Not a Wobbly Stand 📺
 
 That TV on a console with cables everywhere? We mount it flush to any wall — drywall, brick, stone.
 
-✅ $105 standard mount (bracket included)
-✅ $185 hidden wire — zero cables showing
+✅ $150 service call — cable management included
 ✅ Licensed & insured
 ✅ Same-week availability
 
@@ -28,9 +32,9 @@ Serving West LA, Santa Monica, Beverly Hills, Hollywood.
 
 ## Mon Mar 16 — GBP [GBP-A-01]
 
-TV Mounting from $105 — Same-Week Availability
+TV Mounting — $150 Service Call, Same-Week Availability
 
-Standard mount $105 | Hidden wire $185. Bracket included. Any wall type. Licensed & insured. Book at handyandfriend.com/tv-mounting or text (213) 361-1700.
+$150 service call — cable management included. Any wall type. Licensed & insured. Book at handyandfriend.com/tv-mounting or text (213) 361-1700.
 
 ---
 
@@ -38,7 +42,7 @@ Standard mount $105 | Hidden wire $185. Bracket included. Any wall type. License
 
 Hi neighbors! Quick tip from a local handyman — if your TV is still on a console with cables everywhere, mounting it on the wall takes about 90 minutes and completely transforms your room.
 
-We do standard mounts ($105, bracket included) and hidden wire installs ($185 — zero visible cables).
+$150 service call — cable management included, any wall type.
 
 Licensed & insured. Based right here in LA. Same-week availability.
 
@@ -51,14 +55,11 @@ Licensed & insured. Based right here in LA. Same-week availability.
 
 ## Wed Mar 18 — Facebook — Furniture Assembly [FB-A-02]
 
-IKEA Box Sitting Unopened? We Assemble It — From $75 🔧
+IKEA Box Sitting Unopened? We Assemble It 🔧
 
 Those flat-pack boxes aren't going to build themselves. We assemble anything — IKEA, Wayfair, Amazon, Target.
 
-💰 Bookshelf $75
-💰 Dresser $95
-💰 Bed frame $115
-💰 IKEA PAX $50/hr
+💰 $150 service call — up to 2h on-site · $75/hr after
 ✅ Licensed & insured
 ✅ Same-week in LA
 
@@ -83,20 +84,20 @@ Send me a photo of the damage and I'll quote it in 5 minutes. Licensed & insured
 
 ## Thu Mar 19 — GBP [GBP-A-02]
 
-Furniture Assembly from $75 — IKEA, Wayfair, Any Brand
+Furniture Assembly — $150 Service Call, IKEA, Wayfair, Any Brand
 
-Bookshelf $75 | Dresser $95 | Bed frame $115. Professional assembly, same-week. Licensed & insured. Text (213) 361-1700.
+$150 service call (up to 2h · $75/hr after). Professional assembly, same-week. Licensed & insured. Text (213) 361-1700.
 
 ---
 
 ## Fri Mar 20 — Facebook — Cross-sell: Art Hanging [FB-A-03]
 
-Art Hanging Done Right — $95 for Up to 5 Pieces 🖼️
+Art Hanging Done Right — $150 for Up to 5 Pieces 🖼️
 
 Got art sitting on the floor? We mount artwork, mirrors, and shelves to any wall — drywall, brick, plaster.
 
-✅ $95 for up to 5 pieces
-✅ Curtain rods: $75 first, $30 each additional
+✅ $150 service call — up to 5 pieces
+✅ Curtain rods: included in service call
 ✅ Licensed & insured
 ✅ Same-week availability
 
@@ -108,22 +109,18 @@ Just mounted your TV? Add art hanging for a complete room upgrade — book toget
 
 ## Sat Mar 21 — Craigslist — TV Mounting + Furniture Assembly [CL-A-01]
 
-**Title:** TV Mounting $105 | Furniture Assembly from $75 | Licensed LA Handyman
+**Title:** TV Mounting $150 | Furniture Assembly $150 Service Call | Licensed LA Handyman
 
 **Body:**
 Professional TV wall mounting and furniture assembly in Los Angeles.
 
 TV MOUNTING:
-- Standard mount: $105 (bracket install included)
-- Hidden wire: $185 (full in-wall cable concealment)
+- $150 service call — cable management included
 - Any wall type: drywall, brick, stone
 - Takes 60-90 minutes
 
 FURNITURE ASSEMBLY:
-- Bookshelf/nightstand: $75
-- Dresser/chest: $95
-- Bed frame: $115
-- IKEA PAX: $50/hr
+- $150 service call (up to 2h · $75/hr after)
 - Any brand: IKEA, Wayfair, Amazon, Target, West Elm
 
 Licensed & insured. Same-week availability.
@@ -144,10 +141,8 @@ Your Kitchen Is One Paint Job Away from Looking Brand New 🎨
 
 Those dated cabinets dragging your kitchen down? We spray-finish them in 2-3 days.
 
-💰 $75/door — paint included
-💰 $40/door one-side option
-💰 Island cabinets — $175
-✅ Spray finish (smooth factory look)
+💰 Quote after photos — text us a pic for a firm price
+✅ Spray finish (smooth factory look), paint included
 ✅ Licensed & insured
 
 📱 Text (213) 361-1700 or book at handyandfriend.com/cabinet-painting
@@ -158,9 +153,9 @@ Those dated cabinets dragging your kitchen down? We spray-finish them in 2-3 day
 
 ## Mon Mar 23 — GBP [GBP-B-01]
 
-Cabinet Painting from $75/Door — Paint Included!
+Cabinet Painting — Quote After Photos, Paint Included!
 
-Spray finish, 2-3 day turnaround. Full package $75/door. One-side refresh $40. Licensed & insured. Text (213) 361-1700 or book at handyandfriend.com/cabinet-painting.
+Spray finish, 2-3 day turnaround. Text a photo for a firm price. Licensed & insured. Text (213) 361-1700 or book at handyandfriend.com/cabinet-painting.
 
 ---
 
@@ -168,7 +163,7 @@ Spray finish, 2-3 day turnaround. Full package $75/door. One-side refresh $40. L
 
 Hi neighbors! If your kitchen still has those honey-oak cabinets from the '90s — you don't need a $30K remodel. A professional spray-finish paint job makes them look brand new.
 
-We do full cabinet painting at $75/door (paint included). Most kitchens done in 2-3 days.
+We do full cabinet painting — quote after photos (paint included). Most kitchens done in 2-3 days.
 
 Licensed & insured, serving your neighborhood.
 
@@ -183,14 +178,14 @@ Licensed & insured, serving your neighborhood.
 
 Room Looking Dull? Fresh Paint Changes Everything 🏡
 
-Professional interior painting at $3.00/sq ft (labor). You pick the color, we handle the rest — walls, trim, ceiling edges.
+Professional interior painting at $3/sf labor estimate. You pick the color, we handle the rest — walls, trim, ceiling edges.
 
 ✅ $3.00-$4.25/sq ft labor
 ✅ Clean lines, no drips, no mess
 ✅ Licensed & insured
 ✅ Same-week scheduling
 
-Combo deal: Book painting + cabinet painting → save 20%!
+Combo deal: Book painting + cabinet painting same visit — one mobilization, less disruption!
 
 📱 Text (213) 361-1700 or book at handyandfriend.com
 
@@ -200,7 +195,7 @@ Combo deal: Book painting + cabinet painting → save 20%!
 
 Hi neighbors! Got old furniture that looks tired? Before you replace it, consider a paint refresh.
 
-We paint chairs ($40), nightstands ($65), dressers ($170), dining tables ($130) — paint included, professional finish.
+We paint chairs, nightstands, dressers, dining tables — quote after photos, paint included, professional finish.
 
 Bring your piece back to life instead of buying new. Licensed & insured.
 
@@ -221,10 +216,9 @@ Clean lines, no mess. Walls, trim, ceilings. Same-week scheduling. Licensed & in
 
 That Brass Fixture from 1995 Needs to Go 💡
 
-New light fixture = instant room upgrade. We install pendants, chandeliers, sconces — $95 first fixture, $30 each additional.
+New light fixture = instant room upgrade. We install pendants, chandeliers, sconces — $150 service call.
 
-✅ Outlets/switches: $75
-✅ Smart devices: $85
+✅ Outlets, switches, smart devices included in service call
 ✅ 60-minute install
 ✅ Licensed & insured
 
@@ -236,29 +230,25 @@ New light fixture = instant room upgrade. We install pendants, chandeliers, scon
 
 ## Sat Mar 28 — Craigslist — Cabinet Painting + Interior Paint [CL-B-01]
 
-**Title:** Cabinet Painting $75/Door + Interior Painting $3/sqft | Paint Included | Licensed LA
+**Title:** Cabinet Painting (Quote After Photos) + Interior Painting $3/sf Labor | Licensed LA
 
 **Body:**
 Professional painting services in Los Angeles.
 
 CABINET PAINTING:
-- Full package: $75/door (both sides, paint included)
-- Two-side: $70/door
-- One-side: $40/door
-- Island: $175
-- Spray finish — smooth factory look
+- Quote after photos — text us a pic of your cabinets for a firm price
+- Paint included, spray finish — smooth factory look
 - 2-3 day turnaround
 
 INTERIOR PAINTING:
-- $3.00-$4.25/sq ft (labor)
+- $3/sf labor estimate
 - Walls, trim, ceiling edges
 - Clean lines, no mess
 
 FURNITURE PAINTING:
-- Chair: $40 | Nightstand: $65 | Dresser: $170 | Table: $130
-- Paint included
+- Quote after photos — paint included
 
-COMBO DEAL: Book 2+ painting services → 20% off labor!
+COMBO DEAL: Book 2+ services same visit — one mobilization, less disruption!
 
 Licensed & insured. Same-week availability.
 Serving: West LA, Santa Monica, Beverly Hills, Hollywood, Culver City, Mar Vista, Venice, Brentwood.
@@ -360,20 +350,20 @@ Professional hang, frame painting, tight fit. Same-week scheduling. Licensed & i
 
 10 Handyman Services. One Call. All of LA. 🛠️
 
-TV Mounting — from $105
-Cabinet Painting — from $75/door
-Flooring — $3/sq ft
-Furniture Assembly — from $75
-Plumbing Repair — from $60
-Light Fixtures — from $95
-Drywall Repair — same-week
-Door Installation — same-week
-Vanity Install — same-week
-Backsplash — same-week
+TV Mounting — $150 service call (cable mgmt included)
+Cabinet Painting — quote after photos
+Flooring — $3/sf labor estimate
+Furniture Assembly — $150 service call
+Plumbing Repair — $150 service call
+Light Fixtures — $150 service call
+Drywall Repair — $150 service call
+Door Installation — quote after photos
+Vanity Install — quote after photos
+Backsplash — quote after photos
 
 Licensed & insured. Same-week scheduling.
 
-💥 Book 2+ services → 20% off labor!
+💥 Book 2+ services same visit — one mobilization!
 
 📱 Text (213) 361-1700
 🌐 handyandfriend.com
@@ -382,30 +372,27 @@ Licensed & insured. Same-week scheduling.
 
 ## Sat Apr 4 — Craigslist — Flooring + Painting combo [CL-C-01]
 
-**Title:** Flooring $3/sqft + Interior Painting $3/sqft | Full Room Renovation | Licensed LA
+**Title:** Flooring $3/sf Labor + Interior Painting $3/sf Labor | Full Room Renovation | Licensed LA
 
 **Body:**
 Professional flooring and painting in Los Angeles.
 
 FLOORING:
-- LVP install: $3/sq ft labor
-- Laminate install: $3/sq ft labor
-- Demo: $1.50/sq ft
-- Underlayment: $0.50/sq ft
-- Transitions: $30 each
+- LVP/laminate install: $3/sf labor estimate
+- Demo available — ask for quote
 - Material by customer
 
 INTERIOR PAINTING:
-- $3.00-$4.25/sq ft labor
+- $3/sf labor estimate
 - Walls, trim, ceiling edges
 - Clean lines, tape and drop cloth
 
 DOOR INSTALLATION:
-- Interior door replacement
+- Quote after photos
 - Professional hang + hardware
 - Frame painting included
 
-COMBO: Book flooring + painting → 20% off total labor!
+COMBO: Book flooring + painting same visit — one mobilization, less disruption!
 
 Licensed & insured. Same-week availability.
 Serving: West LA, Santa Monica, Beverly Hills, Hollywood, Culver City, Mar Vista, Venice, Brentwood.
@@ -421,15 +408,13 @@ Online: handyandfriend.com
 
 ## Mon Apr 6 — Facebook — Plumbing Repair [FB-D-01]
 
-Leaking Faucet? Fixed Today. $115 Flat Rate. 🔧
+Leaking Faucet? Fixed Today. $150 Service Call. 🔧
 
 That dripping faucet isn't just annoying — it's wasting water and money.
 
-💰 Faucet replacement: $115
-💰 Toilet install: $95
-💰 Shower fixtures: $60
-💰 Re-caulk: $110
-✅ Flat-rate pricing — no hourly surprises
+💰 $150 service call — faucet, toilet, shower fixtures, re-caulk
+✅ Up to 2h on-site · $75/hr after
+✅ No hourly surprises
 ✅ Licensed & insured
 
 📱 Text (213) 361-1700 or book at handyandfriend.com
@@ -440,9 +425,9 @@ That dripping faucet isn't just annoying — it's wasting water and money.
 
 ## Mon Apr 6 — GBP [GBP-D-01]
 
-Plumbing Repair — Flat Rate Pricing | Licensed LA Handyman
+Plumbing Repair — $150 Service Call | Licensed LA Handyman
 
-Faucet $115 | Toilet $95 | Shower $60 | Re-caulk $110. No surprises. Same-week service. Text (213) 361-1700.
+$150 service call covers faucet, toilet, shower fixtures, re-caulk. No surprises. Same-week service. Text (213) 361-1700.
 
 ---
 
@@ -450,7 +435,7 @@ Faucet $115 | Toilet $95 | Shower $60 | Re-caulk $110. No surprises. Same-week s
 
 Hi neighbors! If you've got a leaking faucet, running toilet, or outdated shower fixtures — we handle all basic plumbing repairs with flat-rate pricing. No hourly surprises.
 
-Faucet $115. Toilet $95. Shower fixtures $60. Re-caulk $110.
+$150 service call — covers faucet, toilet, shower fixtures, re-caulk.
 
 Licensed & insured. Same-week service.
 
@@ -482,7 +467,7 @@ That pedestal sink with no storage and exposed pipes? We swap it for a modern va
 
 Hi neighbors! Quick room upgrade idea — swap that old light fixture. New pendant or chandelier takes 60 minutes and completely changes the feel of a room.
 
-$95 for the first fixture, $30 each additional. Outlets and switches $75. Smart devices $85.
+$150 service call — fixtures, outlets, switches, smart devices.
 
 Licensed & insured.
 
@@ -505,12 +490,12 @@ New vanity installed professionally. Full plumbing hookup. Old sink removal incl
 
 Bathroom Upgrade: Vanity + Plumbing + Lighting — One Visit 🛁
 
-New vanity + new faucet ($115) + new light fixture ($95) = completely refreshed bathroom.
+New vanity + new faucet + new light fixture = completely refreshed bathroom.
 
 ✅ One-day turnaround
-✅ Full plumbing hookup
+✅ $150 service call per service (up to 2h on-site · $75/hr after)
 ✅ Licensed & insured
-💥 Book 2+ services → 20% off labor!
+💥 Book 2+ services same visit — one mobilization!
 
 📱 Text (213) 361-1700
 🌐 handyandfriend.com
@@ -519,29 +504,24 @@ New vanity + new faucet ($115) + new light fixture ($95) = completely refreshed 
 
 ## Sat Apr 11 — Craigslist — Plumbing + Vanity + Electrical [CL-D-01]
 
-**Title:** Plumbing Repair $60+ | Vanity Install | Light Fixtures $95 | Licensed LA Handyman
+**Title:** Plumbing Repair | Vanity Install | Light Fixtures | $150 Service Call | Licensed LA Handyman
 
 **Body:**
 Professional plumbing, bathroom, and electrical services in Los Angeles.
 
 PLUMBING:
-- Faucet replacement: $115
-- Toilet install: $95
-- Shower fixtures: $60
-- Re-caulk: $110
+- $150 service call — faucet, toilet, shower fixtures, re-caulk
 
 VANITY INSTALLATION:
+- Quote after photos
 - Old sink removal + new vanity install
 - Full plumbing hookup
 - One-day turnaround
 
 LIGHT FIXTURES:
-- First fixture: $95
-- Each additional: $30
-- Outlets/switches: $75
-- Smart devices: $85
+- $150 service call — fixtures, outlets, switches, smart devices
 
-BATHROOM COMBO: Vanity + faucet + light = full bathroom refresh in one visit. Book 2+ services → 20% off labor!
+BATHROOM COMBO: Vanity + faucet + light = full bathroom refresh in one visit. Book 2+ services same visit — one mobilization!
 
 Licensed & insured. Same-week availability.
 Serving: West LA, Santa Monica, Beverly Hills, Hollywood, Culver City, Mar Vista, Venice, Brentwood.

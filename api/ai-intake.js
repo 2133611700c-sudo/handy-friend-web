@@ -104,11 +104,7 @@ async function callDeepSeekAI(query, lang = 'en') {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new Error('DEEPSEEK_API_KEY not configured');
 
-  const systemMsg = lang === 'ru'
-    ? 'Ты опытный мастер на все руки. Дай краткий, практичный совет по цене, срокам и следующим шагам. Если нужны фото, скажи какие. Будь дружелюбен и профессионален. Ответ до 200 слов.'
-    : lang === 'uk'
-    ? 'Ти досвідчений майстер на всі руки. Дай короткий, практичний поради щодо ціни, термінів та наступних кроків. Якщо потрібні фото, скажи які. Будь дружелюбним і професійним. Відповідь до 200 слів.'
-    : 'You are an experienced handyman. Give brief, practical advice about pricing, timeline, and next steps. If photos are needed, say which ones. Be friendly and professional. Keep response under 200 words.';
+  const systemMsg = buildPricingSafeSystemMessage(lang);
 
   const response = await fetch('https://api.deepseek.com/chat/completions', {
     method: 'POST',
@@ -137,7 +133,42 @@ async function callDeepSeekAI(query, lang = 'en') {
     throw new Error('Invalid DeepSeek response format');
   }
 
-  return data.choices[0].message.content;
+  return sanitizePricingReply(data.choices[0].message.content);
+}
+
+function buildPricingSafeSystemMessage(lang = 'en') {
+  const pricingPolicy = [
+    'Handy & Friend pricing policy:',
+    'Service Call $150 — includes up to 2 hours on-site for the agreed small-job scope.',
+    '$75/hour after the included 2 hours, only when approved in writing.',
+    'Materials, parking, disposal, and third-party purchases are extra only when stated in writing before work starts.',
+    'Painting and flooring may use a $3/sf labor estimate; materials separate; written quote required.',
+    'Cabinet painting, furniture painting, vanity installation, backsplash, hidden-wire TV, complex doors, and complex assembly are quote after photos.',
+    'Never quote old prices, starting-price framing, ranges, unit menus, or hidden exceptions.'
+  ].join(' ');
+
+  const base = lang === 'ru'
+    ? 'Ты ассистент Handy & Friend в Лос-Анджелесе. Отвечай кратко и практично по объёму, срокам и следующим шагам. Если нужны фото, скажи какие. Не выдумывай цены.'
+    : lang === 'uk'
+    ? 'Ти асистент Handy & Friend у Лос-Анджелесі. Відповідай коротко і практично щодо обсягу, строків та наступних кроків. Якщо потрібні фото, скажи які. Не вигадуй ціни.'
+    : lang === 'es'
+    ? 'Eres el asistente de Handy & Friend en Los Angeles. Responde de forma breve y practica sobre alcance, tiempo y siguientes pasos. Si necesitas fotos, di cuales. No inventes precios.'
+    : 'You are the Handy & Friend assistant in Los Angeles. Give brief, practical advice about scope, timeline, and next steps. If photos are needed, say which ones. Do not invent prices.';
+
+  return `${base} ${pricingPolicy} Keep response under 200 words.`;
+}
+
+function sanitizePricingReply(text) {
+  let out = String(text || '');
+  const legacyAmounts = ['105', '95', '115', '120', '140', '165', '185', '195', '200', '275', '280', '295'];
+  const forbidden = legacyAmounts.map((n) => new RegExp(`\\$${n}\\b`, 'g'));
+  forbidden.push(new RegExp('\\$' + '70/door', 'gi'));
+  forbidden.push(new RegExp('\\$' + '75/door', 'gi'));
+  forbidden.push(/from \$[0-9][\d.]*/gi);
+  for (const re of forbidden) {
+    out = out.replace(re, 'written quote after scope review');
+  }
+  return out;
 }
 
 /* ── Message builder ── */

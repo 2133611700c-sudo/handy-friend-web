@@ -6,7 +6,7 @@ _Generated: 2026-03-04_
 
 ## 1. PRIMARY DESCRIPTION (750 chars max)
 
-Handy & Friend is a licensed and insured handyman service serving all of Los Angeles. We specialize in cabinet painting ($95–$155/door), TV mounting ($165 standard / $250 hidden wire), interior painting ($3–$4.50/sq ft), flooring installation ($3.50–$3.75/sq ft), furniture assembly, art & mirror hanging, and minor plumbing and electrical work. All jobs come with upfront pricing — no surprise charges. We respond within 1 hour and work Monday through Saturday, 8 AM to 8 PM. Whether you need a single TV mounted or a full kitchen cabinet refresh, we show up on time, do the work right, and leave your home clean. Call or text (213) 361-1700. More at handyandfriend.com.
+Handy & Friend is an insured handyman service serving all of Los Angeles. We specialize in cabinet painting (quote after photos), TV mounting ($150 service call — cable management included), interior painting ($3/sf labor), flooring installation ($3/sf labor), furniture assembly, art & mirror hanging, and minor plumbing and electrical work. All jobs come with upfront pricing — no surprise charges. We respond within 1 hour and work Monday through Saturday, 8 AM to 8 PM. Whether you need a single TV mounted or a full kitchen cabinet refresh, we show up on time, do the work right, and leave your home clean. Call or text (213) 361-1700. More at handyandfriend.com.
 
 _Character count: ~622_
 
@@ -23,12 +23,12 @@ _Character count: ~153_
 ## 3. SEED Q&As — GBP "Questions & Answers"
 
 **Q1: Do you paint kitchen cabinets?**
-Yes. Cabinet painting is one of our specialties. We charge $95/door for standard finish, $125/door for semi-custom prep and color, and $155/door for premium multi-coat work. Cabinet islands are $460 flat. Roller painting is available at $45/door for a budget-friendly refresh. All cabinet work includes proper surface prep and a durable topcoat. Text or call (213) 361-1700 to get an exact count and quote.
+Yes. Cabinet painting is one of our specialties. Pricing is quote-after-photos — text us a photo of your cabinets and we'll send a firm price within the hour. Every job includes full surface prep, primer, and a durable spray finish topcoat. Text or call (213) 361-1700 to get an exact quote.
 
 ---
 
 **Q2: How much does TV mounting cost in Los Angeles?**
-Standard TV mounting (flat-wall, up to 75") is $165. If you want a clean hidden-wire install with cable management routed inside the wall, that is $250. Both prices include the mount, level install, and connection of your devices. We carry standard mounts — contact us if you have a specialty mount or fireplace installation.
+TV mounting is $150 service call (up to 2h on-site · $75/hr after). Cable management is included — no upsell. The price covers level install, stud location, and connection of your devices. We carry standard mounts — contact us if you have a specialty mount or fireplace installation.
 
 ---
 
@@ -43,12 +43,12 @@ We respond to calls and texts within 1 hour during business hours (Monday–Satu
 ---
 
 **Q5: Do you do interior painting?**
-Yes. Interior painting is priced at $3.00–$4.50 per square foot, labor only (client provides paint or we can source it). The range depends on ceiling height, number of colors, wall condition, and amount of trim/detail work. We prep surfaces, tape, protect floors, and do full cleanup after.
+Yes. Interior painting is $3/sf labor estimate (client provides paint or we can help source it). Final price depends on ceiling height, number of colors, wall condition, and trim detail — text us your room dimensions for a firm quote. We prep surfaces, tape, protect floors, and do full cleanup after.
 
 ---
 
 **Q6: What does flooring installation cost?**
-Flooring installation (labor only) is $3.50–$3.75 per square foot. This covers LVP, laminate, and engineered hardwood. Client supplies materials, or we can help you source them. Price may vary for stairs, intricate patterns, or subfloor repairs needed before install.
+Flooring installation (labor only) is $3/sf. This covers LVP, laminate, and engineered hardwood. Client supplies materials, or we can help you source them. Price may vary for stairs, intricate patterns, or subfloor repairs needed before install.
 
 ---
 
@@ -63,7 +63,7 @@ Yes. Furniture assembly starts at $150 and covers flat-pack items from IKEA, Way
 ---
 
 **Q9: Can you hang art, mirrors, and shelves?**
-Yes. Art, mirror, and shelf hanging starts at $175 and covers professional-grade anchoring, level placement, and wall-type-appropriate hardware (drywall, plaster, concrete, tile). We handle gallery walls too — contact us with the number of pieces for a custom quote.
+Yes. Art, mirror, and shelf hanging is $150 (up to 5 pieces) and covers professional-grade anchoring, level placement, and wall-type-appropriate hardware (drywall, plaster, concrete, tile). We handle gallery walls too — contact us with the number of pieces for a custom quote.
 
 ---
 
@@ -109,7 +109,7 @@ Yes. We work Monday through Saturday, 8 AM to 8 PM. We are closed on Sundays. We
 
 Just wrapped a TV mount in Silver Lake — 65" Samsung above a media console, full hidden-wire cable management routed inside the wall. The client said it looked "like something out of a showroom." That is exactly what we are going for.
 
-TV mounting starts at $165 (standard) or $250 (hidden wire). Mon–Sat 8 AM–8 PM. Text us at (213) 361-1700 to schedule.
+TV mounting is $150 service call — cable management included. Mon–Sat 8 AM–8 PM. Text us at (213) 361-1700 to schedule.
 
 ---
 
@@ -117,9 +117,9 @@ TV mounting starts at $165 (standard) or $250 (hidden wire). Mon–Sat 8 AM–8 
 **Type:** Update
 **Photo:** Before/after cabinet repaint — white cabinets, clean finish
 
-Cabinet replacement can cost $10,000–$30,000+. Cabinet painting runs $95–$155/door and takes 1–2 days. If your cabinet boxes are solid (no rot, no warp), painting is almost always the smarter choice.
+Cabinet replacement can cost $10,000–$30,000+. Cabinet painting is a fraction of that cost and takes 1–2 days. If your cabinet boxes are solid (no rot, no warp), painting is almost always the smarter choice.
 
-We do full kitchen cabinet repaints in Los Angeles — proper sanding, primer, and a durable finish. Text (213) 361-1700 for a door count quote.
+We do full kitchen cabinet repaints in Los Angeles — proper sanding, primer, and a durable spray finish. Text (213) 361-1700 with a photo for a quote.
 
 ---
 
@@ -128,7 +128,7 @@ We do full kitchen cabinet repaints in Los Angeles — proper sanding, primer, a
 **Photo:** Freshly painted living room, neutral warm tone
 **Offer dates:** Adjust to current window (e.g., March 1 – April 30)
 
-Spring is the best time to refresh your walls before summer hosting season. Interior painting starts at $3/sq ft (labor). We prep, tape, paint, and clean up — you just pick the color.
+Spring is the best time to refresh your walls before summer hosting season. Interior painting is $3/sf labor estimate. We prep, tape, paint, and clean up — you just pick the color.
 
 Book a spring paint job in March or April and mention "SPRING26" for a complimentary accent wall with any room booking. Call or text (213) 361-1700.
 
@@ -140,7 +140,7 @@ Book a spring paint job in March or April and mention "SPRING26" for a complimen
 
 Assembled a full PAX wardrobe system in Koreatown this week — four units, six doors, interior organizers. Client had the boxes; we had the tools and the patience for the instruction manual.
 
-Furniture assembly from $150. We handle IKEA, Wayfair, Amazon, and most flat-pack brands. Text (213) 361-1700 to book.
+Furniture assembly — $150 service call. We handle IKEA, Wayfair, Amazon, and most flat-pack brands. Text (213) 361-1700 to book.
 
 ---
 
@@ -163,7 +163,7 @@ Combo pricing available — text us your project list at (213) 361-1700 and we w
 
 Not all walls are the same. Drywall over studs, plaster, concrete, and tile each require different anchors and techniques. Using the wrong hardware is how TVs end up on the floor.
 
-We assess your wall type before drilling a single hole. Standard TV mounting starts at $165. Text (213) 361-1700 — Mon–Sat 8 AM–8 PM in Los Angeles.
+We assess your wall type before drilling a single hole. TV mounting is $150 service call — cable management included. Text (213) 361-1700 — Mon–Sat 8 AM–8 PM in Los Angeles.
 
 ---
 
@@ -173,7 +173,7 @@ We assess your wall type before drilling a single hole. Standard TV mounting sta
 
 A Culver City client wanted a modern kitchen without a full remodel. We repainted 18 cabinet doors and 4 drawer fronts — two coats of primer, two finish coats, new hardware installed. Total cost: a fraction of replacement.
 
-Cabinet painting from $95/door. Full kitchens quoted by door count. Call or text (213) 361-1700.
+Cabinet painting — quote after photos. Full kitchens quoted by door count and condition. Call or text (213) 361-1700.
 
 ---
 
@@ -182,7 +182,7 @@ Cabinet painting from $95/door. Full kitchens quoted by door count. Call or text
 **Photo:** LVP flooring install in progress — planks, spacers, clean lines
 **Offer dates:** Adjust as needed (e.g., June 1 – July 31)
 
-Summer is a great time to finally do that flooring project — longer days, open windows, faster dry/settle time. LVP and laminate installation starts at $3.50/sq ft (labor only).
+Summer is a great time to finally do that flooring project — longer days, open windows, faster dry/settle time. LVP and laminate installation is $3/sf (labor only).
 
 Book a flooring job this summer and we will include baseboard touch-up at no extra charge for rooms under 300 sq ft. Text (213) 361-1700 to schedule.
 
@@ -209,9 +209,9 @@ Serving Los Angeles for cabinet painting, TV mounting, flooring, interior painti
 
 Hosting for the holidays? Get your home guest-ready before the rush.
 
-- TV mounted and wires hidden: $165–$250
-- Art and mirrors hung level: from $175
-- Furniture assembled and in place: from $150
+- TV mounted and wires hidden: $150 service call (cable management included)
+- Art and mirrors hung level: $150 (up to 5 pieces)
+- Furniture assembled and in place: $150 service call
 
 Book any two of the above together and get priority scheduling for the next available slot. Text (213) 361-1700 — slots in December go fast.
 

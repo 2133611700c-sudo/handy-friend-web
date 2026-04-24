@@ -214,7 +214,7 @@ Wall-safe. No mess. Professional finish.
 ✓ All hardware included
 
 Typical time: 1–2 hours
-From $150
+$150 service call
 
 Call or WhatsApp: 213-361-1700
 Free quote in 2 minutes → handyandfriend.com
@@ -242,7 +242,7 @@ IKEA. West Elm. Article. Any brand.
 ✓ Warranty honored
 
 Typical time: 1.5–4 hours
-From $150
+$150 service call
 
 📞 Call: 213-361-1700
 WhatsApp for photos → handyandfriend.com
@@ -268,7 +268,7 @@ Your furniture, perfectly assembled.
 ✓ Finding studs included
 
 Typical time: 1–2.5 hours
-From $150
+$150 service call
 
 Protect your walls. Get it right the first time.
 

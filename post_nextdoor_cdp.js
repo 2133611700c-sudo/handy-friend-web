@@ -16,7 +16,7 @@ Website: handyandfriend.com`,
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_fpcwn6fpcwn6fpcw.png"
   },
   {
-    title: "Kitchen cabinets painted — $70/door, looks like a full remodel",
+    title: "Kitchen cabinets painted — spray finish, looks like a full remodel",
     body: `Okay I have to share this because the transformation is unreal.
 
 I was quoted $18,000 for new kitchen cabinets. Instead I paid $840 to have mine painted. Look at the before/after photo — it's the same kitchen.
@@ -45,18 +45,18 @@ Looks 10x better. No squeaks, no gaps, professional finish.
 
 Called Handy & Friend on Tuesday. Came Wednesday morning. 3 hours later — completely seamless. Matching texture, paint touched up, not a single sign anything happened.
 
-Price: $180 for a larger hole. Small patches from $120. Paint touch-up included.
+Price: $180 for a larger hole. Patches quoted on-site. Paint touch-up included.
 
 (213) 361-1700 | handyandfriend.com`,
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_k34gwsk34gwsk34g.png"
   },
   {
-    title: "TV mounted + cables hidden in wall — $185, same day, took 45 min",
+    title: "TV mounted + cables hidden in wall — $150, same day, took 45 min",
     body: `65" TV on a wobbly stand with cables everywhere. Finally fixed it.
 
 Handy & Friend came same day with stud finder, drill bits, in-wall cable kit. 45 minutes — TV centered, perfectly level, all cables hidden. Looks like it was built that way.
 
-Standard mount: $150. Hidden wire package: $185. Zero regrets.
+$150 service call — cable management included. Zero regrets.
 
 (213) 361-1700 | handyandfriend.com`,
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_5acz715acz715acz.png"
@@ -67,7 +67,7 @@ Standard mount: $150. Hidden wire package: $185. Zero regrets.
 
 Called Handy & Friend. Done in 3 hours. Fully assembled, wall-anchored, all interior fittings correct.
 
-They handle any flat-pack — IKEA, Amazon, Pottery Barn, West Elm. From $150.
+They handle any flat-pack — IKEA, Amazon, Pottery Barn, West Elm. $150 service call.
 
 (213) 361-1700 | handyandfriend.com`,
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_yi4kulyi4kulyi4k.png"
@@ -78,7 +78,7 @@ They handle any flat-pack — IKEA, Amazon, Pottery Barn, West Elm. From $150.
 
 Handy & Friend painted it sage green — professional spray finish, new gold hardware. Looks like a $500 boutique piece now. Cost $170 — paint and hardware included.
 
-Chairs $40, nightstands $65, dressers $170, dining tables $130.
+All furniture painting quoted after photos — send photos for written estimate.
 
 (213) 361-1700 | handyandfriend.com`,
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_gtjfzjgtjfzjgtjf.png"
@@ -89,7 +89,7 @@ Chairs $40, nightstands $65, dressers $170, dining tables $130.
 
 Called Handy & Friend Thursday morning. Came that afternoon. New brushed nickel Moen faucet, new supply lines, new drain cover. Drip gone. Sink looks clean.
 
-Faucet $150, Toilet $165, Shower $150. Flat rate, no surprises.
+$150 service call — faucets, toilets, shower heads. Flat rate, no surprises.
 
 (213) 361-1700 | handyandfriend.com`,
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_hm9f0bhm9f0bhm9f.png"
@@ -100,18 +100,18 @@ Faucet $150, Toilet $165, Shower $150. Flat rate, no surprises.
 
 Handy & Friend took care of it in under an hour. Old one out, new one in, all wiring done safely.
 
-Light fixture: $150. Outlets/switches: $150. Smart devices: $195. Same-day available.
+$150 service call — fixtures, outlets, switches, smart devices. Same-day available.
 
 (213) 361-1700 | handyandfriend.com`,
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_fhqaf8fhqaf8fhqa.png"
   },
   {
-    title: "New interior door installed — $140, looks like it was always there",
+    title: "New interior door installed — quote after photos, looks like it was always there",
     body: `Bedroom door had a hole in it. Sheet hanging in doorway for 3 months.
 
 Handy & Friend removed old door and frame, installed solid-core pre-hung door with new hinges and lever handle. Perfect fit, closes with a satisfying click.
 
-Interior pre-hung: $140. Slab only: $120. Exterior: from $250.
+Door installation is a quote-only service — send photos for estimate.
 
 (213) 361-1700 | handyandfriend.com`,
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_bwzpisbwzpisbwzp.png"
@@ -120,7 +120,7 @@ Interior pre-hung: $140. Slab only: $120. Exterior: from $250.
     title: "Bathroom vanity replaced — looks like a luxury hotel now",
     body: `Cracked pedestal sink with exposed green pipes and cracked mirror. Stopped showing guests this bathroom.
 
-Handy & Friend replaced everything in one day. 48" floating vanity, quartz top, gold faucet, LED mirror. Bought vanity from Home Depot, they installed everything for $195.
+Handy & Friend replaced everything in one day. 48" floating vanity, quartz top, gold faucet, LED mirror. Bought vanity from Home Depot, they handled the full install.
 
 Now it's genuinely the nicest room in the house.
 

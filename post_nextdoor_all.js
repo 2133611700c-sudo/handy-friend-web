@@ -31,7 +31,7 @@ Website: handyandfriend.com`,
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_fpcwn6fpcwn6fpcw.png"
   },
   {
-    title: "Kitchen cabinets painted — $70/door, looks like a full remodel",
+    title: "Kitchen cabinets painted — spray finish, looks like a full remodel",
     body: `Okay I have to share this because the transformation is unreal.
 
 I was quoted $18,000 for new kitchen cabinets. Instead I paid $840 to have mine painted. I know, sounds too good. But look at the before/after photo I'm attaching — it's the same kitchen.
@@ -66,7 +66,7 @@ The difference is night and day. Attached photo is my actual before/after.
 
 Called Handy & Friend on a Tuesday. They came Wednesday morning. 3 hours later — completely seamless. Matching texture, paint touched up, not a single sign anything happened.
 
-Price: $180 for a larger hole. They also do small nail/anchor patches from $120. Paint touch-up is included.
+Price: $180 for a larger hole. They also do patches quoted on-site. Paint touch-up is included.
 
 Honestly the best money I've spent on this house in a while.
 
@@ -74,14 +74,14 @@ Honestly the best money I've spent on this house in a while.
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_k34gwsk34gwsk34g.png"
   },
   {
-    title: "TV mounted + cables hidden in wall — $185, same day, took 45 min",
+    title: "TV mounted + cables hidden in wall — $150, same day, took 45 min",
     body: `Had a 65" TV on a cheap stand with a cable disaster behind it. You know the look.
 
 Tried to mount it myself — couldn't find the studs confidently, didn't want to risk it with a $1,200 TV.
 
 Called Handy & Friend. The guy came same day with a stud finder, proper drill bits, and the in-wall cable kit. 45 minutes later — TV is centered, perfectly level, all cables completely hidden. Looks like it was built that way.
 
-Standard mount: $150. Hidden wire setup: $185. I went with the hidden wire. Zero regrets.
+$150 service call — cable management included. Zero regrets.
 
 (213) 361-1700 | handyandfriend.com`,
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_5acz715acz715acz.png"
@@ -92,7 +92,7 @@ Standard mount: $150. Hidden wire setup: $185. I went with the hidden wire. Zero
 
 Found Handy & Friend, they came Sunday morning. I left for a coffee run and came back to a fully assembled, wall-anchored wardrobe with all the interior fittings installed correctly.
 
-They handle any flat-pack — IKEA, Amazon, Pottery Barn, West Elm. Pricing starts at $150 for small pieces, $275 for bed frames, $70/hr for PAX systems.
+They handle any flat-pack — IKEA, Amazon, Pottery Barn, West Elm. $150 service call — 2 hours included. PAX systems quoted on-site.
 
 No more furniture in boxes stressing me out.
 
@@ -107,7 +107,7 @@ A friend suggested furniture painting. I was skeptical.
 
 Handy & Friend picked it up, stripped and sprayed it sage green with new gold hardware. It came back looking like a $500 boutique piece. I paid $170 — paint and hardware included.
 
-They do: chairs $40, nightstands $65, dressers $170, dining tables $130. 2–3 day turnaround.
+All furniture painting is quoted after photos. Send photos for a written estimate.
 
 This is genuinely underrated. Recommend.
 
@@ -122,7 +122,7 @@ Called Handy & Friend on a Thursday morning. They came that afternoon. New brush
 
 Flat rate pricing:
 — Faucet: $150
-— Toilet: $165
+— Toilet: $150
 — Shower head: $150
 — Re-caulk: $150
 
@@ -139,7 +139,7 @@ Had a new sputnik chandelier sitting in a box for 6 months because I was nervous
 
 Handy & Friend took care of it in under an hour. Old one out, new one in, all wiring done safely. Now I actually like being in that room.
 
-Light fixture install: $150. Outlets and switches also $150. Smart locks/dimmers $195.
+$150 service call — light fixtures, outlets, switches, smart locks/dimmers.
 
 Same-day available.
 
@@ -147,14 +147,12 @@ Same-day available.
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_fhqaf8fhqaf8fhqa.png"
   },
   {
-    title: "Interior door replaced — $140, looks like it was always there",
+    title: "Interior door replaced — quote after photos, looks like it was always there",
     body: `Bedroom door had a hole in it. I'm not proud of how it got there. Had a sheet hanging in the doorway for 3 months.
 
 Handy & Friend came, removed the old door and frame, installed a solid-core pre-hung door with new hinges and a lever handle. Perfect fit — even gap all the way around, closes with a satisfying click.
 
-Interior pre-hung door: $140 (door not included).
-Slab replacement only: $120.
-Exterior door: from $250.
+Door installation is a quote-only service — send photos for a written estimate. (213) 361-1700
 
 Honestly should have done it sooner instead of looking at that sheet every day.
 
@@ -172,7 +170,7 @@ Handy & Friend replaced everything in one day:
 — New brushed gold faucet
 — LED backlit mirror hung perfectly level
 
-I bought the vanity from Home Depot. They installed it all for $195. Now it's genuinely the nicest room in the house.
+I bought the vanity from Home Depot. They handled the full install. Now it's genuinely the nicest room in the house.
 
 (213) 361-1700 | handyandfriend.com`,
     image: "/Users/sergiikuropiatnyk/Downloads/Gemini_Generated_Image_dpivbadpivbadpiv.png"

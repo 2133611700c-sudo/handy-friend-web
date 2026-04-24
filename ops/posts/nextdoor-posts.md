@@ -13,7 +13,7 @@
 **Body:**
 Just wrapped up a TV mounting job nearby. 65" Samsung on a full-motion mount, all wires concealed in-wall — completely clean.
 
-We're Handy & Friend, your local LA handyman. TV mounting from $150, hidden wire setup $185.
+We're Handy & Friend, your local LA handyman. TV mounting — $150 service call, cable management included.
 
 Available same week. Insured.
 
@@ -56,10 +56,10 @@ Insured. Upfront pricing. No hidden fees.
 Hi neighbors! We're Handy & Friend, a local handyman service covering Los Angeles.
 
 What we do:
-- TV mounting ($150 standard, $185 hidden wire)
-- Kitchen cabinet painting (spray finish from $70/door, paint included)
-- Interior painting (from $3/sq ft labor)
-- Furniture assembly (from $150)
+- TV mounting ($150 service call — cable management included)
+- Kitchen cabinet painting (quote after photos)
+- Interior painting ($3/sf labor estimate)
+- Furniture assembly ($150 service call — up to 2h)
 - Art and mirror hanging ($150 up to 5 pieces)
 
 We're insured, respond within 1 hour, and give upfront prices with no surprises.
@@ -79,7 +79,7 @@ Just wrapped up a cabinet painting job in [NEIGHBORHOOD]. 22 doors, full spray f
 
 Took 4 days and the kitchen looks completely different — no replacement needed.
 
-If your cabinets are looking dated, we can give them a factory-smooth spray finish starting at $70/door (both sides) or $75/door with frame. Paint, primer, degreasing, and prep are all included.
+If your cabinets are looking dated, we can give them a factory-smooth spray finish. Text us a photo for a quote — paint, primer, degreasing, and prep are all included.
 
 📲 Free estimate: (213) 361-1700
 🌐 See more before/afters: handyandfriend.com
@@ -97,7 +97,7 @@ Got a new TV? Before you drill into the wall:
 2. Measure twice — center of TV should be at eye level from your couch (usually 42-48 inches)
 3. Plan your cables — hiding wires in-wall looks 10x cleaner
 
-If you'd rather have it done right the first time, we mount TVs daily. Standard mount $150, concealed wires in-wall $185.
+If you'd rather have it done right the first time, we mount TVs daily. $150 service call — cable management included.
 
 📲 Text (213) 361-1700 — usually available same day.
 
@@ -110,7 +110,7 @@ If you'd rather have it done right the first time, we mount TVs daily. Standard 
 **Body:**
 Doing a room refresh? We handle both painting and flooring in one project, same crew.
 
-Interior painting from $3/sq ft + LVP flooring from $3/sq ft (labor only).
+Interior painting $3/sf labor estimate + LVP flooring $3/sf labor estimate.
 
 Book both together — one visit, one mobilization, no double scheduling.
 

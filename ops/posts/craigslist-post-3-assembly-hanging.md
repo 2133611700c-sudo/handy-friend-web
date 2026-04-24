@@ -7,7 +7,7 @@
 ---
 
 ## HEADLINE
-Furniture Assembly & Art Hanging in LA — Same-Day Available, From $150 (Insured)
+Furniture Assembly & Art Hanging in LA — Same-Day Available, $150 Service Call (Insured)
 
 ## BODY
 
@@ -22,9 +22,7 @@ Handy & Friend — professional handyman in Los Angeles.
 - We bring all tools — no mess, no stress
 
 **TV Mounting:**
-- Standard flat/tilt mount — $150
-- Full-motion mount — included
-- Concealed in-wall wiring — $185
+- $150 service call — any mount type, cable management included
 
 **Art, Mirror & Picture Hanging:**
 - Up to 5 pieces — $150

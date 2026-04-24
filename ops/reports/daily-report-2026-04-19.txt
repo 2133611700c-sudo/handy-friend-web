@@ -1,0 +1,12 @@
+DAILY QUALITY REPORT - Sun Apr 19 20:01:00 PDT 2026
+================================
+Placeholder pricing violations: no
+Total leads: 1
+Today's leads: 0
+API health: ok
+Telegram configured: yes
+Cron jobs: 6
+Report saved to: ops/daily-report-2026-04-19.txt
+
+Quality control check complete!
+======================================

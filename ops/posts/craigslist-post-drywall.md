@@ -8,7 +8,7 @@
 ---
 
 ## HEADLINE
-Drywall Repair in Los Angeles — From $120, Same-Day (Insured)
+Drywall Repair in Los Angeles — $150 Service Call, Same-Day (Insured)
 
 ## BODY
 
@@ -17,9 +17,7 @@ Drywall Repair in Los Angeles — From $120, Same-Day (Insured)
 Handy Friend — Los Angeles handyman. Professional drywall repair and wall patching.
 
 **What we do:**
-- Small hole patch (nail, doorknob) — from $120
-- Medium patch (up to 6") — from $180
-- Large section repair — from $250
+- Any patch size — $150 service call (up to 2h on-site · $75/hr after)
 - Texture match included
 - Paint-ready finish, same visit
 
@@ -50,7 +48,7 @@ Hollywood · Silver Lake · Los Feliz · Echo Park · WeHo · Koreatown · Hanco
 ## COMPLIANCE CHECK
 - No banned words ✅ (no "licensed", "bonded", "certified", "best", "#1", "guaranteed")
 - Allowed words used: insured, flat pricing, from $X, same-day ✅
-- Correct prices ✅ ($120 / $180 / $250 — matches price-registry.js)
+- Correct prices ✅ ($150 service call — matches canonical one-price-150 model)
 - Phone correct ✅ (213) 361-1700
 - No fake urgency ✅
 - Texture match included ✅ (accurate)

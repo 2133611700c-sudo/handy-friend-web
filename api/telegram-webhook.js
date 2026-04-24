@@ -45,11 +45,11 @@ function isTgDuplicate(updateId) {
 const START_MSG = `👋 Hey! I'm Alex — your Handy & Friend assistant in Los Angeles.
 
 I can help you with:
-• 🎨 Cabinet painting (from $75/door)
-• 📺 TV mounting (from $150)
-• 🪵 Flooring (from $3/sq ft)
-• 🖌️ Interior painting (from $3/sq ft)
-• 🪑 Furniture assembly (from $150)
+• 🎨 Cabinet painting (quote after photos)
+• 📺 TV mounting ($150 service call)
+• 🪵 Flooring ($3/sf labor estimate)
+• 🖌️ Interior painting ($3/sf labor estimate)
+• 🪑 Furniture assembly ($150 service call)
 • ⚡ Electrical & 🔧 Plumbing
 
 Just tell me what you need — I'll give you an exact price and schedule. What project can I help with?`;
