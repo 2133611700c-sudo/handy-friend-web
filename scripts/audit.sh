@@ -226,10 +226,10 @@ else
   fail "ai-chat valid payload returns reply"
 fi
 
-if [[ "$ai_reply" == *"\$185"* && "$ai_reply" != *"\$105"* ]]; then
-  pass "ai-chat TV pricing uses current anchors (includes \$185, excludes stale \$105)"
+if [[ "$ai_reply" == *"\$150"* && "$ai_reply" != *"\$185"* && "$ai_reply" != *"\$105"* ]]; then
+  pass "ai-chat TV pricing uses one-price-150 model (\$150, no legacy \$185/\$105)"
 else
-  fail "ai-chat TV pricing uses current anchors (includes \$185, excludes stale \$105)"
+  fail "ai-chat TV pricing uses one-price-150 model (\$150, no legacy \$185/\$105)"
 fi
 
 # 6) Tracking + legacy price leakage

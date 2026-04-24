@@ -18,7 +18,7 @@ Handy & Friend — professional handyman in Los Angeles.
 **Furniture Assembly:**
 - IKEA, Wayfair, West Elm, Amazon — all brands
 - Beds, dressers, bookshelves, desks, wardrobes
-- From $150 for standard pieces
+- $150 service call (up to 2h)
 - We bring all tools — no mess, no stress
 
 **TV Mounting:**

@@ -58,7 +58,7 @@ Yes, Handy & Friend is insured for general liability. We carry insurance on ever
 ---
 
 **Q8: Do you assemble furniture?**
-Yes. Furniture assembly starts at $150 and covers flat-pack items from IKEA, Wayfair, Amazon, and other retailers. Price depends on the size and complexity of the piece. We bring all tools needed — you just have the boxes ready.
+Yes. Furniture assembly is $150 service call (up to 2h) and covers flat-pack items from IKEA, Wayfair, Amazon, and other retailers. We bring all tools needed — you just have the boxes ready.
 
 ---
 
