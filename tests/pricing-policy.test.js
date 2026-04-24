@@ -308,6 +308,8 @@ const DENYLIST_PATTERNS = [
   { label: 'published range', re: /published range/i },
   { label: 'exact line-item estimates', re: /exact line-item estimates/i },
   { label: 'per-unit prices', re: /per-unit prices/i },
+  { label: 'cabinet materials included', re: /cabinet painting[^.\n]*(premium paint|primer|degreasing|prep)[^.\n]*included/i },
+  { label: 'customer provides tools', re: /you(?:'d)? provide (?:the )?tools/i },
 ];
 
 // Phrases that must remain present in customer-facing surfaces.
@@ -425,4 +427,27 @@ test('AI intake prompt source covers all languages with frozen pricing', () => {
   assert.match(src, /\$75\/hour/);
   assert.match(src, /\$3\/sf labor estimate/);
   assert.match(src, /Never quote old prices/);
+});
+
+test('AI chat enforces quote-only pricing guardrails server-side', () => {
+  const src = fs.readFileSync(path.resolve(__dirname, '../api/ai-chat.js'), 'utf8');
+  assert.match(src, /function isQuoteOnlyPricingIntent/);
+  assert.match(src, /function buildQuoteOnlyPricingReply/);
+  assert.match(src, /function enforceCanonicalPricingPhrases/);
+  assert.match(src, /hidden-wire TV mounting/);
+  assert.match(src, /vanity installation/);
+  assert.match(src, /cabinet painting/);
+  assert.match(src, /bathroom vanity/);
+  assert.match(src, /tile backsplash/);
+  assert.match(src, /door installation/);
+  assert.match(src, /Quote after photos|quote after photos/);
+  assert.match(src, /Additional time is \$75\/hour after the included 2 hours/);
+  assert.match(src, /\$3\/sf labor estimate/);
+  assert.doesNotMatch(src, /premium paint, primer, degreasing, and prep are included/i);
+});
+
+test('AI chat strips customer-provides-tools wording', () => {
+  const src = fs.readFileSync(path.resolve(__dirname, '../api/ai-chat.js'), 'utf8');
+  assert.match(src, /function enforceToolPolicy/);
+  assert.match(src, /we bring our tools/);
 });

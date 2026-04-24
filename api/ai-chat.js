@@ -230,8 +230,12 @@ export default async function handler(req, res) {
 
   // Final output hygiene: keep chat text clean
   reply = stripMarkdownArtifacts(reply);
-  // v11: prices are allowed pre-phone (ranges). No more dollar stripping.
-  if (!isClearlyOutOfScopeRequest(latestUserText)) {
+  reply = enforceToolPolicy(reply);
+  if (!isClearlyOutOfScopeRequest(latestUserText) && isQuoteOnlyPricingIntent(latestUserText, inferredService)) {
+    reply = buildQuoteOnlyPricingReply(safeLang, latestUserText, inferredService);
+  }
+  if (!isClearlyOutOfScopeRequest(latestUserText) && !isQuoteOnlyPricingIntent(latestUserText, inferredService)) {
+    reply = enforceCanonicalPricingPhrases(reply, latestUserText, inferredService, safeLang);
     reply = enforceMaterialPolicyHint(reply, latestUserText, safeLang);
   }
 
@@ -1059,6 +1063,93 @@ function stripMarkdownArtifacts(text) {
     .trim();
 }
 
+function enforceToolPolicy(reply) {
+  return String(reply || '')
+    .replace(/\byou provide (?:the )?tools(?:\s*\(if needed\))?\s*(?:and|&)?\s*/gi, 'you provide ')
+    .replace(/\byou'?d provide (?:the )?tools(?:\s*\(if needed\))?\s*(?:and|&)?\s*/gi, 'you provide ')
+    .replace(/\bbring your own tools\b/gi, 'provide any required parts or hardware')
+    .replace(/\bwe bring our own tools\b/gi, 'we bring our tools')
+    .replace(/\bwe bring the tools\b/gi, 'we bring our tools');
+}
+
+function isQuoteOnlyPricingIntent(userText, serviceId = '') {
+  const service = String(serviceId || '').toLowerCase();
+  const text = String(userText || '').toLowerCase();
+  if ([
+    'kitchen_cabinet_painting',
+    'furniture_painting',
+    'vanity_installation',
+    'backsplash',
+    'door_installation'
+  ].includes(service)) return true;
+  return (
+    /\b(cabinet|cabinets|kitchen cabinet|paint cabinets?)\b/i.test(text) ||
+    /\b(furniture painting|paint furniture|paint dresser|refinish furniture)\b/i.test(text) ||
+    /\b(vanity|bathroom vanity)\b/i.test(text) ||
+    /\b(backsplash|tile backsplash)\b/i.test(text) ||
+    /\b(door install|door installation|prehung door|door replacement)\b/i.test(text) ||
+    /\bhidden[-\s]?wire\b/i.test(text) ||
+    /\bin[-\s]?wall\s+(wire|wiring|cable|cables)\b/i.test(text) ||
+    /\bwire[s]?\s+(hidden|inside|through)\b/i.test(text)
+  );
+}
+
+function quoteOnlyServiceLabel(userText, serviceId = '') {
+  const service = String(serviceId || '').toLowerCase();
+  const text = String(userText || '').toLowerCase();
+  if (/\bhidden[-\s]?wire\b/i.test(text) || /\bin[-\s]?wall\s+(wire|wiring|cable|cables)\b/i.test(text)) return 'hidden-wire TV mounting';
+  if (/\b(vanity|bathroom vanity)\b/i.test(text)) return 'vanity installation';
+  if (/\b(cabinet|cabinets|kitchen cabinet|paint cabinets?)\b/i.test(text)) return 'cabinet painting';
+  if (/\b(backsplash|tile backsplash)\b/i.test(text)) return 'backsplash installation';
+  if (/\b(door install|door installation|prehung door|door replacement)\b/i.test(text)) return 'door installation';
+  if (/\b(furniture painting|paint furniture|paint dresser|refinish furniture)\b/i.test(text)) return 'furniture painting';
+  if (service === 'vanity_installation') return 'vanity installation';
+  if (service === 'backsplash') return 'backsplash installation';
+  if (service === 'door_installation') return 'door installation';
+  if (service === 'furniture_painting') return 'furniture painting';
+  if (service === 'kitchen_cabinet_painting') return 'cabinet painting';
+  return 'this project';
+}
+
+function buildQuoteOnlyPricingReply(lang, userText, serviceId = '') {
+  const label = quoteOnlyServiceLabel(userText, serviceId);
+  const byLang = {
+    en: `${label} is quote after photos — no public price. Please send photos of the area, the item/fixture, and any measurements you have. We confirm the scope and total in writing before work starts. Materials, parking, disposal, and third-party purchases are extra only if written into the quote.`,
+    ru: `${label}: цена только после фото — публичной цены нет. Пришлите фото зоны, предмета/фурнитуры и размеры, если есть. Объём и итог подтверждаем письменно до начала работ. Материалы, парковка, вывоз мусора и сторонние покупки — доплата только если указаны письменно в смете.`,
+    uk: `${label}: ціна тільки після фото — публічної ціни немає. Надішліть фото зони, предмета/фурнітури та розміри, якщо є. Обсяг і підсумок підтверджуємо письмово до початку робіт. Матеріали, паркування, вивіз сміття і сторонні покупки — доплата лише якщо вказані письмово в кошторисі.`,
+    es: `${label}: quote after photos — no public price. Envia fotos del area, del articulo/accesorio y medidas si las tienes. Confirmamos el alcance y total por escrito antes de empezar. Materiales, estacionamiento, disposal y compras de terceros son extra solo si estan por escrito en la cotizacion.`
+  };
+  return byLang[lang] || byLang.en;
+}
+
+function enforceCanonicalPricingPhrases(reply, userText, serviceId = '', lang = 'en') {
+  let r = String(reply || '').trim();
+  if (!r) return r;
+
+  r = r
+    .replace(/\$3\s*(?:per\s+square\s+foot|per\s+sq\.?\s*ft\.?|\/\s*sq\.?\s*ft\.?)/gi, '$3/sf labor estimate')
+    .replace(/\$3\/sq\.?\s*ft\.?/gi, '$3/sf')
+    .replace(/\$3\s+per\s+sf/gi, '$3/sf');
+
+  const text = String(userText || '').toLowerCase();
+  const service = String(serviceId || '').toLowerCase();
+  const projectEstimateIntent = service === 'flooring' || service === 'interior_painting' || /\b(flooring|floor|laminate|lvp|paint|painting|room)\b/i.test(text);
+  const hasServiceCall = /\$150/.test(r);
+  const hasHourlyAfter = /\$75\s*\/?\s*(?:hour|hr)|\$75\/hr|\$75\/hour/i.test(r);
+
+  if (hasServiceCall && !hasHourlyAfter && !projectEstimateIntent) {
+    const lineByLang = {
+      en: 'Additional time is $75/hour after the included 2 hours, only when approved in writing.',
+      ru: 'Дополнительное время после включённых 2 часов — $75/hour, только после письменного согласования.',
+      uk: 'Додатковий час після включених 2 годин — $75/hour, лише після письмового погодження.',
+      es: 'El tiempo adicional es $75/hour despues de las 2 horas incluidas, solo con aprobacion por escrito.'
+    };
+    const line = lineByLang[lang] || lineByLang.en;
+    r = `${r}\n\n${line}`.trim();
+  }
+
+  return r;
+}
 
 function enforceMaterialPolicyHint(reply, userText, lang) {
   const r = String(reply || '').trim();
@@ -1075,19 +1166,19 @@ function enforceMaterialPolicyHint(reply, userText, lang) {
 
   const byLang = {
     en: {
-      cabinet: 'For cabinet painting, premium paint, primer, degreasing, and prep are included.',
+      cabinet: 'For cabinet painting, materials and third-party purchases are extra only if written into the quote before work starts.',
       labor: 'For this service, it is labor-only. You purchase and provide materials.'
     },
     ru: {
-      cabinet: 'Для покраски кухонных фасадов краска, грунт, обезжиривание и подготовка включены.',
+      cabinet: 'Для покраски кухонных фасадов материалы и сторонние покупки — доплата только если указаны письменно в смете до начала работ.',
       labor: 'По этой услуге это только работа. Материалы покупаете и предоставляете вы.'
     },
     uk: {
-      cabinet: 'Для фарбування кухонних фасадів фарба, ґрунт, знежирення і підготовка включені.',
+      cabinet: 'Для фарбування кухонних фасадів матеріали і сторонні покупки — доплата лише якщо вказані письмово в кошторисі до початку робіт.',
       labor: 'За цією послугою це тільки робота. Матеріали купуєте та надаєте ви.'
     },
     es: {
-      cabinet: 'Para pintura de gabinetes, pintura premium, primer, desengrasado y preparación están incluidos.',
+      cabinet: 'Para pintura de gabinetes, materiales y compras de terceros son extra solo si estan por escrito en la cotizacion antes de empezar.',
       labor: 'Para este servicio es solo mano de obra. Usted compra y proporciona los materiales.'
     }
   };
