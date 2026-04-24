@@ -7,7 +7,7 @@
 ---
 
 ## HEADLINE
-TV Mounting in Los Angeles — Same-Day Service, From $150 (Insured)
+TV Mounting in Los Angeles — Same-Day Service, $150 Service Call (Insured)
 
 ## BODY
 
@@ -16,8 +16,7 @@ TV Mounting in Los Angeles — Same-Day Service, From $150 (Insured)
 Handy & Friend — Los Angeles handyman. Professional TV and wall mounting.
 
 **What we do:**
-- TV mounting (up to 65" standard) — $150
-- TV mounting with concealed wires (in-wall) — $185
+- TV mounting (any size) — $150 service call · cable management included
 - Art, mirrors, and picture hanging (up to 5 pieces) — $150
 - Curtain rod installation — $150 first window, $50 each additional
 

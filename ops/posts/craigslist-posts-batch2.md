@@ -15,7 +15,7 @@
 
 ### TITLE
 
-📺 TV MOUNTING — SAME-DAY TODAY $150 | HIDDEN WIRES $185 | LOS ANGELES ⚡ CALL NOW
+📺 TV MOUNTING — SAME-DAY TODAY $150 | CABLE MANAGEMENT INCLUDED | LOS ANGELES ⚡ CALL NOW
 
 ---
 
@@ -27,8 +27,7 @@ Still staring at your TV sitting on the floor? Get it on the wall TODAY.
 
 We are Handy & Friend — LA's professional TV mounting service. Fast, clean, insured.
 
-✅ Standard TV mount (any size) — $150
-✅ Hidden in-wall wire concealment — $185
+✅ TV mount (any size) — $150 service call · cable management included
 ✅ Art, mirrors, shelves while we're there — $150 (up to 5 pieces)
 
 WHY BOOK US TODAY:
@@ -67,7 +66,7 @@ Or chat online: handyandfriend.com
 
 ### TITLE
 
-🎨 CABINET PAINTING LA — SPRAY FINISH FROM $70/DOOR | BEFORE → AFTER TRANSFORMATION | INSURED
+🎨 CABINET PAINTING LA — SPRAY FINISH, QUOTE AFTER PHOTOS | BEFORE → AFTER TRANSFORMATION | INSURED
 
 ---
 
@@ -81,13 +80,9 @@ After: smooth, factory-quality finish in any color you choose.
 Handy & Friend paints kitchen cabinets in Los Angeles with professional spray equipment — the same finish you see in high-end remodels, without the contractor markup.
 
 CABINET PAINTING PRICING (paint included):
-✅ Spray both sides — $70/door
-✅ Full package (both sides + frame) — $75/door
-✅ Spray one side — $40/door
-✅ Roller finish (budget) — $7.25/door
-✅ Drawer front small — $25 each
-✅ Drawer front large — $35 each
-✅ Kitchen island full repaint — $175
+✅ Quote after photos — text us a pic of your cabinets
+✅ Includes: spray both sides, frame, drawer fronts, island
+✅ All work: full degreasing, sanding, primer, premium paint
 
 WHAT'S INCLUDED IN EVERY JOB:
 - Full degreasing and surface prep
@@ -137,31 +132,25 @@ Stop juggling multiple contractors. We do it all, show up on time, and charge fa
 FULL SERVICE MENU:
 
 📺 TV MOUNTING
-- Standard mount — $150
-- Hidden in-wall wires — $185
+- $150 service call · cable management included
 
 🎨 CABINET PAINTING (paint included)
-- Spray both sides — $70/door
-- Full package (both sides + frame) — $75/door
-- Kitchen island — $175
+- Quote after photos — text us a pic of your cabinets
 
 🖌 INTERIOR PAINTING (labor only)
-- Walls 1 coat — $3.00/sq ft
-- Walls 2 coats — $3.75/sq ft
-- Ceiling — $3.75–$4.25/sq ft
+- $3/sf labor estimate
 
 🪵 FLOORING LVP / LAMINATE (labor only)
-- Installation — $3.00/sq ft
-- Demo old floor — $1.50/sq ft
+- $3/sf labor estimate
 
 🛋 FURNITURE ASSEMBLY
-- IKEA, Wayfair, Amazon, any flat-pack — from $150
+- $150 service call — up to 2h on-site · $75/hr after
 
 🖼 ART & MIRROR HANGING
 - Up to 5 pieces — $150 flat
 
 🔌 MINOR PLUMBING & ELECTRICAL
-- Faucet swap, outlet install, fixture replacement — from $150
+- $150 service call — faucet swap, outlet install, fixture replacement
 
 WHY HANDY & FRIEND:
 ✅ Insured professional service

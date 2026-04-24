@@ -1,0 +1,11 @@
+DAILY QUALITY REPORT - Thu Apr  9 10:00:01 PDT 2026
+================================
+Placeholder pricing violations: no
+Hunter processes: 0
+Last scan: none
+Total leads: 1
+Today's leads: 0
+API health: ok
+Telegram configured: yes
+Cron jobs: 2
+Browser processes: 6

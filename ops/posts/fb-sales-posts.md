@@ -8,12 +8,12 @@
 Handy & Friend — your local LA handyman.
 
 What we do:
-- Kitchen cabinet painting (full package from $75/door, paint included)
-- TV mounting ($150 standard, $185 hidden wire)
-- Interior painting (from $3/sq ft labor)
-- Furniture assembly (from $150)
+- Kitchen cabinet painting (quote after photos, paint included)
+- TV mounting ($150 service call — cable management included)
+- Interior painting ($3/sf labor estimate)
+- Furniture assembly ($150 service call — up to 2h on-site)
 - Art & mirror hanging ($150 up to 5 pieces)
-- Flooring LVP/laminate (from $3/sq ft labor)
+- Flooring LVP/laminate ($3/sf labor estimate)
 
 Insured. Upfront pricing. No hidden fees.
 We respond within 1 hour, Mon-Sat 8am-8pm PT.
@@ -38,7 +38,7 @@ Book 2+ services on the same visit — we're already there, you save travel time
 
 Popular same-visit combos:
 📺 TV mount ($150) + art hanging ($150) — done in one trip
-🎨 Cabinet painting (from $75/door full package) + interior walls — one mobilization, full kitchen refresh
+🎨 Cabinet painting (quote after photos) + interior walls — one mobilization, full kitchen refresh
 🛋️ Furniture assembly + art/mirror hanging — unbox and hang everything same day
 
 No hidden fees. Flat-rate pricing. Free estimate.
@@ -82,7 +82,7 @@ Thinking about mounting your new TV? Here's what most people get wrong:
 2. Center of TV should be at eye level from your couch (42-48")
 3. In-wall cable concealment looks 10x cleaner than cable covers
 
-We mount TVs daily in LA. Standard mount $150, hidden wire setup $185.
+We mount TVs daily in LA. $150 service call — cable management included.
 
 Available same day most weeks.
 
@@ -99,9 +99,9 @@ Call (213) 361-1700 or message us here.
 Spring is here — perfect time for a home refresh.
 
 Popular spring projects:
-🏠 Interior painting — from $3/sq ft (labor only, you pick the color)
-🎨 Cabinet repaint — from $75/door full package (paint included)
-🪵 New flooring — LVP/laminate from $3/sq ft (labor only)
+🏠 Interior painting — $3/sf labor estimate (you pick the color)
+🎨 Cabinet repaint — quote after photos (paint included)
+🪵 New flooring — LVP/laminate $3/sf labor estimate
 
 Free estimate. Same-week availability.
 

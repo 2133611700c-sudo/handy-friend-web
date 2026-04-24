@@ -2,10 +2,15 @@
    PRICES (numbers only — labels in T{})
    Official Price List 2026 — Handy & Friend LA
 ═══════════════════════════════════════════════ */
+/* Public model (frozen 2026-04-24):
+   Service Call — $150, includes up to 2 hours on-site for the agreed scope.
+   $75/hour after, only when approved in writing.
+   Materials/parking/disposal extra only when written before work starts.
+   Paint/flooring: $3/sf labor project estimate on dedicated subpages only. */
 const P={
-  base:{call:95,callHr2:95,hrAfter:75,visitEval:75},
+  base:{call:150,includedHours:2,hrAfter:75},
 
-  /* CATEGORY 1: KITCHEN CABINET PAINTING */
+  /* CATEGORY 1: KITCHEN CABINET PAINTING — quote-only, no public price */
   kitchen:{
     doorRoller:7.25,door1side:40,door2side:70,doorFull:75,
     drawerSmall:25,drawerLarge:35,endPanel:50,island:175,
@@ -14,46 +19,45 @@ const P={
     caulking:1.25,removeContactPaper:50
   },
 
-  /* CATEGORY 2: FURNITURE PAINTING */
+  /* CATEGORY 2: FURNITURE PAINTING — quote-only, no public price */
   furnPaint:{
     chair:40,nightstand:65,dresser:170,diningTable:130,builtIn:60
   },
 
-  /* CATEGORY 3: INTERIOR PAINTING */
+  /* CATEGORY 3: INTERIOR PAINTING — $3/sf labor project estimate */
   paint:{
     wall1coat:3.00,wall2coat:3.75,ceiling:3.75,ceilingTexture:4.25,
     baseboard:3.00,baseboardInstall:2.50,crown:3.75,doorCasing:30,doorSlab:65,
     prep:0.65,wallpaper:1.25,mold:1.50
   },
 
-  /* CATEGORY 4: FLOORING */
+  /* CATEGORY 4: FLOORING — $3/sf labor project estimate */
   floor:{
     laminateLabor:3.00,lvpLabor:3.00,demo:1.50,underlayment:0.50,
     spotLevel:60,transition:30,doorUndercut:30,baseboardReinstall:2.00
   },
 
-  /* CATEGORY 5: MOUNTING & INSTALLATION */
+  /* CATEGORY 5: MOUNTING & INSTALLATION — $150 service call */
   install:{
-    tvStandard:105,tvHiddenWire:185,artMirror:95,curtainFirst:75,
-    curtainEach:30,serviceCall:95
+    tvStandard:150,artMirror:150,curtainFirst:150,curtainEach:75,serviceCall:150
   },
 
-  /* CATEGORY 6: FURNITURE ASSEMBLY */
+  /* CATEGORY 6: FURNITURE ASSEMBLY — $150 service call */
   assembly:{
-    small:75,dresser:95,bed:115,paxHourly:50
+    small:150,paxHourly:75
   },
 
-  /* CATEGORY 7: PLUMBING */
+  /* CATEGORY 7: PLUMBING — $150 service call */
   plumbing:{
-    faucet:115,showerHead:60,toiletRepair:95,recaulk:110
+    faucet:150,showerHead:150,toiletRepair:150,recaulk:150
   },
 
-  /* CATEGORY 8: ELECTRICAL */
+  /* CATEGORY 8: ELECTRICAL — $150 service call */
   electrical:{
-    lightFixture:95,outletSwitch:75,outletEach:30,smartDevice:85
+    lightFixture:150,outletSwitch:150,outletEach:75,smartDevice:150
   },
 
-  /* CATEGORY 9: LINEAR/TRIM SERVICES */
+  /* CATEGORY 9: LINEAR/TRIM SERVICES — project estimate */
   linear:{
     baseboard:3.00,baseboardInstall:2.50,baseboardRemove:2.00,
     crown:3.75,doorCasing:30,caulking:1.25,builtIn:60
@@ -63,49 +67,40 @@ const P={
 hydratePricingFromRegistry(P, window.HF_PRICE_REGISTRY);
 
 function hydratePricingFromRegistry(prices, registry) {
-  const canonical = registry && registry.canonical;
-  const details = registry && registry.details;
-  if (!canonical || !details) return;
+  if (!registry) return;
+  const sc = registry.service_call;
+  const pe = registry.project_estimate;
+  if (!sc || !pe) return;
 
-  prices.paint.wall1coat = n(details.interior_painting?.wall_1coat, prices.paint.wall1coat);
-  prices.paint.wall2coat = n(details.interior_painting?.wall_2coats, prices.paint.wall2coat);
-  prices.paint.ceiling = n(details.interior_painting?.ceiling_smooth, prices.paint.ceiling);
-  prices.paint.ceilingTexture = n(details.interior_painting?.ceiling_textured, prices.paint.ceilingTexture);
-  prices.paint.baseboard = n(details.interior_painting?.baseboard, prices.paint.baseboard);
-  prices.paint.crown = n(details.interior_painting?.crown_ornate, prices.paint.crown);
-  prices.paint.doorCasing = n(details.interior_painting?.door_casing_side, prices.paint.doorCasing);
-  prices.paint.baseboardInstall = n(details.interior_painting?.baseboard_install, prices.paint.baseboardInstall);
-  prices.paint.doorSlab = n(details.interior_painting?.door_slab, prices.paint.doorSlab);
+  // Service call model: $150 base, $75/hr after
+  prices.base.call = n(sc.price, prices.base.call);
+  prices.base.hrAfter = n(sc.hourly_after, prices.base.hrAfter);
 
-  prices.floor.laminateLabor = n(details.flooring?.laminate, prices.floor.laminateLabor);
-  prices.floor.lvpLabor = n(details.flooring?.lvp, prices.floor.lvpLabor);
-  prices.floor.demo = n(details.flooring?.demo, prices.floor.demo);
-  prices.floor.underlayment = n(details.flooring?.underlayment, prices.floor.underlayment);
-  prices.floor.transition = n(details.flooring?.transition, prices.floor.transition);
-  prices.floor.baseboardReinstall = n(details.flooring?.baseboard_remove_reinstall, prices.floor.baseboardReinstall);
-  prices.floor.doorUndercut = n(details.flooring?.door_undercut, prices.floor.doorUndercut);
-  prices.floor.spotLevel = n(details.flooring?.spot_leveling, prices.floor.spotLevel);
+  // Project estimates: painting and flooring labor per sq ft
+  if (pe.interior_painting) {
+    const r = pe.interior_painting.labor_per_sf;
+    prices.paint.wall1coat = n(r, prices.paint.wall1coat);
+  }
+  if (pe.flooring) {
+    const r = pe.flooring.labor_per_sf;
+    prices.floor.laminateLabor = n(r, prices.floor.laminateLabor);
+    prices.floor.lvpLabor = n(r, prices.floor.lvpLabor);
+  }
 
-  prices.install.tvStandard = n(details.tv_mounting?.standard, prices.install.tvStandard);
-  prices.install.tvHiddenWire = n(details.tv_mounting?.hidden_wire, prices.install.tvHiddenWire);
-  prices.install.artMirror = n(details.art_mirrors?.up_to_5_pieces, prices.install.artMirror);
-  prices.install.curtainFirst = n(details.art_mirrors?.curtain_first, prices.install.curtainFirst);
-  prices.install.curtainEach = n(details.art_mirrors?.curtain_each, prices.install.curtainEach);
-
-  prices.assembly.small = n(details.furniture_assembly?.small_item, prices.assembly.small);
-  prices.assembly.dresser = n(details.furniture_assembly?.dresser, prices.assembly.dresser);
-  prices.assembly.bed = n(details.furniture_assembly?.bed_frame, prices.assembly.bed);
-  prices.assembly.paxHourly = n(details.furniture_assembly?.pax_hourly, prices.assembly.paxHourly);
-
-  prices.plumbing.faucet = n(details.plumbing?.faucet, prices.plumbing.faucet);
-  prices.plumbing.showerHead = n(details.plumbing?.shower_head, prices.plumbing.showerHead);
-  prices.plumbing.toiletRepair = n(details.plumbing?.toilet_tank, prices.plumbing.toiletRepair);
-  prices.plumbing.recaulk = n(details.plumbing?.recaulk, prices.plumbing.recaulk);
-
-  prices.electrical.lightFixture = n(details.electrical?.light_fixture, prices.electrical.lightFixture);
-  prices.electrical.outletSwitch = n(details.electrical?.outlet_switch_first, prices.electrical.outletSwitch);
-  prices.electrical.outletEach = n(details.electrical?.outlet_switch_additional, prices.electrical.outletEach);
-  prices.electrical.smartDevice = n(details.electrical?.smart_device, prices.electrical.smartDevice);
+  // Service call categories: lock all to $150
+  const serviceCallPrice = n(sc.price, 150);
+  prices.install.tvStandard = serviceCallPrice;
+  prices.install.artMirror = serviceCallPrice;
+  prices.install.curtainFirst = serviceCallPrice;
+  prices.install.serviceCall = serviceCallPrice;
+  prices.assembly.small = serviceCallPrice;
+  prices.plumbing.faucet = serviceCallPrice;
+  prices.plumbing.showerHead = serviceCallPrice;
+  prices.plumbing.toiletRepair = serviceCallPrice;
+  prices.plumbing.recaulk = serviceCallPrice;
+  prices.electrical.lightFixture = serviceCallPrice;
+  prices.electrical.outletSwitch = serviceCallPrice;
+  prices.electrical.smartDevice = serviceCallPrice;
 }
 
 function n(value, fallback) {
@@ -266,11 +261,11 @@ const T={
     svcs:[
       {id:"paint",name:"Interior Painting",       from:"$3.00/sf"},
       {id:"floor",name:"Flooring Installation",   from:"$3.00/sf"},
-      {id:"tv",   name:"TV Mounting",             from:"$105"},
-      {id:"fur",  name:"Furniture Assembly",       from:"$75"},
-      {id:"art",  name:"Art & Mirrors",           from:"$95"},
-      {id:"plumb",name:"Plumbing",                from:"$115"},
-      {id:"elec", name:"Electrical",              from:"$95"}
+      {id:"tv",   name:"TV Mounting",             from:"$150"},
+      {id:"fur",  name:"Furniture Assembly",       from:"$150"},
+      {id:"art",  name:"Art & Mirrors",           from:"$150"},
+      {id:"plumb",name:"Plumbing",                from:"$150"},
+      {id:"elec", name:"Electrical",              from:"$150"}
     ],
     calcTitle:"Quick Estimate",
     calcSub:"Enter room size → instant price",
@@ -321,62 +316,31 @@ const T={
     lDoorType:"Door Finish",lDoorQty:"Number of Doors",
     lDrawerS:"Small Drawers",lDrawerL:"Large Drawers",lEndPanels:"End Panels",
     lPieceType:"Piece Type",lPieceQty:"Quantity",
-    kitchenDoorOpts:[
-      {v:"doorRoller",l:"Roller Finish — $7.25/door",p:7.25},
-      {v:"door1side",l:"1-Side Spray — $40/door",p:40},
-      {v:"door2side",l:"2-Side Spray — $70/door",p:70},
-      {v:"doorFull",l:"Full Package — $75/door",p:75}
-    ],
-    kitchenAddons:[
-      {id:"degreasing",l:"Heavy Degreasing",p:"+$20/door"},
-      {id:"oakFill",l:"Oak Grain Fill",p:"+$45/door"},
-      {id:"twoTone",l:"Two-Tone Color",p:"+$300 flat"}
-    ],
-    furnPieceOpts:[
-      {v:"chair",l:"Dining Chair — $40/pc",p:40},
-      {v:"nightstand",l:"Nightstand — $65/pc",p:65},
-      {v:"builtIn",l:"Built-in Unit — $60/lin ft",p:60,unit:"lf"},
-      {v:"diningTable",l:"Dining Table — $130/pc",p:130},
-      {v:"dresser",l:"Dresser — $170/pc",p:170}
-    ],
+    kitchenDoorOpts:[{v:"quote",l:"Quote after photos",p:0}],
+    kitchenAddons:[],
+    furnPieceOpts:[{v:"quote",l:"Quote after photos",p:0}],
     fixedOpts:{
       tv:[
-        {id:"tvStd",l:"Standard Mount (up to 65\")",p:105},
-        {id:"tvHide",l:"Concealed Wires (in-wall)",p:185}
+        {id:"tvStd",l:"Standard Mount (up to 65\")",p:150}
       ],
       art:[
-        {id:"artHang",l:"Art / Mirror Hanging (up to 5 pcs)",p:95},
-        {id:"curtain1",l:"Curtain Rods — first window",p:75},
-        {id:"curtainX",l:"Each additional window",p:30,addon:true}
+        {id:"artHang",l:"Art / Mirror Hanging (up to 5 pcs)",p:150},
+        {id:"curtain1",l:"Curtain Rods — first window",p:150}
       ],
       fur:[
-        {id:"furSmall",l:"Small Items (shelf, desk)",p:75},
-        {id:"furDresser",l:"Dresser / Chest",p:95},
-        {id:"furBed",l:"Bed Frame",p:115},
-        {id:"furPax",l:"PAX / Large Closet (min 4h)",p:200}
+        {id:"furSmall",l:"Small Items — fits in 2 hours",p:150}
       ],
       plumb:[
-        {id:"plFaucet",l:"Faucet Install",p:115},
-        {id:"plShower",l:"Shower Head Replace",p:60},
-        {id:"plToilet",l:"Toilet Tank Repair",p:95},
-        {id:"plCaulk",l:"Re-Caulk Tub / Shower",p:110}
+        {id:"plFaucet",l:"Minor Fixture Swap (faucet, shower head, tank)",p:150}
       ],
       elec:[
-        {id:"elLight",l:"Light Fixture Replace",p:95},
-        {id:"elOutlet",l:"Outlets / Switches (first 3)",p:75,extra:{l:"Additional outlets",ep:30}},
-        {id:"elSmart",l:"Smart Doorbell / Lock Install",p:85}
+        {id:"elLight",l:"Minor Fixture Swap (light, outlet, doorbell)",p:150}
       ]
     },
     calcSubLinear:"Select trim type & enter length (ft)",
     lLinearService:"Service Type",lLinearLength:"Length",lLinearUnit:"Unit",
     linearOpts:[
-      {v:"baseboard",l:"Baseboard Paint — $3.00/lin ft",p:3.00},
-      {v:"baseboardInstall",l:"Baseboard Install (new) — $2.50/lin ft",p:2.50},
-      {v:"baseboardRemove",l:"Baseboard Remove & Reinstall — $2.00/lin ft",p:2.00},
-      {v:"crown",l:"Crown Molding Paint — $3.75/lin ft",p:3.75},
-      {v:"doorCasing",l:"Door Casing / Trim — $30/side",p:30},
-      {v:"caulking",l:"Caulking / Sealing — $1.25/lin ft",p:1.25},
-      {v:"builtIn",l:"Built-in Cabinetry — $60/lin ft",p:60}
+      {v:"quote",l:"Trim & Millwork — Quote after photos",p:0}
     ],
     calcBtn:"Calculate",
     resLbl:"Estimated labor cost",
@@ -388,78 +352,44 @@ const T={
     /* DRAWER ROWS — all 7 services */
     dr:{
       prov:"You provide",
-      tvScope:"Fixed price",tvDesc:"Surface cable mgmt included. $95 service call applies.",
+      tvScope:"Service Call · $150",tvDesc:"Includes up to 2 hours on-site. Surface cable mgmt included.",
       tv:[
-        ["TV Mount — Standard (up to 65\")","$105/unit","1–1.5h"],
-        ["TV Mount — Hidden Wire (concealed in-wall)","$185/unit","2–3h"]
+        ["Standard TV Mount (up to 65\")","$150 service call","1–1.5h"],
+        ["Hidden Wire / Concealed In-Wall","Quote after photo","2–3h"]
       ],
       tvProv:"TV bracket / arm",
-      tvN:"Bracket not included. Concealed-wire option requires no fire blocks in wall. All holes patched & painted.",
-      furScope:"Fixed price · Labor only",furDesc:"$95 service call applies. Complex systems hourly.",
+      tvN:"Bracket not included. Hidden-wire quoted after photo of the wall. All holes patched & painted.",
+      furScope:"Service Call · $150",furDesc:"Includes up to 2 hours on-site. Larger scope quoted after photos.",
       fur:[
-        ["Small Furniture Item (shelf, small desk, table)","$75/piece","1–1.5h"],
-        ["Dresser / Chest of Drawers","$95/piece","2–3h"],
-        ["Bed Frame Assembly","$115/piece","2.5–3h"],
-        ["PAX / Large Closet System (IKEA, Elfa)","$50/hour","min 4h ($200)"]
+        ["Small Furniture Assembly (shelf, desk, table)","$150 service call","1–2h"],
+        ["PAX / Large Closet / Bed Frame / Complex","Quote after photos","varies"]
       ],
       furProv:"All parts, hardware & original instructions",
-      furN:"Excess complexity or missing parts billed at $50/hr after included time. $95 service call applies.",
-      artScope:"Fixed price",artDesc:"Up to 5 pieces. Level-checked included.",
+      furN:"Most small items fit in the 2-hour service call. PAX systems, multi-piece sets, and missing parts quoted in writing before work starts.",
+      artScope:"Service Call · $150",artDesc:"Up to 5 standard pieces. Level-checked included.",
       art:[
-        ["Art / Mirror Hanging — up to 5 pieces","$95/package","1–2h"],
-        ["Curtains / Rods — first window","$75/window","1.5–2.5h"],
-        ["Curtains / Rods — each additional window","$30/window","~30 min"]
+        ["Art / Mirror Hanging — up to 5 pieces","$150 service call","1–2h"],
+        ["Gallery wall beyond 5 pieces","Quote after photos","varies"]
       ],
       artProv:"Hardware, anchors, brackets",
-      artN:"Gallery walls >5 pieces billed at $75/hr after 2h. Standard drywall / stud walls only.",
-      kitchScope:"Per door / per unit",kitchDesc:"Professional spray finish. Full package includes degreasing & prep.",
-      kitch:[
-        ["Cabinet Door — Full Package (MOST POPULAR)","$75/door"],
-        ["Cabinet Door Spray — 2 sides only","$70/door"],
-        ["Cabinet Door Spray — 1 side only","$40/door"],
-        ["Cabinet Door — Roller Finish (budget)","$7.25/door"],
-        ["Drawer Front — small (up to 6\")","$25/ea"],
-        ["Drawer Front — large (over 6\")","$35/ea"],
-        ["End Panel / Fridge Panel","$50/ea"],
-        ["Kitchen Island Accent (full refinish)","$175/island"],
-        ["Interior Cabinet Box","$30/section"],
-        ["Heavy Degreasing (soiled kitchen)","$20/door"],
-        ["Oak Grain Filling","$45/door"],
-        ["Two-Tone Color Surcharge","$300/project"],
-        ["Glass Door Masking","$20/door"],
-        ["Hardware Holes Fill","$20/door"],
-        ["Top Coat Upgrade (extra durability)","$20/door"],
-        ["Deep Damage Repair","$25/spot"],
-        ["Caulking / Sealing","$1.25/lf"],
-        ["Remove Contact Paper","$50/hour"]
-      ],
-      kitchProv:"Premium paint, primer, degreasing, and prep are included in the price",
-      kitchN:"Standard LA kitchen: 15 doors × $75 = $1,125 + 6 drawer fronts × $25–$35 = $150–$210 + 1 island = $175. Smooth spray finish included.",
-      furnpScope:"Per piece · Professional refinish",furnpDesc:"Full preparation, sanding, primer & paint included.",
-      furnp:[
-        ["Dining Chair","$40/piece"],
-        ["Nightstand / Side Table","$65/piece"],
-        ["Dresser / Large Cabinet","$170/piece"],
-        ["Dining Table","$130/piece"],
-        ["Built-in Cabinetry","$60/linear foot"]
-      ],
-      furnpProv:"Paint, stain, primer & sanding materials",
-      furnpN:"Includes full surface prep (cleaning, sanding, filling). Materials quoted separately. Turnaround 5-7 days.",
-      plumbScope:"Minor / Handyman-level · No permits",plumbDesc:"Cosmetic fixes only. No new lines or rough plumbing.",
+      artN:"Standard drywall / stud walls. Gallery walls >5 pieces quoted after photos.",
+      kitchScope:"Quote after photos",kitchDesc:"Professional spray finish. Photos required for a written estimate.",
+      kitch:[["Kitchen Cabinet Painting","Quote after photos"]],
+      kitchProv:"Photos of your kitchen required before estimate",
+      kitchN:"Send photos and we provide a written quote. Scope and price confirmed in writing before work starts.",
+      furnpScope:"Quote after photos",furnpDesc:"Full preparation, sanding, primer & paint. Photos required for estimate.",
+      furnp:[["Furniture Painting","Quote after photos"]],
+      furnpProv:"Photos of furniture required before estimate",
+      furnpN:"Send photos and we provide a written quote. Scope and price confirmed in writing before work starts.",
+      plumbScope:"Service Call · $150 · No permits",plumbDesc:"Minor / handyman-level cosmetic fixes. No new lines or rough plumbing.",
       plumb:[
-        ["Faucet Install (kitchen or bathroom)","$115/unit","1.5–2h"],
-        ["Shower Head Replace","$60/unit","< 1h"],
-        ["Toilet Tank Repair (flapper, fill valve)","$95/unit","~1h"],
-        ["Re-Caulk Tub / Shower (old caulk removal included)","$110/unit","2–3h"]
+        ["Faucet, Shower Head, Toilet Tank, Re-Caulk","$150 service call","1–3h"]
       ],
       plumbProv:"Fixture or parts (client provides)",
-      plumbN:"Shutoff valves must be functional. Heavy mold = extra charge. Beyond cosmetic scope -> C-36 plumber referral.",
-      elecScope:"Like-for-like · No permits",elecDesc:"Replacement in existing boxes only. No new circuits.",
+      plumbN:"Shutoff valves must be functional. Beyond cosmetic scope — C-36 plumber referral.",
+      elecScope:"Service Call · $150 · No permits",elecDesc:"Like-for-like replacement in existing boxes only. No new circuits.",
       elec:[
-        ["Light Fixture Replace (existing box)","$95/unit","1–2h"],
-        ["Outlets / Switches — first 1–2 units","$75/set","1–2h"],
-        ["Outlets / Switches — each additional","$30/unit","~15 min"],
-        ["Smart Doorbell / Smart Lock Install","$85/unit","1.5–2h"]
+        ["Light Fixture, Outlet/Switch, Smart Doorbell/Lock","$150 service call","1–2.5h"]
       ],
       elecProv:"Fixture, device, or switch (client provides)",
       elecN:"Ceiling fans with new support box -> C-10 electrician referral. No panel work, no new runs.",
@@ -469,11 +399,7 @@ const T={
         ["Walls — 2 coats (color change)","$3.75/sf"],
         ["Ceiling — smooth (2 coats)","$3.75/sf"],
         ["Ceiling — textured (2 coats)","$4.25/sf"],
-        ["Interior Door Slab","$65/door"],
-        ["Baseboard Paint","$3.00/lf"],
-        ["Baseboard Install (new)","$2.50/lf"],
-        ["Crown Molding Paint","$3.75/lf"],
-        ["Door Casing / Trim","$30/side"]
+        ["Trim, doors, baseboards","Quote after photos"]
       ],
       pF2:[
         ["+ Surface Prep — sanding/patching","+$0.65/sf"],
@@ -482,17 +408,12 @@ const T={
       ],
       pF3:[],
       paintProv:"All paint, primer & tools",
-      paintN:"Materials (paint, supplies) quoted separately. Estimate visit $75 → credited at job start.",
+      paintN:"Materials (paint, supplies) quoted separately in writing before work starts.",
       flScope:"Per sq ft · Labor only",flDesc:"Output: 120–250 sq ft/day.",
       flG1:[
         ["Laminate Click-Lock — labor only","$3.00/sf"],
         ["LVP / Vinyl Click — labor only","$3.00/sf"],
-        ["Demo Old Floor","+$1.50/sf"],
-        ["Underlayment Install","+$0.50/sf"],
-        ["Transition Strip","$30/piece"],
-        ["Door Undercut","$30/door"],
-        ["Baseboard Remove & Reinstall","$2.00/lf"],
-        ["Spot Leveling (per bag)","$60/bag"]
+        ["Demo, underlayment, transitions, baseboard","Quote — written scope"]
       ],
       flG2:[],
       flProv:"Flooring material is separate. We provide labor only.",
@@ -527,8 +448,8 @@ const T={
 
     tvBadge:"Most popular",paintBadge:"Same-day possible",
 
-    comboTitle:"Pick 2 Services — Same Visit",
-    comboSub:"Same crew, one trip — book any combo",
+    comboTitle:"Bundle Small Tasks in One Visit",
+    comboSub:"Add another task while we're there — we confirm the total in writing before arrival.",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Get This Estimate via SMS",
@@ -573,11 +494,11 @@ const T={
     svcs:[
       {id:"paint",name:"Pintura Interior",         from:"$3.00/ft²"},
       {id:"floor",name:"Revestimiento de Pisos",   from:"$3.00/ft²"},
-      {id:"tv",   name:"Montaje de TV",            from:"$105"},
-      {id:"fur",  name:"Ensamblaje de Muebles",    from:"$75"},
-      {id:"art",  name:"Arte, Espejos & Decoración",from:"$95"},
-      {id:"plumb",name:"Plomería",                 from:"$60"},
-      {id:"elec", name:"Eléctrico",                from:"$30"}
+      {id:"tv",   name:"Montaje de TV",            from:"$150"},
+      {id:"fur",  name:"Ensamblaje de Muebles",    from:"$150"},
+      {id:"art",  name:"Arte, Espejos & Decoración",from:"$150"},
+      {id:"plumb",name:"Plomería",                 from:"$150"},
+      {id:"elec", name:"Eléctrico",                from:"$150"}
     ],
     calcTitle:"Calculadora de precio",
     calcSub:"Dimensiones del cuarto → precio",
@@ -627,61 +548,30 @@ const T={
     calcSubLinear:"Elige tipo de moldura e ingresa longitud (pies)",
     lLinearService:"Tipo de servicio",lLinearLength:"Longitud",lLinearUnit:"Unidad",
     linearOpts:[
-      {v:"baseboard",l:"Pintura de zócalo — $3.00/pie lin",p:3.00},
-      {v:"baseboardInstall",l:"Instalación zócalo (nuevo) — $2.50/pie lin",p:2.50},
-      {v:"baseboardRemove",l:"Remover & reinstalar zócalo — $2.00/pie lin",p:2.00},
-      {v:"crown",l:"Pintura moldura corona — $3.75/pie lin",p:3.75},
-      {v:"doorCasing",l:"Marco / moldura puerta — $30/lado",p:30},
-      {v:"caulking",l:"Sellado / caulk — $1.25/pie lin",p:1.25},
-      {v:"builtIn",l:"Gabinete empotrado — $60/pie lin",p:60}
+      {v:"quote",l:"Molduras y zócalos — Cotización con fotos",p:0}
     ],
     lDoorType:"Acabado de puerta",lDoorQty:"Cantidad de puertas",
     lDrawerS:"Cajones pequeños",lDrawerL:"Cajones grandes",lEndPanels:"Paneles laterales",
     lPieceType:"Tipo de pieza",lPieceQty:"Cantidad",
-    kitchenDoorOpts:[
-      {v:"doorRoller",l:"Rodillo — $7.25/puerta",p:7.25},
-      {v:"door1side",l:"Spray 1 cara — $40/puerta",p:40},
-      {v:"door2side",l:"Spray 2 caras — $70/puerta",p:70},
-      {v:"doorFull",l:"Paquete completo — $75/puerta",p:75}
-    ],
-    kitchenAddons:[
-      {id:"degreasing",l:"Desengrasado profundo",p:"+$20/puerta"},
-      {id:"oakFill",l:"Relleno grano de roble",p:"+$45/puerta"},
-      {id:"twoTone",l:"Dos tonos",p:"+$300 fijo"}
-    ],
-    furnPieceOpts:[
-      {v:"chair",l:"Silla — $40/pieza",p:40},
-      {v:"nightstand",l:"Mesita de noche — $65/pieza",p:65},
-      {v:"builtIn",l:"Mueble empotrado — $60/pie lin",p:60,unit:"lf"},
-      {v:"diningTable",l:"Mesa de comedor — $130/pieza",p:130},
-      {v:"dresser",l:"Cómoda — $170/pieza",p:170}
-    ],
+    kitchenDoorOpts:[{v:"quote",l:"Quote after photos",p:0}],
+    kitchenAddons:[],
+    furnPieceOpts:[{v:"quote",l:"Quote after photos",p:0}],
     fixedOpts:{
       tv:[
-        {id:"tvStd",l:"Montaje estándar (hasta 65\")",p:105},
-        {id:"tvHide",l:"Cables ocultos (en pared)",p:185}
+        {id:"tvStd",l:"Montaje estándar (hasta 65\")",p:150}
       ],
       art:[
-        {id:"artHang",l:"Cuadros / Espejos (hasta 5 pcs)",p:95},
-        {id:"curtain1",l:"Cortinas — primera ventana",p:75},
-        {id:"curtainX",l:"Cada ventana adicional",p:30,addon:true}
+        {id:"artHang",l:"Cuadros / Espejos (hasta 5 pcs)",p:150},
+        {id:"curtain1",l:"Cortinas — primera ventana",p:150}
       ],
       fur:[
-        {id:"furSmall",l:"Artículos pequeños",p:75},
-        {id:"furDresser",l:"Cómoda",p:95},
-        {id:"furBed",l:"Marco de cama",p:115},
-        {id:"furPax",l:"PAX / Closet grande (mín 4h)",p:200}
+        {id:"furSmall",l:"Artículos pequeños — caben en 2 horas",p:150}
       ],
       plumb:[
-        {id:"plFaucet",l:"Instalación de grifo",p:115},
-        {id:"plShower",l:"Reemplazo de regadera",p:60},
-        {id:"plToilet",l:"Reparación tanque",p:95},
-        {id:"plCaulk",l:"Re-sellar bañera / ducha",p:110}
+        {id:"plFaucet",l:"Cambio menor de accesorio (grifo, ducha, tanque, sellado)",p:150}
       ],
       elec:[
-        {id:"elLight",l:"Reemplazo de luminaria",p:95},
-        {id:"elOutlet",l:"Enchufes / interruptores (primeros 3)",p:75,extra:{l:"Enchufes adicionales",ep:30}},
-        {id:"elSmart",l:"Timbre / cerradura inteligente",p:85}
+        {id:"elLight",l:"Cambio menor de accesorio (luz, enchufe, timbre/cerradura)",p:150}
       ]
     },
     calcBtn:"Calcular",
@@ -693,78 +583,44 @@ const T={
     sG1:"Instalación",sG2:"Servicios adicionales",
     dr:{
       prov:"Usted provee",
-      kitchScope:"Por puerta / por unidad",kitchDesc:"Acabado profesional con spray. Paquete completo incluye desengrasado y preparación.",
-      kitch:[
-        ["Puerta — Paquete completo (MÁS POPULAR)","$75/puerta"],
-        ["Puerta — spray 2 lados","$70/puerta"],
-        ["Puerta — spray 1 lado","$40/puerta"],
-        ["Puerta — Rodillo (económico)","$7.25/puerta"],
-        ["Frente de cajón — pequeño (hasta 6\")","$25/ea"],
-        ["Frente de cajón — grande (más de 6\")","$35/ea"],
-        ["Panel lateral / Panel refrigerador","$50/ea"],
-        ["Isla de cocina (restauración completa)","$175/isla"],
-        ["Interior de gabinete","$30/sección"],
-        ["Desengrasado profundo","$20/puerta"],
-        ["Relleno de veta de roble","$45/puerta"],
-        ["Cargo por dos tonos","$300/proyecto"],
-        ["Enmascarado de puerta de vidrio","$20/puerta"],
-        ["Relleno de huecos de herraje","$20/puerta"],
-        ["Mejora de capa protectora (durabilidad extra)","$20/puerta"],
-        ["Reparación de daño profundo","$25/punto"],
-        ["Sellado / Calafateo","$1.25/lf"],
-        ["Retiro de papel adhesivo","$50/hora"]
-      ],
-      kitchProv:"La pintura premium, imprimacion, desengrasado y preparacion estan incluidos en el precio",
-      kitchN:"Cocina estandar de LA: 15 puertas × $75 = $1,125 + 6 frentes × $25–$35 = $150–$210 + 1 isla = $175. Acabado liso en spray incluido.",
-      furnpScope:"Por pieza · Restauración profesional",furnpDesc:"Preparación completa, lijado, imprimación y pintura incluidos.",
-      furnp:[
-        ["Silla de comedor","$40/pieza"],
-        ["Mesita de noche / Mesa auxiliar","$65/pieza"],
-        ["Cómoda / Gabinete grande","$170/pieza"],
-        ["Mesa de comedor","$130/pieza"],
-        ["Gabinete empotrado","$60/pie lineal"]
-      ],
-      furnpProv:"Pintura, tinte, imprimación y materiales de lijado",
-      furnpN:"Incluye preparación completa (limpieza, lijado, relleno). Materiales cotizados por separado. Entrega 5-7 días.",
-      tvScope:"Precio fijo",tvDesc:"Manejo de cables superficiales incluido. Min $95 aplicado.",
+      kitchScope:"Quote after photos",kitchDesc:"Professional spray finish. Photos required for a written estimate.",
+      kitch:[["Kitchen Cabinet Painting","Quote after photos"]],
+      kitchProv:"Photos of your kitchen required before estimate",
+      kitchN:"Send photos and we provide a written quote. Scope and price confirmed in writing before work starts.",
+      furnpScope:"Quote after photos",furnpDesc:"Full preparation, sanding, primer & paint. Photos required for estimate.",
+      furnp:[["Furniture Painting","Quote after photos"]],
+      furnpProv:"Photos of furniture required before estimate",
+      furnpN:"Send photos and we provide a written quote. Scope and price confirmed in writing before work starts.",
+      tvScope:"Llamada de servicio · $150",tvDesc:"Incluye hasta 2 horas en sitio. Manejo superficial de cables incluido.",
       tv:[
-        ["Montaje de TV — Estándar (hasta 65\")","$105/unidad","1–1.5h"],
-        ["Montaje de TV — Cables ocultos (en pared)","$185/unidad","2–3h"]
+        ["Montaje estándar (hasta 65\")","$150 llamada de servicio","1–1.5h"],
+        ["Cables ocultos / Instalación en pared","Cotización con fotos","2–3h"]
       ],
       tvProv:"Soporte / bracket del TV",
-      tvN:"Soporte no incluido. Opción oculta requiere sin bloques de fuego. Hoyos reparados y pintados.",
-      furScope:"Precio fijo",furDesc:"Min $75 para artículos pequeños. Por hora para PAX.",
+      tvN:"Soporte no incluido. Instalación con cables ocultos cotizada con foto de la pared. Hoyos reparados y pintados.",
+      furScope:"Llamada de servicio · $150",furDesc:"Incluye hasta 2 horas. Alcance mayor se cotiza con fotos.",
       fur:[
-        ["Artículos pequeños (2–3 pcs) — mesita / silla / estante","$75","1–1.5h"],
-        ["Cómoda (3–6 cajones)","$95","2–3h"],
-        ["Marco de cama (cajones/mecanismo elevador = +$50/hr)","$115","2.5–4h"],
-        ["PAX / sistema de closet grande","$50/hr · mín 4h ($200)","≥4h"]
+        ["Ensamblaje de muebles pequeños (estante, mesa, silla)","$150 llamada de servicio","1–2h"],
+        ["PAX / Closet grande / Marco de cama / Complejo","Cotización con fotos","varies"]
       ],
       furProv:"Todas las piezas, tornillería e instrucciones",
-      furN:"Complejidad excesiva o piezas faltantes se cobran a $50/hr después del tiempo incluido.",
-      artScope:"Precio fijo",artDesc:"Hasta 5 piezas. Nivelado incluido.",
+      furN:"La mayoría de artículos pequeños caben en la llamada de servicio de 2 horas. PAX, conjuntos de varias piezas y partes faltantes se cotizan por escrito antes de comenzar.",
+      artScope:"Llamada de servicio · $150",artDesc:"Hasta 5 piezas estándar. Nivelado incluido.",
       art:[
-        ["Arte / Espejos — hasta 5 piezas","$95/paquete","1–2h"],
-        ["Cortineros / Barras — 1ra ventana","$75/ventana","1.5–2.5h"],
-        ["Cada ventana adicional","+$30/ventana","~30 min"]
+        ["Cuadros / Espejos — hasta 5 piezas","$150 llamada de servicio","1–2h"],
+        ["Galería de más de 5 piezas","Cotización con fotos","varies"]
       ],
       artProv:"Herraje, anclajes y soportes",
-      artN:"Galerías >5 piezas se cobran a $75/hr después de 2h. Solo paredes estándar de drywall / vigas.",
-      plumbScope:"Solo cosmético · Sin permisos",plumbDesc:"Válvulas existentes deben funcionar. Sin líneas nuevas.",
+      artN:"Paredes estándar de drywall / vigas. Galerías >5 piezas se cotizan con fotos.",
+      plumbScope:"Llamada de servicio · $150 · Sin permisos",plumbDesc:"Solo reparaciones menores de handyman. Sin líneas nuevas ni plomería estructural.",
       plumb:[
-        ["Instalación de grifo — cocina o baño","$115","1.5–2.5h"],
-        ["Reemplazo de cabeza de ducha","$60","< 1h"],
-        ["Reparación de tanque / válvula de llenado","$95","~1h"],
-        ["Re-sellado de bañera / ducha","$110","2–3h"]
+        ["Grifo, ducha, tanque, re-sellado","$150 llamada de servicio","1–3h"]
       ],
-      plumbProv:"Grifo, accesorio o piezas de repuesto",
-      plumbN:"Válvulas de cierre deben funcionar. Moho severo = cargo extra. Cualquier cosa fuera del alcance cosmético → plomero C-36.",
-      elecScope:"Solo equivalente · Sin permisos",elecDesc:"Solo reemplazo en cajas existentes. Sin circuitos nuevos.",
+      plumbProv:"Accesorio o piezas de repuesto (el cliente provee)",
+      plumbN:"Válvulas de cierre deben funcionar. Fuera del alcance cosmético → plomero C-36.",
+      elecScope:"Llamada de servicio · $150 · Sin permisos",elecDesc:"Solo reemplazo equivalente en cajas existentes. Sin circuitos nuevos.",
       elec:[
-        ["Cambio de luminaria — 1 (caja existente)","$95","1–2h"],
-        ["Enchufes / interruptores — primeros 1–2","$75","1–2h"],
-        ["Cada enchufe o interruptor adicional","+$30/ea","~15 min"],
-        ["Timbre smart / Cerradura smart + configuración app","$85","1.5–2.5h"]
+        ["Luminaria, enchufe/interruptor, timbre/cerradura smart","$150 llamada de servicio","1–2.5h"]
       ],
       elecProv:"Luminaria, dispositivo o interruptor",
       elecN:"Ventiladores con nueva caja de soporte → electricista C-10. Sin trabajo de panel ni nuevas líneas.",
@@ -774,11 +630,7 @@ const T={
         ["Paredes — 2 capas (cambio de color)","$3.75/ft²"],
         ["Techo — liso (2 capas)","$3.75/ft²"],
         ["Techo — texturizado (2 capas)","$4.25/ft²"],
-        ["Puerta interior / hoja","$65/puerta"],
-        ["Zócalo — pintura","$3.00/lf"],
-        ["Zócalo — instalación (nuevo)","$2.50/lf"],
-        ["Moldura corona","$3.75/lf"],
-        ["Marco de puerta / moldura","$30/lado"]
+        ["Molduras, puertas, zócalos","Cotización con fotos"]
       ],
       pF2:[
         ["+ Lijado / capa de imprimación","+$0.65/ft²"],
@@ -791,14 +643,9 @@ const T={
       paintN:"Visita de estimado $75 → se acredita al inicio. Materiales por cliente, sin margen.",
       flScope:"Por pie² · Solo mano de obra",flDesc:"Rendimiento: 120–250 ft² por día según el producto.",
       flG1:[
-        ["Laminado click-lock","$3.00/ft²"],
-        ["LVP / Vinilo de lujo click","$3.00/ft²"],
-        ["Demo piso existente","+$1.50/ft²"],
-        ["Instalación de underlayment","+$0.50/ft²"],
-        ["Tira de transición","$30/pieza"],
-        ["Recorte inferior de puerta","$30/puerta"],
-        ["Zócalo: retirar + instalar","$2.00/lf"],
-        ["Nivelación puntual (por saco)","$60/saco"]
+        ["Laminado click-lock — solo mano de obra","$3.00/ft²"],
+        ["LVP / Vinilo de lujo click — solo mano de obra","$3.00/ft²"],
+        ["Demo, underlayment, transiciones, zócalos","Cotización — alcance por escrito"]
       ],
       flG2:[],
       flProv:"Material de piso por separado. Solo mano de obra.",
@@ -833,8 +680,8 @@ const T={
 
     tvBadge:"Más popular",paintBadge:"Posible mismo día",
 
-    comboTitle:"Elige 2 Servicios — Misma Visita",
-    comboSub:"Mismo equipo, un viaje — reserva cualquier combo",
+    comboTitle:"Combina tareas pequeñas en una sola visita",
+    comboSub:"Agrega otra tarea mientras estamos — confirmamos el total por escrito antes de llegar.",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Recibe este estimado por SMS",
@@ -878,11 +725,11 @@ const T={
     svcs:[
       {id:"paint",name:"Интерьерная покраска",     from:"$3.00/кф"},
       {id:"floor",name:"Напольное покрытие",       from:"$3.00/кф"},
-      {id:"tv",   name:"Монтаж ТВ",               from:"$105"},
-      {id:"fur",  name:"Сборка мебели",            from:"$75"},
-      {id:"art",  name:"Картины, зеркала и декор", from:"$95"},
-      {id:"plumb",name:"Сантехника",               from:"$60"},
-      {id:"elec", name:"Электрика",                from:"$30"}
+      {id:"tv",   name:"Монтаж ТВ",               from:"$150"},
+      {id:"fur",  name:"Сборка мебели",            from:"$150"},
+      {id:"art",  name:"Картины, зеркала и декор", from:"$150"},
+      {id:"plumb",name:"Сантехника",               from:"$150"},
+      {id:"elec", name:"Электрика",                from:"$150"}
     ],
     calcTitle:"Калькулятор площади",
     calcSub:"Введите размеры комнаты → получите цену",
@@ -932,61 +779,30 @@ const T={
     calcSubLinear:"Выберите тип отделки и введите длину (фут)",
     lLinearService:"Тип отделки",lLinearLength:"Длина",lLinearUnit:"Единица",
     linearOpts:[
-      {v:"baseboard",l:"Покраска плинтуса — $3.00/пог.фут",p:3.00},
-      {v:"baseboardInstall",l:"Установка плинтуса (новый) — $2.50/пог.фут",p:2.50},
-      {v:"baseboardRemove",l:"Снять & переустановить плинтус — $2.00/пог.фут",p:2.00},
-      {v:"crown",l:"Покраска молдинга — $3.75/пог.фут",p:3.75},
-      {v:"doorCasing",l:"Отделка дверного проёма — $30/сторона",p:30},
-      {v:"caulking",l:"Герметизация / герметик — $1.25/пог.фут",p:1.25},
-      {v:"builtIn",l:"Встроенная мебель — $60/пог.фут",p:60}
+      {v:"quote",l:"Молдинги и плинтусы — Смета после фото",p:0}
     ],
     lDoorType:"Покрытие двери",lDoorQty:"Кол-во дверей",
     lDrawerS:"Маленькие ящики",lDrawerL:"Большие ящики",lEndPanels:"Торцевые панели",
     lPieceType:"Тип предмета",lPieceQty:"Количество",
-    kitchenDoorOpts:[
-      {v:"doorRoller",l:"Валик — $7.25/дверь",p:7.25},
-      {v:"door1side",l:"Спрей 1 сторона — $40/дверь",p:40},
-      {v:"door2side",l:"Спрей 2 стороны — $70/дверь",p:70},
-      {v:"doorFull",l:"Полный пакет — $75/дверь",p:75}
-    ],
-    kitchenAddons:[
-      {id:"degreasing",l:"Глубокое обезжиривание",p:"+$20/дверь"},
-      {id:"oakFill",l:"Заполнение текстуры дуба",p:"+$45/дверь"},
-      {id:"twoTone",l:"Двухцветная покраска",p:"+$300 фикс"}
-    ],
-    furnPieceOpts:[
-      {v:"chair",l:"Стул — $40/шт",p:40},
-      {v:"nightstand",l:"Тумба — $65/шт",p:65},
-      {v:"builtIn",l:"Встроенный модуль — $60/п.ф",p:60,unit:"lf"},
-      {v:"diningTable",l:"Обеденный стол — $130/шт",p:130},
-      {v:"dresser",l:"Комод — $170/шт",p:170}
-    ],
+    kitchenDoorOpts:[{v:"quote",l:"Quote after photos",p:0}],
+    kitchenAddons:[],
+    furnPieceOpts:[{v:"quote",l:"Quote after photos",p:0}],
     fixedOpts:{
       tv:[
-        {id:"tvStd",l:"Стандартный монтаж (до 65\")",p:105},
-        {id:"tvHide",l:"Скрытые провода (в стене)",p:185}
+        {id:"tvStd",l:"Стандартный монтаж (до 65\")",p:150}
       ],
       art:[
-        {id:"artHang",l:"Картины / Зеркала (до 5 шт.)",p:95},
-        {id:"curtain1",l:"Карнизы — первое окно",p:75},
-        {id:"curtainX",l:"Каждое доп. окно",p:30,addon:true}
+        {id:"artHang",l:"Картины / Зеркала (до 5 шт.)",p:150},
+        {id:"curtain1",l:"Карнизы — первое окно",p:150}
       ],
       fur:[
-        {id:"furSmall",l:"Мелкие предметы (полка, стол)",p:75},
-        {id:"furDresser",l:"Комод",p:95},
-        {id:"furBed",l:"Кровать",p:115},
-        {id:"furPax",l:"PAX / Большой шкаф (мин 4ч)",p:200}
+        {id:"furSmall",l:"Мелкие предметы — умещаются в 2 часа",p:150}
       ],
       plumb:[
-        {id:"plFaucet",l:"Установка смесителя",p:115},
-        {id:"plShower",l:"Замена душевой лейки",p:60},
-        {id:"plToilet",l:"Ремонт бачка унитаза",p:95},
-        {id:"plCaulk",l:"Перегерметизация ванны",p:110}
+        {id:"plFaucet",l:"Мелкий ремонт (смеситель, лейка, бачок, герметизация)",p:150}
       ],
       elec:[
-        {id:"elLight",l:"Замена светильника",p:95},
-        {id:"elOutlet",l:"Розетки / выключатели (первые 3)",p:75,extra:{l:"Доп. розетки",ep:30}},
-        {id:"elSmart",l:"Умный звонок / замок",p:85}
+        {id:"elLight",l:"Мелкий ремонт (светильник, розетка, звонок/замок)",p:150}
       ]
     },
     calcBtn:"Рассчитать",
@@ -998,78 +814,44 @@ const T={
     sG1:"Укладка",sG2:"Дополнительные работы",
     dr:{
       prov:"Вы обеспечиваете",
-      kitchScope:"За дверь / за единицу",kitchDesc:"Профессиональная покраска пульверизатором. Полный пакет: обезжиривание и подготовка.",
-      kitch:[
-        ["Дверь — Полный пакет (ПОПУЛЯРНОЕ)","$75/дверь"],
-        ["Дверь — спрей 2 стороны","$70/дверь"],
-        ["Дверь — спрей 1 сторона","$40/дверь"],
-        ["Дверь — валик (бюджет)","$7.25/дверь"],
-        ["Фасад ящика — малый (до 6\")","$25/шт"],
-        ["Фасад ящика — большой (более 6\")","$35/шт"],
-        ["Боковая панель / панель холодильника","$50/шт"],
-        ["Кухонный остров (полная реставрация)","$175/остров"],
-        ["Внутренний короб шкафа","$30/секция"],
-        ["Глубокое обезжиривание","$20/дверь"],
-        ["Заполнение текстуры дуба","$45/дверь"],
-        ["Доплата за два тона","$300/проект"],
-        ["Маскировка стеклянных дверей","$20/дверь"],
-        ["Заполнение отверстий от фурнитуры","$20/дверь"],
-        ["Улучшенное защитное покрытие (доп. прочность)","$20/дверь"],
-        ["Ремонт глубоких повреждений","$25/точка"],
-        ["Герметизация / конопатка","$1.25/пф"],
-        ["Удаление контактной плёнки","$50/час"]
-      ],
-      kitchProv:"Премиальная краска, грунт, обезжиривание и подготовка уже включены в стоимость",
-      kitchN:"Стандартная кухня LA: 15 дверей × $75 = $1,125 + 6 фасадов × $25–$35 = $150–$210 + 1 остров = $175. Гладкое распылительное покрытие включено.",
-      furnpScope:"За единицу · Профессиональная реставрация",furnpDesc:"Полная подготовка, шлифовка, грунт и покраска включены.",
-      furnp:[
-        ["Обеденный стул","$40/шт"],
-        ["Тумбочка / Приставной столик","$65/шт"],
-        ["Комод / Большой шкаф","$170/шт"],
-        ["Обеденный стол","$130/шт"],
-        ["Встроенная мебель","$60/пог.фут"]
-      ],
-      furnpProv:"Краска, морилка, грунт и материалы для шлифовки",
-      furnpN:"Включает полную подготовку (чистка, шлифовка, заполнение). Материалы — отдельно. Срок 5–7 дней.",
-      tvScope:"Фиксированная цена",tvDesc:"Укладка кабелей по поверхности включена. Минимальный выезд $95.",
+      kitchScope:"Quote after photos",kitchDesc:"Professional spray finish. Photos required for a written estimate.",
+      kitch:[["Kitchen Cabinet Painting","Quote after photos"]],
+      kitchProv:"Photos of your kitchen required before estimate",
+      kitchN:"Send photos and we provide a written quote. Scope and price confirmed in writing before work starts.",
+      furnpScope:"Quote after photos",furnpDesc:"Full preparation, sanding, primer & paint. Photos required for estimate.",
+      furnp:[["Furniture Painting","Quote after photos"]],
+      furnpProv:"Photos of furniture required before estimate",
+      furnpN:"Send photos and we provide a written quote. Scope and price confirmed in writing before work starts.",
+      tvScope:"Сервисный вызов · $150",tvDesc:"Включает до 2 часов на объекте. Укладка кабелей по поверхности включена.",
       tv:[
-        ["Монтаж ТВ — Стандартный (до 65\")","$105/ед.","1–1.5ч"],
-        ["Монтаж ТВ — Скрытая проводка (в стене)","$185/ед.","2–3ч"]
+        ["Стандартный монтаж (до 65\")","$150 сервисный вызов","1–1.5ч"],
+        ["Скрытая проводка / Прокладка в стене","Котировка по фото","2–3ч"]
       ],
       tvProv:"Кронштейн / держатель",
-      tvN:"Кронштейн не входит. Скрытая проводка — только если нет противопожарных блоков. Отверстия зашпаклёваны и покрашены.",
-      furScope:"Фиксированная цена",furDesc:"Минимальный выезд $75 для мелких предметов. Почасовая для PAX.",
+      tvN:"Кронштейн не входит. Скрытая проводка котируется по фото стены. Отверстия зашпаклёваны и покрашены.",
+      furScope:"Сервисный вызов · $150",furDesc:"Включает до 2 часов. Бо́льший объём котируется по фото.",
       fur:[
-        ["Мелкие предметы (2–3 шт.) — тумбочка / стул / полка","$75","1–1.5ч"],
-        ["Комод (3–6 ящиков)","$95","2–3ч"],
-        ["Каркас кровати (хранение/подъёмный механизм = +$50/ч)","$115","2.5–4ч"],
-        ["PAX / система большого гардероба","$50/ч · мин 4ч ($200)","≥4ч"]
+        ["Сборка мелкой мебели (полка, стол, стул)","$150 сервисный вызов","1–2ч"],
+        ["PAX / Большой шкаф / Кровать / Сложная сборка","Котировка по фото","varies"]
       ],
       furProv:"Все детали, крепёж и инструкции",
-      furN:"Повышенная сложность или недостающие детали — доплата $50/ч сверх включённого времени.",
-      artScope:"Фиксированная цена",artDesc:"До 5 предметов. Гарантия горизонтали включена.",
+      furN:"Большинство мелких предметов вмещается в 2-часовой сервисный вызов. PAX, несколько предметов и отсутствующие детали — котировка письменно до начала работ.",
+      artScope:"Сервисный вызов · $150",artDesc:"До 5 стандартных предметов. Гарантия горизонтали включена.",
       art:[
-        ["Картины / Зеркала — до 5 штук","$95/пакет","1–2ч"],
-        ["Карнизы / Штанги — 1-е окно","$75/окно","1.5–2.5ч"],
-        ["Каждое дополнительное окно","+$30/окно","~30 мин"]
+        ["Картины / Зеркала — до 5 штук","$150 сервисный вызов","1–2ч"],
+        ["Галерея более 5 предметов","Котировка по фото","varies"]
       ],
       artProv:"Крепёж, анкеры, кронштейны",
-      artN:"Галерея >5 предметов — $75/ч после 2ч. Только стандартные стены (гипсокартон/балки).",
-      plumbScope:"Только косметика · Без разрешений",plumbDesc:"Запорные клапаны должны работать. Без новых линий.",
+      artN:"Стандартные стены (гипсокартон/балки). Галерея >5 предметов — котировка по фото.",
+      plumbScope:"Сервисный вызов · $150 · Без разрешений",plumbDesc:"Только мелкий ремонт хендимена. Без новых линий и черновой сантехники.",
       plumb:[
-        ["Установка крана — кухня или ванная","$115","1.5–2.5ч"],
-        ["Замена душевой лейки","$60","< 1ч"],
-        ["Ремонт бачка / наполнительного клапана","$95","~1ч"],
-        ["Повторная герметизация ванны / душа","$110","2–3ч"]
+        ["Смеситель, лейка, бачок, герметизация","$150 сервисный вызов","1–3ч"]
       ],
-      plumbProv:"Кран, смеситель или запчасти",
-      plumbN:"Запорные клапаны должны работать. Сильная плесень — доплата. Всё сверх косметики → направление C-36.",
-      elecScope:"Только замена аналогом · Без разрешений",elecDesc:"Только замена в существующих коробках. Без новых линий.",
+      plumbProv:"Кран, смеситель или запчасти (клиент обеспечивает)",
+      plumbN:"Запорные клапаны должны работать. Всё сверх косметики → направление C-36.",
+      elecScope:"Сервисный вызов · $150 · Без разрешений",elecDesc:"Только замена аналогом в существующих коробках. Без новых линий.",
       elec:[
-        ["Замена светильника — 1 шт. (существующая коробка)","$95","1–2ч"],
-        ["Розетки / выключатели — первые 1–2 шт.","$75","1–2ч"],
-        ["Каждая дополнительная розетка или выключатель","+$30/шт.","~15 мин"],
-        ["Умный звонок / Умный замок + настройка приложения","$85","1.5–2.5ч"]
+        ["Светильник, розетка/выключатель, умный звонок/замок","$150 сервисный вызов","1–2.5ч"]
       ],
       elecProv:"Светильник, устройство или выключатель",
       elecN:"Вентиляторы с новой опорной коробкой → лицензированный C-10. Без работ на щитке, без новых цепей.",
@@ -1079,11 +861,7 @@ const T={
         ["Стены — 2 слоя (смена цвета)","$3.75/кф"],
         ["Потолок — гладкий (2 слоя)","$3.75/кф"],
         ["Потолок — текстурный (2 слоя)","$4.25/кф"],
-        ["Межкомнатная дверь / полотно","$65/дверь"],
-        ["Плинтус — покраска","$3.00/пф"],
-        ["Плинтус — установка (новый)","$2.50/пф"],
-        ["Молдинг корона","$3.75/пф"],
-        ["Дверная коробка / наличник","$30/сторона"]
+        ["Молдинги, двери, плинтусы","Смета после фото"]
       ],
       pF2:[
         ["+ Шлифовка / грунтовочный слой","+$0.65/кф"],
@@ -1096,14 +874,9 @@ const T={
       paintN:"Выезд для оценки $75 → засчитывается в стоимость работ. Материалы — клиент, без наценки.",
       flScope:"За кв.фут · Только работа",flDesc:"Выработка: 120–250 кв.фут в день в зависимости от продукта.",
       flG1:[
-        ["Ламинат замковый (click-lock)","$3.00/кф"],
-        ["LVP / Роскошный виниловый ламинат","$3.00/кф"],
-        ["Демонтаж старого пола","+$1.50/кф"],
-        ["Укладка подложки","+$0.50/кф"],
-        ["Порожек перехода","$30/шт."],
-        ["Подрезка двери","$30/дверь"],
-        ["Плинтус: снять + установить","$2.00/пф"],
-        ["Точечное выравнивание (за мешок)","$60/мешок"]
+        ["Ламинат замковый (click-lock) — только работа","$3.00/кф"],
+        ["LVP / Роскошный виниловый ламинат — только работа","$3.00/кф"],
+        ["Демонтаж, подложка, порожки, плинтусы","Смета — объём письменно"]
       ],
       flG2:[],
       flProv:"Материал покрытия — отдельно. Только работа.",
@@ -1138,8 +911,8 @@ const T={
 
     tvBadge:"Самый популярный",paintBadge:"Возможно в тот же день",
 
-    comboTitle:"Выбери 2 услуги — один визит",
-    comboSub:"Закажи комбо — одна бригада, один выезд",
+    comboTitle:"Совмести несколько задач за один визит",
+    comboSub:"Добавь ещё одну задачу, пока мы у тебя — общую стоимость подтверждаем письменно до приезда.",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Получить смету по СМС",
@@ -1183,11 +956,11 @@ const T={
     svcs:[
       {id:"paint",name:"Інтер'єрне фарбування",       from:"$3.00/кф"},
       {id:"floor",name:"Підлогове покриття",           from:"$3.00/кф"},
-      {id:"tv",   name:"Монтаж ТВ",                   from:"$105"},
-      {id:"fur",  name:"Збирання меблів",              from:"$75"},
-      {id:"art",  name:"Картини, дзеркала та декор",   from:"$95"},
-      {id:"plumb",name:"Сантехніка",                   from:"$60"},
-      {id:"elec", name:"Електрика",                    from:"$30"}
+      {id:"tv",   name:"Монтаж ТВ",                   from:"$150"},
+      {id:"fur",  name:"Збирання меблів",              from:"$150"},
+      {id:"art",  name:"Картини, дзеркала та декор",   from:"$150"},
+      {id:"plumb",name:"Сантехніка",                   from:"$150"},
+      {id:"elec", name:"Електрика",                    from:"$150"}
     ],
     calcTitle:"Калькулятор площі",
     calcSub:"Введіть розміри кімнати → отримайте ціну",
@@ -1237,61 +1010,30 @@ const T={
     calcSubLinear:"Оберіть тип молдингу та введіть довжину (фут)",
     lLinearService:"Тип роботи",lLinearLength:"Довжина",lLinearUnit:"Одиниця",
     linearOpts:[
-      {v:"baseboard",l:"Фарбування плінтуса — $3.00/пог.фут",p:3.00},
-      {v:"baseboardInstall",l:"Установка плінтуса (новий) — $2.50/пог.фут",p:2.50},
-      {v:"baseboardRemove",l:"Зняти & переустановити плінтус — $2.00/пог.фут",p:2.00},
-      {v:"crown",l:"Фарбування молдингу — $3.75/пог.фут",p:3.75},
-      {v:"doorCasing",l:"Обрамлення дверей — $30/сторона",p:30},
-      {v:"caulking",l:"Герметизація / герметик — $1.25/пог.фут",p:1.25},
-      {v:"builtIn",l:"Вбудована меблі — $60/пог.фут",p:60}
+      {v:"quote",l:"Молдинги та плінтуси — Кошторис після фото",p:0}
     ],
     lDoorType:"Покриття дверей",lDoorQty:"Кількість дверей",
     lDrawerS:"Маленькі ящики",lDrawerL:"Великі ящики",lEndPanels:"Торцеві панелі",
     lPieceType:"Тип предмета",lPieceQty:"Кількість",
-    kitchenDoorOpts:[
-      {v:"doorRoller",l:"Валик — $7.25/двері",p:7.25},
-      {v:"door1side",l:"Спрей 1 сторона — $40/двері",p:40},
-      {v:"door2side",l:"Спрей 2 сторони — $70/двері",p:70},
-      {v:"doorFull",l:"Повний пакет — $75/двері",p:75}
-    ],
-    kitchenAddons:[
-      {id:"degreasing",l:"Глибоке знежирення",p:"+$20/двері"},
-      {id:"oakFill",l:"Заповнення текстури дуба",p:"+$45/двері"},
-      {id:"twoTone",l:"Двоколірне фарбування",p:"+$300 фікс"}
-    ],
-    furnPieceOpts:[
-      {v:"chair",l:"Стілець — $40/шт",p:40},
-      {v:"nightstand",l:"Тумба — $65/шт",p:65},
-      {v:"builtIn",l:"Вбудований модуль — $60/п.ф",p:60,unit:"lf"},
-      {v:"diningTable",l:"Обідній стіл — $130/шт",p:130},
-      {v:"dresser",l:"Комод — $170/шт",p:170}
-    ],
+    kitchenDoorOpts:[{v:"quote",l:"Quote after photos",p:0}],
+    kitchenAddons:[],
+    furnPieceOpts:[{v:"quote",l:"Quote after photos",p:0}],
     fixedOpts:{
       tv:[
-        {id:"tvStd",l:"Стандартний монтаж (до 65\")",p:105},
-        {id:"tvHide",l:"Приховані дроти (в стіні)",p:185}
+        {id:"tvStd",l:"Стандартний монтаж (до 65\")",p:150}
       ],
       art:[
-        {id:"artHang",l:"Картини / Дзеркала (до 5 шт.)",p:95},
-        {id:"curtain1",l:"Карнизи — перше вікно",p:75},
-        {id:"curtainX",l:"Кожне додаткове вікно",p:30,addon:true}
+        {id:"artHang",l:"Картини / Дзеркала (до 5 шт.)",p:150},
+        {id:"curtain1",l:"Карнизи — перше вікно",p:150}
       ],
       fur:[
-        {id:"furSmall",l:"Дрібні предмети (полиця, стіл)",p:75},
-        {id:"furDresser",l:"Комод",p:95},
-        {id:"furBed",l:"Ліжко",p:115},
-        {id:"furPax",l:"PAX / Велика шафа (мін 4год)",p:200}
+        {id:"furSmall",l:"Дрібні предмети — вміщуються в 2 години",p:150}
       ],
       plumb:[
-        {id:"plFaucet",l:"Встановлення змішувача",p:115},
-        {id:"plShower",l:"Заміна душової лійки",p:60},
-        {id:"plToilet",l:"Ремонт бачка унітазу",p:95},
-        {id:"plCaulk",l:"Перегерметизація ванни",p:110}
+        {id:"plFaucet",l:"Дрібний ремонт (змішувач, лійка, бачок, герметизація)",p:150}
       ],
       elec:[
-        {id:"elLight",l:"Заміна світильника",p:95},
-        {id:"elOutlet",l:"Розетки / вимикачі (перші 3)",p:75,extra:{l:"Додаткові розетки",ep:30}},
-        {id:"elSmart",l:"Розумний дзвінок / замок",p:85}
+        {id:"elLight",l:"Дрібний ремонт (світильник, розетка, дзвінок/замок)",p:150}
       ]
     },
     calcBtn:"Розрахувати",
@@ -1303,92 +1045,54 @@ const T={
     sG1:"Укладання",sG2:"Додаткові роботи",
     dr:{
       prov:"Ви забезпечуєте",
-      kitchScope:"За дверцю / за одиницю",kitchDesc:"Професійне фарбування пульверизатором. Повний пакет: знежирення та підготовка.",
-      kitch:[
-        ["Дверця — Повний пакет (ПОПУЛЯРНЕ)","$75/дверця"],
-        ["Дверця — спрей 2 сторони","$70/дверця"],
-        ["Дверця — спрей 1 сторона","$40/дверця"],
-        ["Дверця — валик (бюджет)","$7.25/дверця"],
-        ["Фасад шухляди — малий (до 6\")","$25/шт"],
-        ["Фасад шухляди — великий (понад 6\")","$35/шт"],
-        ["Бічна панель / панель холодильника","$50/шт"],
-        ["Кухонний острів (повна реставрація)","$175/острів"],
-        ["Внутрішній короб шафи","$30/секція"],
-        ["Глибоке знежирення","$20/дверця"],
-        ["Заповнення текстури дуба","$45/дверця"],
-        ["Доплата за два тони","$300/проект"],
-        ["Маскування скляних дверцят","$20/дверця"],
-        ["Заповнення отворів від фурнітури","$20/дверця"],
-        ["Покращене захисне покриття (додаткова міцність)","$20/дверця"],
-        ["Ремонт глибоких пошкоджень","$25/точка"],
-        ["Герметизація / конопатка","$1.25/пф"],
-        ["Видалення контактної плівки","$50/год"]
-      ],
-      kitchProv:"Преміальна фарба, ґрунт, знежирення та підготовка вже входять у вартість",
-      kitchN:"Стандартна кухня LA: 15 дверцят × $75 = $1,125 + 6 фасадів × $25–$35 = $150–$210 + 1 острів = $175. Гладке розпилювальне покриття включено.",
-      furnpScope:"За одиницю · Професійна реставрація",furnpDesc:"Повна підготовка, шліфування, ґрунт та фарбування включені.",
-      furnp:[
-        ["Обідній стілець","$40/шт"],
-        ["Тумбочка / Приставний столик","$65/шт"],
-        ["Комод / Велика шафа","$170/шт"],
-        ["Обідній стіл","$130/шт"],
-        ["Вбудовані меблі","$60/пог.фут"]
-      ],
-      furnpProv:"Фарба, морилка, ґрунт та матеріали для шліфування",
-      furnpN:"Включає повну підготовку (чистка, шліфування, заповнення). Матеріали — окремо. Термін 5–7 днів.",
-      tvScope:"Фіксована ціна",tvDesc:"Укладання кабелів по поверхні включено. Мінімальний виїзд $95.",
+      kitchScope:"Quote after photos",kitchDesc:"Professional spray finish. Photos required for a written estimate.",
+      kitch:[["Kitchen Cabinet Painting","Quote after photos"]],
+      kitchProv:"Photos of your kitchen required before estimate",
+      kitchN:"Send photos and we provide a written quote. Scope and price confirmed in writing before work starts.",
+      furnpScope:"Quote after photos",furnpDesc:"Full preparation, sanding, primer & paint. Photos required for estimate.",
+      furnp:[["Furniture Painting","Quote after photos"]],
+      furnpProv:"Photos of furniture required before estimate",
+      furnpN:"Send photos and we provide a written quote. Scope and price confirmed in writing before work starts.",
+      tvScope:"Сервісний виклик · $150",tvDesc:"Включає до 2 годин на об'єкті. Укладання кабелів по поверхні включено.",
       tv:[
-        ["Монтаж ТВ — Стандартний (до 65\")","$105/од.","1–1.5год"],
-        ["Монтаж ТВ — Прихована проводка (в стіні)","$185/од.","2–3год"]
+        ["Стандартний монтаж (до 65\")","$150 сервісний виклик","1–1.5год"],
+        ["Прихована проводка / Прокладання в стіні","Котировка по фото","2–3год"]
       ],
       tvProv:"Кронштейн / тримач для ТВ",
-      tvN:"Кронштейн не входить. Прихована проводка — тільки якщо немає протипожежних блоків. Отвори зашпакльовані та пофарбовані.",
-      furScope:"Фіксована ціна",furDesc:"Мінімальний виїзд $75 для дрібних предметів. Погодинна для PAX.",
+      tvN:"Кронштейн не входить. Прихована проводка котирується по фото стіни. Отвори зашпакльовані та пофарбовані.",
+      furScope:"Сервісний виклик · $150",furDesc:"Включає до 2 годин. Більший обсяг котирується по фото.",
       fur:[
-        ["Дрібні предмети (2–3 шт.) — тумбочка / стілець / полиця","$75","1–1.5год"],
-        ["Комод (3–6 шухляд)","$95","2–3год"],
-        ["Каркас ліжка (зберігання/підйомний механізм = +$50/год)","$115","2.5–4год"],
-        ["PAX / система великої гардеробної","$50/год · мін 4год ($200)","≥4год"]
+        ["Збирання дрібних меблів (полиця, стіл, стілець)","$150 сервісний виклик","1–2год"],
+        ["PAX / Велика шафа / Ліжко / Складне збирання","Котировка по фото","varies"]
       ],
       furProv:"Всі деталі, кріплення та інструкції",
-      furN:"Підвищена складність або відсутні деталі — доплата $50/год понад включений час.",
-      artScope:"Фіксована ціна",artDesc:"До 5 предметів. Гарантія горизонталі включена.",
+      furN:"Більшість дрібних предметів вміщується в 2-годинний сервісний виклик. PAX, кілька предметів та відсутні деталі — котировка письмово до початку робіт.",
+      artScope:"Сервісний виклик · $150",artDesc:"До 5 стандартних предметів. Гарантія горизонталі включена.",
       art:[
-        ["Картини / Дзеркала — до 5 штук","$95/пакет","1–2год"],
-        ["Карнизи / Штанги — 1-е вікно","$75/вікно","1.5–2.5год"],
-        ["Кожне додаткове вікно","+$30/вікно","~30 хв"]
+        ["Картини / Дзеркала — до 5 штук","$150 сервісний виклик","1–2год"],
+        ["Галерея більше 5 предметів","Котировка по фото","varies"]
       ],
       artProv:"Кріплення, анкери, кронштейни",
-      artN:"Галерея >5 предметів — $75/год після 2год. Тільки стандартні стіни (гіпсокартон/балки).",
-      plumbScope:"Тільки косметика · Без дозволів",plumbDesc:"Запірні клапани мають працювати. Без нових ліній.",
+      artN:"Стандартні стіни (гіпсокартон/балки). Галерея >5 предметів — котировка по фото.",
+      plumbScope:"Сервісний виклик · $150 · Без дозволів",plumbDesc:"Тільки дрібний ремонт хендімена. Без нових ліній та чорнової сантехніки.",
       plumb:[
-        ["Встановлення крана — кухня або ванна","$115","1.5–2.5год"],
-        ["Заміна душової лійки","$60","< 1год"],
-        ["Ремонт бачка / наповнювального клапана","$95","~1год"],
-        ["Повторне герметизування ванни / душу","$110","2–3год"]
+        ["Змішувач, лійка, бачок, герметизація","$150 сервісний виклик","1–3год"]
       ],
-      plumbProv:"Кран, змішувач або запчастини",
-      plumbN:"Запірні клапани мають працювати. Сильна пліснява — доплата. Все що виходить за косметику → направлення C-36.",
-      elecScope:"Тільки заміна аналогом · Без дозволів",elecDesc:"Тільки заміна в існуючих коробках. Без нових ліній.",
+      plumbProv:"Кран, змішувач або запчастини (клієнт забезпечує)",
+      plumbN:"Запірні клапани мають працювати. Все що виходить за косметику → направлення C-36.",
+      elecScope:"Сервісний виклик · $150 · Без дозволів",elecDesc:"Тільки заміна аналогом в існуючих коробках. Без нових ліній.",
       elec:[
-        ["Заміна світильника — 1 шт. (існуюча коробка)","$95","1–2год"],
-        ["Розетки / вимикачі — перші 1–2 шт.","$75","1–2год"],
-        ["Кожна додаткова розетка або вимикач","+$30/шт.","~15 хв"],
-        ["Розумний дзвінок / Розумний замок + налаштування додатку","$85","1.5–2.5год"]
+        ["Світильник, розетка/вимикач, розумний дзвінок/замок","$150 сервісний виклик","1–2.5год"]
       ],
       elecProv:"Світильник, пристрій або вимикач",
-      elecN:"Стельові вентилятори з новою опорною коробкою → ліцензований C-10. Без робіт на щитку, без нових цепів.",
+      elecN:"Стельові вентилятори з новою опорною коробкою → ліцензований C-10. Без робіт на щитку, без нових ліній.",
       paintScope:"За кв.фут · Тільки робота",paintDesc:"кф = площа поверхні фарбування (стіни/стеля), НЕ площа підлоги.",
       pF1:[
         ["Стіни — 1 шар (оновлення кольору)","$3.00/кф"],
         ["Стіни — 2 шари (зміна кольору)","$3.75/кф"],
         ["Стеля — гладка (2 шари)","$3.75/кф"],
         ["Стеля — текстурна (2 шари)","$4.25/кф"],
-        ["Міжкімнатні двері / полотно","$65/двері"],
-        ["Плінтус — фарбування","$3.00/пф"],
-        ["Плінтус — встановлення (новий)","$2.50/пф"],
-        ["Молдинг корона","$3.75/пф"],
-        ["Дверна коробка / лиштва","$30/сторона"]
+        ["Молдинги, двері, плінтуси","Кошторис після фото"]
       ],
       pF2:[
         ["+ Шліфування / ґрунтувальний шар","+$0.65/кф"],
@@ -1401,14 +1105,9 @@ const T={
       paintN:"Виїзд для оцінки $75 → зараховується у вартість робіт. Матеріали — клієнт, без націнки.",
       flScope:"За кв.фут · Тільки робота",flDesc:"Виробіток: 120–250 кв.фут на день залежно від продукту.",
       flG1:[
-        ["Ламінат замковий (click-lock)","$3.00/кф"],
-        ["LVP / Розкішний вініловий ламінат","$3.00/кф"],
-        ["Демонтаж старої підлоги","+$1.50/кф"],
-        ["Укладання підкладки","+$0.50/кф"],
-        ["Поріжок переходу","$30/шт."],
-        ["Підрізання дверей","$30/двері"],
-        ["Плінтус: зняти + встановити","$2.00/пф"],
-        ["Точкове вирівнювання (за мішок)","$60/мішок"]
+        ["Ламінат замковий (click-lock) — тільки робота","$3.00/кф"],
+        ["LVP / Розкішний вініловий ламінат — тільки робота","$3.00/кф"],
+        ["Демонтаж, підкладка, поріжки, плінтуси","Кошторис — обсяг письмово"]
       ],
       flG2:[],
       flProv:"Матеріал покриття — окремо. Тільки робота.",
@@ -1443,8 +1142,8 @@ const T={
 
     tvBadge:"Найпопулярніший",paintBadge:"Можна в той же день",
 
-    comboTitle:"Обери 2 послуги — один візит",
-    comboSub:"Замов комбо — одна бригада, один виїзд",
+    comboTitle:"Поєднай кілька завдань за один візит",
+    comboSub:"Додай ще одне завдання, поки ми у тебе — загальну вартість підтверджуємо письмово до приїзду.",
 
     /* SMS CAPTURE */
     smsCaptureTitle:"Отримати смету по СМС",
@@ -1482,7 +1181,7 @@ const UI_I18N={
     heroResponseNote:'⏰ We respond within 1 hour during business hours (8am-8pm PT)',
     urgencyChip:'⚡ Trusted by homeowners across Los Angeles',
     urgencyTitle:'🎯 Book Your Service Today',
-    urgencySub:'Clear pricing • Starts-at quotes • Same-Day Response • Central LA service area',
+    urgencySub:'Clear pricing • Written quotes • Same-Day Response • Central LA service area',
     urgencyBtn:'✅ Book Your Service Now',
     whyTitle:'Why Choose Handy & Friend?',
     painLabel:'❌ Pain Point',
@@ -1514,7 +1213,7 @@ const UI_I18N={
     review2:'"Upfront pricing and clear scope from start to finish. Showed up on time, cleaned up after."',
     review3:'"Perfect furniture assembly! On time, clean, and super reliable. Will call again."',
     leadTitle:'Ready to Book Your Service?',
-    leadSub:'Phone and chat quotes are free. On-site estimates: $75, credited toward your project when you book.',
+    leadSub:'Phone and chat quotes are free. Service Call $150 includes up to 2 hours.',
     leadNamePlaceholder:'Your Name',
     leadEmailPlaceholder:'Your Email',
     leadPhonePlaceholder:'Phone Number (e.g. 310-555-0100)',
@@ -1582,24 +1281,24 @@ const UI_I18N={
     hiwStep1Title:'Call or Text',
     hiwStep1Desc:'Describe what you need. Photo helps. Most quotes in 15 minutes.',
     hiwStep2Title:'Get a Clear Price',
-    hiwStep2Desc:'Starts-at pricing or a flat quote. No hidden fees.',
+    hiwStep2Desc:'Written price before work starts. No hidden fees.',
     hiwStep3Title:'We Show Up & Fix It',
     hiwStep3Desc:'Same-day or next-day across central LA.',
     moreServicesStrip:'TV mounting · drywall · assembly · electrical · plumbing · painting · doors · and more',
     heroEyebrowV2:"Los Angeles · Text a Photo · 15-Min Flat Quote",
-    heroTitleV2:"TV Mount $150 · Drywall $120 · Assembly $150",
+    heroTitleV2:"Service Call $150 · Up to 2 Hours · $75/hr After",
     heroSubV2:"Text a photo, get a flat quote in 15 minutes. Same-day handyman across central LA. English · Español · Русский · עברית.",
     heroCallBtn:"Call (213) 361-1700",
     heroTextBtn:"Text Photo for Quote",
     urgencyStripV2:"⚡ 3 same-day slots left this week · Text now for your 15-min quote",
-    serviceGridTitle:"Flat Prices. No Surprises.",
+    serviceGridTitle:"Simple Pricing. Written Scope.",
     serviceGridSub:"LA-wide handyman help with clear upfront pricing.",
-    svcTvTitle:"TV Mounting",svcTvPrice:"from $150",svcTvDesc:"Standard or hidden wire. Any wall type. 45 min average.",
-    svcDwTitle:"Drywall Repair",svcDwPrice:"from $120",svcDwDesc:"Hole patches, texture matching, primer included.",
-    svcFaTitle:"Furniture Assembly",svcFaPrice:"from $150",svcFaDesc:"IKEA, Wayfair, Amazon. PAX, KALLAX, MALM, beds, dressers.",
-    svcDoorTitle:"Door Installation",svcDoorPrice:"from $140",svcDoorDesc:"Interior slab, prehung, exterior, smart locks.",
-    svcPaintTitle:"Interior Painting",svcPaintPrice:"from $3/sq ft",svcPaintDesc:"Walls, ceilings, trim, touch-up. Cabinets from $75/door.",
-    svcArtTitle:"Art & Mirror Hanging",svcArtPrice:"$150 up to 5 pcs",svcArtDesc:"Level-checked, properly secured, any wall type.",
+    svcTvTitle:"TV Mounting",svcTvPrice:"$150 service call",svcTvDesc:"Standard mount on any wall. Surface cable mgmt included.",
+    svcDwTitle:"Drywall Repair",svcDwPrice:"$150 service call",svcDwDesc:"Small patches, texture matching, primer included.",
+    svcFaTitle:"Furniture Assembly",svcFaPrice:"$150 service call",svcFaDesc:"IKEA, Wayfair, Amazon. Most pieces fit in 2 hours.",
+    svcDoorTitle:"Door Installation",svcDoorPrice:"Quote after photos",svcDoorDesc:"Interior, prehung, exterior, smart locks. Send photos for written quote.",
+    svcPaintTitle:"Interior Painting",svcPaintPrice:"Quote after photos",svcPaintDesc:"Walls, ceilings, trim. $3/sf labor estimate on painting page.",
+    svcArtTitle:"Art & Mirror Hanging",svcArtPrice:"$150 service call",svcArtDesc:"Up to 5 pieces. Level-checked, properly secured, any wall type.",
     pppTitle:"Tired of Bad Handyman Experiences?",
     ppp1Pain:"Contractor no-shows",ppp1Promise:"Text confirmation 2 hours before",
     ppp2Pain:"Hidden fees and surprises",ppp2Promise:"Flat price in writing before visit",
@@ -1618,8 +1317,8 @@ const UI_I18N={
     faqNewA1:"Most requests get a same-day or next-day slot. Text us a photo and we confirm within 15 minutes during Mon-Sat 8am-7pm.",
     faqNewQ2:"Are you insured?",
     faqNewA2:"Yes — General Liability Insurance. We're a small local team; we handle minor handyman jobs under $500 labor. For anything bigger or requiring permits, we refer you to a trade contractor.",
-    faqNewQ3:"What's your minimum job size?",
-    faqNewA3:"Our service minimum is $150. This covers our travel, tools, materials, and a short job. Many small tasks fit within one visit.",
+    faqNewQ3:"How does your pricing work?",
+    faqNewA3:"Our service call is $150 and includes up to 2 hours on-site for the agreed scope. Additional labor is $75/hour. Materials, parking, and disposal are extra only when confirmed in writing before work starts.",
     faqNewQ4:"Do you work weekends and same-day?",
     faqNewA4:"Yes — Mon to Sat 8am to 7pm. Same-day and next-day availability most weeks. Sunday by special request only.",
     faqNewQ5:"Do you bring your own tools?",
@@ -1653,7 +1352,7 @@ const UI_I18N={
     heroResponseNote:'⏰ Respondemos en 1 hora durante horario laboral (8am-8pm PT)',
     urgencyChip:'⚡ Con la confianza de hogares en Los Angeles',
     urgencyTitle:'🎯 Reserva tu servicio hoy',
-    urgencySub:'Precios claros • Cotizacion desde • Respuesta el mismo dia • Area de servicio central de LA',
+    urgencySub:'Precios claros • Cotizacion por escrito • Respuesta el mismo dia • Area de servicio central de LA',
     urgencyBtn:'✅ Reserva tu lugar ahora',
     whyTitle:'Por que elegir Handy & Friend?',
     painLabel:'❌ Problema',
@@ -1685,7 +1384,7 @@ const UI_I18N={
     review2:'"Precio claro y alcance bien definido de principio a fin. Llegaron a tiempo y dejaron todo limpio."',
     review3:'"Armado de muebles perfecto. Llegaron a tiempo, limpios y muy confiables. Llamare de nuevo."',
     leadTitle:'Listo para reservar tu servicio?',
-    leadSub:'Las cotizaciones por telefono y chat son gratis. Estimado en sitio: $75, acreditado al contratar.',
+    leadSub:'Las cotizaciones por teléfono y chat son gratis. El servicio comienza en $150.',
     leadNamePlaceholder:'Tu nombre',
     leadEmailPlaceholder:'Tu correo',
     leadPhonePlaceholder:'Numero de telefono (ej. 310-555-0100)',
@@ -1753,24 +1452,24 @@ const UI_I18N={
     hiwStep1Title:'Llama o escribe',
     hiwStep1Desc:'Describe lo que necesitas. Una foto ayuda. Cotizacion en 15 minutos.',
     hiwStep2Title:'Precio claro',
-    hiwStep2Desc:'Precio desde o cotizacion fija. Sin sorpresas.',
+    hiwStep2Desc:'Precio por escrito antes de comenzar. Sin sorpresas.',
     hiwStep3Title:'Llegamos y lo arreglamos',
     hiwStep3Desc:'El mismo dia o al dia siguiente en el centro de LA.',
     moreServicesStrip:'Montaje de TV · drywall · muebles · electrico · plomeria · pintura · puertas · y mas',
     heroEyebrowV2:"Los Ángeles · Envía una foto · Cotización fija en 15 min",
-    heroTitleV2:"Montaje TV $150 · Drywall $120 · Armado $150",
+    heroTitleV2:"Llamada de servicio $150 · 2 horas incl. · $75/hr después",
     heroSubV2:"Envía una foto por SMS y cotizamos en 15 minutos. Handyman el mismo día en el centro de LA. English · Español · Русский · עברית.",
     heroCallBtn:"Llama al (213) 361-1700",
     heroTextBtn:"Envía foto para cotizar",
     urgencyStripV2:"⚡ Quedan 3 cupos para hoy esta semana · Escríbenos ahora y cotizamos en 15 min",
-    serviceGridTitle:"Precios fijos. Sin sorpresas.",
+    serviceGridTitle:"Precio simple. Por escrito.",
     serviceGridSub:"Ayuda de handyman en todo LA con precios claros desde el inicio.",
-    svcTvTitle:"Montaje de TV",svcTvPrice:"desde $150",svcTvDesc:"Estándar o con cables ocultos. Cualquier tipo de pared. 45 min en promedio.",
-    svcDwTitle:"Reparación de drywall",svcDwPrice:"desde $120",svcDwDesc:"Parches, igualación de textura, imprimante incluido.",
-    svcFaTitle:"Armado de muebles",svcFaPrice:"desde $150",svcFaDesc:"IKEA, Wayfair, Amazon. PAX, KALLAX, MALM, camas, cómodas.",
-    svcDoorTitle:"Instalación de puertas",svcDoorPrice:"desde $140",svcDoorDesc:"Interior, prehung, exterior, cerraduras inteligentes.",
-    svcPaintTitle:"Pintura interior",svcPaintPrice:"desde $3/ft²",svcPaintDesc:"Paredes, techos, molduras, retoques. Gabinetes desde $75 por puerta.",
-    svcArtTitle:"Cuadros y espejos",svcArtPrice:"$150 hasta 5 piezas",svcArtDesc:"Nivelados, bien fijados, cualquier tipo de pared.",
+    svcTvTitle:"Montaje de TV",svcTvPrice:"$150 llamada de servicio",svcTvDesc:"Estándar en drywall o estructura. Soporte en cable incluido. Instalación con cables ocultos: cotización con fotos.",
+    svcDwTitle:"Reparación de drywall",svcDwPrice:"$150 llamada de servicio",svcDwDesc:"Parches pequeños hasta 6\". Parches mayores o daño por agua: cotización con fotos.",
+    svcFaTitle:"Armado de muebles",svcFaPrice:"$150 llamada de servicio",svcFaDesc:"IKEA, Wayfair, Amazon. Piezas pequeñas a medianas que caben en 2 horas. PAX/Elfa o piezas múltiples: cotización.",
+    svcDoorTitle:"Instalación de puertas",svcDoorPrice:"Cotización con fotos",svcDoorDesc:"Interior, prehung, exterior, cerraduras inteligentes.",
+    svcPaintTitle:"Pintura interior",svcPaintPrice:"$3/sf labor estimate",svcPaintDesc:"Paredes, techos, molduras, retoques. Estimado de proyecto — solo mano de obra, materiales aparte.",
+    svcArtTitle:"Cuadros y espejos",svcArtPrice:"$150 llamada de servicio",svcArtDesc:"Hasta 5 piezas estándar. Nivelados, bien fijados, cualquier tipo de pared.",
     pppTitle:"¿Cansado de malas experiencias con handymen?",
     ppp1Pain:"Contratistas que no llegan",ppp1Promise:"Confirmación por SMS 2 horas antes",
     ppp2Pain:"Cargos ocultos y sorpresas",ppp2Promise:"Precio fijo por escrito antes de la visita",
@@ -1790,7 +1489,7 @@ const UI_I18N={
     faqNewQ2:"¿Tienen seguro?",
     faqNewA2:"Sí — seguro de responsabilidad civil (General Liability). Somos un equipo local pequeño; nos encargamos de trabajos menores de handyman con mano de obra de menos de $500. Para trabajos más grandes o que requieran permisos, te referimos a un contratista con licencia.",
     faqNewQ3:"¿Cuál es el trabajo mínimo?",
-    faqNewA3:"Nuestro mínimo es $150. Cubre el traslado, las herramientas, los materiales y un trabajo corto. Varias tareas pequeñas suelen caber en una sola visita.",
+    faqNewA3:"Llamada de servicio: $150, incluye hasta 2 horas en sitio para el trabajo acordado. Tiempo adicional: $75/hora, solo cuando se aprueba por escrito. Los materiales son extra únicamente cuando se especifican por escrito antes de comenzar.",
     faqNewQ4:"¿Trabajan fines de semana y el mismo día?",
     faqNewA4:"Sí — de lunes a sábado de 8am a 7pm. La mayoría de las semanas tenemos disponibilidad el mismo día o al día siguiente. Los domingos solo por pedido especial.",
     faqNewQ5:"¿Traen sus propias herramientas?",
@@ -1824,7 +1523,7 @@ const UI_I18N={
     heroResponseNote:'⏰ Отвечаем в течение 1 часа в рабочие часы (8am-8pm PT)',
     urgencyChip:'⚡ Нам доверяют клиенты по всему Лос-Анджелесу',
     urgencyTitle:'🎯 Забронируйте услугу сегодня',
-    urgencySub:'Прозрачные цены • Расчёт от такой-то суммы • Ответ в тот же день • Центр Лос-Анджелеса',
+    urgencySub:'Прозрачные цены • Письменная смета • Ответ в тот же день • Центр Лос-Анджелеса',
     urgencyBtn:'✅ Забронировать сейчас',
     whyTitle:'Почему выбирают Handy & Friend?',
     painLabel:'❌ Проблема',
@@ -1856,7 +1555,7 @@ const UI_I18N={
     review2:'"Прозрачные цены и понятный объём работ от начала до конца. Приехали вовремя, всё убрали после себя."',
     review3:'"Идеальная сборка мебели! Вовремя, чисто, очень надёжно. Обращусь снова."',
     leadTitle:'Готовы забронировать услугу?',
-    leadSub:'Оценка по телефону и в чате бесплатна. Выездная смета: $75, сумма засчитывается при заказе.',
+    leadSub:'Оценка по телефону и в чате бесплатна. Сервисный вызов — $150.',
     leadNamePlaceholder:'Ваше имя',
     leadEmailPlaceholder:'Ваш email',
     leadPhonePlaceholder:'Телефон (например 310-555-0100)',
@@ -1924,24 +1623,24 @@ const UI_I18N={
     hiwStep1Title:'Звонок или СМС',
     hiwStep1Desc:'Опишите задачу. Фото помогает. Расчёт за 15 минут.',
     hiwStep2Title:'Честная цена',
-    hiwStep2Desc:'От такой-то суммы или фиксированная цена. Без скрытых платежей.',
+    hiwStep2Desc:'Письменная цена до начала работ. Никаких скрытых платежей.',
     hiwStep3Title:'Приезжаем и делаем',
     hiwStep3Desc:'Сегодня или завтра в центре Лос-Анджелеса.',
     moreServicesStrip:'Монтаж ТВ · гипсокартон · сборка мебели · электрика · сантехника · покраска · двери · и многое другое',
     heroEyebrowV2:"Лос-Анджелес · Фото в SMS · Расчёт за 15 мин",
-    heroTitleV2:"Монтаж ТВ $150 · Гипсокартон $120 · Сборка $150",
+    heroTitleV2:"Сервисный вызов $150 · до 2 часов · $75/час после",
     heroSubV2:"Пришлите фото в SMS — расчёт за 15 минут. Хендимен в день обращения по центру LA. English · Español · Русский · עברית.",
     heroCallBtn:"Звонок (213) 361-1700",
     heroTextBtn:"Отправить фото для расчёта",
     urgencyStripV2:"⚡ Осталось 3 места на этой неделе с приездом сегодня · Напишите сейчас — расчёт за 15 мин",
-    serviceGridTitle:"Фиксированные цены. Без сюрпризов.",
+    serviceGridTitle:"Простая цена. Письменный объём.",
     serviceGridSub:"Услуги хендимена по всему LA с понятной ценой заранее.",
-    svcTvTitle:"Монтаж ТВ",svcTvPrice:"от $150",svcTvDesc:"Стандартный или со скрытой проводкой. Любая стена. В среднем 45 минут.",
-    svcDwTitle:"Ремонт гипсокартона",svcDwPrice:"от $120",svcDwDesc:"Заделка дыр, подгонка текстуры, грунт включён.",
-    svcFaTitle:"Сборка мебели",svcFaPrice:"от $150",svcFaDesc:"IKEA, Wayfair, Amazon. PAX, KALLAX, MALM, кровати, комоды.",
-    svcDoorTitle:"Установка дверей",svcDoorPrice:"от $140",svcDoorDesc:"Межкомнатные, в коробке, входные, смарт-замки.",
-    svcPaintTitle:"Внутренняя покраска",svcPaintPrice:"от $3 за фут²",svcPaintDesc:"Стены, потолки, плинтусы, подкраска. Кухонные фасады от $75 за дверцу.",
-    svcArtTitle:"Картины и зеркала",svcArtPrice:"$150 до 5 штук",svcArtDesc:"По уровню, надёжно закреплено, любая стена.",
+    svcTvTitle:"Монтаж ТВ",svcTvPrice:"$150 сервисный вызов",svcTvDesc:"Стандарт на гипсокартоне или балке. Кабель-канал включён. Скрытая проводка — котировка по фото.",
+    svcDwTitle:"Ремонт гипсокартона",svcDwPrice:"$150 сервисный вызов",svcDwDesc:"Небольшие дыры до 6\". Крупный ремонт или водный ущерб — котировка по фото.",
+    svcFaTitle:"Сборка мебели",svcFaPrice:"$150 сервисный вызов",svcFaDesc:"IKEA, Wayfair, Amazon. Мелкие и средние предметы, помещающиеся в 2 часа. PAX/Elfa и несколько сложных предметов — котировка.",
+    svcDoorTitle:"Установка дверей",svcDoorPrice:"Котировка по фото",svcDoorDesc:"Межкомнатные, в коробке, входные, смарт-замки.",
+    svcPaintTitle:"Внутренняя покраска",svcPaintPrice:"$3/sf labor estimate",svcPaintDesc:"Стены, потолки, плинтусы, подкраска. Сметная стоимость проекта — только работа, материалы отдельно.",
+    svcArtTitle:"Картины и зеркала",svcArtPrice:"$150 сервисный вызов",svcArtDesc:"До 5 стандартных предметов. По уровню, надёжно закреплено, любая стена.",
     pppTitle:"Устали от плохих хендименов?",
     ppp1Pain:"Мастер не пришёл",ppp1Promise:"SMS с подтверждением за 2 часа до визита",
     ppp2Pain:"Скрытые доплаты и сюрпризы",ppp2Promise:"Фиксированная цена в письменном виде до визита",
@@ -1961,7 +1660,7 @@ const UI_I18N={
     faqNewQ2:"Есть страховка?",
     faqNewA2:"Да — страховка гражданской ответственности (General Liability). Мы небольшая местная команда и берём мелкие задачи хендимена с работой до $500. Более крупные работы или те, где нужны разрешения, передаём подрядчику с лицензией.",
     faqNewQ3:"Какой минимальный заказ?",
-    faqNewA3:"Минимальный заказ — $150. В него входят выезд, инструмент, материалы и короткая работа. Часто в один визит помещается сразу несколько мелких задач.",
+    faqNewA3:"Сервисный вызов — $150, включает до 2 часов работы на объекте по согласованному объёму. Дополнительное время: $75/час, только при письменном согласовании. Материалы — доплата только если указано в письменном договоре до начала работ.",
     faqNewQ4:"Работаете ли по выходным и в день обращения?",
     faqNewA4:"Да — пн–сб с 8:00 до 19:00. Выезд в тот же или на следующий день есть почти всегда. Воскресенье — только по отдельной договорённости.",
     faqNewQ5:"Привозите ли свой инструмент?",
@@ -1995,7 +1694,7 @@ const UI_I18N={
     heroResponseNote:'⏰ Відповідаємо протягом 1 години в робочий час (8am-8pm PT)',
     urgencyChip:'⚡ Нам довіряють клієнти по всьому Лос-Анджелесу',
     urgencyTitle:'🎯 Забронюйте послугу сьогодні',
-    urgencySub:'Прозорі ціни • Розрахунок від такої-то суми • Відповідь того ж дня • Центр Лос-Анджелеса',
+    urgencySub:'Прозорі ціни • Письмовий кошторис • Відповідь того ж дня • Центр Лос-Анджелеса',
     urgencyBtn:'✅ Забронювати зараз',
     whyTitle:'Чому обирають Handy & Friend?',
     painLabel:'❌ Проблема',
@@ -2027,7 +1726,7 @@ const UI_I18N={
     review2:'"Прозорі ціни й зрозумілий обсяг робіт від початку до кінця. Приїхали вчасно, прибрали після себе."',
     review3:'"Ідеальне збирання меблів! Вчасно, чисто, дуже надійно. Звернусь ще."',
     leadTitle:'Готові забронювати послугу?',
-    leadSub:'Оцінка телефоном і в чаті безкоштовна. Виїзний кошторис: $75, зараховується при замовленні.',
+    leadSub:'Оцінка телефоном і в чаті безкоштовна. Сервісний виклик — $150.',
     leadNamePlaceholder:'Ваше ім’я',
     leadEmailPlaceholder:'Ваш email',
     leadPhonePlaceholder:'Телефон (наприклад 310-555-0100)',
@@ -2095,24 +1794,24 @@ const UI_I18N={
     hiwStep1Title:'Дзвінок або СМС',
     hiwStep1Desc:'Опишіть завдання. Фото допомагає. Розрахунок за 15 хвилин.',
     hiwStep2Title:'Чесна ціна',
-    hiwStep2Desc:'Від такої-то суми або фіксована ціна. Без прихованих платежів.',
+    hiwStep2Desc:'Письмова ціна до початку робіт. Ніяких прихованих платежів.',
     hiwStep3Title:'Приїжджаємо та робимо',
     hiwStep3Desc:'Сьогодні або завтра в центрі Лос-Анджелеса.',
     moreServicesStrip:'Монтаж ТВ · гіпсокартон · збирання меблів · електрика · сантехніка · фарбування · двері · і багато іншого',
     heroEyebrowV2:"Лос-Анджелес · Фото в SMS · Розрахунок за 15 хв",
-    heroTitleV2:"Монтаж ТВ $150 · Гіпсокартон $120 · Збирання $150",
+    heroTitleV2:"Сервісний виклик $150 · до 2 годин · $75/год після",
     heroSubV2:"Надішліть фото в SMS — розрахунок за 15 хвилин. Хендімен у день звернення по центру LA. English · Español · Русский · עברית.",
     heroCallBtn:"Дзвінок (213) 361-1700",
     heroTextBtn:"Надіслати фото для розрахунку",
     urgencyStripV2:"⚡ Залишилось 3 слоти цього тижня з приїздом сьогодні · Напишіть зараз — розрахунок за 15 хв",
-    serviceGridTitle:"Фіксовані ціни. Без сюрпризів.",
+    serviceGridTitle:"Проста ціна. Письмовий обсяг.",
     serviceGridSub:"Послуги хендімена по всьому LA зі зрозумілою ціною наперед.",
-    svcTvTitle:"Монтаж ТВ",svcTvPrice:"від $150",svcTvDesc:"Стандартний або з прихованою проводкою. Будь-яка стіна. У середньому 45 хвилин.",
-    svcDwTitle:"Ремонт гіпсокартону",svcDwPrice:"від $120",svcDwDesc:"Латання отворів, підбір текстури, ґрунтовка включена.",
-    svcFaTitle:"Збирання меблів",svcFaPrice:"від $150",svcFaDesc:"IKEA, Wayfair, Amazon. PAX, KALLAX, MALM, ліжка, комоди.",
-    svcDoorTitle:"Встановлення дверей",svcDoorPrice:"від $140",svcDoorDesc:"Міжкімнатні, з коробкою, вхідні, смарт-замки.",
-    svcPaintTitle:"Внутрішнє фарбування",svcPaintPrice:"від $3 за фут²",svcPaintDesc:"Стіни, стелі, плінтуси, підфарбовування. Кухонні фасади від $75 за дверцята.",
-    svcArtTitle:"Картини та дзеркала",svcArtPrice:"$150 до 5 шт.",svcArtDesc:"По рівню, надійно закріплено, будь-яка стіна.",
+    svcTvTitle:"Монтаж ТВ",svcTvPrice:"$150 сервісний виклик",svcTvDesc:"Стандарт на гіпсокартоні або балці. Кабель-канал включено. Прихована проводка — котировка по фото.",
+    svcDwTitle:"Ремонт гіпсокартону",svcDwPrice:"$150 сервісний виклик",svcDwDesc:"Невеликі дірки до 6\". Більший ремонт або пошкодження водою — котировка по фото.",
+    svcFaTitle:"Збирання меблів",svcFaPrice:"$150 сервісний виклик",svcFaDesc:"IKEA, Wayfair, Amazon. Дрібні та середні предмети, що вміщуються в 2 години. PAX/Elfa та кілька складних предметів — котировка.",
+    svcDoorTitle:"Встановлення дверей",svcDoorPrice:"Котировка по фото",svcDoorDesc:"Міжкімнатні, з коробкою, вхідні, смарт-замки.",
+    svcPaintTitle:"Внутрішнє фарбування",svcPaintPrice:"$3/sf labor estimate",svcPaintDesc:"Стіни, стелі, плінтуси, підфарбовування. Кошторис проекту — лише робота, матеріали окремо.",
+    svcArtTitle:"Картини та дзеркала",svcArtPrice:"$150 сервісний виклик",svcArtDesc:"До 5 стандартних предметів. По рівню, надійно закріплено, будь-яка стіна.",
     pppTitle:"Втомилися від поганих хендіменів?",
     ppp1Pain:"Майстер не прийшов",ppp1Promise:"SMS з підтвердженням за 2 години до візиту",
     ppp2Pain:"Приховані доплати й сюрпризи",ppp2Promise:"Фіксована ціна письмово до візиту",
@@ -2132,7 +1831,7 @@ const UI_I18N={
     faqNewQ2:"Чи є страховка?",
     faqNewA2:"Так — страховка цивільної відповідальності (General Liability). Ми невелика місцева команда й беремо дрібні задачі хендімена з роботою до $500. Більші роботи або ті, де потрібні дозволи, передаємо підряднику з ліцензією.",
     faqNewQ3:"Яке мінімальне замовлення?",
-    faqNewA3:"Мінімальне замовлення — $150. У нього входять виїзд, інструмент, матеріали та коротка робота. Часто в один візит вміщується одразу кілька дрібних задач.",
+    faqNewA3:"Сервісний виклик — $150, включає до 2 годин роботи на об'єкті за погодженим обсягом. Додатковий час: $75/год, лише при письмовому погодженні. Матеріали — доплата лише якщо зазначено в письмовій угоді до початку робіт.",
     faqNewQ4:"Чи працюєте у вихідні та в день звернення?",
     faqNewA4:"Так — пн–сб з 8:00 до 19:00. Виїзд у той самий або наступний день є майже завжди. Неділя — тільки за окремою домовленістю.",
     faqNewQ5:"Чи привозите свій інструмент?",
@@ -2550,8 +2249,7 @@ function renderGrid(){
     div.className = 'cpromo';
     div.innerHTML =
       '<span class="cpromo-tag">COMBO</span>' +
-      '<span class="cpromo-pair">' + p.label + '</span>' +
-      '<span class="cpromo-save">Save $' + p.save + '</span>';
+      '<span class="cpromo-pair">' + p.label + '</span>';
     card.appendChild(div);
   });
   // Calculator card — 10th cell in the grid
@@ -3557,29 +3255,29 @@ document.addEventListener('DOMContentLoaded',()=>{
 const CROSS_SELL = {
   /* Cluster 1: Wall & Install */
   tv: [
-    { id:'art',  emoji:'🪞', price:'$95 (up to 5 pcs)' },
-    { id:'fur',  emoji:'🛋️', price:'from $75' }
+    { id:'art',  emoji:'🪞', price:'$150 service call' },
+    { id:'fur',  emoji:'🛋️', price:'$150 service call' }
   ],
   fur: [
-    { id:'tv',   emoji:'📺', price:'from $105' },
-    { id:'art',  emoji:'🪞', price:'$95' }
+    { id:'tv',   emoji:'📺', price:'$150 service call' },
+    { id:'art',  emoji:'🪞', price:'$150 service call' }
   ],
   /* Cluster 3: Renovation */
   p1: [
-    { id:'floor', emoji:'🏠', price:'from $3/sq ft' },
-    { id:'drywall', emoji:'🔧', price:'from $120' }
+    { id:'floor', emoji:'🏠', price:'$3/sf labor estimate' },
+    { id:'drywall', emoji:'🔧', price:'$150 service call' }
   ],
   p2: [
-    { id:'floor', emoji:'🏠', price:'from $3/sq ft' },
-    { id:'drywall', emoji:'🔧', price:'from $120' }
+    { id:'floor', emoji:'🏠', price:'$3/sf labor estimate' },
+    { id:'drywall', emoji:'🔧', price:'$150 service call' }
   ],
   fl: [
-    { id:'paint', emoji:'🎨', price:'from $3/sq ft' },
-    { id:'trim',  emoji:'📏', price:'from $2.50/lf' }
+    { id:'paint', emoji:'🎨', price:'$3/sf labor estimate' },
+    { id:'trim',  emoji:'📏', price:'Quote after photos' }
   ],
   fv: [
-    { id:'paint', emoji:'🎨', price:'from $3/sq ft' },
-    { id:'trim',  emoji:'📏', price:'from $2.50/lf' }
+    { id:'paint', emoji:'🎨', price:'$3/sf labor estimate' },
+    { id:'trim',  emoji:'📏', price:'Quote after photos' }
   ]
   /* plumb, elec: intentionally excluded — standalone services, legal scope flag */
 };
@@ -3690,12 +3388,12 @@ function showCalcCrossSell(svcId, total) {
 ═══════════════════════════════════════════════ */
 const COMBO_PAIRS = {
   /* Cluster 3: Renovation */
-  paint: { partner: 'floor', label: 'Painting + Flooring',                   save: 275 },
-  floor: { partner: 'paint', label: 'Flooring + Painting',                   save: 275 },
+  paint: { partner: 'floor', label: 'Painting + Flooring' },
+  floor: { partner: 'paint', label: 'Flooring + Painting' },
   /* Cluster 1: Wall & Install */
-  tv:    { partner: 'art',   label: 'TV Mounting + Art Hanging',             save: 68 },
-  art:   { partner: 'tv',    label: 'Art Hanging + TV Mounting',             save: 68 },
-  fur:   { partner: 'tv',    label: 'Furniture Assembly + TV Mounting',      save: 63 },
+  tv:    { partner: 'art',   label: 'TV Mounting + Art Hanging' },
+  art:   { partner: 'tv',    label: 'Art Hanging + TV Mounting' },
+  fur:   { partner: 'tv',    label: 'Furniture Assembly + TV Mounting' },
   /* plumb/elec: standalone — no combo badge */
 };
 
@@ -3705,14 +3403,12 @@ function buildComboPromo(svcId){
   const l=L();
   const withSvc=l.svcs.find(s=>s.id===pair.partner);
   if(!withSvc)return '';
-  const save=pair.save;
   const waMsg=encodeURIComponent(
-    `${l.waGreet}\nCombo: ${l.svcs.find(s=>s.id===svcId)?.name} + ${withSvc.name}\nSave $${save}\n${l.waConfirm}`
+    `${l.waGreet}\nCombo: ${l.svcs.find(s=>s.id===svcId)?.name} + ${withSvc.name}\n${l.waConfirm}`
   );
   return `<a class="cpromo" href="https://wa.me/12133611700?text=${waMsg}" target="_blank" rel="noopener" onclick="event.stopPropagation();track('combo_promo_click',{from:'${svcId}',to:'${pair.partner}'})">
     <span class="cpromo-tag">COMBO</span>
     <span class="cpromo-pair">${pair.label}</span>
-    <span class="cpromo-save">Save $${save}</span>
     <span class="cpromo-wa">WhatsApp →</span>
   </a>`;
 }
@@ -3736,17 +3432,16 @@ function injectComboPromos(){
    INTERACTIVE COMBO CALCULATOR
 ═══════════════════════════════════════════════ */
 function initComboCalc() {
-  const BASE = { tv:105, fur:75, art:95, paint:500, floor:500, curtain:75 };
   const LABELS = { tv:'TV Mounting', fur:'Furniture Assembly', art:'Art & Mirror Hanging',
                    paint:'Interior Painting', floor:'Flooring', curtain:'Curtain Rods' };
-  const IDS = Object.keys(BASE);
+  const IDS = Object.keys(LABELS);
 
   function populate(sel, excludeId) {
     sel.innerHTML = '<option value="">Pick a service…</option>';
     IDS.forEach(id => {
       if (id === excludeId) return;
       const o = document.createElement('option');
-      o.value = id; o.textContent = LABELS[id] + ' (from $' + BASE[id] + ')';
+      o.value = id; o.textContent = LABELS[id];
       sel.appendChild(o);
     });
   }
@@ -3766,16 +3461,13 @@ function initComboCalc() {
     if (a === b) { err.style.display = 'block'; return; }
     populate(s1, b); populate(s2, a);
     s1.value = a; s2.value = b;
-    const total = BASE[a] + BASE[b];
-    const disc  = Math.round(total * 0.8);
-    const saved = total - disc;
-    document.getElementById('ccOriginal').textContent   = '$' + total;
-    document.getElementById('ccDiscounted').textContent = '$' + disc;
-    document.getElementById('ccSave').textContent       = 'Save $' + saved;
-    const msg = encodeURIComponent('Hi! I want to book a COMBO: ' + LABELS[a] + ' + ' + LABELS[b] + '. Combo price $' + disc + ' (save $' + saved + ')');
+    document.getElementById('ccOriginal').textContent   = '$150 / service call';
+    document.getElementById('ccDiscounted').textContent = 'Written quote';
+    document.getElementById('ccSave').textContent       = 'Scope confirmed in writing';
+    const msg = encodeURIComponent('Hi! I want to book two services in one visit: ' + LABELS[a] + ' + ' + LABELS[b] + '. Please confirm availability.');
     document.getElementById('ccWa').href = 'https://wa.me/12133611700?text=' + msg;
     res.style.display = 'block';
-    track('combo_calc_view', {svc_a:a, svc_b:b, total:disc, save:saved});
+    track('combo_calc_view', {svc_a:a, svc_b:b});
   }
 
   s1.addEventListener('change', calc);
@@ -3871,7 +3563,7 @@ document.addEventListener('click', function(e) {
   const cardId = btn.closest('.scard')?.dataset.id;
   if (!cardId || !COMBO_PAIRS[cardId]) return;
   const p = COMBO_PAIRS[cardId];
-  const msg = encodeURIComponent('Hi! Interested in COMBO: ' + p.label + ' (Save $' + p.save + ')');
+  const msg = encodeURIComponent('Hi! Interested in combining: ' + p.label + '. Please confirm availability.');
   window.open('https://wa.me/12133611700?text=' + msg, '_blank');
 });
 

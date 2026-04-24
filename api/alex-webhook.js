@@ -992,9 +992,10 @@ async function maybeCreateFbPreLead(senderId, sessionId, messages) {
 
 const WA_GRAPH_VERSION = 'v19.0';
 
-// WhatsApp dedup (separate store from Messenger)
-const waSeen = globalThis.__HF_WA_WEBHOOK_SEEN || new Map();
-globalThis.__HF_WA_WEBHOOK_SEEN = waSeen;
+// WhatsApp dedup (separate store from Messenger and from whatsappDeduper)
+// Must use a DIFFERENT globalThis key than __HF_WA_WEBHOOK_SEEN (used by whatsappDeduper above).
+const waSeen = globalThis.__HF_WA_DEDUP_MAP || new Map();
+globalThis.__HF_WA_DEDUP_MAP = waSeen;
 
 function isWaDuplicate(msgId) {
   if (!msgId) return false;
@@ -1005,11 +1006,12 @@ function isWaDuplicate(msgId) {
   return false;
 }
 
-function isSyntheticWaMessage(from, msgId) {
+function isSyntheticWaMessage(from, msgId, text) {
   if (!from) return false;
   if (from === '19991234567') return true;
   if (/^1555/.test(from)) return true;
   if (msgId && /e2e|test|probe|synthetic/i.test(msgId)) return true;
+  if (text && /e2e synthetic|synthetic probe|ignore this|audit test|qa only|test only/i.test(text)) return true;
   return false;
 }
 
@@ -1025,7 +1027,7 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
     return;
   }
 
-  const synthetic = isSyntheticWaMessage(from, msgId);
+  const synthetic = isSyntheticWaMessage(from, msgId, inboundText);
   const sessionId = `wa_${from}`;
   console.log('[WA_WEBHOOK] from=%s msgId=%s synthetic=%s text=%s', from, msgId, synthetic, inboundText.slice(0, 80));
 

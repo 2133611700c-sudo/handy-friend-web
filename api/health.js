@@ -557,15 +557,15 @@ async function pricingHealth(_req, res) {
   const postbacks = getMessengerPostbackTexts();
   const pricingVersion = getPricingSourceVersion();
   const services = [
-    { id: 'tv_mounting', label: 'TV Mounting', expected: '$105' },
-    { id: 'furniture_assembly', label: 'Furniture Assembly', expected: '$75' },
-    { id: 'art_mirrors', label: 'Art & Mirrors', expected: '$95' },
+    { id: 'tv_mounting', label: 'TV Mounting', expected: '$150' },
+    { id: 'furniture_assembly', label: 'Furniture Assembly', expected: '$150' },
+    { id: 'art_mirrors', label: 'Art & Mirrors', expected: '$150' },
     { id: 'interior_painting', label: 'Painting', expected: '$3.00' },
     { id: 'flooring', label: 'Flooring', expected: '$3.00' },
-    { id: 'kitchen_cabinet_painting', label: 'Kitchen Cabinet Painting', expected: '$75' },
-    { id: 'furniture_painting', label: 'Furniture Painting', expected: '$40' },
-    { id: 'plumbing', label: 'Plumbing', expected: '$115' },
-    { id: 'electrical', label: 'Electrical', expected: '$95' }
+    { id: 'kitchen_cabinet_painting', label: 'Kitchen Cabinet Painting', expected: 'null' },
+    { id: 'furniture_painting', label: 'Furniture Painting', expected: 'null' },
+    { id: 'plumbing', label: 'Plumbing', expected: '$150' },
+    { id: 'electrical', label: 'Electrical', expected: '$150' }
   ];
 
   let pricingHtml = '';

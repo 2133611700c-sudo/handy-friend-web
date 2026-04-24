@@ -8,7 +8,7 @@
 
 ### Headline (copy this):
 ```
-Flooring Installation in Los Angeles — Same-Day Service, from $3.00/sq ft (Insured)
+Flooring Installation in Los Angeles — Same-Day Service, $3/sf Labor Estimate (Insured)
 ```
 
 ### Body (copy this):
@@ -18,9 +18,9 @@ Need new flooring installed? We do it right, today.
 Handy & Friend — Los Angeles handyman.
 
 WHAT WE DO:
-• Flooring (LVP/laminate from $3.00/sq ft)
-• Interior painting (from $3.00/sq ft)
-• Baseboard install (from $2.50/ft)
+• Flooring (LVP/laminate — $3/sf labor estimate)
+• Interior painting ($3/sf labor estimate)
+• Baseboard install (quote after photos)
 
 WHAT YOU GET:
 • Professional workmanship
