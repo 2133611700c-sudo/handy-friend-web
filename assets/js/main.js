@@ -1297,7 +1297,7 @@ const UI_I18N={
     svcDwTitle:"Drywall Repair",svcDwPrice:"$150 service call",svcDwDesc:"Small patches, texture matching, primer included.",
     svcFaTitle:"Furniture Assembly",svcFaPrice:"$150 service call",svcFaDesc:"IKEA, Wayfair, Amazon. Most pieces fit in 2 hours.",
     svcDoorTitle:"Door Installation",svcDoorPrice:"Quote after photos",svcDoorDesc:"Interior, prehung, exterior, smart locks. Send photos for written quote.",
-    svcPaintTitle:"Interior Painting",svcPaintPrice:"Quote after photos",svcPaintDesc:"Walls, ceilings, trim. $3/sf labor estimate on painting page.",
+    svcPaintTitle:"Interior Painting",svcPaintPrice:"$3/sf labor estimate",svcPaintDesc:"Walls, ceilings, trim. Labor only, materials separate.",
     svcArtTitle:"Art & Mirror Hanging",svcArtPrice:"$150 service call",svcArtDesc:"Up to 5 pieces. Level-checked, properly secured, any wall type.",
     pppTitle:"Tired of Bad Handyman Experiences?",
     ppp1Pain:"Contractor no-shows",ppp1Promise:"Text confirmation 2 hours before",
