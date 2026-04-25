@@ -409,6 +409,28 @@ for (const [fileName, filePath] of extendedFiles) {
   }
 }
 
+test('pricing page exposes crawlable one-price model before React renders', () => {
+  const src = fs.readFileSync(path.resolve(__dirname, '../pricing/index.html'), 'utf8');
+  assert.match(src, /Service Call \$150/i);
+  assert.match(src, /includes up to 2 hours/i);
+  assert.match(src, /\$75\/hour/i);
+  assert.match(src, /materials, parking, disposal/i);
+});
+
+test('blog and neighborhood landing pages include Google tracking bootstrap', () => {
+  const dirs = ['blog', 'la-neighborhoods'];
+  for (const dir of dirs) {
+    const absDir = path.resolve(__dirname, '..', dir);
+    for (const file of fs.readdirSync(absDir)) {
+      if (!file.endsWith('.html')) continue;
+      const filePath = path.join(absDir, file);
+      const src = fs.readFileSync(filePath, 'utf8');
+      assert.match(src, /G-Z05XJ8E281|\/assets\/js\/shared\.js/,
+        `MISSING: Google tracking bootstrap not found in ${dir}/${file}`);
+    }
+  }
+});
+
 test('Alex full system prompt contains no legacy pricing instructions', () => {
   const prompt = buildSystemPrompt({ guardMode: GUARD_MODES.PRE_CONTACT_RANGE });
   assert.match(prompt, /Service Call: \$150/i);
