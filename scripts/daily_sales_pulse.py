@@ -54,7 +54,63 @@ def sb_get(path):
         with urlreq.urlopen(urlreq.Request(url, headers=h), timeout=10) as r:
             return r.status, json.loads(r.read().decode('utf-8', errors='replace'))
     except Exception as e:
+        # Capture HTTPError body so we can detect "missing column / table" gracefully.
+        try:
+            from urllib.error import HTTPError
+            if isinstance(e, HTTPError):
+                body = e.read().decode('utf-8', errors='replace')
+                try:
+                    return e.code, json.loads(body)
+                except Exception:
+                    return e.code, {'error': body[:500]}
+        except Exception:
+            pass
         return -1, {'error': str(e)}
+
+
+def _meta_dict(row):
+    """funnel_events.metadata is JSONB — PostgREST returns it as dict, but be defensive."""
+    m = row.get('metadata') if isinstance(row, dict) else None
+    if isinstance(m, dict):
+        return m
+    if isinstance(m, str):
+        try:
+            d = json.loads(m)
+            return d if isinstance(d, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def _is_paid_event(row):
+    """Google Ads attributed CTA: gclid in metadata, utm_source=google, or channel_source=google_ads_search."""
+    meta = _meta_dict(row)
+    if meta.get('gclid'):
+        return True
+    if str(meta.get('utm_source', '')).lower() == 'google':
+        return True
+    cs = str(row.get('channel_source') or '').lower()
+    if cs in ('google_ads_search', 'google_ads', 'paid_search'):
+        return True
+    return False
+
+
+def _service_slug(row):
+    meta = _meta_dict(row)
+    slug = meta.get('service_slug') or meta.get('service') or meta.get('service_type')
+    if slug:
+        return str(slug).lower()
+    # Fallback: derive from page_path
+    pp = (row.get('page_path') or '').strip().lower()
+    if not pp or pp == '/':
+        return 'home'
+    parts = [p for p in pp.split('/') if p]
+    if not parts:
+        return 'home'
+    # drop common non-service first segments
+    if parts[0] in ('services', 'service'):
+        parts = parts[1:] or ['home']
+    return parts[0].split('?')[0].split('#')[0] or 'home'
 
 
 def send_telegram(text):
@@ -217,6 +273,128 @@ def main():
     c, outbox_failed_ga4 = sb_get('outbound_jobs?select=id&status=eq.failed&job_type=eq.ga4_event&limit=50')
     n_outbox_failed_ga4 = count_list(c, outbox_failed_ga4) or 0
 
+    # ── 8. Funnel events (CTA activity) last 24h ─────────────────────────────
+    # Pulls real + test together once, splits client-side. Degrades to None on
+    # missing table / column / network error so report never crashes.
+    funnel_available = True
+    funnel_real = []
+    funnel_test = []
+    c, fe_rows = sb_get(
+        f'funnel_events?select=id,event_name,page_path,metadata,is_test,channel_source,occurred_at'
+        f'&occurred_at=gte.{since_24h}&order=occurred_at.desc&limit=2000'
+    )
+    if c == 200 and isinstance(fe_rows, list):
+        for row in fe_rows:
+            # Defensive: treat missing is_test as real (column may not exist on legacy rows)
+            if row.get('is_test') is True:
+                funnel_test.append(row)
+            else:
+                funnel_real.append(row)
+    elif c in (404, 400):
+        funnel_available = False
+    else:
+        funnel_available = False
+        errors.append(f'funnel_events query failed http={c}')
+
+    # CTA totals (real)
+    def _count_evt(rows, name):
+        return sum(1 for r in rows if r.get('event_name') == name)
+
+    cta_total = len(funnel_real)
+    cta_phone = _count_evt(funnel_real, 'phone_click')
+    cta_wa = _count_evt(funnel_real, 'whatsapp_click')
+    cta_email = _count_evt(funnel_real, 'email_click')
+    cta_messenger = _count_evt(funnel_real, 'messenger_click')
+    # Estimate proxy: widget_open + phone_captured (chat-driven estimate intents)
+    cta_estimate = (
+        _count_evt(funnel_real, 'widget_open')
+        + _count_evt(funnel_real, 'phone_captured')
+        + _count_evt(funnel_real, 'quote_shown')
+    )
+
+    cta_test_total = len(funnel_test)
+
+    # CTA by service
+    cta_by_service = {}  # slug -> {'phone':..,'wa':..,'estimate':..}
+    CTA_TRACKED = {'phone_click', 'whatsapp_click', 'widget_open', 'phone_captured', 'quote_shown'}
+    for row in funnel_real:
+        en = row.get('event_name')
+        if en not in CTA_TRACKED:
+            continue
+        slug = _service_slug(row)
+        bucket = cta_by_service.setdefault(slug, {'phone': 0, 'wa': 0, 'estimate': 0})
+        if en == 'phone_click':
+            bucket['phone'] += 1
+        elif en == 'whatsapp_click':
+            bucket['wa'] += 1
+        else:  # widget_open, phone_captured, quote_shown
+            bucket['estimate'] += 1
+
+    # Paid-attributed CTA (Google Ads)
+    paid_rows = [r for r in funnel_real if _is_paid_event(r)]
+    paid_cta_total = len(paid_rows)
+    paid_cta_phone = _count_evt(paid_rows, 'phone_click')
+    paid_cta_wa = _count_evt(paid_rows, 'whatsapp_click')
+    paid_cta_estimate = (
+        _count_evt(paid_rows, 'widget_open')
+        + _count_evt(paid_rows, 'phone_captured')
+        + _count_evt(paid_rows, 'quote_shown')
+    )
+
+    # Latest evidence
+    latest_cta_id = funnel_real[0].get('id') if funnel_real else None
+    latest_paid_gclid = None
+    for r in paid_rows:
+        g = _meta_dict(r).get('gclid')
+        if g:
+            latest_paid_gclid = g
+            break
+
+    # ── 9. Paid leads (last 24h) ─────────────────────────────────────────────
+    # source=google_ads_search OR gclid set OR utm_source=google
+    paid_leads = []
+    leads_24h_full = []
+    c, leads_24h_full = sb_get(
+        f'leads?select=id,source,gclid,utm_source,utm_medium,utm_campaign,service_type,created_at'
+        f'&is_test=eq.false&created_at=gte.{since_24h}&order=created_at.desc&limit=500'
+    )
+    if not (c == 200 and isinstance(leads_24h_full, list)):
+        leads_24h_full = []
+    for l in leads_24h_full:
+        if (
+            l.get('source') == 'google_ads_search'
+            or l.get('gclid')
+            or str(l.get('utm_source') or '').lower() == 'google'
+        ):
+            paid_leads.append(l)
+    n_paid_leads_24h = len(paid_leads)
+
+    # WhatsApp-attributed leads 24h (best-effort: source=whatsapp)
+    wa_leads_24h = [l for l in leads_24h_full if l.get('source') in ('whatsapp', 'whatsapp_inbound')]
+    n_wa_leads_24h = len(wa_leads_24h)
+
+    latest_real_lead_id = leads_24h_full[0].get('id') if leads_24h_full else None
+
+    # Test leads 24h (separate)
+    c, test_leads = sb_get(
+        f'leads?select=id&is_test=eq.true&created_at=gte.{since_24h}&limit=200'
+    )
+    n_test_leads_24h = count_list(c, test_leads) or 0
+
+    # ── Funnel-gap warnings ──────────────────────────────────────────────────
+    funnel_warnings = []
+    if funnel_available:
+        if paid_cta_total > 0 and n_paid_leads_24h == 0:
+            funnel_warnings.append(
+                f'⚠️ {paid_cta_total} paid CTA clicks but 0 paid leads captured'
+            )
+        if cta_wa > 0 and n_wa_leads_24h == 0:
+            funnel_warnings.append(
+                f'⚠️ {cta_wa} WhatsApp clicks but 0 WA-attributed leads'
+            )
+        if any(l.get('gclid') for l in leads_24h_full):
+            funnel_warnings.append('✅ Form gclid attribution working')
+
     # ── Build Telegram message ───────────────────────────────────────────────
     date_str = now.strftime('%Y-%m-%d')
     lines = [f'📊 <b>Daily Lead Pulse — {date_str}</b>', '']
@@ -233,6 +411,57 @@ def main():
     else:
         real_sess = n_fb_sessions_7d if n_fb_sessions_7d is not None else '?'
         lines.append(f'💬 FB Messenger: {real_sess} real sessions (7d) → {n_preleads} pre-leads captured (0 organic)')
+
+    # ── CTA activity (funnel_events) ──
+    lines.append('')
+    if not funnel_available:
+        lines.append('<b>── CTA Activity (last 24h) ──</b>')
+        lines.append('  n/a (funnel_events unavailable)')
+    else:
+        lines.append('<b>── CTA Activity (last 24h) ──</b>')
+        lines.append(
+            f'  Total: {cta_total}  |  Phone: {cta_phone}  |  WA: {cta_wa}  |  Estimate: {cta_estimate}'
+        )
+        if cta_email or cta_messenger:
+            lines.append(f'  Email: {cta_email}  |  Messenger: {cta_messenger}')
+        lines.append(f'  Test CTAs: {cta_test_total}')
+
+        # Paid CTA
+        lines.append('')
+        lines.append('<b>── Paid CTA (Google Ads) ──</b>')
+        lines.append(
+            f'  Total: {paid_cta_total}  |  Phone: {paid_cta_phone}  |  WA: {paid_cta_wa}  |  Estimate: {paid_cta_estimate}'
+        )
+        lines.append(f'  Paid form leads (24h): {n_paid_leads_24h}')
+
+        # By service
+        if cta_by_service:
+            lines.append('')
+            lines.append('<b>── CTA by Service ──</b>')
+            ranked = sorted(
+                cta_by_service.items(),
+                key=lambda kv: kv[1]['phone'] + kv[1]['wa'] + kv[1]['estimate'],
+                reverse=True,
+            )[:6]
+            for slug, b in ranked:
+                lines.append(
+                    f'  {slug}: phone {b["phone"]} / WA {b["wa"]} / est {b["estimate"]}'
+                )
+
+        # Funnel warnings
+        if funnel_warnings:
+            lines.append('')
+            lines.append('<b>── Funnel Warnings ──</b>')
+            for w in funnel_warnings:
+                lines.append(f'  {w}')
+
+        # Evidence
+        lines.append('')
+        lines.append('<b>── Evidence ──</b>')
+        lines.append(f'  Latest gclid: {latest_paid_gclid or "none"}')
+        lines.append(f'  Latest CTA id: {latest_cta_id or "none"}')
+        lines.append(f'  Latest real lead id: {latest_real_lead_id or "none"}')
+        lines.append(f'  Test leads 24h: {n_test_leads_24h}')
 
     # Social signals
     lines.append('')
@@ -325,6 +554,28 @@ def main():
         'outbox_pending': n_outbox_pending,
         'outbox_failed': n_outbox_failed,
         'outbox_failed_ga4': n_outbox_failed_ga4,
+        'funnel_events': {
+            'available': funnel_available,
+            'cta_total': cta_total,
+            'cta_phone': cta_phone,
+            'cta_whatsapp': cta_wa,
+            'cta_email': cta_email,
+            'cta_messenger': cta_messenger,
+            'cta_estimate': cta_estimate,
+            'cta_test_total': cta_test_total,
+            'cta_by_service': cta_by_service,
+            'paid_cta_total': paid_cta_total,
+            'paid_cta_phone': paid_cta_phone,
+            'paid_cta_whatsapp': paid_cta_wa,
+            'paid_cta_estimate': paid_cta_estimate,
+            'paid_leads_24h': n_paid_leads_24h,
+            'wa_leads_24h': n_wa_leads_24h,
+            'test_leads_24h': n_test_leads_24h,
+            'warnings': funnel_warnings,
+            'latest_cta_id': latest_cta_id,
+            'latest_paid_gclid': latest_paid_gclid,
+            'latest_real_lead_id': latest_real_lead_id,
+        },
         'actions': actions,
         'errors': errors,
     }
@@ -344,7 +595,26 @@ def main():
         or bool(errors)
         or (isinstance(n_tg_fails_24h, int) and n_tg_fails_24h > 3)
         or n_outbox_failed > 0
+        or cta_total > 0
+        or paid_cta_total > 0
+        or bool(funnel_warnings)
     )
+
+    args = set(sys.argv[1:])
+    dry_run = '--dry-run' in args
+    test_send = '--test-send' in args
+
+    if dry_run:
+        print('telegram_delivery=skipped (--dry-run)')
+        return 0
+
+    if test_send:
+        # Force-send a clearly labeled test message
+        test_msg = '[DRY RUN TEST]\n' + msg
+        sent = send_telegram(test_msg)
+        print(f'telegram_delivery=test_send sent={sent}')
+        return 0
+
     if has_signal:
         sent = send_telegram(msg)
         if not sent:
