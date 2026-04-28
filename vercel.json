@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/wa-watchdog",
-      "schedule": "*/2 * * * *"
+      "schedule": "0 * * * *"
     }
   ],
   "redirects": [
