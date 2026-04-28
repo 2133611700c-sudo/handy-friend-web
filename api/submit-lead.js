@@ -288,11 +288,18 @@ export default async function handler(req, res) {
     service_hint:  service,
     attachments:   safeAttachments.map(a => ({ type: a.type, url: a.name })),
     attribution: {
-      utm_source:   normalizedAttribution.utmSource   || req.query?.utm_source,
-      utm_medium:   normalizedAttribution.utmMedium   || req.query?.utm_medium,
-      utm_campaign: normalizedAttribution.utmCampaign || req.query?.utm_campaign,
-      gclid:        normalizedAttribution.gclid,
-      referrer:     req.headers.referer || ''
+      utm_source:   normalizedAttribution.utmSource   || req.query?.utm_source || '',
+      utm_medium:   normalizedAttribution.utmMedium   || req.query?.utm_medium || '',
+      utm_campaign: normalizedAttribution.utmCampaign || req.query?.utm_campaign || '',
+      utm_content:  normalizedAttribution.utmContent  || '',
+      utm_term:     normalizedAttribution.utmTerm     || '',
+      gclid:        normalizedAttribution.clickId?.gclid    || '',
+      gbraid:       normalizedAttribution.clickId?.gbraid   || '',
+      wbraid:       normalizedAttribution.clickId?.wbraid   || '',
+      fbclid:       normalizedAttribution.clickId?.fbclid   || '',
+      msclkid:      normalizedAttribution.clickId?.msclkid  || '',
+      referrer:     normalizedAttribution.referrer || req.headers.referer || '',
+      landing_page: normalizedAttribution.landingPath || normalizedAttribution.pageUrl || ''
     },
     meta: { zip, preferred_contact: preferredContact, lang }
   });

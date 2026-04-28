@@ -91,15 +91,36 @@
     }
   }
 
+  function getStored(k){ try { return sessionStorage.getItem('hf_' + k) || ''; } catch(e) { return ''; } }
+  function buildAttrMeta() {
+    var qp = new URLSearchParams(window.location.search || '');
+    function pick(k){ return (qp.get(k) || getStored(k) || ''); }
+    return {
+      gclid:        pick('gclid'),
+      gbraid:       pick('gbraid'),
+      wbraid:       pick('wbraid'),
+      fbclid:       pick('fbclid'),
+      msclkid:      pick('msclkid'),
+      utm_source:   pick('utm_source'),
+      utm_medium:   pick('utm_medium'),
+      utm_campaign: pick('utm_campaign'),
+      utm_content:  pick('utm_content'),
+      utm_term:     pick('utm_term'),
+      referrer:     document.referrer || '',
+      landing_page: window.location.pathname + window.location.search
+    };
+  }
+
   function postCtaEvent(eventName, extra) {
     try {
+      var attrMeta = buildAttrMeta();
       var payload = {
         session_id: getOrCreateSessionId(),
         event_name: eventName,
         page_path: window.location.pathname || '/',
         channel_source: 'real_website_chat',
         is_test: false,
-        metadata: Object.assign({ ts: new Date().toISOString() }, extra || {})
+        metadata: Object.assign({ ts: new Date().toISOString(), lead_type: 'cta_click' }, attrMeta, extra || {})
       };
       if (typeof window.hfPostCtaEvent === 'function') {
         window.hfPostCtaEvent(eventName, extra || {});
@@ -142,6 +163,17 @@
     } else if (href.indexOf('wa.me') > -1 || href.indexOf('whatsapp') > -1) {
       emitCoreEvent('whatsapp_click', { link_url: href, link_text: text });
       postCtaEvent('whatsapp_click', { link_url: href, link_text: text });
+      // Google Ads conversion fire (mirror of root index.html). Label may not yet
+      // exist in Ads UI — owner creates it post-deploy; harmless until then.
+      try {
+        if (typeof gtag === 'function' && window.HF_GOOGLE_ADS_ID) {
+          gtag('event', 'conversion', {
+            send_to: window.HF_GOOGLE_ADS_ID + '/whatsapp_lead',
+            value: 1.0,
+            currency: 'USD'
+          });
+        }
+      } catch(e) {}
       if (typeof fbq !== 'undefined') fbq('trackCustom', 'whatsapp_click', { link_url: href });
     }
   });
