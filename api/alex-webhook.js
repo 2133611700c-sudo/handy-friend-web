@@ -1063,16 +1063,65 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
   const msgType = String(msg?.type || '');
   if (!from) return;
 
-  // Phase 3: handle image/media messages
+  // Phase 3: handle image/video/document messages
+  // Save media metadata (URL only — binary download not yet implemented → media_status=metadata_only)
+  // Then send Alex acknowledgment reply so the customer gets a response.
   if (msgType === 'image' || msgType === 'video' || msgType === 'document') {
     const mediaId = msg?.[msgType]?.id || msg?.image?.id || null;
+    const sessionId = `wa_${from}`;
     if (mediaId) {
       const { handleInboundMedia, buildPhotoContextHint } = require('../lib/whatsapp/media-handler.js');
+      const { extractCollectedFields, buildCollectedFieldsSummary } = require('../lib/whatsapp/conversation-memory.js');
+      const { detectLanguage } = require('../lib/alex/core.js');
       const mimeType = msg?.[msgType]?.mime_type || 'image/jpeg';
+
+      // Save metadata async (non-blocking) — media_status=metadata_only
       handleInboundMedia({ mediaId, customerPhone: from, inboundWamid: msgId, mimeType }).catch(e =>
         console.error('[WA_WEBHOOK] media-handler error:', e?.message)
       );
-      console.log('[WA_WEBHOOK] Photo received mediaId=%s from=%s — processing async', mediaId, from);
+      console.log('[WA_WEBHOOK] Photo received mediaId=%s from=%s — sending Alex ack', mediaId, from);
+
+      // Send Alex acknowledgment so customer knows photo arrived
+      try {
+        const photoHistory = await loadConversationHistory(sessionId);
+        const photoCollected = extractCollectedFields(photoHistory);
+        photoCollected.photos = 'received'; // mark photos as done
+        const recentUserText = photoHistory.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
+        const lang = detectLanguage(recentUserText).language;
+        const photoHint = buildPhotoContextHint(1, lang);
+        const collectedCtx = buildCollectedFieldsSummary(photoCollected);
+        // Synthetic trigger text in the right language so Alex knows what happened
+        const photoTrigger = {
+          ru: 'Клиент прислал фото. Поблагодари за фото и спроси только недостающие детали.',
+          uk: 'Клієнт надіслав фото. Подякуй за фото і уточни лише відсутні деталі.',
+          es: 'El cliente envió una foto. Agradece y pregunta solo los detalles que faltan.',
+          en: 'Customer sent a photo. Acknowledge receipt and ask for remaining missing details only.',
+        }[lang] || 'Customer sent a photo. Acknowledge receipt and ask for remaining missing details only.';
+
+        const { generateAlexWhatsAppReply } = require('../lib/alex/whatsapp-reply-engine.js');
+        const ackAlex = await generateAlexWhatsAppReply({
+          inboundText: photoTrigger,
+          customerPhone: from,
+          conversationHistory: photoHistory,
+          extraContext: [photoHint, collectedCtx].filter(Boolean).join('\n'),
+        });
+        const { sendAlexReply } = require('../lib/whatsapp/send-alex-reply.js');
+        await sendAlexReply({
+          inboundWamid: msgId,
+          customerPhone: from,
+          customerName: contactName,
+          customerMessage: '[Photo]',
+          replyText: ackAlex.replyText,
+          source: ackAlex.source,
+          model: ackAlex.model,
+          audit: { ...(ackAlex.audit || {}), media_status: 'metadata_only', photo_ack: true },
+        });
+        await logLeadEvent(null, 'whatsapp_photo_ack_sent', {
+          from, media_id: mediaId, media_status: 'metadata_only', lang,
+        }).catch(() => {});
+      } catch (ackErr) {
+        console.error('[WA_WEBHOOK] photo ack failed:', ackErr?.message);
+      }
     } else {
       console.log('[WA_WEBHOOK] Skip non-text type=%s from=%s (no media id)', msgType, from);
     }
@@ -1112,12 +1161,37 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
     return;
   }
 
-  // Alex — WhatsApp engine: English-only, post-generation safety validator
+  // ── Conversation memory + missing-fields context ─────────────────────────
+  // Extract what the customer already told us from history (ZIP, TV size, sq ft,
+  // wall type, photos). Build a context string telling Alex what to NOT ask again.
+  let extraContext = '';
+  try {
+    const { extractCollectedFields, buildCollectedFieldsSummary } = require('../lib/whatsapp/conversation-memory.js');
+    const { buildMissingFieldsContext } = require('../lib/alex/missing-fields-engine.js');
+    const historyOnly = messages.slice(0, -1);
+    const collectedFields = extractCollectedFields(historyOnly);
+    if (historyOnly.some(m => /\[Photo received\]|\[Photo\]/i.test(m.content || ''))) {
+      collectedFields.photos = 'received';
+    }
+    const { inferServiceType: inferForCtx } = require('../lib/alex-policy-engine.js');
+    const recentText = messages.slice(-4).map(m => m.content || '').join(' ');
+    const preInferredIntent = inferForCtx(inboundText)?.serviceId
+      || inferForCtx(recentText)?.serviceId
+      || 'unknown';
+    const collectedCtx = buildCollectedFieldsSummary(collectedFields);
+    const missingCtx = buildMissingFieldsContext(preInferredIntent, collectedFields);
+    extraContext = [collectedCtx, missingCtx].filter(Boolean).join('\n');
+  } catch (memErr) {
+    console.warn('[WA_WEBHOOK] memory/missing-fields ctx error:', memErr?.message);
+  }
+
+  // Alex — shared multilingual core (lib/alex/core.js via whatsapp-reply-engine.js)
   const { generateAlexWhatsAppReply } = require('../lib/alex/whatsapp-reply-engine.js');
   const waAlex = await generateAlexWhatsAppReply({
     inboundText,
     customerPhone: from,
     conversationHistory: messages.slice(0, -1),
+    extraContext,
   });
   let reply = stripMarkdownArtifacts(stripLeadPayloadBlock(waAlex.replyText)).slice(0, 1500);
   console.log(JSON.stringify({
@@ -1275,13 +1349,11 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
       await logLeadEvent(createdLeadId, 'whatsapp_outbound_failed', { inbound_wamid: msgId, error: err.message }).catch(() => {});
     }
 
-    // Phase 7: Schedule missed-reply watchdog (fire-and-forget, 60s deferred check)
-    try {
-      const { scheduleReplyCheck } = require('../lib/whatsapp/reply-watchdog.js');
-      scheduleReplyCheck({ inboundWamid: msgId, customerPhone: from, inboundText });
-    } catch (e) {
-      console.error('[WA_WEBHOOK] watchdog schedule error:', e?.message);
-    }
+    // Phase 7: Missed-reply watchdog runs via /api/wa-watchdog cron (every 2 min).
+    // setTimeout is NOT used here — Vercel serverless does not guarantee deferred
+    // execution after the response is flushed. The cron endpoint queries Supabase
+    // directly for inbound rows with no linked outbound reply.
+    console.log(JSON.stringify({ component: 'wa_webhook', watchdog: 'cron', inbound_wamid: msgId }));
   }
 
   // Telegram alert on lead

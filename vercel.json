@@ -7,6 +7,10 @@
     {
       "path": "/api/health?type=telegram_watchdog",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/wa-watchdog",
+      "schedule": "*/2 * * * *"
     }
   ],
   "redirects": [
