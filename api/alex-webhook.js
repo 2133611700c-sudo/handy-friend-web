@@ -1141,33 +1141,78 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
     console.error('[WA_WEBHOOK] Lead error:', err.message);
   }
 
-  // Cloud API path: send DRAFT to operator approval, do NOT auto-send to customer
+  // Persist inbound regardless of reply mode.
   try {
-    const { sendApprovalRequest } = require('../lib/telegram/approval.js');
     const { recordInbound } = require('../lib/whatsapp/dedup.js');
-
-    // Persist inbound + draft for later approval flow
     await recordInbound({
       wamid: msgId, from, to: phoneNumberId, body: inboundText, media: null, type: msgType, contextWamid: null, pushName: contactName,
-    }).catch(e => console.warn('[WA_WEBHOOK] dedup.recordInbound (table may need migration):', e.message));
-
-    const ar = await sendApprovalRequest({
-      inboundWamid: msgId,
-      customerPhone: from,
-      customerName: contactName,
-      customerMessage: inboundText,
-      alexDraft: reply,
-      threadId: sessionId,
-    });
-    console.log('[WA_WEBHOOK] approval queued ok=%s tg_msg_id=%s', ar?.ok, ar?.messageId);
-    await logLeadEvent(createdLeadId, 'whatsapp_approval_queued', {
-      from, session_id: sessionId, telegram_message_id: ar?.messageId || null, draft_preview: reply.slice(0, 120),
-    }).catch(() => {});
+    }).catch(e => console.warn('[WA_WEBHOOK] dedup.recordInbound:', e.message));
   } catch (err) {
-    console.error('[WA_WEBHOOK] approval queue failed:', err.message);
-    await logLeadEvent(createdLeadId, 'whatsapp_approval_failed', {
-      from, session_id: sessionId, error: err.message,
-    }).catch(() => {});
+    console.warn('[WA_WEBHOOK] inbound persist failed:', err.message);
+  }
+
+  // Reply-mode router: auto (default), approval, or off.
+  const replyMode = String(process.env.WHATSAPP_REPLY_MODE || 'auto').toLowerCase();
+  console.log(JSON.stringify({ component: 'wa_webhook', reply_mode: replyMode, inbound_wamid: msgId }));
+
+  if (replyMode === 'off') {
+    // Log only; alert owner that a lead arrived and AUTO is off.
+    try {
+      const { sendTelegramMessage } = require('../lib/telegram/send.js');
+      await sendTelegramMessage({
+        source: 'whatsapp_off_mode',
+        text: `🟡 <b>WHATSAPP LEAD (auto-reply OFF)</b>\nFrom: <code>+${from}</code>\n${inboundText.slice(0, 400)}`,
+        timeoutMs: 4500,
+      }).catch(() => {});
+    } catch {}
+  } else if (replyMode === 'approval') {
+    // Legacy approval flow — send draft to Telegram for ✅/✏️/❌.
+    try {
+      const { sendApprovalRequest } = require('../lib/telegram/approval.js');
+      const ar = await sendApprovalRequest({
+        inboundWamid: msgId,
+        customerPhone: from,
+        customerName: contactName,
+        customerMessage: inboundText,
+        alexDraft: reply,
+        threadId: sessionId,
+      });
+      console.log('[WA_WEBHOOK] approval queued ok=%s tg_msg_id=%s', ar?.ok, ar?.messageId);
+      await logLeadEvent(createdLeadId, 'whatsapp_approval_queued', {
+        from, session_id: sessionId, telegram_message_id: ar?.messageId || null, draft_preview: reply.slice(0, 120),
+      }).catch(() => {});
+    } catch (err) {
+      console.error('[WA_WEBHOOK] approval queue failed:', err.message);
+      await logLeadEvent(createdLeadId, 'whatsapp_approval_failed', { from, session_id: sessionId, error: err.message }).catch(() => {});
+    }
+  } else {
+    // AUTO mode (production). Send the safe English draft to the customer
+    // through Cloud API. Telegram message goes out as proof, not approval.
+    try {
+      const { sendAlexReply } = require('../lib/whatsapp/send-alex-reply.js');
+      const sendResult = await sendAlexReply({
+        inboundWamid: msgId,
+        customerPhone: from,
+        customerName: contactName,
+        customerMessage: inboundText,
+        replyText: reply,
+        source: waAlex.source,
+        model: waAlex.model,
+      });
+      if (sendResult.ok) {
+        await logLeadEvent(createdLeadId, sendResult.alreadySent ? 'whatsapp_outbound_already_sent' : 'whatsapp_outbound_sent', {
+          inbound_wamid: msgId, outbound_wamid: sendResult.outboundWamid, source: waAlex.source, model: waAlex.model,
+        }).catch(() => {});
+      } else {
+        console.error('[WA_WEBHOOK] auto-send failed:', sendResult.error, sendResult.errorCode || '');
+        await logLeadEvent(createdLeadId, 'whatsapp_outbound_failed', {
+          inbound_wamid: msgId, error: sendResult.error, error_code: sendResult.errorCode || null, safety_flags: sendResult.safetyFlags || null,
+        }).catch(() => {});
+      }
+    } catch (err) {
+      console.error('[WA_WEBHOOK] auto-send threw:', err.message);
+      await logLeadEvent(createdLeadId, 'whatsapp_outbound_failed', { inbound_wamid: msgId, error: err.message }).catch(() => {});
+    }
   }
 
   // Telegram alert on lead
