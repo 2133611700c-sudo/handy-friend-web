@@ -1242,6 +1242,11 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
           reply_language: waAlex.replyLanguage,
           language_confidence: waAlex.languageConfidence,
           service_intent: waAlex.serviceIntent,
+          // P0-A: business-critical audit fields persisted explicitly into raw.alex_audit
+          pricing_policy_version: getPricingSourceVersion(),
+          website_cta_included:   /handyandfriend\.com/i.test(reply),
+          calculator_mentioned:   /calculator/i.test(reply),
+          in_reply_to_wamid:      msgId || null,
         },
       });
       if (sendResult.ok) {

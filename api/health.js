@@ -47,6 +47,7 @@ export default async function handler(req, res) {
   if (type === 'outbox') return outboxHealth(req, res);
   if (type === 'telegram') return telegramHealth(req, res);
   if (type === 'telegram_watchdog') return telegramWatchdog(req, res);
+  if (type === 'wa_watchdog') return waWatchdog(req, res);
   return basicHealth(req, res);
 }
 
@@ -479,6 +480,19 @@ async function attributionHealth(req, res) {
   } catch (err) {
     return res.status(500).json({ ok: false, error: String(err?.message || 'attribution_health_failed') });
   }
+}
+
+/* ── WA Auto-Reply Watchdog ──
+ * GET /api/health?type=wa_watchdog
+ * GET /api/health?type=wa_watchdog&dry_run=1
+ *
+ * Delegates to lib/whatsapp/wa-watchdog.js (CJS) so tests can require()
+ * the core logic directly without hitting the ESM/CJS boundary of this file.
+ * Stays inside /api/health to remain under the Hobby 12-function cap.
+ */
+async function waWatchdog(req, res) {
+  const { runWaWatchdog } = require('../lib/whatsapp/wa-watchdog.js');
+  return runWaWatchdog(req, res, { getConfig });
 }
 
 /* ── basic (ex factory-health) ── */
