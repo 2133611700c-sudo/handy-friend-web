@@ -1103,13 +1103,16 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
     customerPhone: from,
     conversationHistory: messages.slice(0, -1),
   });
-  let reply = stripMarkdownArtifacts(stripLeadPayloadBlock(waAlex.replyText)).slice(0, 1200);
+  let reply = stripMarkdownArtifacts(stripLeadPayloadBlock(waAlex.replyText)).slice(0, 1500);
   console.log(JSON.stringify({
     component: 'wa_alex',
     source: waAlex.source,
     model: waAlex.model,
     reason: waAlex.reason,
     safety_flags: waAlex.safetyFlags,
+    detected_language: waAlex.detectedLanguage,
+    reply_language: waAlex.replyLanguage,
+    service_intent: waAlex.serviceIntent,
     reply_preview: reply.slice(0, 80),
     audit: waAlex.audit ? {
       provider: waAlex.audit.provider,
@@ -1217,6 +1220,10 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
         fallback_used: !!a.fallback_used,
         source: a.source || waAlex.source,
         safety_flags: waAlex.safetyFlags || [],
+        detected_language: waAlex.detectedLanguage || null,
+        reply_language: waAlex.replyLanguage || null,
+        language_confidence: waAlex.languageConfidence ?? null,
+        service_intent: waAlex.serviceIntent || null,
       }).catch(() => {});
     } catch {}
     try {
@@ -1229,7 +1236,13 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
         replyText: reply,
         source: waAlex.source,
         model: waAlex.model,
-        audit: waAlex.audit || null,
+        audit: {
+          ...(waAlex.audit || {}),
+          detected_language: waAlex.detectedLanguage,
+          reply_language: waAlex.replyLanguage,
+          language_confidence: waAlex.languageConfidence,
+          service_intent: waAlex.serviceIntent,
+        },
       });
       if (sendResult.ok) {
         await logLeadEvent(createdLeadId, sendResult.alreadySent ? 'whatsapp_outbound_already_sent' : 'whatsapp_outbound_sent', {

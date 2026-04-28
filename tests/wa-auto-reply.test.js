@@ -215,7 +215,10 @@ test('sendAlexReply is idempotent — duplicate inbound does not re-send', async
   assert.equal(sent.length, 0, 'Cloud API must NOT be called on duplicate');
 });
 
-test('sendAlexReply REFUSES unsafe (Cyrillic) reply text', async () => {
+test('sendAlexReply REFUSES unsafe (banned-claim) reply text', async () => {
+  // Multilingual era: Cyrillic alone is allowed (customer language). What
+  // remains unsafe is a banned claim (licensed/bonded/certified/#1/best in LA)
+  // in any language. Verify the gate still blocks that.
   reset();
   const sent = [];
   const saved = global.fetch;
@@ -227,11 +230,11 @@ test('sendAlexReply REFUSES unsafe (Cyrillic) reply text', async () => {
     return { ok: true, status: 200, json: async () => ({}), text: async () => '' };
   };
   const { sendAlexReply } = require('../lib/whatsapp/send-alex-reply.js');
-  const r = await sendAlexReply({ inboundWamid: 'w', customerPhone: '12135551234', replyText: 'Привет!' });
+  const r = await sendAlexReply({ inboundWamid: 'w', customerPhone: '12135551234', replyText: 'We are licensed and bonded.' });
   global.fetch = saved;
   assert.equal(r.ok, false);
   assert.equal(r.error, 'unsafe_reply');
-  assert.ok(r.safetyFlags.includes('cyrillic'));
+  assert.ok(r.safetyFlags.includes('banned_phrase'));
   assert.equal(sent.length, 0);
 });
 
