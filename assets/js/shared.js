@@ -150,6 +150,8 @@
     if (window.__HF_INLINE_CLICK_TRACKING) return; // root page has its own listener
     var link = e.target.closest('a[href]');
     if (!link) return;
+    // Sticky bar has its own enriched listener (service_slug + button_label) — avoid double-fire.
+    if (link.closest && link.closest('.sp-book-sticky')) return;
     var href = (link.getAttribute('href') || '').trim();
     var text = (link.textContent || '').trim().slice(0, 120);
 
@@ -334,12 +336,45 @@
       });
     }
 
-    /* Inject mobile sticky CTA bar if not already present */
+    /* Inject mobile sticky CTA bar if not already present.
+       Includes Call / WhatsApp / Get Estimate with enriched funnel_events tracking
+       (service_slug + button_label so we can attribute conversions per landing). */
     if (!document.querySelector('.sp-book-sticky') && window.location.pathname !== '/book') {
+      var pathSlug = (window.location.pathname || '/').replace(/^\/+|\/+$/g, '').split('/')[0];
+      var serviceSlug = (pathSlug || 'home').replace(/-/g, '_');
+      var phoneHref = 'tel:+12133611700';
+      var waText = (typeof window.hfBuildWaText === 'function')
+        ? window.hfBuildWaText(serviceSlug)
+        : 'Hi! I have a question about ' + (pathSlug ? pathSlug.replace(/-/g, ' ') : 'your services');
+      var waHref = 'https://wa.me/12133611700?text=' + encodeURIComponent(waText);
+      var bookHref = '/book' + (pathSlug ? '?service=' + encodeURIComponent(pathSlug) : '');
+
       var stickyBar = document.createElement('div');
       stickyBar.className = 'sp-book-sticky';
-      stickyBar.innerHTML = '<a href="tel:+12133611700">\uD83D\uDCDE Call (213) 361-1700</a><a href="/book">Get Free Estimate</a>';
+      stickyBar.innerHTML =
+        '<a href="' + phoneHref + '" data-cta="call">\uD83D\uDCDE Call</a>' +
+        '<a href="' + waHref + '" data-cta="whatsapp" target="_blank" rel="noopener">\uD83D\uDCAC WhatsApp</a>' +
+        '<a href="' + bookHref + '" data-cta="estimate">Get Estimate</a>';
       document.body.appendChild(stickyBar);
+
+      stickyBar.querySelectorAll('a[data-cta]').forEach(function(el){
+        el.addEventListener('click', function(){
+          var cta = el.getAttribute('data-cta');
+          var eventName = cta === 'call' ? 'phone_click'
+            : cta === 'whatsapp' ? 'whatsapp_click'
+            : 'widget_open';
+          var label = 'sticky_' + cta;
+          try {
+            postCtaEvent(eventName, {
+              link_url: el.href,
+              link_text: (el.textContent || '').trim().slice(0, 60),
+              button_label: label,
+              service_slug: serviceSlug,
+              source_widget: 'mobile_sticky_bar'
+            });
+          } catch (_) {}
+        });
+      });
     }
   });
 

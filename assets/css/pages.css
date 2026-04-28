@@ -179,8 +179,10 @@ a:hover{color:var(--sp-orange-hover)}
 .sp-book-sticky{display:none}
 @media(max-width:600px){
   .sp-book-sticky{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--sp-dark);padding:10px 16px;z-index:90;gap:10px;box-shadow:0 -2px 12px rgba(0,0,0,.25)}
-  .sp-book-sticky a{flex:1;background:var(--sp-orange);color:#fff;text-align:center;padding:12px 8px;border-radius:8px;font-weight:700;font-size:15px;text-decoration:none}
-  .sp-book-sticky a:last-child{background:transparent;border:1px solid rgba(255,255,255,.3);font-weight:500;font-size:14px}
+  .sp-book-sticky a{flex:1;background:var(--sp-orange);color:#fff;text-align:center;padding:12px 6px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;white-space:nowrap;min-width:0}
+  .sp-book-sticky a[data-cta="whatsapp"]{background:#25D366}
+  .sp-book-sticky a[data-cta="estimate"],
+  .sp-book-sticky a:last-child{background:transparent;border:1px solid rgba(255,255,255,.4);font-weight:600;font-size:13px}
   .sp-form{margin-bottom:80px}
 }
 
