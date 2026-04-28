@@ -183,3 +183,7 @@ lighthouse-*.html
 case-eos-2844939/
 case-pricing-audit/baseline/
 ops/reports/migration-drift-2026-04-24.md
+
+# OpenClaw lead reporter runtime
+ops/openclaw/logs/
+ops/openclaw/state/
