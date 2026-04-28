@@ -1,0 +1,263 @@
+{
+  "started_at_utc": "2026-04-25T20:02:14.180576+00:00",
+  "base_url": "https://handyandfriend.com",
+  "tag": "e2e-080645705a74",
+  "assertions": [
+    {
+      "name": "ai_chat http 200",
+      "ok": true,
+      "extra": {
+        "code": 200
+      }
+    },
+    {
+      "name": "ai_chat returned leadId",
+      "ok": true,
+      "extra": {
+        "lead_id": "lead_1777147338448_nk3uo6"
+      }
+    },
+    {
+      "name": "lead row exists in Supabase",
+      "ok": true
+    },
+    {
+      "name": "lead is marked is_test=true",
+      "ok": true,
+      "extra": {
+        "is_test": true
+      }
+    },
+    {
+      "name": "lead.source == website_chat",
+      "ok": true,
+      "extra": {
+        "source": "website_chat"
+      }
+    },
+    {
+      "name": "lead taxonomy tagged traffic_source=e2e",
+      "ok": true,
+      "extra": {
+        "code": 200
+      }
+    },
+    {
+      "name": "ai_conversations has >= 2 turns",
+      "ok": true,
+      "extra": {
+        "count": 2
+      }
+    },
+    {
+      "name": "at least one telegram_sends row for lead",
+      "ok": true,
+      "extra": {
+        "count": 1
+      }
+    },
+    {
+      "name": "at least one OK Telegram send with message_id",
+      "ok": true,
+      "extra": {
+        "first": {
+          "id": 52,
+          "ok": true,
+          "telegram_message_id": 4667,
+          "source": "ai_chat",
+          "error_code": null,
+          "error_description": null,
+          "created_at": "2026-04-25T20:02:19.533322+00:00",
+          "is_test": false,
+          "traffic_source": null
+        }
+      }
+    },
+    {
+      "name": "lead_events has telegram_sent for lead",
+      "ok": true,
+      "extra": {
+        "event_types": [
+          "telegram_sent",
+          "ai_chat_capture"
+        ]
+      }
+    },
+    {
+      "name": "watchdog view v_leads_without_telegram queryable",
+      "ok": true
+    }
+  ],
+  "evidence": {
+    "ai_chat": {
+      "http_status": 200,
+      "response_excerpt": "{\"reply\":\"Hi Alice! Great, thanks for reaching out.\\n\\nA standard 55\\\" TV mount on drywall or studs is covered by our $150 service call \u2014 that includes up to 2 hours on-site labor. You'll just need to provide the mount/bracket.\\n\\nSince you're in Hollywood and want this week, I can get you booked fast. Also, while our team is there, would you like us to hang any art or a mirror? Same $150 service call if it fits within the 2 hours.\\n\\nTo lock in the $150 price and a time this week, what's the be"
+    },
+    "lead_id": "lead_1777147338448_nk3uo6",
+    "leads_query": {
+      "http_status": 200,
+      "rows": [
+        {
+          "id": "lead_1777147338448_nk3uo6",
+          "phone": "1300007334",
+          "source": "website_chat",
+          "is_test": true,
+          "service_type": "tv_mounting",
+          "created_at": "2026-04-25T20:02:18.448+00:00"
+        }
+      ]
+    },
+    "lead_taxonomy_update": {
+      "http_status": 200,
+      "rows": [
+        {
+          "id": "lead_1777147338448_nk3uo6",
+          "created_at": "2026-04-25T20:02:18.448+00:00",
+          "updated_at": "2026-04-25T20:02:23.448662+00:00",
+          "source": "website_chat",
+          "status": "new",
+          "full_name": "Unknown",
+          "phone": "1300007334",
+          "email": null,
+          "address": null,
+          "city": null,
+          "zip": null,
+          "service_type": "tv_mounting",
+          "problem_description": "name Alice, phone 21300007334, standard 55 inch TV, this week",
+          "budget_range": null,
+          "preferred_date": null,
+          "lead_score": 0,
+          "ai_summary": null,
+          "notes": null,
+          "source_details": {
+            "tag": "e2e-080645705a74",
+            "test": true,
+            "source": "e2e_smoke"
+          },
+          "stage": "new",
+          "outcome": null,
+          "lost_reason": null,
+          "contacted_at": null,
+          "qualified_at": null,
+          "quoted_at": null,
+          "closed_at": null,
+          "quoted_amount": null,
+          "won_amount": null,
+          "response_time_min": null,
+          "channel": "website_chat",
+          "session_id": "e2e-080645705a74",
+          "ai_summary_short": null,
+          "ai_summary_full": null,
+          "assigned_to": null,
+          "next_action_at": null,
+          "last_contact_at": null,
+          "is_test": true,
+          "test_reason": null,
+          "test_actor": null,
+          "source_message_id": null,
+          "dedupe_key": "1300007334_tv_mounting_2026-04-25",
+          "pipeline_version": "2026.03.27-v1",
+          "last_transition_at": "2026-04-25T20:02:18.448+00:00",
+          "last_owner_alert_at": null,
+          "attribution_source": null,
+          "utm_source": null,
+          "utm_medium": null,
+          "utm_campaign": null,
+          "gclid": null,
+          "conversion_value": null,
+          "messenger_psid": null,
+          "telegram_user_id": null,
+          "sources": [],
+          "last_inbound_at": null,
+          "last_outbound_at": null,
+          "last_ai_reply_at": null,
+          "intent_level": null,
+          "needs_owner_now": false,
+          "next_best_action": null,
+          "conversation_summary": null,
+          "budget_signal": null,
+          "urgency_signal": null,
+          "has_photos": false,
+          "urgency": null,
+          "has_photo": false,
+          "confidence": null,
+          "traffic_source": "e2e"
+        }
+      ]
+    },
+    "ai_conversations": {
+      "http_status": 200,
+      "rows": [
+        {
+          "session_id": "e2e-080645705a74",
+          "message_role": "user",
+          "created_at": "2026-04-25T20:02:19.105799+00:00"
+        },
+        {
+          "session_id": "e2e-080645705a74",
+          "message_role": "assistant",
+          "created_at": "2026-04-25T20:02:19.105799+00:00"
+        }
+      ]
+    },
+    "telegram_sends": {
+      "http_status": 200,
+      "rows": [
+        {
+          "id": 52,
+          "ok": true,
+          "telegram_message_id": 4667,
+          "source": "ai_chat",
+          "error_code": null,
+          "error_description": null,
+          "created_at": "2026-04-25T20:02:19.533322+00:00",
+          "is_test": false,
+          "traffic_source": null
+        }
+      ]
+    },
+    "lead_events": {
+      "http_status": 200,
+      "rows": [
+        {
+          "event_type": "telegram_sent",
+          "event_data": {
+            "source": "ai_chat",
+            "message_id": 4667,
+            "session_id": "e2e-080645705a74",
+            "photos_sent": 0,
+            "photos_total": 0,
+            "telegram_send_id": 52
+          },
+          "created_at": "2026-04-25T20:02:19.651113+00:00"
+        },
+        {
+          "event_type": "ai_chat_capture",
+          "event_data": {
+            "lang": "en",
+            "is_new": true,
+            "is_test": true,
+            "service": "tv_mounting",
+            "session_id": "e2e-080645705a74",
+            "correlation_id": "ai_chat:e2e-080645705a74",
+            "idempotency_key": "ai_chat_capture:e2e-080645705a74:lead_1777147338448_nk3uo6",
+            "conversation_summary": "[AI Chat | EN]\nClient: hi i need tv mounting in hollywood\nClient: name Alice, phone 21300007334, standard 55 inch TV, this week"
+          },
+          "created_at": "2026-04-25T20:02:18.706827+00:00"
+        }
+      ]
+    },
+    "watchdog_sample": {
+      "http_status": 200,
+      "rows": [
+        {
+          "id": "lead_1777146803395_w2vl7o",
+          "telegram_proofs": 2
+        }
+      ]
+    }
+  },
+  "finished_at_utc": "2026-04-25T20:02:24.660768+00:00",
+  "result": "PASS",
+  "failures": []
+}

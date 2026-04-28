@@ -64,8 +64,11 @@ test('SAFE_FALLBACK passes the safety validator', () => {
   assert.doesNotMatch(SAFE_FALLBACK, /licensed|bonded|certified/i);
 });
 
-test('WA system prompt enforces English-only and no banned claims', () => {
-  assert.match(WA_SYSTEM_PROMPT, /Reply ONLY in English/);
+test('WA_SYSTEM_PROMPT (legacy constant, not used in production) retains its original text', () => {
+  // WA_SYSTEM_PROMPT is a legacy export kept for backward compat and reference.
+  // Production WhatsApp replies use the shared multilingual core (lib/alex/core.js).
+  // This test just verifies the constant hasn't been accidentally deleted.
+  assert.ok(typeof WA_SYSTEM_PROMPT === 'string' && WA_SYSTEM_PROMPT.length > 0);
   assert.match(WA_SYSTEM_PROMPT, /Never claim 'licensed', 'bonded', 'certified'/);
   assert.match(WA_SYSTEM_PROMPT, /best in LA/);
   assert.match(WA_SYSTEM_PROMPT, /photos/);

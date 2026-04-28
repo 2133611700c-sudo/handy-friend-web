@@ -1,0 +1,73 @@
+{
+  "started_at_utc": "2026-04-26T06:00:12.469463+00:00",
+  "base_url": "https://handyandfriend.com",
+  "tag": "e2e-4bb3c394e592",
+  "assertions": [
+    {
+      "name": "ai_chat http 200",
+      "ok": false,
+      "extra": {
+        "code": -1
+      }
+    },
+    {
+      "name": "ai_chat returned leadId",
+      "ok": false,
+      "extra": {
+        "lead_id": null
+      }
+    },
+    {
+      "name": "ai_conversations has >= 2 turns",
+      "ok": true,
+      "extra": {
+        "count": 2
+      }
+    },
+    {
+      "name": "watchdog view v_leads_without_telegram queryable",
+      "ok": true
+    }
+  ],
+  "evidence": {
+    "ai_chat": {
+      "http_status": -1,
+      "response_excerpt": "The read operation timed out"
+    },
+    "lead_id": null,
+    "ai_conversations": {
+      "http_status": 200,
+      "rows": [
+        {
+          "session_id": "e2e-4bb3c394e592",
+          "message_role": "user",
+          "created_at": "2026-04-26T06:00:18.908777+00:00"
+        },
+        {
+          "session_id": "e2e-4bb3c394e592",
+          "message_role": "assistant",
+          "created_at": "2026-04-26T06:00:18.908777+00:00"
+        }
+      ]
+    },
+    "watchdog_sample": {
+      "http_status": 200,
+      "rows": [
+        {
+          "id": "lead_1777156841932_9opk2n",
+          "telegram_proofs": 6
+        },
+        {
+          "id": "lead_1777146803395_w2vl7o",
+          "telegram_proofs": 4
+        }
+      ]
+    }
+  },
+  "finished_at_utc": "2026-04-26T07:01:04.776975+00:00",
+  "result": "FAIL",
+  "failures": [
+    "ai_chat http 200",
+    "ai_chat returned leadId"
+  ]
+}

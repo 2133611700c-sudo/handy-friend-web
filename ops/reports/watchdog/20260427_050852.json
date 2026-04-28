@@ -1,0 +1,73 @@
+{
+  "checked_at": "2026-04-27T05:08:52.365545+00:00",
+  "base_url": "https://handyandfriend.com",
+  "ads_urls": {
+    "exit": 1,
+    "stdout_tail": "\u001b[31m\u274c FAIL\u001b[0m  [painting/los-angeles]  https://handyandfriend.com/painting/los-angeles\n       URLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'handyandfriend.com'. (_ssl.c:1129)\n\u001b[31m\u274c FAIL\u001b[0m  [services [sitelink]]  https://handyandfriend.com/services\n       URLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'handyandfriend.com'. (_ssl.c:1129)\n\u001b[32m\u2705 PASS\u001b[0m  [book [sitelink]]\n\u001b[32m\u2705 PASS\u001b[0m  [gallery [sitelink]]\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\u001b[31m\u001b[1m5 FAIL / 19 PASS\u001b[0m",
+    "stderr_tail": "",
+    "elapsed_s": 13.0
+  },
+  "health": {
+    "http": -1,
+    "ok": null
+  },
+  "telegram_dashboard": {
+    "http": 200,
+    "pending": 0,
+    "fails_24h": 2,
+    "fails_7d": 6,
+    "leads_without_proof": 0
+  },
+  "social_leads_stuck": {
+    "http": 200,
+    "count": 3,
+    "oldest_age_days": 9.2,
+    "hot_7d_unreviewed": 0
+  },
+  "social_leads_lifecycle": {
+    "new_hot_warm": 3,
+    "reviewed": 0,
+    "contacted": 0,
+    "converted": 0,
+    "ignored_hot_warm": 40
+  },
+  "fb_messenger": {
+    "real_sessions_7d": 2,
+    "leads_7d": 0,
+    "organic_pre_leads": 0
+  },
+  "nextdoor_scanner": {
+    "http": 200,
+    "last_row_at": "2026-04-07T01:05:13.015331+00:00",
+    "age_hours": 484.1
+  },
+  "craigslist_scanner": {
+    "http": 200,
+    "last_row_at": "2026-04-22T18:16:27.37868+00:00",
+    "age_hours": 106.9
+  },
+  "facebook_scanner": {
+    "http": 200,
+    "last_row_at": "2026-04-23T17:40:45.894073+00:00",
+    "age_hours": 83.5
+  },
+  "scanner_proof_gap": {
+    "last_real_proof_age_h": 83.5,
+    "scanner_active": false,
+    "gap_confirmed": false
+  },
+  "issues": [
+    "Ads URL audit FAILED (exit=1)",
+    "/api/health HTTP -1",
+    "3 HOT/WARM social leads stuck >24h in status=new, oldest 9.2d (review in social_leads table)",
+    "FB Messenger: 2 real sessions in 7d \u2192 0 leads/pre-leads (phone gate blocking capture)",
+    "Nextdoor HOT/WARM yield zero: last signal 20.2d ago \u2014 ND hunter runs but reads from manual JSON feed files (all 3 currently empty, no live scraping)",
+    "CL scanner: last post 106.9h ago \u2014 scanner may be stale",
+    "FB Groups scanner: last post 83.5h ago \u2014 scanner may be stale"
+  ],
+  "result": "RED",
+  "alert": {
+    "sent": false,
+    "message_id": "disabled_by_env"
+  }
+}

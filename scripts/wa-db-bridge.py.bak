@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+"""
+WhatsApp Mac DB → Alex → OpenClaw bridge
+Tails WhatsApp Mac SQLite ChatStorage for new INBOUND messages,
+forwards to handyandfriend.com /api/whatsapp-webhook with X-Outbound-Mode: openclaw,
+sends Alex reply via openclaw message send.
+
+Replaces openclaw whatsapp-web.js inbound (which is broken — messagesHandled=0).
+Uses Mac WhatsApp app's local DB which DOES receive all messages reliably.
+"""
+import sqlite3, time, json, subprocess, urllib.request, sys, os, re, threading
+
+DB = os.path.expanduser('~/Library/Group Containers/group.net.whatsapp.WhatsApp.shared/ChatStorage.sqlite')
+WEBHOOK_URL = 'https://handyandfriend.com/api/whatsapp-webhook'
+SELF_JIDS_PERSONAL_LIDS = set()  # populated dynamically
+POLL_SEC = 2
+
+def log(*a):
+    print(time.strftime('%H:%M:%S'), '[db-bridge]', *a, flush=True)
+
+def get_state_path():
+    return '/tmp/wa-db-bridge.state'
+
+def load_last_pk():
+    try:
+        with open(get_state_path()) as f:
+            return int(f.read().strip())
+    except: return 0
+
+def save_last_pk(pk):
+    with open(get_state_path(), 'w') as f:
+        f.write(str(pk))
+
+def fetch_new_inbound(last_pk):
+    """Read WAL-mode SQLite safely."""
+    con = sqlite3.connect(f'file:{DB}?mode=ro', uri=True, timeout=5)
+    con.execute('PRAGMA journal_mode=WAL')
+    cur = con.cursor()
+    cur.execute("""
+        SELECT m.Z_PK, m.ZSTANZAID, m.ZFROMJID, m.ZTOJID, m.ZTEXT, m.ZMESSAGEDATE, m.ZPUSHNAME,
+               s.ZCONTACTJID, s.ZPARTNERNAME
+        FROM ZWAMESSAGE m
+        LEFT JOIN ZWACHATSESSION s ON m.ZCHATSESSION = s.Z_PK
+        WHERE m.Z_PK > ?
+          AND m.ZISFROMME = 0
+          AND m.ZTEXT IS NOT NULL
+          AND m.ZTEXT != ''
+        ORDER BY m.Z_PK ASC
+        LIMIT 50
+    """, (last_pk,))
+    rows = cur.fetchall()
+    con.close()
+    return rows
+
+def jid_to_phone(jid):
+    """Map WhatsApp JID to phone number. Handles +XX@s.whatsapp.net and LID format."""
+    if not jid: return None
+    # Direct phone JID: 46765167266@s.whatsapp.net
+    m = re.match(r'^(\d+)@s\.whatsapp\.net', jid)
+    if m: return m.group(1)
+    # Group: ignore
+    if '@g.us' in jid: return None
+    # LID: needs lookup via session contact JID
+    return None
+
+def get_contact_phone_for_session(contact_jid, push_name):
+    """Get real phone from session contact JID."""
+    if contact_jid:
+        ph = jid_to_phone(contact_jid)
+        if ph: return ph
+    return None
+
+def post_webhook(from_phone, msg_id, text, push_name):
+    payload = {
+        'object':'whatsapp_business_account',
+        'entry':[{'id':'1577856530133515','changes':[{'value':{
+            'messaging_product':'whatsapp',
+            'metadata':{'display_phone_number':'12133611700','phone_number_id':'920678054472684'},
+            'contacts':[{'profile':{'name':push_name or 'Customer'},'wa_id':from_phone}],
+            'messages':[{'from':from_phone,'id':msg_id,'timestamp':str(int(time.time())),
+                         'text':{'body':text},'type':'text'}]
+        },'field':'messages'}]}]
+    }
+    body = json.dumps(payload).encode()
+    req = urllib.request.Request(WEBHOOK_URL, data=body,
+        headers={'Content-Type':'application/json','X-Outbound-Mode':'openclaw'},
+        method='POST')
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = resp.read().decode()
+            return resp.status, data
+    except Exception as e:
+        return 0, str(e)
+
+def send_via_openclaw(target_phone, text):
+    target = '+' + target_phone if not target_phone.startswith('+') else target_phone
+    try:
+        result = subprocess.run(
+            ['openclaw','message','send','--channel','whatsapp',
+             '--target',target,'--message',text,'--json'],
+            capture_output=True, text=True, timeout=60)
+        # Extract messageId via regex from full output (handles multi-line JSON)
+        m = re.search(r'"messageId"\s*:\s*"([^"]+)"', result.stdout + result.stderr)
+        if m: return m.group(1)
+        log(f'send parse fail. stdout="{result.stdout[:200]}" stderr="{result.stderr[:200]}"')
+        return None
+    except Exception as e:
+        log('send error', e)
+        return None
+
+def parse_partner_phone(partner_name):
+    """Extract phone from ZPARTNERNAME like '+46 76 516 72 66' → '46765167266'."""
+    if not partner_name: return None
+    digits = re.sub(r'\D', '', partner_name)
+    if len(digits) >= 7: return digits
+    return None
+
+def process_message(row):
+    pk, stanza, from_jid, to_jid, text, mdate, push_name, contact_jid, partner_name = row
+    phone = jid_to_phone(from_jid)
+    if not phone:
+        # LID — try contact JID from session, then partner name
+        phone = jid_to_phone(contact_jid) if contact_jid else None
+    if not phone:
+        phone = parse_partner_phone(partner_name)
+    if not phone:
+        log(f'skip pk={pk} no phone (jid={from_jid} contact={contact_jid} partner={partner_name})')
+        return True  # mark seen to avoid re-processing
+    if phone == '12133611700':
+        log(f'skip self pk={pk} from={phone}')
+        return True
+    log(f'inbound pk={pk} from=+{phone} text="{text[:60]}"')
+    status, resp = post_webhook(phone, stanza or f'db-{pk}', text, push_name)
+    if status != 200:
+        log(f'webhook FAIL status={status} resp={resp[:150]}')
+        return False
+    try:
+        reply = json.loads(resp).get('reply','')
+    except:
+        log(f'webhook resp parse fail: {resp[:150]}')
+        return False
+    if not reply:
+        log(f'no reply text from Alex')
+        return True
+    log(f'alex reply len={len(reply)}: "{reply[:60]}..."')
+    msg_id = send_via_openclaw(phone, reply)
+    if msg_id:
+        log(f'sent ok messageId={msg_id}')
+    else:
+        log(f'send via openclaw FAILED')
+    return True
+
+def main():
+    log(f'starting, db={DB}')
+    if not os.path.exists(DB):
+        log('DB not found'); sys.exit(1)
+    last_pk = load_last_pk()
+    if last_pk == 0:
+        # On first run, skip backlog — start from current max
+        con = sqlite3.connect(f'file:{DB}?mode=ro', uri=True)
+        cur = con.cursor()
+        cur.execute('SELECT MAX(Z_PK) FROM ZWAMESSAGE')
+        last_pk = cur.fetchone()[0] or 0
+        con.close()
+        save_last_pk(last_pk)
+        log(f'first run, starting from pk={last_pk}')
+    else:
+        log(f'resuming from pk={last_pk}')
+
+    while True:
+        try:
+            rows = fetch_new_inbound(last_pk)
+            for row in rows:
+                pk = row[0]
+                if process_message(row):
+                    last_pk = pk
+                    save_last_pk(last_pk)
+        except sqlite3.OperationalError as e:
+            log(f'db locked: {e}')
+        except Exception as e:
+            log(f'err: {e}')
+        time.sleep(POLL_SEC)
+
+if __name__ == '__main__':
+    main()

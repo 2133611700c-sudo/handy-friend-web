@@ -1,0 +1,79 @@
+{
+  "checked_at": "2026-04-26T06:00:01.832131+00:00",
+  "base_url": "https://handyandfriend.com",
+  "ads_urls": {
+    "exit": 0,
+    "stdout_tail": "\u001b[32m\u2705 PASS\u001b[0m  [plumbing/los-angeles]\n\u001b[32m\u2705 PASS\u001b[0m  [lighting/los-angeles]\n\u001b[32m\u2705 PASS\u001b[0m  [painting/los-angeles]\n\u001b[32m\u2705 PASS\u001b[0m  [services [sitelink]]\n\u001b[32m\u2705 PASS\u001b[0m  [book [sitelink]]\n\u001b[32m\u2705 PASS\u001b[0m  [gallery [sitelink]]\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\u001b[32m\u001b[1mALL 24 PASS \u2014 routing clean\u001b[0m",
+    "stderr_tail": "",
+    "elapsed_s": 9.1
+  },
+  "health": {
+    "http": 200,
+    "ok": true
+  },
+  "telegram_dashboard": {
+    "http": 200,
+    "pending": 0,
+    "fails_24h": 4,
+    "fails_7d": 4,
+    "leads_without_proof": 0
+  },
+  "e2e": {
+    "exit": 1,
+    "stdout_tail": "  \u274c ai_chat returned leadId\n  \u2705 ai_conversations has >= 2 turns\n  \u2705 watchdog view v_leads_without_telegram queryable\n\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nResult: FAIL\nEvidence: /Users/sergiikuropiatnyk/handy-friend-landing-v6/ops/reports/e2e/e2e_20260426_000104.json\nFailures: ['ai_chat http 200', 'ai_chat returned leadId']",
+    "stderr_tail": "",
+    "elapsed_s": 3652.4
+  },
+  "social_leads_stuck": {
+    "http": 200,
+    "count": 3,
+    "oldest_age_days": 8.2,
+    "hot_7d_unreviewed": 0
+  },
+  "social_leads_lifecycle": {
+    "new_hot_warm": 3,
+    "reviewed": 0,
+    "contacted": 0,
+    "converted": 0,
+    "ignored_hot_warm": 40
+  },
+  "fb_messenger": {
+    "real_sessions_7d": 2,
+    "leads_7d": 0,
+    "organic_pre_leads": 0
+  },
+  "nextdoor_scanner": {
+    "http": 200,
+    "last_row_at": "2026-04-07T01:05:13.015331+00:00",
+    "age_hours": 460.9
+  },
+  "craigslist_scanner": {
+    "http": 200,
+    "last_row_at": "2026-04-22T18:16:27.37868+00:00",
+    "age_hours": 83.7
+  },
+  "facebook_scanner": {
+    "http": 200,
+    "last_row_at": "2026-04-23T17:40:45.894073+00:00",
+    "age_hours": 60.3
+  },
+  "scanner_proof_gap": {
+    "last_real_proof_age_h": 60.3,
+    "scanner_active": false,
+    "gap_confirmed": false
+  },
+  "issues": [
+    "Telegram fails_24h=4",
+    "E2E Alex chain FAILED",
+    "3 HOT/WARM social leads stuck >24h in status=new, oldest 8.2d (review in social_leads table)",
+    "FB Messenger: 2 real sessions in 7d \u2192 0 leads/pre-leads (phone gate blocking capture)",
+    "Nextdoor HOT/WARM yield zero: last signal 19.2d ago \u2014 ND hunter runs but reads from manual JSON feed files (all 3 currently empty, no live scraping)",
+    "CL scanner: last post 83.7h ago \u2014 scanner may be stale",
+    "FB Groups scanner: last post 60.3h ago \u2014 scanner may be stale"
+  ],
+  "result": "RED",
+  "alert": {
+    "sent": false,
+    "message_id": "disabled_by_env"
+  }
+}

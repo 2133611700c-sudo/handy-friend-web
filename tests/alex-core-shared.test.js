@@ -167,3 +167,67 @@ test('inferServiceType (shared) catches RU flooring + ES cabinet + UK assembly +
   assert.equal(inferServiceType('Потрібно зібрати меблі IKEA')?.serviceId, 'furniture_assembly');
   assert.equal(inferServiceType('I need TV mounting on a brick wall')?.serviceId, 'tv_mounting');
 });
+
+// ── Website CTA in replies ──────────────────────────────────────────────────────
+
+test('core.js FALLBACK_BY_LANG includes handyandfriend.com in all languages', async () => {
+  await withFetch(async (url) => {
+    if (String(url).includes('deepseek.com')) {
+      return { ok: false, status: 500, statusText: 'Error', headers: new Map(), text: async () => '', json: async () => ({}) };
+    }
+    return { ok: true, json: async () => ({}) };
+  }, async () => {
+    for (const [lang, text] of [
+      ['en', 'Hi'],
+      ['ru', 'Привет'],
+      ['uk', 'Привіт, потрібно зробити'],
+      ['es', 'Hola'],
+    ]) {
+      // Clear module cache so we get fresh instances
+      delete require.cache[require.resolve('../lib/alex/whatsapp-agent.js')];
+      const { generateWhatsAppAlexReply } = require('../lib/alex/whatsapp-agent.js');
+      const r = await generateWhatsAppAlexReply({ inboundText: text, customerPhone: '12135551234' });
+      assert.equal(r.source, 'fallback', `${lang} should be fallback`);
+      assert.match(r.replyText, /handyandfriend\.com/i, `${lang} fallback must include CTA`);
+    }
+  });
+});
+
+test('audit includes pricing_policy_version and website_cta_included', async () => {
+  await withFetch(deepseekMock('Hi! For TV mounting I need: TV size, wall type, photos, ZIP, timing. You can also visit handyandfriend.com — we have service details and a calculator to help estimate the project.'), async () => {
+    delete require.cache[require.resolve('../lib/alex/whatsapp-agent.js')];
+    const { generateWhatsAppAlexReply } = require('../lib/alex/whatsapp-agent.js');
+    const r = await generateWhatsAppAlexReply({ inboundText: 'I need TV mounting', customerPhone: '12135551234' });
+    assert.equal(r.source, 'model');
+    assert.ok(r.audit, 'audit must exist');
+    assert.ok(typeof r.audit.pricing_policy_version === 'string', 'pricing_policy_version must be string');
+    assert.equal(r.audit.website_cta_included, true, 'website_cta_included must be true when CTA in reply');
+    assert.equal(r.audit.calculator_mentioned, true, 'calculator_mentioned must be true');
+  });
+});
+
+// ── Pricing differentiation: flooring vs wall painting ───────────────────────
+
+test('inferServiceType correctly classifies wall painting vs flooring', () => {
+  const { inferServiceType } = require('../lib/alex-policy-engine.js');
+  assert.equal(inferServiceType('Сколько стоит покрасить стены?')?.serviceId, 'interior_painting');
+  assert.equal(inferServiceType('Какая цена установки пола')?.serviceId, 'flooring');
+  // These must NOT be the same service
+  assert.notEqual(
+    inferServiceType('Сколько стоит покрасить стены?')?.serviceId,
+    inferServiceType('Какая цена установки пола')?.serviceId
+  );
+});
+
+test('buildSystemPrompt contains separate flooring and painting pricing rules', () => {
+  const { buildSystemPrompt } = require('../lib/alex-one-truth.js');
+  const prompt = buildSystemPrompt({});
+  // Flooring exclusions
+  assert.match(prompt, /demo|subfloor|baseboards|transitions/i, 'flooring exclusions must be in prompt');
+  // Painting separate
+  assert.match(prompt, /wall surface|coats|prep state/i, 'painting scope must be in prompt');
+  // CTA
+  assert.match(prompt, /handyandfriend\.com/i, 'CTA must be in prompt');
+  // Cabinet anchor
+  assert.match(prompt, /\$70.*door|70.*door/i, 'cabinet anchor must be in prompt');
+});

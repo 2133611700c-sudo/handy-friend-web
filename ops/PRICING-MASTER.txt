@@ -1,0 +1,159 @@
+================================================================================
+HANDY & FRIEND — MASTER PRICE SHEET
+Version: 2026.04.24-v1-one-price
+Source:  lib/price-registry.js
+Updated: 2026-04-24
+================================================================================
+
+
+THE MODEL
+--------------------------------------------------------------------------------
+
+  Service Call                    $150
+  Includes                        Up to 2 hours on-site for the agreed scope
+  Additional labor                $75/hour — only after 2h, only in writing
+  Materials / parking / disposal  Extra only when stated in writing first
+
+  All prices are LABOR ONLY.
+  Client provides materials unless written into the quote.
+
+
+$150 SERVICE CALL  (public price — standard small jobs)
+--------------------------------------------------------------------------------
+
+  TV MOUNTING
+    Included:    Standard wall mount up to 65" on drywall or studs.
+                 Surface cable management included.
+    Quote-only:  Hidden-wire / in-wall wiring. Fire-block walls.
+
+  FURNITURE ASSEMBLY
+    Included:    Small to medium pieces fitting in 2 hours.
+                 IKEA shelves, desks, tables, small dressers.
+    Quote-only:  PAX / Elfa closet systems. Bed frames. Multiple complex pieces.
+
+  ART & MIRROR HANGING
+    Included:    Up to 5 standard pieces, level-checked.
+                 Drywall or stud walls.
+    Quote-only:  Gallery walls over 5 pieces. Oversized mirrors with structural anchoring.
+
+  PLUMBING (minor)
+    Included:    Faucet swap. Shower head replacement. Toilet tank repair.
+                 Re-caulk tub or shower.
+    Quote-only:  New supply lines. Permit-required work. Anything beyond like-for-like.
+
+  ELECTRICAL (minor)
+    Included:    Light fixture replacement in existing box.
+                 Outlet or switch swap. Smart doorbell / lock install.
+    Quote-only:  New circuits. Panel work. Permit-required work.
+
+  DRYWALL REPAIR
+    Included:    Small patches up to 6 inches. Texture matching for same-color refresh.
+    Quote-only:  Medium 6–12 in. Large 12+ in. Multi-coat color change. Water damage.
+
+  DOOR REPAIR / ADJUSTMENT
+    Included:    Hinge adjustment. Latch fix. Handle or knob replacement.
+                 Strike plate alignment.
+    Quote-only:  New door install. Pre-hung replacement. Exterior door install.
+
+  Overflow: $75/hr after 2h — only when approved in writing before work continues.
+
+
+PROJECT ESTIMATE  (public price — dedicated subpages only)
+--------------------------------------------------------------------------------
+
+  INTERIOR PAINTING               $3.00 per sq ft  (labor only)
+  FLOORING INSTALLATION           $3.00 per sq ft  (labor only)
+
+  Written quote required. Materials are separate in both cases.
+
+  Interior Painting — detailed breakdown:
+    Walls — 1 coat                $3.00 / sf
+    Walls — 2 coats               $3.75 / sf
+    Ceiling — smooth              $3.75 / sf
+    Ceiling — textured            $4.25 / sf
+    Baseboard painting            $3.00 / sf
+    Crown molding (ornate)        $3.75 / sf
+    Door casing (per side)        $30.00 each
+    Baseboard install (labor)     $2.50 / lf
+    Door slab painting            $65.00 each
+
+  Flooring Installation — detailed breakdown:
+    Laminate or LVP               $3.00 / sf
+    Demo / removal                $1.50 / sf
+    Underlayment                  $0.50 / sf
+    Transition strip              $30.00 each
+
+
+QUOTE ONLY  (no public price — photos required before any estimate)
+--------------------------------------------------------------------------------
+
+  Kitchen Cabinet Painting    Door count, condition, and finish type vary.
+  Furniture Painting          Piece count, surface prep, and finish vary.
+  Door Installation           Door type, frame condition, pre-hung vs slab vary.
+  Vanity Installation         Existing plumbing config and fixture size vary.
+  Backsplash Installation     Tile type, sq ft, and surface prep vary.
+  Hidden-wire TV (in-wall)    Wall type, fire blocking, and run length vary.
+
+  Process:
+    Customer texts photos  →  Manager reviews  →  Written quote sent
+    →  Scope confirmed in writing  →  Work starts
+
+
+RULES — WHAT TO QUOTE / WHAT NOT TO QUOTE
+--------------------------------------------------------------------------------
+
+  ALLOWED                          NEVER SAY
+  $150 service call                $185 / $120 / $105 / $75 flat / $140
+  $75/hr overflow (in writing)     "starts at" or "from $"
+  $3.00/sf painting or flooring    Per-door price for cabinets
+  "Quote after photos"             Per-piece price for furniture painting
+
+
+CROSS-SELL CLUSTERS
+--------------------------------------------------------------------------------
+
+  Wall install      TV Mounting + Furniture Assembly + Art & Mirror Hanging
+  Renovation        Interior Painting + Flooring + Drywall + Door Install
+  Paint refresh     Kitchen Cabinet Painting + Furniture Painting + Interior Painting
+  Standalone        Plumbing, Electrical, Door Repair
+
+  Booking 2+ services same visit: one trip, manager quotes bundled scope.
+  No automatic 20% combo discount.
+
+
+QUICK REFERENCE — CUSTOMER-FACING PHRASES
+--------------------------------------------------------------------------------
+
+  Standard TV mount
+    "$150 service call — up to 2 hours, cable management included.
+     $75/hr after if needed, approved in writing first."
+
+  Hidden-wire TV
+    "Hidden-wire jobs are quoted after photos — text a photo of your wall
+     and TV location."
+
+  Cabinet painting
+    "Quote after photos — text photos of your cabinets and we'll send
+     a written price."
+
+  Interior painting (e.g. 300 sf)
+    "$3/sf labor estimate — that's roughly $900 for 300 sf.
+     Written quote confirms the final total."
+
+  Flooring (e.g. 400 sf)
+    "$3/sf labor — roughly $1,200 for 400 sf.
+     Written quote required before we start."
+
+  Customer says "too expensive"
+    "Our price is $150 — that's fixed. It covers the full job within 2 hours.
+     Happy to schedule a free scope call."
+
+  Customer quotes old price ($185)
+    "That's outdated — current price is $150 service call,
+     up to 2 hours included."
+
+
+================================================================================
+Do not edit prices in this file.
+Edit lib/price-registry.js and redeploy.
+================================================================================

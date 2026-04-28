@@ -106,10 +106,11 @@ test('service categories partition correctly', () => {
 // No legacy service-specific prices may leak into the LLM prompt.
 // ---------------------------------------------------------------------------
 
-test('Alex catalog only contains allowed dollar tokens (150, 75, 3.00)', () => {
+test('Alex catalog only contains allowed dollar tokens (150, 75, 3.00, 70 cabinet anchor)', () => {
   const joined = getAlexPricingCatalogLines().join('\n');
   const tokens = [...joined.matchAll(/\$\s*(\d+(?:\.\d+)?)/g)].map((m) => Number(m[1]));
-  const allowed = new Set([150, 75, 3, 3.0]);
+  // 70 is the approved public anchor for cabinet painting ($70/door, paint included)
+  const allowed = new Set([150, 75, 3, 3.0, 70]);
   const leaked = tokens.filter((n) => !allowed.has(n));
   assert.deepEqual(leaked, [], `Alex catalog leaked legacy price tokens: ${leaked.join(', ')}`);
 });
@@ -281,7 +282,8 @@ const DENYLIST_PATTERNS = [
   { label: '$295',  re: /\$295\b/ },
   { label: '$60 (legacy service price)', re: /\$60\b/ },
   { label: '$65 (legacy door price)',    re: /\$65\b/ },
-  { label: '$70/door',  re: /\$70\/door/ },
+  // $70/door is the approved cabinet painting public anchor — NOT in denylist
+  // { label: '$70/door',  re: /\$70\/door/ },
   { label: '$75/door',  re: /\$75\/door/ },
   { label: '$40/door',  re: /\$40\/door/ },
   { label: '$7.25',     re: /\$7\.25/ },

@@ -1,0 +1,72 @@
+{
+  "checked_at": "2026-04-26T16:12:40.305987+00:00",
+  "base_url": "https://handyandfriend.com",
+  "ads_urls": {
+    "exit": 1,
+    "stdout_tail": "\u001b[32m\u2705 PASS\u001b[0m  [drywall [canonical]]\n\u001b[32m\u2705 PASS\u001b[0m  [furniture-assembly [canonical]]\n\u001b[32m\u2705 PASS\u001b[0m  [tv-mounting/los-angeles]\n\u001b[32m\u2705 PASS\u001b[0m  [drywall/los-angeles]\n\u001b[32m\u2705 PASS\u001b[0m  [furniture-assembly/los-angeles]\n\u001b[32m\u2705 PASS\u001b[0m  [assembly/los-angeles]\n\u001b[31m\u274c FAIL\u001b[0m  [flooring [canonical]]  https://handyandfriend.com/flooring\n       URLError: _ssl.c:1112: The handshake operation timed out",
+    "stderr_tail": "    return self.read(nbytes, buffer)\n  File \"/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ssl.py\", line 1099, in read\n    return self._sslobj.read(len, buffer)\nsocket.timeout: The read operation timed out",
+    "elapsed_s": 61.7
+  },
+  "health": {
+    "http": -1,
+    "ok": null
+  },
+  "telegram_dashboard": {
+    "http": -1,
+    "pending": null,
+    "fails_24h": null,
+    "fails_7d": null,
+    "leads_without_proof": null
+  },
+  "social_leads_stuck": {
+    "http": -1,
+    "count": null,
+    "oldest_age_days": null,
+    "hot_7d_unreviewed": 0
+  },
+  "social_leads_lifecycle": {
+    "new_hot_warm": 0,
+    "reviewed": 0,
+    "contacted": 0,
+    "converted": 0,
+    "ignored_hot_warm": 0
+  },
+  "fb_messenger": {
+    "real_sessions_7d": 0,
+    "leads_7d": 0,
+    "organic_pre_leads": 0
+  },
+  "nextdoor_scanner": {
+    "http": 200,
+    "last_row_at": "2026-04-07T01:05:13.015331+00:00",
+    "age_hours": 471.1
+  },
+  "craigslist_scanner": {
+    "http": 200,
+    "last_row_at": "2026-04-22T18:16:27.37868+00:00",
+    "age_hours": 93.9
+  },
+  "facebook_scanner": {
+    "http": 200,
+    "last_row_at": "2026-04-23T17:40:45.894073+00:00",
+    "age_hours": 70.5
+  },
+  "scanner_proof_gap": {
+    "last_real_proof_age_h": 70.5,
+    "scanner_active": false,
+    "gap_confirmed": false
+  },
+  "issues": [
+    "Ads URL audit FAILED (exit=1)",
+    "/api/health HTTP -1",
+    "/api/health?type=telegram HTTP -1",
+    "Nextdoor HOT/WARM yield zero: last signal 19.6d ago \u2014 ND hunter runs but reads from manual JSON feed files (all 3 currently empty, no live scraping)",
+    "CL scanner: last post 93.9h ago \u2014 scanner may be stale",
+    "FB Groups scanner: last post 70.5h ago \u2014 scanner may be stale"
+  ],
+  "result": "RED",
+  "alert": {
+    "sent": false,
+    "message_id": "disabled_by_env"
+  }
+}
