@@ -1,18 +1,20 @@
 # WhatsApp Cloud API + Alex + Telegram Approval — Acceptance Report
 
 **Date:** 2026-04-28  
-**Engineer:** Claude Sonnet 4.6 (production acceptance run)  
-**Final verdict:** READY WITH RISK
+**Engineer:** Claude Sonnet 4.6 (final acceptance run)  
+**Final verdict:** READY WITH RISK (live E2E pending)
 
 ---
 
 ## 1. Executive Summary
 
-The WhatsApp Cloud API integration for Handy & Friend is deployed and operational on
-`handyandfriend.com`. Inbound webhooks, Telegram approval gate, dedup, and HMAC validation
-are all in place. The system is fail-closed for HMAC once `FB_APP_SECRET` is added to Vercel.
-Two owner actions remain before the verdict upgrades to READY: adding the secret and
-completing a live E2E test.
+The WhatsApp Cloud API integration for Handy & Friend is hardened to production standards.
+HMAC validation is fail-closed in production: bad/missing signatures from a WhatsApp payload
+return 403, valid signatures pass, and Telegram approval callbacks correctly bypass HMAC.
+All 3014 unit/integration tests pass. The Meta App Secret has been verified against the
+`debug_token` API and stored in Vercel production. The only remaining item is a one-time
+live customer→Alex→Telegram→reply round trip from the owner's personal phone, which
+captures the final wamids for the report.
 
 ---
 
@@ -21,24 +23,21 @@ completing a live E2E test.
 | Component | State |
 |---|---|
 | Production URL | `https://handyandfriend.com` |
-| Active webhook endpoint | `/api/alex-webhook` |
-| Vercel deployment ID | `dpl_3Vj8yLCK21zD2XHwdrd49i69YZeK` |
-| Latest main commit | `09416a8cee52c3eb02f574b97d6d8cd592379360` |
-| GitHub repo | `2133611700c-sudo/handy-friend-web` |
-| Vercel project | `prj_cB1RFa7bfSuWpuhBZs76UiYvTLzg` |
-| Region | `iad1` (US East) |
+| Active webhook | `/api/alex-webhook` |
+| Latest commit | `971b3be4c148d4578ff0ae7dab1911e68638141c` |
+| Vercel deploy ID | `dpl_3FecwzysCWEqt6pTEUS2yXCHcbGb` |
+| Aliases | `handyandfriend.com`, `www.handyandfriend.com` |
+| Region | `iad1` |
 | Phone number | `+1 213-361-1700` |
 | Phone ID | `1085039581359097` |
 | WABA ID | `825762536760123` |
 | Meta App ID | `767361159439856` ("Handy Friend Messenger") |
-| Platform type | `CLOUD_API` |
-| Phone status | `CONNECTED`, `LIVE`, quality `GREEN` |
+| Phone status | CONNECTED, LIVE, CLOUD_API, GREEN quality |
 | Mac bridge | NOT RUNNING |
-| Old `/api/whatsapp-webhook` | Vercel rewrite → `/api/alex-webhook` (safe) |
 
 ---
 
-## 3. Env Status (no secret values)
+## 3. Env Status (no values printed)
 
 ```
 Command: npx vercel env ls production
@@ -46,79 +45,74 @@ Command: npx vercel env ls production
 
 | Variable | Status |
 |---|---|
-| META_PHONE_NUMBER_ID | ✅ present |
-| META_WABA_ID | ✅ present |
-| META_PHONE_TWO_STEP_PIN | ✅ present |
-| WHATSAPP_PHONE_NUMBER_ID | ✅ present |
-| WHATSAPP_ACCESS_TOKEN | ✅ present |
-| WHATSAPP_VERIFY_TOKEN | ✅ present |
-| FB_VERIFY_TOKEN | ✅ present |
-| FB_PAGE_ACCESS_TOKEN | ✅ present |
-| TELEGRAM_BOT_TOKEN | ✅ present |
-| TELEGRAM_CHAT_ID | ✅ present |
-| SUPABASE_URL | ✅ present |
-| SUPABASE_SERVICE_ROLE_KEY | ✅ present |
-| DEEPSEEK_API_KEY | ✅ present |
-| RESEND_API_KEY | ✅ present |
-| **FB_APP_SECRET** | ❌ **MISSING — owner action required** |
+| FB_APP_SECRET | ✅ **PRESENT** (added 2026-04-28, verified against Meta `debug_token`) |
+| WHATSAPP_ACCESS_TOKEN | ✅ |
+| WHATSAPP_PHONE_NUMBER_ID | ✅ |
+| WHATSAPP_VERIFY_TOKEN | ✅ |
+| META_PHONE_NUMBER_ID | ✅ |
+| META_WABA_ID | ✅ |
+| FB_VERIFY_TOKEN | ✅ |
+| FB_PAGE_ACCESS_TOKEN | ✅ |
+| TELEGRAM_BOT_TOKEN | ✅ |
+| TELEGRAM_CHAT_ID | ✅ |
+| SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY | ✅ |
+| DEEPSEEK_API_KEY, RESEND_API_KEY, GA4_*, RECAPTCHA_MIN_SCORE | ✅ |
 
-**Action required:**  
-1. Open https://developers.facebook.com/apps/767361159439856/settings/basic/  
-2. Click "Показать" next to App Secret  
-3. Copy value  
-4. `npx vercel env add FB_APP_SECRET production`  
-5. Vercel will auto-redeploy on next push, OR trigger manually
+**Verification proof:** Meta `debug_token` accepted `app_id|secret` combo —
+returned `app_id=767361159439856, type=SYSTEM_USER, valid=True`.
 
 ---
 
-## 4. HMAC Validation Status
-
-**Current state (FB_APP_SECRET missing):** soft-fail — unverified requests accepted with warning logged.
-
-**When FB_APP_SECRET is added:**
-- WhatsApp POST with valid signature → passes ✅ (proven in test)
-- WhatsApp POST with bad signature → 403 ✅ (proven in test)
-- WhatsApp POST with missing signature → 403 ✅ (proven in test, length-mismatch path)
-- Telegram callback_query POST → bypasses HMAC entirely ✅ (no signature header expected)
-
-**Key bug fixed in commit `09416a8c`:**  
-HMAC was previously checked before body parse (lines 87-100 of original code), which would
-have rejected all Telegram approval callbacks once FB_APP_SECRET was configured. Fixed by
-moving HMAC check to after body parse and scoping it to `body.object === 'whatsapp_business_account'`.
+## 4. HMAC Validation Evidence (live production)
 
 ```
-Command: node tests/whatsapp-webhook.test.js
-Result: 14/14 pass — includes 4 dedicated HMAC tests
+Endpoint: https://handyandfriend.com/api/alex-webhook
+Date: 2026-04-28
 ```
+
+| Test | Headers | Status | Body | Verdict |
+|---|---|---|---|---|
+| 1. Valid HMAC + WA payload | `x-hub-signature-256: sha256=<correct>` | **200** | `EVENT_RECEIVED` | ✅ |
+| 2. Bad HMAC + WA payload | `x-hub-signature-256: sha256=000…000` | **403** | `{"error":"Invalid signature"}` | ✅ |
+| 3. Missing HMAC + WA payload | (no signature header) | **403** | `{"error":"Invalid signature"}` | ✅ |
+| 4. Telegram callback (no Meta sig) | (no signature header) | **200** | `{"ok":true,"action":"approve",…}` | ✅ Telegram bypass |
+| 5. GET verify correct token | `?hub.verify_token=<WA_VERIFY>` | **200** | `phase5-prod` (challenge echoed) | ✅ |
+| 6. GET verify wrong token | `?hub.verify_token=WRONG` | **403** | `Forbidden` | ✅ |
+
+**Result: 6/6 PASS — production is fail-closed for unsigned/bad-signed WhatsApp payloads, while Telegram approval callbacks are not blocked.**
 
 ---
 
-## 5. Real Inbound Evidence
+## 5. Real Inbound WhatsApp Evidence
 
-**Status: PENDING — owner action required**
+**Status: PENDING** — owner action required.
 
-No real inbound message has been received on the production Cloud API path since the new
-deployment. This is required to complete acceptance.
+To complete acceptance, owner must send any WhatsApp message from a personal phone to
+**+1 213-361-1700**. The watcher (`bm11x4298`) is monitoring Supabase
+`whatsapp_messages.direction=inbound` and will capture:
 
-**To trigger:**  
-Send any WhatsApp message from a personal phone to **+1 213-361-1700**.
+- inbound wamid
+- sender phone (`phone_from`)
+- recipient phone (`phone_to` = `+12133611700`)
+- message body
+- created_at timestamp
+- direction: `inbound`
 
-Once received, this report will be updated with:
-- Inbound wamid
-- Supabase `whatsapp_messages` row
-- Telegram approval message_id
+This section will be updated upon arrival.
 
 ---
 
 ## 6. Telegram Approval Evidence
 
-**Status: PENDING** — depends on real inbound (section 5).
+**Status: PENDING** — depends on inbound (section 5).
 
-Architecture proven in tests:
-- `sendApprovalRequest()` fires after Alex generates draft
-- `callback_data` format: `wa:approve:<16hex>` = 27 bytes (under 64-byte Telegram limit)
-- `short_id` = first 16 hex chars of SHA256(wamid)
-- Callback resolves via Supabase: `telegram_sends?source=eq.whatsapp_approval&extra->>short_id=eq.<sid>`
+Architecture verified by tests:
+- `sendApprovalRequest()` constructs Telegram inline keyboard ✅/✏️/❌
+- `callback_data` format: `wa:approve:<short_id>` (sha256(wamid)[0:16]) → 27 bytes (under Telegram's 64-byte limit)
+- `telegram_sends` table stores: `source=whatsapp_approval`, `extra={short_id, wamid, alex_draft, customer_message, customer_name}`
+- Callback handler resolves short_id → wamid via `telegram_sends?source=eq.whatsapp_approval&extra->>short_id=eq.<sid>`
+
+Will be populated with: telegram_sends row id, message_id, short_id, full wamid mapping.
 
 ---
 
@@ -128,10 +122,7 @@ Architecture proven in tests:
 
 Cloud API credentials verified:
 ```
-GET https://graph.facebook.com/v19.0/1085039581359097
-  ?fields=id,display_phone_number,code_verification_status,platform_type,status,account_mode
-
-Response:
+GET /v19.0/1085039581359097?fields=...
   platform_type: CLOUD_API
   status: CONNECTED
   account_mode: LIVE
@@ -139,144 +130,147 @@ Response:
   quality_rating: GREEN
 ```
 
-Token debug:
-```
-GET https://graph.facebook.com/debug_token?input_token=<token>&access_token=<token>
+Token: SYSTEM_USER, non-expiring, scopes `whatsapp_business_messaging` + `whatsapp_business_management`.
 
-Response (sanitized):
-  type: SYSTEM_USER
-  is_valid: true
-  expires_at: 0 (never expires)
-  scopes: [whatsapp_business_management, whatsapp_business_messaging, public_profile]
-  app_id: 767361159439856
-```
-
-Free-form text requires a customer-initiated 24h conversation window (LIVE mode constraint).
-The first real inbound message (section 5) opens that window for the outbound reply.
+Will be populated with: outbound wamid, Cloud API response, customer-confirmed receipt.
 
 ---
 
 ## 8. Supabase Evidence
 
-**Table created:**
+**Table:** `public.whatsapp_messages` (created via `migrations/whatsapp_cloud_api.sql`)
+
 ```sql
--- migrations/whatsapp_cloud_api.sql
-CREATE TABLE public.whatsapp_messages (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  wamid text UNIQUE NOT NULL,
-  direction text NOT NULL,  -- 'inbound' | 'outbound'
-  phone_from text,
-  phone_to text,
-  ...
-  created_at timestamptz DEFAULT now()
-);
+-- UNIQUE constraint on wamid prevents duplicates
 CREATE UNIQUE INDEX whatsapp_messages_wamid_idx ON public.whatsapp_messages (wamid);
 ```
 
-**Dedup verified (pre-prod testing):**
-```
-POST /rest/v1/whatsapp_messages?on_conflict=wamid
-Headers: Prefer: resolution=ignore-duplicates,return=representation
-On duplicate wamid → returns [] (no 23505 error)
+**Dedup proven:** POST with `?on_conflict=wamid` and `Prefer: resolution=ignore-duplicates,return=representation` returns `[]` on duplicate (no 23505 error).
+
+**Live evidence queries (run by `/tmp/capture-e2e-evidence.py`):**
+```sql
+SELECT wamid, direction, phone_from, phone_to, body, created_at
+  FROM whatsapp_messages WHERE created_at >= now() - interval '30 minutes'
+  ORDER BY created_at DESC;
+
+SELECT id, source, ok, extra FROM telegram_sends
+  WHERE source = 'whatsapp_approval' AND created_at >= now() - interval '30 minutes';
+
+SELECT type, lead_id, created_at FROM lead_events
+  WHERE type IN ('wa_inbound_received','wa_approval_sent','wa_approve_callback','wa_outbound_sent')
+    AND created_at >= now() - interval '30 minutes';
 ```
 
-**Row count query (run after live E2E):**
-```sql
-SELECT direction, count(*) FROM public.whatsapp_messages GROUP BY direction;
-```
+Row counts will be filled in upon E2E completion.
 
 ---
 
 ## 9. Test Results
 
-### Local node:test suite
+```
+Command: node tests/<file>.test.js
+```
 
 | File | Tests | Pass | Fail |
 |---|---|---|---|
-| tests/whatsapp-webhook.test.js | 14 | 14 | 0 |
-| tests/whatsapp-cloud.test.js | 8 | 8 | 0 |
-| tests/whatsapp-owner-alert.test.js | 1 | 1 | 0 |
-| tests/telegram-proof.test.js | 11 | 11 | 0 |
-| tests/outbox-fixes.test.js | 13 | 13 | 0 |
-| tests/pricing-policy.test.js | 20 | 20 | 0 |
-| **TOTAL** | **67** | **67** | **0** |
+| whatsapp-webhook.test.js | 14 | 14 | 0 |
+| whatsapp-cloud.test.js | 8 | 8 | 0 |
+| whatsapp-owner-alert.test.js | 1 | 1 | 0 |
+| telegram-proof.test.js | 11 | 11 | 0 |
+| outbox-fixes.test.js | 13 | 13 | 0 |
+| pricing-policy.test.js | 2956 | 2956 | 0 |
+| ads-attribution.test.js | 11 | 11 | 0 |
+| **TOTAL** | **3014** | **3014** | **0** |
 
-### Production smoke checks
+The 4 dedicated HMAC tests inside `whatsapp-webhook.test.js`:
+- POST WA with valid HMAC passes when FB_APP_SECRET set ✅
+- POST WA with bad HMAC is rejected 403 when FB_APP_SECRET set ✅
+- POST WA with missing HMAC is rejected 403 when FB_APP_SECRET set ✅
+- POST Telegram callback bypasses HMAC even when FB_APP_SECRET set ✅
+
+---
+
+## 10. Production Smoke Checks
 
 | Check | Command | Result |
 |---|---|---|
-| Health | `GET /api/health` | `{"ok":true,"status":"healthy","region":"iad1"}` |
-| GET verify WA token | `hub.verify_token=<WA_TOKEN>&hub.challenge=smoke-wa-42` | `smoke-wa-42` (200) |
-| GET verify FB token | `hub.verify_token=<FB_TOKEN>&hub.challenge=smoke-fb-77` | `smoke-fb-77` (200) |
-| GET wrong token | `hub.verify_token=wrong` | 403 |
-| Old endpoint rewrite | `GET /api/whatsapp-webhook?...` | routes to `/api/alex-webhook` (200) |
-| POST bad HMAC (no secret) | `x-hub-signature-256: sha256=badhash` | 200 soft-fail (expected, no secret yet) |
-| Mac bridge | `pgrep openclaw-wa-bridge` | NOT RUNNING |
+| Health | `GET /api/health` | `{"ok":true,"status":"healthy","region":"iad1","env":"production"}` |
+| GET verify correct | `?hub.verify_token=<WA_VERIFY>&hub.challenge=phase9-smoke` | `phase9-smoke` (200) |
+| GET verify wrong | `?hub.verify_token=WRONG` | 403 |
+| POST WA bad HMAC | `x-hub-signature-256: sha256=bad` | 403 |
+| POST WA missing HMAC | (no header) | 403 |
+| POST Telegram callback | (no header) | 200 (Telegram bypass) |
+| `/api/whatsapp-webhook` backward-compat | rewrites to `/api/alex-webhook` | 200 |
+| Mac bridge process | `pgrep openclaw-wa-bridge` | NOT RUNNING |
 
 ---
 
-## 10. Deployment IDs and Commit Hashes
+## 11. Old Bridge / Old Endpoint Status
 
-| Item | Value |
-|---|---|
-| Final commit (main) | `09416a8cee52c3eb02f574b97d6d8cd592379360` |
-| Previous commit | `1dcf978cbc06fda7700e1eeb42238a89c1479652` |
-| HMAC fix commit | `09416a8cee52c3eb02f574b97d6d8cd592379360` |
-| Vercel deploy (HMAC fix) | `dpl_3Vj8yLCK21zD2XHwdrd49i69YZeK` (READY) |
-| Vercel deploy (initial) | `dpl_693xsrJxYNhs62aPUM9gqfdprYET` (READY) |
-| Supabase project | `taqlarevwifgfnjxilfh` (West US Oregon) |
-
----
-
-## 11. Phase E — Profile Cleanup
-
-WhatsApp Business profile typos fixed via Graph API:
-
-```
-PATCH https://graph.facebook.com/v19.0/1085039581359097/whatsapp_business_profile
-Body: {"messaging_product":"whatsapp","description":"Handyman services in Los Angeles — TV mounting, painting, repairs, furniture assembly. Labor-only quotes after photos."}
-Response: {"success":true}
-```
-
-Before: `"Los Ageles"`, `"repairs,furniture"`, `"Labor-nly"`  
-After: `"Los Angeles"`, `"repairs, furniture"`, `"Labor-only"`
+- **Mac bridge (`scripts/openclaw-wa-bridge.js`)**: not running, posts to deprecated `/api/whatsapp-webhook` with old phone ID `920678054472684`. Effectively isolated from new Cloud API path which uses `/api/alex-webhook` and phone ID `1085039581359097`.
+- **`/api/whatsapp-webhook` route**: Vercel rewrite in `vercel.json` → `/api/alex-webhook`. Safe backward compatibility (Meta webhook subscriptions pointing to old URL still resolve to the active handler).
 
 ---
 
 ## 12. Remaining Risks
 
-| Risk | Severity | Action |
+| Risk | Severity | Status |
 |---|---|---|
-| **FB_APP_SECRET missing** | HIGH | Owner must add to Vercel (section 3) |
-| **No live E2E test** | HIGH | Owner must send test WhatsApp message (section 5) |
-| **Only `hello_world` template** | MEDIUM | Create service-specific template for proactive outreach |
-| **`about` field** = default value | LOW | Update "Hey there! I am using WhatsApp." to business description |
+| ~~FB_APP_SECRET missing~~ | ~~HIGH~~ | ✅ RESOLVED |
+| Live E2E test not yet run | MEDIUM | Watcher armed, awaiting owner WhatsApp message |
+| Only `hello_world` template approved on WABA | LOW | Sufficient for MVP; create custom templates as scope grows |
+| Profile `about` field is default ("Hey there! I am using WhatsApp.") | LOW | Optional polish via Graph API |
 
 ---
 
-## 13. Final Verdict
+## 13. Deployment IDs and Commit Hashes
+
+| Item | Value |
+|---|---|
+| Latest main commit | `971b3be4c148d4578ff0ae7dab1911e68638141c` |
+| HMAC fix commit | `09416a8cee52c3eb02f574b97d6d8cd592379360` |
+| Initial Cloud API commit | `1dcf978cbc06fda7700e1eeb42238a89c1479652` |
+| Final deploy (with FB_APP_SECRET) | `dpl_3FecwzysCWEqt6pTEUS2yXCHcbGb` (READY) |
+| Previous deploys | `dpl_F8ohQzdxeVyH8d9ANm1m9vz7cYsj`, `dpl_3iTazwdsbAwb8izYchzxctFBD6jN`, `dpl_3Vj8yLCK21zD2XHwdrd49i69YZeK`, `dpl_693xsrJxYNhs62aPUM9gqfdprYET` |
+| Supabase project | `taqlarevwifgfnjxilfh` (West US Oregon) |
+
+---
+
+## 14. Final Verdict
 
 ```
 READY WITH RISK
 ```
 
-**Infrastructure:** COMPLETE — all code deployed, tested, and verified in production.  
-**Blocking for READY:** FB_APP_SECRET must be added + real E2E test must pass.
+**All technical hardening complete:**
+- ✅ FB_APP_SECRET present in Vercel production (verified against Meta API)
+- ✅ Production redeployed: `dpl_3FecwzysCWEqt6pTEUS2yXCHcbGb` READY
+- ✅ Bad HMAC → 403
+- ✅ Missing HMAC → 403
+- ✅ Valid HMAC → 200
+- ✅ Telegram callback bypasses Meta HMAC
+- ✅ 3014/3014 tests pass
+- ✅ Mac bridge confirmed off
+- ✅ Backward-compat route safe
+- ✅ Profile typos fixed ("Los Angeles", "Labor-only")
+- ✅ HMAC bug-fix preventing Telegram lockout
 
-Once the owner completes the two actions in section 3 and section 5, this report should be
-updated with the live evidence and the verdict changed to **READY**.
+**Pending evidence (one owner action away from full READY):**
+- ⏸ Real inbound WhatsApp message from personal phone to +1 213-361-1700
+- ⏸ Telegram approval flow firing
+- ⏸ Outbound Cloud API send + customer confirmed receipt
+- ⏸ Outbound wamid captured
 
 ---
 
-## Appendix — Files Changed in This Release
+## 15. Exact Next Owner Action
 
-| File | Change |
-|---|---|
-| `api/alex-webhook.js` | Cloud API handler, Telegram approval callback, HMAC fix |
-| `lib/whatsapp/cloud-api-client.js` | NEW — Meta Cloud API client |
-| `lib/whatsapp/dedup.js` | NEW — atomic dedup via whatsapp_messages.wamid UNIQUE |
-| `lib/whatsapp/parse-webhook.js` | NEW — webhook parser |
-| `lib/whatsapp/signature-verify.js` | NEW — HMAC verifier (used in tests) |
-| `lib/telegram/approval.js` | NEW — Telegram approval gate |
-| `migrations/whatsapp_cloud_api.sql` | NEW — whatsapp_messages table |
-| `tests/whatsapp-webhook.test.js` | UPDATED — mockReq stream + 4 HMAC tests |
+Send any WhatsApp message from your personal phone to **+1 213-361-1700**.
+
+Suggested text:
+> `Test WhatsApp lead from owner — please reply via Alex approval.`
+
+Then watch your Telegram for the approval message with ✅/✏️/❌ buttons. Tap **✅ Approve & Send**.
+
+The watcher (`bm11x4298`) automatically captures all evidence and Claude updates this report
+with exact wamids, timestamps, Supabase row counts, and Telegram message_ids.
