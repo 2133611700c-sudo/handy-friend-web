@@ -243,6 +243,75 @@ test('POST unsupported object returns 404', async () => {
   assert.equal(result.status, 404);
 });
 
+// ── HMAC signature validation ───────────────────────────────────────────────
+
+test('POST WA with valid HMAC passes when FB_APP_SECRET set', async () => {
+  const secret = 'test-hmac-secret-abc';
+  const body = {
+    object: 'whatsapp_business_account',
+    entry: [{ changes: [{ value: { metadata: { phone_number_id: 'pid' }, statuses: [{ id: 'wamid.s1', status: 'delivered', timestamp: '1', recipient_id: '1' }] } }] }]
+  };
+  const rawBody = Buffer.from(JSON.stringify(body), 'utf8');
+  const crypto = require('crypto');
+  const sig = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+
+  const savedSecret = process.env.FB_APP_SECRET;
+  process.env.FB_APP_SECRET = secret;
+  const result = await invoke({
+    method: 'POST',
+    headers: { 'x-hub-signature-256': sig },
+    body,
+  });
+  process.env.FB_APP_SECRET = savedSecret || '';
+  assert.equal(result.status, 200);
+});
+
+test('POST WA with bad HMAC is rejected 403 when FB_APP_SECRET set', async () => {
+  const savedSecret = process.env.FB_APP_SECRET;
+  process.env.FB_APP_SECRET = 'test-hmac-secret-abc';
+  const result = await invoke({
+    method: 'POST',
+    headers: { 'x-hub-signature-256': 'sha256=badhash' },
+    body: { object: 'whatsapp_business_account', entry: [] },
+  });
+  process.env.FB_APP_SECRET = savedSecret || '';
+  assert.equal(result.status, 403);
+});
+
+test('POST WA with missing HMAC is rejected 403 when FB_APP_SECRET set', async () => {
+  const savedSecret = process.env.FB_APP_SECRET;
+  process.env.FB_APP_SECRET = 'test-hmac-secret-abc';
+  const result = await invoke({
+    method: 'POST',
+    headers: {},
+    body: { object: 'whatsapp_business_account', entry: [] },
+  });
+  process.env.FB_APP_SECRET = savedSecret || '';
+  assert.equal(result.status, 403);
+});
+
+test('POST Telegram callback bypasses HMAC even when FB_APP_SECRET set', async () => {
+  const savedSecret = process.env.FB_APP_SECRET;
+  process.env.FB_APP_SECRET = 'test-hmac-secret-abc';
+  // Telegram update has no x-hub-signature-256 — must NOT be rejected
+  const result = await invoke({
+    method: 'POST',
+    headers: {},
+    body: {
+      update_id: 99999,
+      callback_query: {
+        id: 'cq1',
+        from: { id: 123 },
+        data: 'wa:approve:abcd1234abcd1234',
+        message: { message_id: 1, chat: { id: 123 } }
+      }
+    },
+  });
+  process.env.FB_APP_SECRET = savedSecret || '';
+  // Returns 200 (processed) — not 403
+  assert.equal(result.status, 200);
+});
+
 // ── logLeadEvent(null) guard ─────────────────────────────────────────────────
 
 test('logLeadEvent with null lead_id skips DB insert and returns ok:skipped', async () => {

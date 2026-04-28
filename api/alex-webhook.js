@@ -84,21 +84,6 @@ async function handler(req, res) {
     req.on('error', reject);
   });
 
-  // HMAC X-Hub-Signature-256 validation
-  const appSecret = (process.env.FB_APP_SECRET || process.env.WHATSAPP_APP_SECRET || '').trim();
-  if (appSecret) {
-    const sig = req.headers['x-hub-signature-256'] || '';
-    const expected = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
-    const sigBuf = Buffer.from(sig);
-    const expBuf = Buffer.from(expected);
-    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
-      console.warn('[WEBHOOK] Invalid X-Hub-Signature-256 — rejected');
-      return res.status(403).json({ error: 'Invalid signature' });
-    }
-  } else {
-    console.warn('[WEBHOOK] FB_APP_SECRET not set — skipping HMAC validation');
-  }
-
   let body;
   try {
     body = rawBody.length ? JSON.parse(rawBody.toString('utf8')) : {};
@@ -107,22 +92,26 @@ async function handler(req, res) {
   }
 
   // ── Telegram bot callback (inline keyboard for WhatsApp approval) ──────────
+  // Telegram does NOT send X-Hub-Signature-256 — skip HMAC for these requests.
   if (body.callback_query || body.update_id) {
     return handleTelegramUpdate(body, res);
   }
 
   // ── WhatsApp Business — Cloud API only (NO bridge fallback) ────────────────
   if (body.object === 'whatsapp_business_account') {
-    // HMAC verify (will be enforced once FB_APP_SECRET set in Vercel; soft-fail until then)
-    const sigVerify = require('../lib/whatsapp/signature-verify.js');
-    if (sigVerify.isConfigured()) {
-      const sigHeader = req.headers['x-hub-signature-256'] || '';
-      if (!sigVerify.verifyWebhookSignature(rawBody, sigHeader)) {
-        console.warn('[WA_WEBHOOK] HMAC INVALID — rejecting');
+    // HMAC X-Hub-Signature-256 validation — fail-closed when FB_APP_SECRET is set.
+    const appSecret = (process.env.FB_APP_SECRET || process.env.META_APP_SECRET || process.env.WHATSAPP_APP_SECRET || '').trim();
+    if (appSecret) {
+      const sig = req.headers['x-hub-signature-256'] || '';
+      const expected = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
+      const sigBuf = Buffer.from(sig);
+      const expBuf = Buffer.from(expected);
+      if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+        console.warn('[WA_WEBHOOK] HMAC INVALID — rejected');
         return res.status(403).json({ error: 'Invalid signature' });
       }
     } else {
-      console.warn('[WA_WEBHOOK] HMAC not configured (META_APP_SECRET missing) — accepting unverified');
+      console.warn('[WA_WEBHOOK] FB_APP_SECRET not set — accepting unverified (soft-fail)');
     }
 
     const errors = [];
