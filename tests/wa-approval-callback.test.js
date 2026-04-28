@@ -149,7 +149,10 @@ test('duplicate approve detects existing outbound and does not re-send', async (
 
 // ── Fallback when Alex draft is empty ──────────────────────────────────────
 
-test('approve with empty draft falls back to safe English reply', async () => {
+test('approve with empty draft is BLOCKED (no silent substitution)', async () => {
+  // STRICT MODE: empty stored draft → block, do not silently substitute.
+  // Operator must regenerate. The exported FALLBACK_REPLY constant remains
+  // available for the regen tooling but is NOT used by the callback handler.
   const calls = { sendText: [] };
   const savedFetch = global.fetch;
   global.fetch = async (url, opts) => {
@@ -157,19 +160,15 @@ test('approve with empty draft falls back to safe English reply', async () => {
     if (u.includes('/telegram_sends?source=eq.whatsapp_approval')) {
       return { ok: true, status: 200, json: async () => [{ extra: { wamid: 'wamid.IN.NODRAFT', wa_from: '12135550000', alex_draft: '', short_id: 'fallback00000000' } }] };
     }
-    if (u.includes('/whatsapp_messages?direction=eq.out')) {
-      return { ok: true, status: 200, json: async () => [] };
-    }
     if (u.includes('graph.facebook.com') && u.endsWith('/messages')) {
       calls.sendText.push(JSON.parse(opts.body));
-      const respText = JSON.stringify({ messages: [{ id: 'wamid.OUT.FALLBACK' }] });
-      return { ok: true, status: 200, text: async () => respText, json: async () => JSON.parse(respText) };
+      return { ok: true, status: 200, text: async () => '', json: async () => ({}) };
     }
     return { ok: true, status: 200, json: async () => ({}), text: async () => '' };
   };
 
   delete require.cache[require.resolve('../lib/telegram/wa-approval-callback.js')];
-  const { handleWAApprovalCallback, FALLBACK_REPLY } = require('../lib/telegram/wa-approval-callback.js');
+  const { handleWAApprovalCallback } = require('../lib/telegram/wa-approval-callback.js');
 
   const res = mockRes();
   await handleWAApprovalCallback(
@@ -179,10 +178,10 @@ test('approve with empty draft falls back to safe English reply', async () => {
 
   global.fetch = savedFetch;
 
-  assert.equal(res.payload.result.sentWamid, 'wamid.OUT.FALLBACK');
-  assert.equal(calls.sendText.length, 1);
-  assert.equal(calls.sendText[0].text.body, FALLBACK_REPLY);
-  assert.match(FALLBACK_REPLY, /^Hi! Thanks for reaching out\./);
+  assert.equal(res.payload.result.ok, false, 'empty draft must NOT send');
+  assert.equal(res.payload.result.error, 'unsafe_draft');
+  assert.ok(res.payload.result.safetyFlags.includes('empty'));
+  assert.equal(calls.sendText.length, 0, 'Cloud API must NOT be called for empty draft');
 });
 
 // ── /api/telegram-webhook routes wa:* callbacks (regression test for the bug) ─
