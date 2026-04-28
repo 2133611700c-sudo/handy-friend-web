@@ -11,6 +11,7 @@
  * - SUPABASE_SERVICE_ROLE_KEY
  */
 
+const crypto = require('crypto');
 const { restInsert, getConfig, logLeadEvent } = require('./_lib/supabase-admin.js');
 const { callAlex } = require('../lib/ai-fallback.js');
 const { processInbound, transitionLead, logEvent: pipelineLogEvent, drainOutboxInline, enqueueOutboundJob } = require('../lib/lead-pipeline.js');
@@ -75,25 +76,72 @@ async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const body = req.body || {};
+  // Collect raw body (bodyParser disabled for HMAC validation)
+  const rawBody = await new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
 
-  // ── WhatsApp Business ────────────────────────────────────────────────────────
+  // HMAC X-Hub-Signature-256 validation
+  const appSecret = (process.env.FB_APP_SECRET || process.env.WHATSAPP_APP_SECRET || '').trim();
+  if (appSecret) {
+    const sig = req.headers['x-hub-signature-256'] || '';
+    const expected = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
+    const sigBuf = Buffer.from(sig);
+    const expBuf = Buffer.from(expected);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      console.warn('[WEBHOOK] Invalid X-Hub-Signature-256 — rejected');
+      return res.status(403).json({ error: 'Invalid signature' });
+    }
+  } else {
+    console.warn('[WEBHOOK] FB_APP_SECRET not set — skipping HMAC validation');
+  }
+
+  let body;
+  try {
+    body = rawBody.length ? JSON.parse(rawBody.toString('utf8')) : {};
+  } catch {
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+
+  // ── Telegram bot callback (inline keyboard for WhatsApp approval) ──────────
+  if (body.callback_query || body.update_id) {
+    return handleTelegramUpdate(body, res);
+  }
+
+  // ── WhatsApp Business — Cloud API only (NO bridge fallback) ────────────────
   if (body.object === 'whatsapp_business_account') {
+    // HMAC verify (will be enforced once FB_APP_SECRET set in Vercel; soft-fail until then)
+    const sigVerify = require('../lib/whatsapp/signature-verify.js');
+    if (sigVerify.isConfigured()) {
+      const sigHeader = req.headers['x-hub-signature-256'] || '';
+      if (!sigVerify.verifyWebhookSignature(rawBody, sigHeader)) {
+        console.warn('[WA_WEBHOOK] HMAC INVALID — rejecting');
+        return res.status(403).json({ error: 'Invalid signature' });
+      }
+    } else {
+      console.warn('[WA_WEBHOOK] HMAC not configured (META_APP_SECRET missing) — accepting unverified');
+    }
+
     const errors = [];
     for (const entry of body.entry || []) {
       for (const change of entry.changes || []) {
         const value = change?.value || {};
+        const phoneNumberId = (value.metadata?.phone_number_id || process.env.META_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID || '').trim();
+        // Status callbacks
         if (value.statuses?.length) {
-          console.log('[WA_WEBHOOK] Status callback:', JSON.stringify(value.statuses[0]));
+          const { updateStatus } = require('../lib/whatsapp/dedup.js');
+          for (const s of value.statuses) {
+            console.log('[WA_WEBHOOK] Status:', JSON.stringify(s));
+            await updateStatus({ wamid: s.id, status: s.status, timestamp: Number(s.timestamp || 0), errorReason: s.errors?.[0]?.title || null }).catch(e => console.error('[WA_WEBHOOK] status update err:', e.message));
+          }
           continue;
         }
         const contactName = value.contacts?.[0]?.profile?.name || 'Unknown';
-        const phoneNumberId = (value.metadata?.phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID || '').trim();
         for (const msg of value.messages || []) {
-          if (isWaDuplicate(msg.id)) {
-            console.log('[WA_WEBHOOK] Dedup skip:', msg.id);
-            continue;
-          }
+          if (isWaDuplicate(msg.id)) { console.log('[WA_WEBHOOK] Local dedup:', msg.id); continue; }
           try {
             await handleWhatsAppMessage(msg, contactName, phoneNumberId);
           } catch (err) {
@@ -140,6 +188,7 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
+module.exports.config = { api: { bodyParser: false } };
 
 function verifyWebhook(req, res) {
   // Accept either FB_VERIFY_TOKEN (Messenger) or WHATSAPP_VERIFY_TOKEN (WhatsApp)
@@ -1064,43 +1113,58 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
 
   await saveTurns(sessionId, null, inboundText, reply);
 
-  // Lead capture
+  // Lead capture — for WhatsApp, ALWAYS create lead on first inbound (we have phone via `from`)
   let createdLeadId = null;
-  const inferredLead = inferLeadFromConversation(messages);
-  if (inferredLead) {
-    try {
-      const waEnvelope = createEnvelope({
-        source:            'whatsapp',
-        source_user_id:    from,
-        source_message_id: msgId,
-        source_thread_id:  sessionId,
-        lead_phone:        inferredLead.phone || from,
-        lead_email:        '',
-        lead_name:         contactName !== 'Unknown' ? contactName : (inferredLead.name || 'Unknown'),
-        raw_text:          inferredLead.problem_description || inboundText,
-        service_hint:      inferredLead.service_type || '',
-        meta:              { wa_from: from, session_id: sessionId, pricing_version: getPricingSourceVersion() }
-      });
-      const created = await processInbound(waEnvelope);
-      createdLeadId = created?.id || null;
+  const inferredLead = inferLeadFromConversation(messages) || {};
+  try {
+    const waEnvelope = createEnvelope({
+      source:            'whatsapp',
+      source_user_id:    from,
+      source_message_id: msgId,
+      source_thread_id:  sessionId,
+      lead_phone:        inferredLead.phone || from,
+      lead_email:        '',
+      lead_name:         contactName !== 'Unknown' ? contactName : (inferredLead.name || 'WhatsApp Lead'),
+      raw_text:          inferredLead.problem_description || inboundText,
+      service_hint:      inferredLead.service_type || '',
+      meta:              { wa_from: from, session_id: sessionId, pricing_version: getPricingSourceVersion() }
+    });
+    const created = await processInbound(waEnvelope);
+    createdLeadId = created?.id || null;
+    if (createdLeadId) {
       await transitionLead(created.id, 'contacted', { contacted_at: new Date().toISOString() }).catch(() => {});
-      console.log('[WA_WEBHOOK] Lead id=%s phone=%s', createdLeadId, inferredLead.phone);
-    } catch (err) {
-      console.error('[WA_WEBHOOK] Lead error:', err.message);
+      console.log('[WA_WEBHOOK] Lead id=%s phone=%s (auto on inbound)', createdLeadId, inferredLead.phone || from);
     }
+  } catch (err) {
+    console.error('[WA_WEBHOOK] Lead error:', err.message);
   }
 
-  // Send reply
+  // Cloud API path: send DRAFT to operator approval, do NOT auto-send to customer
   try {
-    const sendResult = await sendWhatsAppReply(phoneNumberId, from, reply, msgId);
-    console.log('[WA_WEBHOOK] Reply sent ok=%s outbound_id=%s', sendResult.ok, sendResult.messageId);
-    await logLeadEvent(createdLeadId, 'whatsapp_ai_reply_sent', {
-      from, session_id: sessionId, outbound_msg_id: sendResult.messageId, reply_preview: reply.slice(0, 100)
+    const { sendApprovalRequest } = require('../lib/telegram/approval.js');
+    const { recordInbound } = require('../lib/whatsapp/dedup.js');
+
+    // Persist inbound + draft for later approval flow
+    await recordInbound({
+      wamid: msgId, from, to: phoneNumberId, body: inboundText, media: null, type: msgType, contextWamid: null, pushName: contactName,
+    }).catch(e => console.warn('[WA_WEBHOOK] dedup.recordInbound (table may need migration):', e.message));
+
+    const ar = await sendApprovalRequest({
+      inboundWamid: msgId,
+      customerPhone: from,
+      customerName: contactName,
+      customerMessage: inboundText,
+      alexDraft: reply,
+      threadId: sessionId,
+    });
+    console.log('[WA_WEBHOOK] approval queued ok=%s tg_msg_id=%s', ar?.ok, ar?.messageId);
+    await logLeadEvent(createdLeadId, 'whatsapp_approval_queued', {
+      from, session_id: sessionId, telegram_message_id: ar?.messageId || null, draft_preview: reply.slice(0, 120),
     }).catch(() => {});
   } catch (err) {
-    console.error('[WA_WEBHOOK] Reply failed:', err.message);
-    await logLeadEvent(createdLeadId, 'whatsapp_ai_reply_failed', {
-      from, session_id: sessionId, error: err.message, error_code: err.code || 'unknown'
+    console.error('[WA_WEBHOOK] approval queue failed:', err.message);
+    await logLeadEvent(createdLeadId, 'whatsapp_approval_failed', {
+      from, session_id: sessionId, error: err.message,
     }).catch(() => {});
   }
 
@@ -1148,4 +1212,68 @@ async function notifyTelegramWaLead({ leadId, sessionId, from, contactName, serv
   const slaTime = new Date(Date.now() + 3600000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Los_Angeles' });
   const text = `🟢 <b>WHATSAPP_LEAD</b>\n━━━━━━━━━━━━━━━━━━━━\n📱 Phone: <code>+${esc(from)}</code>\n👤 Name: ${esc(contactName)}\n🔧 Service: ${esc(service)}\n🌐 Channel: WhatsApp Business\n━━━━━━━━━━━━━━━━━━━━\n⏰ <b>SLA:</b> ${slaTime} PT\n━━━━━━━━━━━━━━━━━━━━\n<b>User:</b> ${esc(String(userText || '').slice(0, 300))}\n<b>Alex:</b> ${esc(String(aiReply || '').slice(0, 300))}\n<i>Session: ${esc(sessionId)}</i>`;
   await unifiedTelegramSend({ source: 'alex_webhook', leadId, sessionId, text, token, chatId, timeoutMs: 4000, extra: { channel: 'whatsapp', kind: 'lead_capture', wa_from: from } });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Telegram bot callback — inline keyboard for WhatsApp approval
+// (merged into alex-webhook to stay under Vercel Hobby 12-function limit)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function handleTelegramUpdate(update, res) {
+  const cb = update.callback_query;
+  if (!cb || !cb.data) return res.status(200).json({ ok: true, ignored: 'no callback_query' });
+
+  const operator = cb.from?.username || String(cb.from?.id || 'unknown');
+  const m = String(cb.data).match(/^wa:(approve|reject|edit):(.+)$/);
+  if (!m) return res.status(200).json({ ok: true, ignored: 'unknown format' });
+  const [, action, sid] = m;
+
+  const cloudApi = require('../lib/whatsapp/cloud-api-client.js');
+  const dedup = require('../lib/whatsapp/dedup.js');
+  const SB_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+  const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+
+  // Resolve short_id → original approval request via telegram_sends.extra
+  async function resolveShortId(s) {
+    const url = `${SB_URL}/rest/v1/telegram_sends?source=eq.whatsapp_approval&extra->>short_id=eq.${encodeURIComponent(s)}&order=created_at.desc&limit=1`;
+    const r = await fetch(url, { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } });
+    const arr = await r.json();
+    return Array.isArray(arr) && arr[0] ? arr[0].extra : null;
+  }
+
+  let result, alert;
+  try {
+    const ctx = await resolveShortId(sid);
+    if (!ctx) { result = { ok: false, error: 'short_id not found' }; alert = '❌ ' + result.error; }
+    else if (action === 'approve') {
+      const replyText = String(ctx.alex_draft || '').trim().slice(0, 4000);
+      const to = String(ctx.wa_from || '').replace(/^\+/, '');
+      if (!replyText || !to) { result = { ok: false, error: 'missing draft or to' }; alert = '❌ ' + result.error; }
+      else {
+        const sent = await cloudApi.sendTextMessage(to, replyText, ctx.wamid || null);
+        await dedup.recordOutbound({ wamid: sent.wamid, to, body: replyText, status: 'sent', approvedBy: operator, draftText: replyText }).catch(() => {});
+        result = { ok: true, sentWamid: sent.wamid };
+        alert = `✅ Sent (${String(sent.wamid).slice(0, 12)}…)`;
+      }
+    } else if (action === 'reject') {
+      if (ctx.wamid) await dedup.updateStatus({ wamid: ctx.wamid, status: 'rejected' }).catch(() => {});
+      result = { ok: true, action: 'rejected' };
+      alert = '❌ Rejected';
+    } else {
+      result = { ok: true, action: 'edit_pending' };
+      alert = '✏️ Reply with new text — feature WIP';
+    }
+  } catch (e) {
+    result = { ok: false, error: e.message };
+    alert = `❌ ${String(e.message).slice(0, 180)}`;
+  }
+
+  if (BOT_TOKEN) {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: cb.id, text: alert, show_alert: false }),
+    }).catch(() => {});
+  }
+  return res.status(200).json({ ok: true, action, sid, result });
 }
