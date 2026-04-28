@@ -47,6 +47,7 @@ export default async function handler(req, res) {
   if (type === 'outbox') return outboxHealth(req, res);
   if (type === 'telegram') return telegramHealth(req, res);
   if (type === 'telegram_watchdog') return telegramWatchdog(req, res);
+  if (type === 'wa_watchdog') return waWatchdog(req, res);
   return basicHealth(req, res);
 }
 
@@ -1098,4 +1099,119 @@ async function outboxHealth(req, res) {
   };
 
   return res.status(healthy ? 200 : 503).json(report);
+}
+
+/* ── WA Auto-Reply Watchdog (cron) ──
+ * GET /api/health?type=wa_watchdog
+ * Called daily by vercel.json cron (Hobby plan: once/day at 9am UTC).
+ * Can also be called manually: GET /api/health?type=wa_watchdog&secret=<CRON_SECRET>
+ *
+ * Logic:
+ *   1. Query Supabase for inbound WhatsApp messages from the last 10 minutes
+ *      with direction='in' and no linked outbound row.
+ *   2. For each missed reply: Telegram alert + lead_event + mark watchdog_alerted.
+ *
+ * Lives inside /api/health to stay under Hobby plan's 12-function cap.
+ */
+async function waWatchdog(req, res) {
+  const cronSecret = process.env.CRON_SECRET || '';
+  const reqSecret = req.query?.secret || req.headers?.['x-cron-secret'] || '';
+  const isCronCall = req.headers?.['x-vercel-cron'] === '1';
+  if (!isCronCall && cronSecret && reqSecret !== cronSecret) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+
+  const config = getConfig();
+  if (!config) return res.status(500).json({ ok: false, error: 'supabase_env_missing' });
+
+  const sbH = {
+    apikey: config.serviceRoleKey,
+    Authorization: `Bearer ${config.serviceRoleKey}`,
+    'Content-Type': 'application/json',
+    Prefer: 'return=representation',
+  };
+  const sbBase = config.projectUrl.replace(/\/$/, '') + '/rest/v1';
+
+  const windowMs = 10 * 60 * 1000; // 10 minutes
+  const since = new Date(Date.now() - windowMs).toISOString();
+
+  let inboundRows = [];
+  try {
+    const inRes = await fetch(
+      `${sbBase}/whatsapp_messages?direction=eq.in&created_at=gte.${encodeURIComponent(since)}&select=id,wamid,customer_phone,body,raw,created_at&order=created_at.desc&limit=50`,
+      { headers: sbH }
+    );
+    if (inRes.ok) {
+      const data = await inRes.json();
+      inboundRows = Array.isArray(data) ? data : [];
+    }
+  } catch (e) {
+    console.error('[wa_watchdog] Supabase inbound query error:', e?.message);
+    return res.status(500).json({ error: 'supabase_error', message: e?.message });
+  }
+
+  const pending = inboundRows.filter(row => !row.raw?.watchdog_alerted);
+  if (!pending.length) {
+    return res.status(200).json({ ok: true, checked: inboundRows.length, missed: 0, alerted: 0 });
+  }
+
+  let alerted = 0;
+  const results = [];
+
+  for (const row of pending) {
+    try {
+      const outRes = await fetch(
+        `${sbBase}/whatsapp_messages?direction=eq.out&raw->>in_reply_to_wamid=eq.${encodeURIComponent(row.wamid)}&select=id&limit=1`,
+        { headers: sbH }
+      );
+      let hasReply = false;
+      if (outRes.ok) {
+        const outData = await outRes.json();
+        hasReply = Array.isArray(outData) && outData.length > 0;
+      }
+
+      if (!hasReply) {
+        const bodyPreview = String(row.body || '').slice(0, 80);
+        const ageSeconds = Math.round((Date.now() - new Date(row.created_at).getTime()) / 1000);
+        const reason = `no_outbound_after_${ageSeconds}s`;
+        const botToken = process.env.TELEGRAM_BOT_TOKEN;
+        const chatId = process.env.TELEGRAM_CHAT_ID;
+        const masked = String(row.customer_phone || '').slice(0, 5) + '****';
+        const text = `⚠️ WA AUTO-REPLY FAILED\nPhone: ${masked}\nWamid: ${row.wamid}\nText: "${bodyPreview}"\nReason: ${reason}`;
+
+        await Promise.all([
+          botToken && chatId
+            ? fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text }),
+              }).catch(e => console.error('[wa_watchdog] Telegram alert error:', e?.message))
+            : Promise.resolve(),
+          fetch(`${sbBase}/lead_events`, {
+            method: 'POST',
+            headers: sbH,
+            body: JSON.stringify({
+              event_type: 'whatsapp_auto_reply_failed',
+              payload: { inbound_wamid: row.wamid, customer_phone: row.customer_phone, reason },
+            }),
+          }).catch(e => console.error('[wa_watchdog] lead_event error:', e?.message)),
+          fetch(`${sbBase}/whatsapp_messages?id=eq.${row.id}`, {
+            method: 'PATCH',
+            headers: sbH,
+            body: JSON.stringify({ raw: { watchdog_alerted: true } }),
+          }).catch(e => console.error('[wa_watchdog] PATCH error:', e?.message)),
+        ]);
+        alerted++;
+        results.push({ wamid: row.wamid, action: 'alerted', reason });
+      } else {
+        results.push({ wamid: row.wamid, action: 'has_reply' });
+      }
+    } catch (e) {
+      console.error('[wa_watchdog] row check error wamid=%s:', row.wamid, e?.message);
+      results.push({ wamid: row.wamid, action: 'error', error: e?.message });
+    }
+  }
+
+  console.log(JSON.stringify({ component: 'wa_watchdog', checked: pending.length, alerted, results }));
+  return res.status(200).json({ ok: true, checked: pending.length, missed: alerted, alerted, results });
 }

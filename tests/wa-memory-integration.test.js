@@ -181,24 +181,27 @@ test('buildPhotoContextHint returns CONTEXT string with photo mention', () => {
 
 // ── wa-watchdog exports correct structure ─────────────────────────────────
 
-test('wa-watchdog.js exists and is a valid module with default export', () => {
-  // We can't fully test the watchdog without Supabase, but we can verify it parses
+test('wa watchdog handler exists inside health.js with correct markers', () => {
+  // waWatchdog is merged into health.js to stay within Hobby 12-function cap
   const fs = require('fs');
   const content = fs.readFileSync(
-    require('path').join(__dirname, '../api/wa-watchdog.js'), 'utf8'
+    require('path').join(__dirname, '../api/health.js'), 'utf8'
   );
-  assert.match(content, /export default async function handler/);
-  assert.match(content, /wa-watchdog/);
+  assert.match(content, /wa_watchdog/);
   assert.match(content, /whatsapp_auto_reply_failed/);
   assert.match(content, /WA AUTO-REPLY FAILED/);
   assert.match(content, /watchdog_alerted/);
 });
 
-test('vercel.json includes wa-watchdog cron every 2 minutes', () => {
+test('vercel.json includes wa watchdog cron via health dispatcher', () => {
   const vercelCfg = require('../vercel.json');
   const cronPaths = (vercelCfg.crons || []).map(c => c.path);
-  assert.ok(cronPaths.includes('/api/wa-watchdog'), 'wa-watchdog must be in crons');
-  const watchdogCron = vercelCfg.crons.find(c => c.path === '/api/wa-watchdog');
-  // Hobby plan: daily only. Accepted schedules: daily at any hour or hourly.
+  // Watchdog is now dispatched via health.js to stay under Hobby 12-function cap
+  const watchdogCron = vercelCfg.crons.find(
+    c => c.path === '/api/wa-watchdog' || c.path === '/api/health?type=wa_watchdog'
+  );
+  assert.ok(watchdogCron, 'wa watchdog must be in crons (as standalone or health dispatcher)');
   assert.ok(['*/2 * * * *', '0 * * * *', '0 9 * * *'].includes(watchdogCron.schedule), 'watchdog must have valid cron schedule');
+  // Must be within 2-cron Hobby limit
+  assert.ok((vercelCfg.crons || []).length <= 2, 'must not exceed Hobby plan 2-cron limit');
 });
