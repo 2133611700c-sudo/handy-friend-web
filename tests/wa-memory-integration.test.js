@@ -199,6 +199,6 @@ test('vercel.json includes wa-watchdog cron every 2 minutes', () => {
   const cronPaths = (vercelCfg.crons || []).map(c => c.path);
   assert.ok(cronPaths.includes('/api/wa-watchdog'), 'wa-watchdog must be in crons');
   const watchdogCron = vercelCfg.crons.find(c => c.path === '/api/wa-watchdog');
-  // Hobby plan: hourly. Pro plan can use '*/2 * * * *' for every-2-min checks.
-  assert.ok(['*/2 * * * *', '0 * * * *'].includes(watchdogCron.schedule), 'watchdog must have valid cron schedule');
+  // Hobby plan: daily only. Accepted schedules: daily at any hour or hourly.
+  assert.ok(['*/2 * * * *', '0 * * * *', '0 9 * * *'].includes(watchdogCron.schedule), 'watchdog must have valid cron schedule');
 });
