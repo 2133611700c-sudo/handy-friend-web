@@ -61,6 +61,11 @@
       "permanent": true
     },
     {
+      "source": "/review",
+      "destination": "https://search.google.com/local/writereview?placeid=ChIJ6V5HHH7HwoARFgMKq_E0XK8",
+      "permanent": false
+    },
+    {
       "source": "/fb",
       "destination": "https://www.facebook.com/profile.php?id=61588215297678&locale=en_US",
       "permanent": false
@@ -334,10 +339,7 @@
       "source": "/pricing",
       "destination": "/pricing/index.html"
     },
-    {
-      "source": "/review",
-      "destination": "/api/review-redirect"
-    },
+
     {
       "source": "/privacy",
       "destination": "/privacy.html"

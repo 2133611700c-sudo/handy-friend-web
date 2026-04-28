@@ -358,7 +358,7 @@
       document.body.appendChild(stickyBar);
 
       stickyBar.querySelectorAll('a[data-cta]').forEach(function(el){
-        el.addEventListener('click', function(){
+        el.addEventListener('click', function(evt){
           var cta = el.getAttribute('data-cta');
           var eventName = cta === 'call' ? 'phone_click'
             : cta === 'whatsapp' ? 'whatsapp_click'
@@ -373,6 +373,38 @@
               source_widget: 'mobile_sticky_bar'
             });
           } catch (_) {}
+
+          // WhatsApp: generate attribution ref before opening so inbound can be matched back to gclid
+          if (cta === 'whatsapp') {
+            evt.preventDefault();
+            var attr = buildAttrMeta();
+            fetch('/api/attribution-ref', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                gclid:          attr.gclid,
+                gbraid:         attr.gbraid,
+                wbraid:         attr.wbraid,
+                fbclid:         attr.fbclid,
+                msclkid:        attr.msclkid,
+                utm_source:     attr.utm_source,
+                utm_medium:     attr.utm_medium,
+                utm_campaign:   attr.utm_campaign,
+                utm_content:    attr.utm_content,
+                utm_term:       attr.utm_term,
+                landing_page:   window.location.href,
+                page_path:      window.location.pathname + window.location.search,
+                referrer:       attr.referrer,
+                source_widget:  'mobile_sticky_bar',
+                service_slug:   serviceSlug,
+                message_prefix: waText
+              })
+            }).then(function(r){ return r.ok ? r.json() : null; }).then(function(data){
+              window.open((data && data.wa_url) ? data.wa_url : el.href, '_blank', 'noopener');
+            }).catch(function(){
+              window.open(el.href, '_blank', 'noopener');
+            });
+          }
         });
       });
     }

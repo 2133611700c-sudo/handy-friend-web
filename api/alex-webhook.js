@@ -1128,12 +1128,55 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
 
   await saveTurns(sessionId, null, inboundText, reply);
 
+  // ── hf_ref attribution resolution ──
+  // Extract HF-XXXXXX from message body, look up attribution_refs, resolve gclid/UTMs.
+  let waAttribution = null;
+  const hfRefMatch = inboundText.match(/\bHF-([A-Z0-9]{4,12})\b/i);
+  const hfRefRaw = hfRefMatch ? ('HF-' + hfRefMatch[1].toUpperCase()) : null;
+  if (hfRefRaw) {
+    try {
+      const SB_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+      const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+      const refRes = await fetch(
+        `${SB_URL}/rest/v1/attribution_refs?hf_ref=eq.${encodeURIComponent(hfRefRaw)}&limit=1`,
+        { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, Accept: 'application/json' } }
+      );
+      const refRows = await refRes.json();
+      if (Array.isArray(refRows) && refRows.length) {
+        const ref = refRows[0];
+        waAttribution = {
+          hf_ref:       ref.hf_ref,
+          gclid:        ref.gclid,
+          gbraid:       ref.gbraid,
+          wbraid:       ref.wbraid,
+          utm_source:   ref.utm_source,
+          utm_medium:   ref.utm_medium,
+          utm_campaign: ref.utm_campaign,
+          landing_page: ref.landing_page,
+        };
+        // Mark ref as used
+        fetch(`${SB_URL}/rest/v1/attribution_refs?hf_ref=eq.${encodeURIComponent(hfRefRaw)}`, {
+          method: 'PATCH',
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({ used_at: new Date().toISOString(), used_by_phone: from }),
+        }).catch(() => {});
+        console.log(JSON.stringify({ component: 'wa_attribution', hf_ref: hfRefRaw, gclid: ref.gclid, utm_source: ref.utm_source }));
+      }
+    } catch (err) {
+      console.warn('[WA_WEBHOOK] hf_ref lookup failed:', err.message);
+    }
+  }
+
   // Lead capture — for WhatsApp, ALWAYS create lead on first inbound (we have phone via `from`)
   let createdLeadId = null;
   const inferredLead = inferLeadFromConversation(messages) || {};
   try {
+    // If attribution ref resolved, classify source as google_ads_search when gclid present
+    const attrSource = (waAttribution && (waAttribution.gclid || waAttribution.gbraid || waAttribution.wbraid))
+      ? 'google_ads_search'
+      : 'whatsapp';
     const waEnvelope = createEnvelope({
-      source:            'whatsapp',
+      source:            attrSource,
       source_user_id:    from,
       source_message_id: msgId,
       source_thread_id:  sessionId,
@@ -1144,11 +1187,25 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
       service_hint:      inferredLead.service_type || '',
       meta:              { wa_from: from, session_id: sessionId, pricing_version: getPricingSourceVersion() }
     });
+    // Attach attribution fields if resolved
+    if (waAttribution) {
+      waEnvelope.attribution = Object.assign(waEnvelope.attribution || {}, {
+        gclid:        waAttribution.gclid || '',
+        gbraid:       waAttribution.gbraid || '',
+        wbraid:       waAttribution.wbraid || '',
+        utm_source:   waAttribution.utm_source || '',
+        utm_medium:   waAttribution.utm_medium || '',
+        utm_campaign: waAttribution.utm_campaign || '',
+        landing_page: waAttribution.landing_page || '',
+        attribution_source: attrSource,
+        source_details: { hf_ref: hfRefRaw, channel: attrSource, wa_attribution: true },
+      });
+    }
     const created = await processInbound(waEnvelope);
     createdLeadId = created?.id || null;
     if (createdLeadId) {
       await transitionLead(created.id, 'contacted', { contacted_at: new Date().toISOString() }).catch(() => {});
-      console.log('[WA_WEBHOOK] Lead id=%s phone=%s (auto on inbound)', createdLeadId, inferredLead.phone || from);
+      console.log('[WA_WEBHOOK] Lead id=%s phone=%s source=%s (auto on inbound)', createdLeadId, inferredLead.phone || from, attrSource);
     }
   } catch (err) {
     console.error('[WA_WEBHOOK] Lead error:', err.message);
@@ -1159,6 +1216,7 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
     const { recordInbound } = require('../lib/whatsapp/dedup.js');
     await recordInbound({
       wamid: msgId, from, to: phoneNumberId, body: inboundText, media: null, type: msgType, contextWamid: null, pushName: contactName,
+      attribution: waAttribution,
     }).catch(e => console.warn('[WA_WEBHOOK] dedup.recordInbound:', e.message));
   } catch (err) {
     console.warn('[WA_WEBHOOK] inbound persist failed:', err.message);
