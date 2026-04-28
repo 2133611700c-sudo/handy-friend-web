@@ -1111,6 +1111,16 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
     reason: waAlex.reason,
     safety_flags: waAlex.safetyFlags,
     reply_preview: reply.slice(0, 80),
+    audit: waAlex.audit ? {
+      provider: waAlex.audit.provider,
+      ok: waAlex.audit.ok,
+      http_status: waAlex.audit.http_status,
+      latency_ms: waAlex.audit.latency_ms,
+      attempts: waAlex.audit.attempts,
+      finish_reason: waAlex.audit.finish_reason,
+      prompt_version: waAlex.audit.prompt_version,
+      fallback_used: waAlex.audit.fallback_used,
+    } : null,
   }));
 
   await saveTurns(sessionId, null, inboundText, reply);
@@ -1188,6 +1198,27 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
   } else {
     // AUTO mode (production). Send the safe English draft to the customer
     // through Cloud API. Telegram message goes out as proof, not approval.
+    // Forensic audit: log the structured model-call proof BEFORE the send.
+    try {
+      const a = waAlex.audit || {};
+      await logLeadEvent(createdLeadId, a.fallback_used ? 'whatsapp_alex_fallback_used' : 'whatsapp_alex_model_called', {
+        inbound_wamid: msgId,
+        provider: a.provider || null,
+        model: a.model || null,
+        ok: a.ok === true,
+        http_status: a.http_status || null,
+        latency_ms: a.latency_ms || null,
+        attempts: a.attempts || null,
+        finish_reason: a.finish_reason || null,
+        request_id: a.request_id || null,
+        usage: a.usage || null,
+        error_category: a.error_category || null,
+        prompt_version: a.prompt_version || null,
+        fallback_used: !!a.fallback_used,
+        source: a.source || waAlex.source,
+        safety_flags: waAlex.safetyFlags || [],
+      }).catch(() => {});
+    } catch {}
     try {
       const { sendAlexReply } = require('../lib/whatsapp/send-alex-reply.js');
       const sendResult = await sendAlexReply({
@@ -1198,6 +1229,7 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
         replyText: reply,
         source: waAlex.source,
         model: waAlex.model,
+        audit: waAlex.audit || null,
       });
       if (sendResult.ok) {
         await logLeadEvent(createdLeadId, sendResult.alreadySent ? 'whatsapp_outbound_already_sent' : 'whatsapp_outbound_sent', {
