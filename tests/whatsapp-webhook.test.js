@@ -40,7 +40,32 @@ function mockRes() {
   };
 }
 
-async function invoke(req) {
+function mockReq(overrides = {}) {
+  // Simulate Node.js readable stream for raw body parsing (req.on('data'/'end'))
+  const { body, ...rest } = overrides;
+  const rawBody = body ? Buffer.from(JSON.stringify(body), 'utf8') : Buffer.alloc(0);
+  const listeners = {};
+  const req = {
+    ...rest,
+    on(event, cb) {
+      if (!listeners[event]) listeners[event] = [];
+      listeners[event].push(cb);
+      if (event === 'end') {
+        // Emit data then end on next tick
+        setImmediate(() => {
+          (listeners['data'] || []).forEach(fn => fn(rawBody));
+          (listeners['end'] || []).forEach(fn => fn());
+        });
+      }
+      return req;
+    },
+    headers: rest.headers || {},
+  };
+  return req;
+}
+
+async function invoke(overrides) {
+  const req = mockReq(overrides);
   const res = mockRes();
   await handler(req, res);
   return { status: res.statusCode, payload: res.payload };
