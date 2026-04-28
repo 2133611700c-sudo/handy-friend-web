@@ -1063,6 +1063,22 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
   const msgType = String(msg?.type || '');
   if (!from) return;
 
+  // Phase 3: handle image/media messages
+  if (msgType === 'image' || msgType === 'video' || msgType === 'document') {
+    const mediaId = msg?.[msgType]?.id || msg?.image?.id || null;
+    if (mediaId) {
+      const { handleInboundMedia, buildPhotoContextHint } = require('../lib/whatsapp/media-handler.js');
+      const mimeType = msg?.[msgType]?.mime_type || 'image/jpeg';
+      handleInboundMedia({ mediaId, customerPhone: from, inboundWamid: msgId, mimeType }).catch(e =>
+        console.error('[WA_WEBHOOK] media-handler error:', e?.message)
+      );
+      console.log('[WA_WEBHOOK] Photo received mediaId=%s from=%s — processing async', mediaId, from);
+    } else {
+      console.log('[WA_WEBHOOK] Skip non-text type=%s from=%s (no media id)', msgType, from);
+    }
+    return;
+  }
+
   const inboundText = msgType === 'text' ? String(msg?.text?.body || '').trim() : '';
   if (!inboundText) {
     console.log('[WA_WEBHOOK] Skip non-text type=%s from=%s', msgType, from);
@@ -1257,6 +1273,14 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
     } catch (err) {
       console.error('[WA_WEBHOOK] auto-send threw:', err.message);
       await logLeadEvent(createdLeadId, 'whatsapp_outbound_failed', { inbound_wamid: msgId, error: err.message }).catch(() => {});
+    }
+
+    // Phase 7: Schedule missed-reply watchdog (fire-and-forget, 60s deferred check)
+    try {
+      const { scheduleReplyCheck } = require('../lib/whatsapp/reply-watchdog.js');
+      scheduleReplyCheck({ inboundWamid: msgId, customerPhone: from, inboundText });
+    } catch (e) {
+      console.error('[WA_WEBHOOK] watchdog schedule error:', e?.message);
     }
   }
 
