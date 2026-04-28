@@ -19,12 +19,13 @@ const {
 
 // ── Safety validator ───────────────────────────────────────────────────────
 
-test('detectSafetyFlags catches Cyrillic / Russian customer-facing text', () => {
+test('safety validator NO LONGER flags Cyrillic — multilingual is allowed', () => {
+  // Same-brain era: customer can write in Russian, Alex replies in Russian.
   const flags = detectSafetyFlags('Привет! Расскажите, что нужно сделать.');
-  assert.ok(flags.includes('cyrillic'), 'cyrillic flag missing');
+  assert.deepEqual(flags, [], 'pure Cyrillic intake reply should pass');
 });
 
-test('detectSafetyFlags catches all banned claims', () => {
+test('detectSafetyFlags catches all banned claims (English + multilingual)', () => {
   for (const claim of [
     'We are licensed contractors',
     'Bonded and insured',
@@ -32,6 +33,9 @@ test('detectSafetyFlags catches all banned claims', () => {
     'We are #1 in LA',
     'The best in LA service',
     'Number one rated',
+    'Мы лицензированы и застрахованы',
+    'Ми ліцензовані і сертифіковані',
+    'Estamos licenciados y certificados',
   ]) {
     const flags = detectSafetyFlags(claim);
     assert.ok(flags.includes('banned_phrase'), `did not flag: "${claim}"`);
@@ -45,7 +49,7 @@ test('detectSafetyFlags catches internal-data leakage', () => {
 
 test('detectSafetyFlags catches empty or too-long text', () => {
   assert.ok(detectSafetyFlags('').includes('empty'));
-  assert.ok(detectSafetyFlags('x'.repeat(1300)).includes('too_long'));
+  assert.ok(detectSafetyFlags('x'.repeat(1600)).includes('too_long'));
 });
 
 test('isSafeForCustomer returns true on plain English intake message', () => {
@@ -89,29 +93,30 @@ test('engine: vague inbound → calls model and returns safe English reply', asy
     const r = await generateAlexWhatsAppReply({ inboundText: 'Hi', customerPhone: '12135551234' });
     assert.equal(r.ok, true);
     assert.equal(r.source, 'model');
-    assert.equal(r.needsOwnerApproval, true);
+    assert.equal(r.needsOwnerApproval, false, 'auto mode default — no operator approval gate');
     assert.deepEqual(r.safetyFlags, []);
     assert.match(r.replyText, /photos/i);
     assert.match(r.replyText, /ZIP/);
   });
 });
 
-test('engine: model returns Russian → rejected, fallback used, flags captured', async () => {
+test('engine: Russian inbound → Russian model reply is ACCEPTED (same-brain)', async () => {
   await withMockedFetch(async (url) => {
     if (String(url).includes('deepseek.com')) {
       return {
         ok: true, status: 200,
-        json: async () => ({ choices: [{ message: { content: 'Привет! Расскажите подробнее.' } }] }),
+        json: async () => ({ choices: [{ message: { content: 'Здравствуйте! Расскажите, какой проект — пришлите фото и ZIP.' } }] }),
       };
     }
     return { ok: true, status: 200, json: async () => ({}) };
   }, async () => {
     const r = await generateAlexWhatsAppReply({ inboundText: 'Привет', customerPhone: '12135551234' });
     assert.equal(r.ok, true);
-    assert.equal(r.source, 'fallback');
-    assert.equal(r.replyText, SAFE_FALLBACK);
-    assert.ok(r.safetyFlags.includes('cyrillic'));
-    assert.match(r.reason, /safety_flags.*cyrillic/);
+    assert.equal(r.source, 'model', 'Russian reply to Russian customer must be accepted');
+    assert.match(r.replyText, /Здравствуйте/);
+    assert.equal(r.detectedLanguage, 'ru');
+    assert.equal(r.replyLanguage, 'ru');
+    assert.deepEqual(r.safetyFlags, []);
   });
 });
 
@@ -145,7 +150,7 @@ test('engine: model failure → fallback with model_error reason', async () => {
   });
 });
 
-test('approval callback BLOCKS unsafe stored draft (no substitution)', async () => {
+test('approval callback BLOCKS unsafe stored draft (banned claim, no substitution)', async () => {
   // STRICT MODE: the operator-visible draft must equal what's sent. So if the
   // stored draft is Cyrillic / banned / empty, the callback must REFUSE to
   // send and tell the operator to regenerate. No silent SAFE_FALLBACK send.
@@ -158,7 +163,7 @@ test('approval callback BLOCKS unsafe stored draft (no substitution)', async () 
     const u = String(url);
     if (u.includes('/telegram_sends?source=eq.whatsapp_approval')) {
       return { ok: true, status: 200, json: async () => [{ extra: {
-        wamid: 'wamid.IN.RU', wa_from: '12135551234', alex_draft: 'Привет! Что нужно?', short_id: 'cyrcyrcyrcyrcyrA',
+        wamid: 'wamid.IN.BANNED', wa_from: '12135551234', alex_draft: 'We are licensed and bonded — best in LA!', short_id: 'bannedbannedban1',
       } }] };
     }
     if (u.includes('/whatsapp_messages?direction=eq.out')) {
@@ -180,14 +185,14 @@ test('approval callback BLOCKS unsafe stored draft (no substitution)', async () 
   const res = { statusCode: 0, payload: null, headers: {},
     setHeader() {}, status(c) { this.statusCode = c; return this; }, json(o) { this.payload = o; return this; }, end() {} };
   await handleWAApprovalCallback(
-    { update_id: 7, callback_query: { id: 'cq', from: { id: 1 }, data: 'wa:approve:cyrcyrcyrcyrcyrA' } },
+    { update_id: 7, callback_query: { id: 'cq', from: { id: 1 }, data: 'wa:approve:bannedbannedban1' } },
     res
   );
   global.fetch = savedFetch;
 
   assert.equal(res.payload.result.ok, false, 'must NOT send when draft is unsafe');
   assert.equal(res.payload.result.error, 'unsafe_draft');
-  assert.ok(res.payload.result.safetyFlags.includes('cyrillic'));
+  assert.ok(res.payload.result.safetyFlags.includes('banned_phrase'));
   assert.equal(calls.sendText.length, 0, 'Cloud API must NOT be called for unsafe draft');
   assert.ok(calls.answerCallback.length === 1, 'operator must get a callback alert');
   assert.match(calls.answerCallback[0].text, /DRAFT BLOCKED/);
