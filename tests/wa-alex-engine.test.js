@@ -145,13 +145,14 @@ test('engine: model failure → fallback with model_error reason', async () => {
   });
 });
 
-test('approval callback blocks Cyrillic stored draft and sends fallback instead', async () => {
-  // This test simulates the wa:approve callback when the stored draft is Russian.
-  // Expected: fallback reply is sent, result.fallback === true.
+test('approval callback BLOCKS unsafe stored draft (no substitution)', async () => {
+  // STRICT MODE: the operator-visible draft must equal what's sent. So if the
+  // stored draft is Cyrillic / banned / empty, the callback must REFUSE to
+  // send and tell the operator to regenerate. No silent SAFE_FALLBACK send.
   process.env.SUPABASE_URL = 'https://example.supabase.co';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'srv';
 
-  const calls = { sendText: [] };
+  const calls = { sendText: [], answerCallback: [] };
   const savedFetch = global.fetch;
   global.fetch = async (url, opts) => {
     const u = String(url);
@@ -165,11 +166,11 @@ test('approval callback blocks Cyrillic stored draft and sends fallback instead'
     }
     if (u.includes('graph.facebook.com') && u.endsWith('/messages')) {
       calls.sendText.push(JSON.parse(opts.body));
-      const resp = JSON.stringify({ messages: [{ id: 'wamid.OUT.SAFE' }] });
-      return { ok: true, status: 200, text: async () => resp, json: async () => JSON.parse(resp) };
+      return { ok: true, status: 200, text: async () => '', json: async () => ({}) };
     }
-    if (u.includes('/whatsapp_messages') && opts?.method === 'POST') {
-      return { ok: true, status: 201, json: async () => [], text: async () => '' };
+    if (u.includes('answerCallbackQuery')) {
+      calls.answerCallback.push(JSON.parse(opts.body));
+      return { ok: true, status: 200, json: async () => ({}) };
     }
     return { ok: true, status: 200, json: async () => ({}), text: async () => '' };
   };
@@ -184,11 +185,69 @@ test('approval callback blocks Cyrillic stored draft and sends fallback instead'
   );
   global.fetch = savedFetch;
 
+  assert.equal(res.payload.result.ok, false, 'must NOT send when draft is unsafe');
+  assert.equal(res.payload.result.error, 'unsafe_draft');
+  assert.ok(res.payload.result.safetyFlags.includes('cyrillic'));
+  assert.equal(calls.sendText.length, 0, 'Cloud API must NOT be called for unsafe draft');
+  assert.ok(calls.answerCallback.length === 1, 'operator must get a callback alert');
+  assert.match(calls.answerCallback[0].text, /DRAFT BLOCKED/);
+  assert.match(calls.answerCallback[0].text, /regen/i);
+});
+
+test('approval callback BLOCKS empty stored draft', async () => {
+  process.env.SUPABASE_URL = 'https://example.supabase.co';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'srv';
+  const calls = { sendText: [] };
+  const savedFetch = global.fetch;
+  global.fetch = async (url, opts) => {
+    const u = String(url);
+    if (u.includes('/telegram_sends?source=eq.whatsapp_approval')) {
+      return { ok: true, status: 200, json: async () => [{ extra: {
+        wamid: 'wamid.IN.EMPTY', wa_from: '12135551234', alex_draft: '', short_id: 'emptyemptyempty1',
+      } }] };
+    }
+    if (u.includes('graph.facebook.com')) { calls.sendText.push(JSON.parse(opts.body)); return { ok:true,status:200,text:async()=>'',json:async()=>({}) }; }
+    return { ok: true, status: 200, json: async () => ({}), text: async () => '' };
+  };
+  delete require.cache[require.resolve('../lib/telegram/wa-approval-callback.js')];
+  const { handleWAApprovalCallback } = require('../lib/telegram/wa-approval-callback.js');
+  const res = { statusCode:0, payload:null, headers:{}, setHeader(){}, status(c){this.statusCode=c;return this;}, json(o){this.payload=o;return this;}, end(){} };
+  await handleWAApprovalCallback({update_id:8, callback_query:{id:'cq', from:{id:1}, data:'wa:approve:emptyemptyempty1'}}, res);
+  global.fetch = savedFetch;
+  assert.equal(res.payload.result.ok, false);
+  assert.equal(res.payload.result.error, 'unsafe_draft');
+  assert.ok(res.payload.result.safetyFlags.includes('empty'));
+  assert.equal(calls.sendText.length, 0);
+});
+
+test('approval callback SENDS exact text when stored draft is safe', async () => {
+  process.env.SUPABASE_URL = 'https://example.supabase.co';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'srv';
+  const SAFE_DRAFT = 'Hi! Could you share the TV size and your ZIP code? Once we have those, we will get back to you.';
+  const calls = { sendText: [] };
+  const savedFetch = global.fetch;
+  global.fetch = async (url, opts) => {
+    const u = String(url);
+    if (u.includes('/telegram_sends?source=eq.whatsapp_approval')) {
+      return { ok:true, status:200, json: async () => [{ extra: { wamid:'wamid.IN.OK', wa_from:'12135551234', alex_draft: SAFE_DRAFT, short_id:'safedraftsafedft0' } }] };
+    }
+    if (u.includes('/whatsapp_messages?direction=eq.out')) return { ok:true, status:200, json: async () => [] };
+    if (u.includes('graph.facebook.com') && u.endsWith('/messages')) {
+      calls.sendText.push(JSON.parse(opts.body));
+      const resp = JSON.stringify({ messages: [{ id:'wamid.OUT.OK' }] });
+      return { ok:true, status:200, text: async () => resp, json: async () => JSON.parse(resp) };
+    }
+    return { ok:true, status:200, json: async () => ({}), text: async () => '' };
+  };
+  delete require.cache[require.resolve('../lib/telegram/wa-approval-callback.js')];
+  const { handleWAApprovalCallback } = require('../lib/telegram/wa-approval-callback.js');
+  const res = { statusCode:0, payload:null, headers:{}, setHeader(){}, status(c){this.statusCode=c;return this;}, json(o){this.payload=o;return this;}, end(){} };
+  await handleWAApprovalCallback({update_id:9, callback_query:{id:'cq', from:{id:1}, data:'wa:approve:safedraftsafedft0'}}, res);
+  global.fetch = savedFetch;
   assert.equal(res.payload.result.ok, true);
-  assert.equal(res.payload.result.fallback, true, 'must be marked fallback because draft was Cyrillic');
+  assert.equal(res.payload.result.sentWamid, 'wamid.OUT.OK');
   assert.equal(calls.sendText.length, 1);
-  assert.equal(calls.sendText[0].text.body, SAFE_FALLBACK, 'must send SAFE_FALLBACK English text instead of Russian draft');
-  assert.doesNotMatch(calls.sendText[0].text.body, /[Ѐ-ӿ]/, 'sent text must not contain Cyrillic');
+  assert.equal(calls.sendText[0].text.body, SAFE_DRAFT, 'sent body must be EXACTLY the stored draft (no substitution)');
 });
 
 // ── Banned-phrase exhaustive coverage ──────────────────────────────────────
