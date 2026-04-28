@@ -1,276 +1,245 @@
 # WhatsApp Cloud API + Alex + Telegram Approval — Acceptance Report
 
-**Date:** 2026-04-28  
-**Engineer:** Claude Sonnet 4.6 (final acceptance run)  
-**Final verdict:** READY WITH RISK (live E2E pending)
+**Date:** 2026-04-28
+**Engineer:** Claude Sonnet 4.6 (incident commander after live failure)
+**Final verdict:** READY WITH RISK — single owner action remaining
 
 ---
 
 ## 1. Executive Summary
 
-The WhatsApp Cloud API integration for Handy & Friend is hardened to production standards.
-HMAC validation is fail-closed in production: bad/missing signatures from a WhatsApp payload
-return 403, valid signatures pass, and Telegram approval callbacks correctly bypass HMAC.
-All 3014 unit/integration tests pass. The Meta App Secret has been verified against the
-`debug_token` API and stored in Vercel production. The only remaining item is a one-time
-live customer→Alex→Telegram→reply round trip from the owner's personal phone, which
-captures the final wamids for the report.
+A real production failure was hit during live E2E: customer "Привет" message reached
+production, was logged, and produced a Telegram approval message — but tapping ✅
+sent **nothing** to the customer because two independent bugs in the chain.
+
+Both root causes were identified, fixed, tested (3034/3034), deployed to production,
+and verified by behavior probe. The corrected English draft has been written to the
+existing pending approval. The owner taps ✅ once on the existing Telegram message
+to send the safe English fallback to the customer and capture the outbound wamid.
 
 ---
 
-## 2. Final Production State
+## 2. Root cause #1 — Telegram callback dropped at wrong endpoint
 
-| Component | State |
+**Symptom:** owner taps ✅, no WhatsApp reply ever sends.
+
+**Cause:** the Telegram bot webhook URL is `/api/telegram-webhook` (set via `setWebhook`),
+not `/api/alex-webhook`. The wa-approval handler `handleTelegramUpdate` lived only in
+`/api/alex-webhook`. `/api/telegram-webhook` had a hard early return:
+
+```js
+const message = update.message || update.edited_message;
+if (!message) return res.status(200).json({ ok: true }); // ← drops callback_query
+```
+
+`callback_query` updates have no `.message` field → silently 200 → handler never reached
+→ `cloudApi.sendTextMessage` never called → no outbound row → customer gets nothing.
+
+**Fix (commit `d5c76d31`):**
+- Extracted handler to `lib/telegram/wa-approval-callback.js` (shared module).
+- `/api/telegram-webhook` now detects `wa:*` callback_query and delegates BEFORE the
+  `!message` early return.
+- `/api/alex-webhook` also delegates to the same shared module.
+- Idempotency: `alreadySentTo()` blocks repeated ✅ taps from sending duplicate replies
+  within 5 minutes.
+- 7 new tests cover callback routing, idempotency, fallback, and regression of the
+  "callback_query dropped as non-message" bug.
+
+---
+
+## 3. Root cause #2 — Alex prompt told Russia to reply in Russian
+
+**Symptom:** even after callback routing was fixed, the stored draft was Russian
+("Привет! Рад знакомству! Расскажите…") for a US business that requires English replies.
+
+**Cause:** `lib/alex-one-truth.js` is the website's multilingual chat prompt:
+
+```
+- Match the customer's language (EN/RU/UK/ES) automatically
+- If customer writes in Russian, reply in Russian. Same for Ukrainian, Spanish.
+```
+
+That is correct for the multilingual landing chat. It is wrong for WhatsApp where the
+business serves Los Angeles and the owner mandates English-only customer-facing replies
+regardless of inbound language. The same prompt was being passed into the WA path:
+
+```js
+const guardMode = getGuardMode({ hasContact, hasPhone });
+const systemPrompt = buildSystemPrompt({ guardMode });   // ← multilingual
+const alexResult = await callAlex(messages, systemPrompt);
+```
+
+**Fix (commit `3ac2e8c2`):**
+- New module `lib/alex/whatsapp-reply-engine.js` exporting
+  `generateAlexWhatsAppReply({ inboundText, customerPhone, conversationHistory })`.
+- WA system prompt enforces:
+  - "Reply ONLY in English. Never in Russian, Ukrainian, Spanish, or any other
+    language, even if the customer wrote in those."
+  - Intake guidance: ask for photos, scope, ZIP code, preferred timing.
+  - Service-specific hints (TV mounting / painting / drywall / etc.).
+  - Hard rules: no `licensed`, `bonded`, `certified`, `#1`, `best in LA`. No internal
+    margin / worker rate / cost-of-goods leakage.
+- Post-generation safety validator `detectSafetyFlags(text)` returns flags for:
+  `cyrillic`, `non_latin_script`, `banned_phrase`, `internal_leak`, `empty`, `too_long`.
+- If any flag fires, the engine emits `SAFE_FALLBACK` (English) and reports the reason.
+- Output contract:
+  ```
+  { ok, replyText, source: 'model'|'fallback', model, reason, safetyFlags, needsOwnerApproval }
+  ```
+- The approval callback handler now also runs `detectSafetyFlags(stored draft)` BEFORE
+  sending. If flags fire, the stored draft is replaced in-flight with `SAFE_FALLBACK`
+  and the Telegram alert says: "⚠️ Draft blocked (<flags>). Sent SAFE_FALLBACK instead".
+- The pending failed-lead draft (`telegram_sends.id=89`, `short_id=89830bbb8be738c3`)
+  was rewritten in Supabase from Russian to `SAFE_FALLBACK` so the owner's existing
+  Telegram approval can now safely fire.
+
+---
+
+## 4. Files changed
+
+| File | Change |
 |---|---|
-| Production URL | `https://handyandfriend.com` |
-| Active webhook | `/api/alex-webhook` |
-| Latest commit | `971b3be4c148d4578ff0ae7dab1911e68638141c` |
-| Vercel deploy ID | `dpl_3FecwzysCWEqt6pTEUS2yXCHcbGb` |
-| Aliases | `handyandfriend.com`, `www.handyandfriend.com` |
-| Region | `iad1` |
-| Phone number | `+1 213-361-1700` |
-| Phone ID | `1085039581359097` |
-| WABA ID | `825762536760123` |
-| Meta App ID | `767361159439856` ("Handy Friend Messenger") |
-| Phone status | CONNECTED, LIVE, CLOUD_API, GREEN quality |
-| Mac bridge | NOT RUNNING |
+| `lib/alex/whatsapp-reply-engine.js` | NEW — WA-specific Alex engine + safety validator |
+| `lib/telegram/wa-approval-callback.js` | NEW — shared handler with idempotency + fail-safe |
+| `tests/wa-alex-engine.test.js` | NEW — 13 tests (Cyrillic/banned/empty/fallback/handler) |
+| `tests/wa-approval-callback.test.js` | NEW — 7 tests (routing/idempotency/fallback) |
+| `api/alex-webhook.js` | wired engine; delegates callbacks to shared handler |
+| `api/telegram-webhook.js` | routes `wa:*` callback_query to shared handler |
 
 ---
 
-## 3. Env Status (no values printed)
+## 5. Test results
 
 ```
-Command: npx vercel env ls production
+node tests/<file>.test.js
 ```
 
-| Variable | Status |
+| File | Pass / Total |
 |---|---|
-| FB_APP_SECRET | ✅ **PRESENT** (added 2026-04-28, verified against Meta `debug_token`) |
-| WHATSAPP_ACCESS_TOKEN | ✅ |
-| WHATSAPP_PHONE_NUMBER_ID | ✅ |
-| WHATSAPP_VERIFY_TOKEN | ✅ |
-| META_PHONE_NUMBER_ID | ✅ |
-| META_WABA_ID | ✅ |
-| FB_VERIFY_TOKEN | ✅ |
-| FB_PAGE_ACCESS_TOKEN | ✅ |
-| TELEGRAM_BOT_TOKEN | ✅ |
-| TELEGRAM_CHAT_ID | ✅ |
-| SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY | ✅ |
-| DEEPSEEK_API_KEY, RESEND_API_KEY, GA4_*, RECAPTCHA_MIN_SCORE | ✅ |
-
-**Verification proof:** Meta `debug_token` accepted `app_id|secret` combo —
-returned `app_id=767361159439856, type=SYSTEM_USER, valid=True`.
+| whatsapp-webhook | 14 / 14 |
+| whatsapp-cloud | 8 / 8 |
+| whatsapp-owner-alert | 1 / 1 |
+| telegram-proof | 11 / 11 |
+| outbox-fixes | 13 / 13 |
+| pricing-policy | 2956 / 2956 |
+| ads-attribution | 11 / 11 |
+| **wa-approval-callback (new)** | **7 / 7** |
+| **wa-alex-engine (new)** | **13 / 13** |
+| **TOTAL** | **3034 / 3034** |
 
 ---
 
-## 4. HMAC Validation Evidence (live production)
-
-```
-Endpoint: https://handyandfriend.com/api/alex-webhook
-Date: 2026-04-28
-```
-
-| Test | Headers | Status | Body | Verdict |
-|---|---|---|---|---|
-| 1. Valid HMAC + WA payload | `x-hub-signature-256: sha256=<correct>` | **200** | `EVENT_RECEIVED` | ✅ |
-| 2. Bad HMAC + WA payload | `x-hub-signature-256: sha256=000…000` | **403** | `{"error":"Invalid signature"}` | ✅ |
-| 3. Missing HMAC + WA payload | (no signature header) | **403** | `{"error":"Invalid signature"}` | ✅ |
-| 4. Telegram callback (no Meta sig) | (no signature header) | **200** | `{"ok":true,"action":"approve",…}` | ✅ Telegram bypass |
-| 5. GET verify correct token | `?hub.verify_token=<WA_VERIFY>` | **200** | `phase5-prod` (challenge echoed) | ✅ |
-| 6. GET verify wrong token | `?hub.verify_token=WRONG` | **403** | `Forbidden` | ✅ |
-
-**Result: 6/6 PASS — production is fail-closed for unsigned/bad-signed WhatsApp payloads, while Telegram approval callbacks are not blocked.**
-
----
-
-## 5. Real Inbound WhatsApp Evidence
-
-**Status: PENDING** — owner action required.
-
-To complete acceptance, owner must send any WhatsApp message from a personal phone to
-**+1 213-361-1700**. The watcher (`bm11x4298`) is monitoring Supabase
-`whatsapp_messages.direction=inbound` and will capture:
-
-- inbound wamid
-- sender phone (`phone_from`)
-- recipient phone (`phone_to` = `+12133611700`)
-- message body
-- created_at timestamp
-- direction: `inbound`
-
-This section will be updated upon arrival.
-
----
-
-## 6. Telegram Approval Evidence
-
-**Status: PENDING** — depends on inbound (section 5).
-
-Architecture verified by tests:
-- `sendApprovalRequest()` constructs Telegram inline keyboard ✅/✏️/❌
-- `callback_data` format: `wa:approve:<short_id>` (sha256(wamid)[0:16]) → 27 bytes (under Telegram's 64-byte limit)
-- `telegram_sends` table stores: `source=whatsapp_approval`, `extra={short_id, wamid, alex_draft, customer_message, customer_name}`
-- Callback handler resolves short_id → wamid via `telegram_sends?source=eq.whatsapp_approval&extra->>short_id=eq.<sid>`
-
-Will be populated with: telegram_sends row id, message_id, short_id, full wamid mapping.
-
----
-
-## 7. Outbound WhatsApp Evidence
-
-**Status: PENDING** — depends on Telegram approval (section 6).
-
-Cloud API credentials verified:
-```
-GET /v19.0/1085039581359097?fields=...
-  platform_type: CLOUD_API
-  status: CONNECTED
-  account_mode: LIVE
-  code_verification_status: VERIFIED
-  quality_rating: GREEN
-```
-
-Token: SYSTEM_USER, non-expiring, scopes `whatsapp_business_messaging` + `whatsapp_business_management`.
-
-Will be populated with: outbound wamid, Cloud API response, customer-confirmed receipt.
-
----
-
-## 8. Supabase Evidence
-
-**Table:** `public.whatsapp_messages` (created via `migrations/whatsapp_cloud_api.sql`)
-
-```sql
--- UNIQUE constraint on wamid prevents duplicates
-CREATE UNIQUE INDEX whatsapp_messages_wamid_idx ON public.whatsapp_messages (wamid);
-```
-
-**Dedup proven:** POST with `?on_conflict=wamid` and `Prefer: resolution=ignore-duplicates,return=representation` returns `[]` on duplicate (no 23505 error).
-
-**Live evidence queries (run by `/tmp/capture-e2e-evidence.py`):**
-```sql
-SELECT wamid, direction, phone_from, phone_to, body, created_at
-  FROM whatsapp_messages WHERE created_at >= now() - interval '30 minutes'
-  ORDER BY created_at DESC;
-
-SELECT id, source, ok, extra FROM telegram_sends
-  WHERE source = 'whatsapp_approval' AND created_at >= now() - interval '30 minutes';
-
-SELECT type, lead_id, created_at FROM lead_events
-  WHERE type IN ('wa_inbound_received','wa_approval_sent','wa_approve_callback','wa_outbound_sent')
-    AND created_at >= now() - interval '30 minutes';
-```
-
-Row counts will be filled in upon E2E completion.
-
----
-
-## 9. Test Results
-
-```
-Command: node tests/<file>.test.js
-```
-
-| File | Tests | Pass | Fail |
-|---|---|---|---|
-| whatsapp-webhook.test.js | 14 | 14 | 0 |
-| whatsapp-cloud.test.js | 8 | 8 | 0 |
-| whatsapp-owner-alert.test.js | 1 | 1 | 0 |
-| telegram-proof.test.js | 11 | 11 | 0 |
-| outbox-fixes.test.js | 13 | 13 | 0 |
-| pricing-policy.test.js | 2956 | 2956 | 0 |
-| ads-attribution.test.js | 11 | 11 | 0 |
-| **TOTAL** | **3014** | **3014** | **0** |
-
-The 4 dedicated HMAC tests inside `whatsapp-webhook.test.js`:
-- POST WA with valid HMAC passes when FB_APP_SECRET set ✅
-- POST WA with bad HMAC is rejected 403 when FB_APP_SECRET set ✅
-- POST WA with missing HMAC is rejected 403 when FB_APP_SECRET set ✅
-- POST Telegram callback bypasses HMAC even when FB_APP_SECRET set ✅
-
----
-
-## 10. Production Smoke Checks
-
-| Check | Command | Result |
-|---|---|---|
-| Health | `GET /api/health` | `{"ok":true,"status":"healthy","region":"iad1","env":"production"}` |
-| GET verify correct | `?hub.verify_token=<WA_VERIFY>&hub.challenge=phase9-smoke` | `phase9-smoke` (200) |
-| GET verify wrong | `?hub.verify_token=WRONG` | 403 |
-| POST WA bad HMAC | `x-hub-signature-256: sha256=bad` | 403 |
-| POST WA missing HMAC | (no header) | 403 |
-| POST Telegram callback | (no header) | 200 (Telegram bypass) |
-| `/api/whatsapp-webhook` backward-compat | rewrites to `/api/alex-webhook` | 200 |
-| Mac bridge process | `pgrep openclaw-wa-bridge` | NOT RUNNING |
-
----
-
-## 11. Old Bridge / Old Endpoint Status
-
-- **Mac bridge (`scripts/openclaw-wa-bridge.js`)**: not running, posts to deprecated `/api/whatsapp-webhook` with old phone ID `920678054472684`. Effectively isolated from new Cloud API path which uses `/api/alex-webhook` and phone ID `1085039581359097`.
-- **`/api/whatsapp-webhook` route**: Vercel rewrite in `vercel.json` → `/api/alex-webhook`. Safe backward compatibility (Meta webhook subscriptions pointing to old URL still resolve to the active handler).
-
----
-
-## 12. Remaining Risks
-
-| Risk | Severity | Status |
-|---|---|---|
-| ~~FB_APP_SECRET missing~~ | ~~HIGH~~ | ✅ RESOLVED |
-| Live E2E test not yet run | MEDIUM | Watcher armed, awaiting owner WhatsApp message |
-| Only `hello_world` template approved on WABA | LOW | Sufficient for MVP; create custom templates as scope grows |
-| Profile `about` field is default ("Hey there! I am using WhatsApp.") | LOW | Optional polish via Graph API |
-
----
-
-## 13. Deployment IDs and Commit Hashes
+## 6. Production deployment
 
 | Item | Value |
 |---|---|
-| Latest main commit | `971b3be4c148d4578ff0ae7dab1911e68638141c` |
-| HMAC fix commit | `09416a8cee52c3eb02f574b97d6d8cd592379360` |
-| Initial Cloud API commit | `1dcf978cbc06fda7700e1eeb42238a89c1479652` |
-| Final deploy (with FB_APP_SECRET) | `dpl_3FecwzysCWEqt6pTEUS2yXCHcbGb` (READY) |
-| Previous deploys | `dpl_F8ohQzdxeVyH8d9ANm1m9vz7cYsj`, `dpl_3iTazwdsbAwb8izYchzxctFBD6jN`, `dpl_3Vj8yLCK21zD2XHwdrd49i69YZeK`, `dpl_693xsrJxYNhs62aPUM9gqfdprYET` |
-| Supabase project | `taqlarevwifgfnjxilfh` (West US Oregon) |
+| Latest deploy | `dpl_6hzUfbEGCNqvgBaR9BMqgimeYQ12` (READY, target=production) |
+| Commit | `3ac2e8c272eab4a15c061146ddd3ff50dd1d3641` |
+| Aliases | `handyandfriend.com`, `www.handyandfriend.com` |
+| Region | `iad1` |
+| Health | `{"ok":true,"status":"healthy","env":"production"}` |
+| Behavior probe | `POST /api/telegram-webhook` with `wa:approve:` returns `{"action":"approve"}` ✅ |
+| HMAC fail-closed | unchanged (proven 6/6 in earlier deploy `dpl_3FecwzysCWEqt6pTEUS2yXCHcbGb`) |
+| Mac bridge | NOT RUNNING |
+| `/api/whatsapp-webhook` | safe Vercel rewrite to `/api/alex-webhook` |
 
 ---
 
-## 14. Final Verdict
+## 7. Live failed lead — evidence
+
+| Field | Value |
+|---|---|
+| inbound wamid | `wamid.HBgMMzgwNjY1NjM4MzEyFQIAEhgUM0FBRUU5RkQwNDI3MTJEQTQ0NzUA` |
+| inbound timestamp | `2026-04-28T03:25:35.928Z` |
+| customer phone (masked) | `+38066xxxx312` |
+| customer name | Сергей |
+| inbound body | `Привет` |
+| Supabase `whatsapp_messages.id` | `5` (direction=in, status=received) |
+| created lead | `lead_1777346734562_awn5fh` (source=whatsapp) |
+| `lead_events` | `whatsapp_inbound` linked to lead |
+| `telegram_sends.id` | `89`, source=`whatsapp_approval`, ok=true |
+| short_id | `89830bbb8be738c3` |
+| callback_data | `wa:approve:89830bbb8be738c3` = 27 bytes (under 64) |
+| OLD draft | Russian ("Привет! Рад знакомству!…") — REPLACED 2026-04-28T03:35Z |
+| NEW draft | `SAFE_FALLBACK` English text — written via `/tmp/regen-stale-draft.py` |
+| `extra.alex_draft_replaced_reason` | `stale_russian_draft_replaced_by_english_fallback` |
+| outbound wamid | **PENDING** owner ✅ tap |
+| customer received reply | **PENDING** |
+
+---
+
+## 8. Telegram evidence
+
+- `telegram_sends.id=89` — approval message was delivered (`ok=true`).
+- `extra.short_id=89830bbb8be738c3` resolves to inbound wamid above via Supabase lookup.
+- `callback_data=wa:approve:89830bbb8be738c3` is 27 bytes (under Telegram's 64-byte limit).
+- Approval message is still in the owner's Telegram chat — it is the same message, no
+  duplicate alert was generated. The stored draft inside it now points to `SAFE_FALLBACK`.
+
+---
+
+## 9. Outbound WhatsApp evidence
+
+**Status:** PENDING — depends on owner tapping ✅ on the existing Telegram approval.
+
+When the owner taps ✅:
+1. Telegram → POST `/api/telegram-webhook` → `isWAApprovalCallback` matches `wa:approve:`.
+2. Shared handler resolves `short_id=89830bbb8be738c3` → loads stored draft (now English).
+3. Safety validator passes (English, no banned phrases).
+4. Idempotency check: no outbound to `380665638312` in last 5 min → proceed.
+5. Cloud API `POST /v19.0/1085039581359097/messages` with English text.
+6. Outbound wamid stored in `whatsapp_messages` (direction=out, approved_by=owner).
+7. Telegram answerCallbackQuery → "✅ Sent (wamid…)".
+
+Watcher `bdzilskf2` is polling Supabase for the outbound row.
+
+---
+
+## 10. Old bridge / old endpoint status
+
+- Mac bridge: NOT RUNNING (`pgrep openclaw-wa-bridge` empty).
+- `/api/whatsapp-webhook`: Vercel rewrite to `/api/alex-webhook`. Same handler, safe.
+
+---
+
+## 11. Remaining risks
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| Owner has not yet tapped ✅ on the existing Telegram approval | HIGH | Single click required; corrected draft is in place |
+| Customer first reply is the generic SAFE_FALLBACK (not service-specific) | LOW | The customer wrote only "Привет" with no service hint — the engine cannot infer scope. Future inbound with specifics will produce contextual English replies. |
+| Telegram bot webhook URL is hard-coded to `/api/telegram-webhook` | LOW | Both endpoints now route `wa:*` callback to the same shared handler |
+| Auto-reply mode is OFF | by-design | All WA replies require owner ✅. Can be enabled later by setting `needsOwnerApproval=false` in the engine. |
+
+---
+
+## 12. Final verdict
 
 ```
 READY WITH RISK
 ```
 
-**All technical hardening complete:**
-- ✅ FB_APP_SECRET present in Vercel production (verified against Meta API)
-- ✅ Production redeployed: `dpl_3FecwzysCWEqt6pTEUS2yXCHcbGb` READY
-- ✅ Bad HMAC → 403
-- ✅ Missing HMAC → 403
-- ✅ Valid HMAC → 200
-- ✅ Telegram callback bypasses Meta HMAC
-- ✅ 3014/3014 tests pass
-- ✅ Mac bridge confirmed off
-- ✅ Backward-compat route safe
-- ✅ Profile typos fixed ("Los Angeles", "Labor-only")
-- ✅ HMAC bug-fix preventing Telegram lockout
+All technical fixes are deployed and tested. The system will send a correct English
+reply the moment the owner taps ✅ on the existing Telegram approval message — proven
+by the safety validator unit tests and the fact that the stored draft in Supabase has
+been verified to start with "Hi! Thanks for reaching out…" (English).
 
-**Pending evidence (one owner action away from full READY):**
-- ⏸ Real inbound WhatsApp message from personal phone to +1 213-361-1700
-- ⏸ Telegram approval flow firing
-- ⏸ Outbound Cloud API send + customer confirmed receipt
-- ⏸ Outbound wamid captured
+Verdict will flip to **READY** when:
+1. Owner taps ✅ on the pending Telegram approval message.
+2. Outbound row appears in `whatsapp_messages` direction='out'.
+3. Customer (`+38066xxxx312`) confirms WhatsApp reply was received.
 
 ---
 
-## 15. Exact Next Owner Action
+## 13. Exact next owner action
 
-Send any WhatsApp message from your personal phone to **+1 213-361-1700**.
+Open Telegram → find the existing approval message from earlier (with ✅/✏️/❌ buttons,
+short_id `89830bbb8be738c3`) → **tap ✅ Approve & Send**.
 
-Suggested text:
-> `Test WhatsApp lead from owner — please reply via Alex approval.`
+Then confirm in chat: "Сергей got the reply" or paste a screenshot of his WhatsApp.
 
-Then watch your Telegram for the approval message with ✅/✏️/❌ buttons. Tap **✅ Approve & Send**.
-
-The watcher (`bm11x4298`) automatically captures all evidence and Claude updates this report
-with exact wamids, timestamps, Supabase row counts, and Telegram message_ids.
+After that confirmation I will:
+- Capture the outbound wamid + Cloud API status.
+- Run the duplicate-tap test (idempotency).
+- Update this report with the captured evidence and flip verdict to **READY**.
+- Commit and push the final report.
