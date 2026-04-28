@@ -1096,13 +1096,22 @@ async function handleWhatsAppMessage(msg, contactName, phoneNumberId) {
     return;
   }
 
-  // Alex
-  const guardMode = getGuardMode({ hasContact, hasPhone });
-  const systemPrompt = buildSystemPrompt({ guardMode });
-  const alexResult = await callAlex(messages, systemPrompt);
-  let reply = stripLeadPayloadBlock(String(alexResult.reply || '').trim());
-  reply = stripMarkdownArtifacts(reply).slice(0, 1000);
-  if (!reply) reply = 'Hi! Please share your project details and best phone number 📲';
+  // Alex — WhatsApp engine: English-only, post-generation safety validator
+  const { generateAlexWhatsAppReply } = require('../lib/alex/whatsapp-reply-engine.js');
+  const waAlex = await generateAlexWhatsAppReply({
+    inboundText,
+    customerPhone: from,
+    conversationHistory: messages.slice(0, -1),
+  });
+  let reply = stripMarkdownArtifacts(stripLeadPayloadBlock(waAlex.replyText)).slice(0, 1200);
+  console.log(JSON.stringify({
+    component: 'wa_alex',
+    source: waAlex.source,
+    model: waAlex.model,
+    reason: waAlex.reason,
+    safety_flags: waAlex.safetyFlags,
+    reply_preview: reply.slice(0, 80),
+  }));
 
   await saveTurns(sessionId, null, inboundText, reply);
 
