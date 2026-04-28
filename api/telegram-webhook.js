@@ -69,6 +69,16 @@ async function handler(req, res) {
   }
 
   const update = req.body || {};
+
+  // ── WhatsApp approval callback (✅/✏️/❌ buttons) ───────────────────────────
+  // Telegram bot's callback_query updates land here (Telegram bot webhook URL
+  // is /api/telegram-webhook). Without this, owner taps ✅ but the WhatsApp
+  // Cloud API send is never triggered → customer gets nothing.
+  const { isWAApprovalCallback, handleWAApprovalCallback } = require('../lib/telegram/wa-approval-callback.js');
+  if (isWAApprovalCallback(update)) {
+    return handleWAApprovalCallback(update, res);
+  }
+
   const message = update.message || update.edited_message;
 
   // Ignore non-message updates (channel posts, inline queries, etc.)

@@ -93,7 +93,11 @@ async function handler(req, res) {
 
   // ── Telegram bot callback (inline keyboard for WhatsApp approval) ──────────
   // Telegram does NOT send X-Hub-Signature-256 — skip HMAC for these requests.
+  // Note: in production the Telegram bot webhook URL points to /api/telegram-webhook,
+  // which also imports the same shared handler. This path stays for backward compat.
   if (body.callback_query || body.update_id) {
+    const { isWAApprovalCallback, handleWAApprovalCallback } = require('../lib/telegram/wa-approval-callback.js');
+    if (isWAApprovalCallback(body)) return handleWAApprovalCallback(body, res);
     return handleTelegramUpdate(body, res);
   }
 
