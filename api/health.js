@@ -68,7 +68,13 @@ async function ctaEventIngest(req, res) {
     return res.status(403).json({ ok: false, error: 'forbidden_origin' });
   }
 
-  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch (_) { body = {}; }
+  } else if (body && typeof body === 'object' && typeof body.toString === 'function' && Buffer.isBuffer && Buffer.isBuffer(body)) {
+    try { body = JSON.parse(body.toString('utf-8')); } catch (_) { body = {}; }
+  }
+  if (!body || typeof body !== 'object') body = {};
   const eventName = String(body.event_name || '').trim().toLowerCase();
   const allowed = new Set([
     'widget_seen', 'widget_open', 'chat_first_message', 'phone_click',
