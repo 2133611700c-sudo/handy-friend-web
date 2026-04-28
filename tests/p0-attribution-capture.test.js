@@ -93,6 +93,40 @@ test('whatsapp_click fires Google Ads conversion in index.html and shared.js', (
   assert.ok(/whatsapp_lead/.test(shared), 'shared.js must fire Ads conversion on whatsapp_click');
 });
 
+test('submit-lead envelope.source uses classified channel (not hardcoded "website")', () => {
+  // Regression for P0 Tail 1: prior to fix, leads with gclid landed with source='other'
+  // because envelope.source was hardcoded 'website' (downgraded to 'other' by normalizeSource).
+  const src = fs.readFileSync(path.resolve(__dirname, '../api/submit-lead.js'), 'utf8');
+  assert.ok(
+    /createEnvelope\(\{[\s\S]*?source:\s*classifiedSource/m.test(src),
+    'submit-lead.js createEnvelope must pass classified channel as source, not hardcoded "website"'
+  );
+  assert.ok(
+    !/createEnvelope\(\{[\s\S]{0,200}source:\s*['"]website['"]\s*,/m.test(src),
+    'legacy hardcoded `source: "website"` must not appear in createEnvelope call'
+  );
+  assert.ok(
+    src.includes('source_details:    leadData.sourceDetails'),
+    'submit-lead.js must propagate source_details into envelope.attribution'
+  );
+  assert.ok(
+    src.includes('attribution_source: classifiedSource'),
+    'submit-lead.js must propagate attribution_source into envelope.attribution'
+  );
+});
+
+test('lead-pipeline processInbound forwards source_details + attribution_source from envelope', () => {
+  const src = fs.readFileSync(path.resolve(__dirname, '../lib/lead-pipeline.js'), 'utf8');
+  assert.ok(
+    /attribution_source:\s*envelope\.attribution\?\.attribution_source/.test(src),
+    'processInbound must read attribution_source from envelope.attribution.attribution_source'
+  );
+  assert.ok(
+    /source_details:\s*envelope\.attribution\?\.source_details/.test(src),
+    'processInbound must forward envelope.attribution.source_details into createOrMergeLead'
+  );
+});
+
 test('postCtaEvent payload includes gclid/utm/landing_page in metadata', () => {
   const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
   const shared = fs.readFileSync(path.resolve(__dirname, '../assets/js/shared.js'), 'utf8');

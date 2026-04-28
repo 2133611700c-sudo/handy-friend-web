@@ -279,8 +279,13 @@ export default async function handler(req, res) {
   saveLeadContext(leadData).catch((err) => console.error('[LEAD_CONTEXT_ASYNC_ERROR]', err.message));
 
   // Create or merge lead using Unified Lead System v3 (multi-key dedupe + side effects via outbox)
+  // P0 attribution fix: pass classified channel as source so leads.source is e.g. google_ads_search,
+  // not the hardcoded 'website'. deriveChannel(normalizedSource, source_details) will then return
+  // the same canonical channel via the VALID_SOURCES path. Also propagate source_details +
+  // attribution_source so the columns are populated end-to-end.
+  const classifiedSource = normalizedAttribution.channel || 'website_form';
   const envelope = createEnvelope({
-    source:        'website',
+    source:        classifiedSource,
     lead_phone:    phone,
     lead_email:    email,
     lead_name:     name,
@@ -288,18 +293,20 @@ export default async function handler(req, res) {
     service_hint:  service,
     attachments:   safeAttachments.map(a => ({ type: a.type, url: a.name })),
     attribution: {
-      utm_source:   normalizedAttribution.utmSource   || req.query?.utm_source || '',
-      utm_medium:   normalizedAttribution.utmMedium   || req.query?.utm_medium || '',
-      utm_campaign: normalizedAttribution.utmCampaign || req.query?.utm_campaign || '',
-      utm_content:  normalizedAttribution.utmContent  || '',
-      utm_term:     normalizedAttribution.utmTerm     || '',
-      gclid:        normalizedAttribution.clickId?.gclid    || '',
-      gbraid:       normalizedAttribution.clickId?.gbraid   || '',
-      wbraid:       normalizedAttribution.clickId?.wbraid   || '',
-      fbclid:       normalizedAttribution.clickId?.fbclid   || '',
-      msclkid:      normalizedAttribution.clickId?.msclkid  || '',
-      referrer:     normalizedAttribution.referrer || req.headers.referer || '',
-      landing_page: normalizedAttribution.landingPath || normalizedAttribution.pageUrl || ''
+      utm_source:        normalizedAttribution.utmSource   || req.query?.utm_source || '',
+      utm_medium:        normalizedAttribution.utmMedium   || req.query?.utm_medium || '',
+      utm_campaign:      normalizedAttribution.utmCampaign || req.query?.utm_campaign || '',
+      utm_content:       normalizedAttribution.utmContent  || '',
+      utm_term:          normalizedAttribution.utmTerm     || '',
+      gclid:             normalizedAttribution.clickId?.gclid    || '',
+      gbraid:            normalizedAttribution.clickId?.gbraid   || '',
+      wbraid:            normalizedAttribution.clickId?.wbraid   || '',
+      fbclid:            normalizedAttribution.clickId?.fbclid   || '',
+      msclkid:           normalizedAttribution.clickId?.msclkid  || '',
+      referrer:          normalizedAttribution.referrer || req.headers.referer || '',
+      landing_page:      normalizedAttribution.landingPath || normalizedAttribution.pageUrl || '',
+      source_details:    leadData.sourceDetails,
+      attribution_source: classifiedSource
     },
     meta: { zip, preferred_contact: preferredContact, lang }
   });
