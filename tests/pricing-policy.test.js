@@ -425,7 +425,9 @@ test('blog and neighborhood landing pages include Google tracking bootstrap', ()
       if (!file.endsWith('.html')) continue;
       const filePath = path.join(absDir, file);
       const src = fs.readFileSync(filePath, 'utf8');
-      assert.match(src, /G-Z05XJ8E281|\/assets\/js\/shared\.js/,
+      // Allow cache-busted shared.v<YYYYMMDD>.js (commit 2584b6e0) in addition
+      // to the legacy filename and the literal GA4 measurement ID.
+      assert.match(src, /G-Z05XJ8E281|\/assets\/js\/shared(\.v\d{8})?\.js/,
         `MISSING: Google tracking bootstrap not found in ${dir}/${file}`);
     }
   }

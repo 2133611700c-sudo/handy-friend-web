@@ -22,7 +22,7 @@ const RESPONSE_TEMPLATES = {
   neda_kasher: `Hi Neda! Getting ready for Thursday dinner guests? Our professional housekeeping team can help with deep cleaning, kitchen sanitization, and making your home guest-ready. We're insured and available on short notice. Free estimate: (213) 361-1700 - Sergii from Handy & Friend`,
 
   // For Elise Andrews - handyman/construction worker
-  elise_andrews: `Hi Elise! We handle a wide range of handyman and construction work - from repairs and installations to small renovation projects. Professional, licensed, and insured team. Free estimate: (213) 361-1700 - Sergii from Handy & Friend`,
+  elise_andrews: `Hi Elise! We handle a wide range of handyman and construction work - from repairs and installations to small renovation projects. Professional and insured team. Free estimate: (213) 361-1700 - Sergii from Handy & Friend`,
 
   // For Brigitte Davis - deep clean apartment
   brigitte_davis: `Hi Brigitte! Deep cleaning apartments is our specialty. We do thorough cleaning of kitchens (appliances, cabinets), bathrooms (tile, grout), floors, windows, and all surfaces. Professional team with eco-friendly products. Free estimate: (213) 361-1700 - Sergii from Handy & Friend`

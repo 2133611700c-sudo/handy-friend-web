@@ -422,4 +422,15 @@ function formatTelegramAlert(results) {
   }
   
   if (results.warm.length > 0) {
-    message += `🌡️ WARM LEADS (1-3 days,
+    message += `🌡️ WARM LEADS (1-3 days, <20 comments):\n`;
+    results.warm.forEach((post, i) => {
+      message += `${i + 1}. ${post.author} — ${post.area}\n`;
+      message += `   Service: ${post.serviceType}\n`;
+      message += `   Posted: ${post.timeAgo}, ${post.comments} comments\n\n`;
+    });
+  }
+
+  return message;
+}
+
+module.exports = { formatTelegramAlert };
