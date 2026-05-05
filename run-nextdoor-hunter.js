@@ -422,4 +422,62 @@ function formatTelegramAlert(results) {
   }
   
   if (results.warm.length > 0) {
-    message += `🌡️ WARM LEADS (1-3 days,
+    message += `🌡️ WARM LEADS (1-3 days, <20 comments):\n`;
+    results.warm.slice(0, 3).forEach((post, i) => {
+      message += `${i + 1}. ${post.author} — ${post.area}\n`;
+      message += `   Service: ${post.serviceType}\n`;
+      message += `   Posted: ${post.timeAgo}, ${post.comments} comments\n\n`;
+    });
+  }
+
+  if (results.cool.length > 0) {
+    message += `🧊 COOL LEADS (3-7 days, <30 comments): ${results.cool.length}\n`;
+  }
+
+  if (results.skipped.length > 0) {
+    message += `🚫 SKIPPED: ${results.skipped.length}\n`;
+  }
+
+  message += `\n📈 Daily total: ${results.filtered}/${CONFIG.MAX_RESPONSES_PER_DAY} Nextdoor responses\n`;
+  message += `⏰ Next scan: In 1 hour\n`;
+  message += `🔒 Safety: No prices in templates, scope filtering active`;
+
+  return message;
+}
+
+function saveScanReport(results, telegramMessage) {
+  const reportDir = path.join(__dirname, 'ops');
+  if (!fs.existsSync(reportDir)) {
+    fs.mkdirSync(reportDir, { recursive: true });
+  }
+
+  const payload = {
+    createdAt: new Date().toISOString(),
+    results,
+    telegramMessage
+  };
+
+  const reportPath = path.join(reportDir, 'nextdoor-hunter-last-run.json');
+  fs.writeFileSync(reportPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  return reportPath;
+}
+
+function main() {
+  console.log('🚀 Starting Nextdoor Hunter (Safe Templates)...');
+
+  const posts = simulateNextdoorSearch();
+  const results = processPosts(posts);
+  const telegramMessage = formatTelegramAlert(results);
+  const reportPath = saveScanReport(results, telegramMessage);
+
+  console.log('✅ Nextdoor Hunter scan complete');
+  console.log(`📊 Found ${results.total} posts, filtered ${results.filtered}`);
+  console.log(`🔥 ${results.hot.length} HOT, 🌡️ ${results.warm.length} WARM, 🧊 ${results.cool.length} COOL`);
+  console.log(`📝 Saved report: ${reportPath}`);
+  console.log('\n📤 Telegram message preview:\n');
+  console.log('='.repeat(50));
+  console.log(telegramMessage);
+  console.log('='.repeat(50));
+}
+
+main();

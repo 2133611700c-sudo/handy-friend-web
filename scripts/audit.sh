@@ -190,7 +190,7 @@ fi
 
 code_review=$(http_code "$SITE/review")
 redir_review=$(http_redirect "$SITE/review")
-if [[ ( "$code_review" == "301" || "$code_review" == "302" ) && "$redir_review" == *"google"* ]]; then
+if [[ ( "$code_review" == "301" || "$code_review" == "302" || "$code_review" == "307" || "$code_review" == "308" ) && "$redir_review" == *"google"* ]]; then
   pass "redirect /review -> Google"
 else
   fail "redirect /review -> Google"
