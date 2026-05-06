@@ -56,7 +56,8 @@ async function main() {
     text: args.text.trim(),
     token: args.token || undefined,
     chatId: args.chatId || undefined,
-    timeoutMs: 8000,
+    timeoutMs: Number(process.env.TELEGRAM_SEND_TIMEOUT_MS || 12000),
+    retries: Number(process.env.TELEGRAM_SEND_RETRIES || 2),
     extra: {
       category: args.category || null,
       actionable: args.actionable === true,
