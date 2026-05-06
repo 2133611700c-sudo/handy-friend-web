@@ -30,6 +30,8 @@ SITE="https://handyandfriend.com"
 stats7=$(curl -s "${SITE}/api/health?type=stats&key=${STATS_SECRET}&days=7")
 stats30=$(curl -s "${SITE}/api/health?type=stats&key=${STATS_SECRET}&days=30")
 outbox=$(curl -s "${SITE}/api/health?type=outbox")
+telegram_health=$(curl -s "${SITE}/api/health?type=telegram")
+sales_pulse=$(python3 scripts/daily_sales_pulse.py || true)
 
 parse() {
   local json="$1"; local key="$2"
@@ -59,6 +61,11 @@ J30=$(parse "$stats30" "data.jobs_completed")
 OUTBOX_OK=$(parse "$outbox" "ok")
 OUTBOX_SLO=$(parse "$outbox" "slo_breached")
 OUTBOX_QD=$(parse "$outbox" "queue_depth")
+TG_FAIL_24H=$(parse "$telegram_health" "failures_24h")
+TG_FAIL_7D=$(parse "$telegram_health" "failures_7d")
+TG_NO_PROOF_7D=$(parse "$telegram_health" "leads_without_telegram_proof_7d")
+PAID_FORM_24H=$(echo "$sales_pulse" | rg -o "Paid form leads \(24h\): [0-9]+" | rg -o "[0-9]+" | tail -n1 || echo "?")
+LATEST_GCLID=$(echo "$sales_pulse" | sed -n 's/.*Latest gclid: //p' | tail -n1 | tr -d '\r')
 
 # ── write report ──
 {
@@ -81,6 +88,8 @@ OUTBOX_QD=$(parse "$outbox" "queue_depth")
   echo "## Outbox Health"
   echo ""
   echo "- ok=${OUTBOX_OK}, slo_breached=${OUTBOX_SLO}, queue_depth=${OUTBOX_QD}"
+  echo "- telegram_failures_24h=${TG_FAIL_24H}, telegram_failures_7d=${TG_FAIL_7D}, leads_without_telegram_proof_7d=${TG_NO_PROOF_7D}"
+  echo "- paid_form_leads_24h=${PAID_FORM_24H}, latest_gclid=${LATEST_GCLID}"
   echo ""
   echo "## Google Ads (manual — pull from kabinet UI)"
   echo ""
@@ -101,11 +110,23 @@ OUTBOX_QD=$(parse "$outbox" "queue_depth")
   if [[ "${L7}" =~ ^[0-9]+$ ]] && [[ "${L7}" -lt 1 ]]; then
     echo "- 🚨 ALERT: 0 leads in last 7d"
   fi
-  if [[ "${OUTBOX_OK}" == "False" ]]; then
+  if [[ "${OUTBOX_OK}" == "False" || "${OUTBOX_OK}" == "false" ]]; then
     echo "- 🚨 ALERT: outbox unhealthy (ok=${OUTBOX_OK})"
   fi
-  if [[ "${OUTBOX_SLO}" == "True" ]]; then
+  if [[ "${OUTBOX_SLO}" == "True" || "${OUTBOX_SLO}" == "true" ]]; then
     echo "- ⚠️  WARN: outbox SLO breached"
+  fi
+  if [[ "${TG_FAIL_24H}" =~ ^[0-9]+$ ]] && [[ "${TG_FAIL_24H}" -ge 1 ]]; then
+    echo "- 🚨 ALERT: telegram failures in last 24h = ${TG_FAIL_24H}"
+  fi
+  if [[ "${TG_NO_PROOF_7D}" =~ ^[0-9]+$ ]] && [[ "${TG_NO_PROOF_7D}" -ge 1 ]]; then
+    echo "- 🚨 ALERT: leads without telegram proof (7d) = ${TG_NO_PROOF_7D}"
+  fi
+  if [[ "${L7}" =~ ^[0-9]+$ ]] && [[ "${L7}" -ge 1 ]] && [[ "${PAID_FORM_24H}" =~ ^[0-9]+$ ]] && [[ "${PAID_FORM_24H}" -eq 0 ]]; then
+    echo "- ⚠️  WARN: there are leads but paid form attribution is 0 in last 24h"
+  fi
+  if [[ "${LATEST_GCLID}" == "none" || -z "${LATEST_GCLID}" ]]; then
+    echo "- ⚠️  WARN: latest_gclid is none (possible Ads attribution gap)"
   fi
   echo ""
   echo "---"
@@ -122,8 +143,14 @@ ALERT_MSG=""
 if [[ "${L7}" =~ ^[0-9]+$ ]] && [[ "${L7}" -eq 0 ]]; then
   ALERT_MSG="${ALERT_MSG}🚨 0 leads in last 7 days%0A"
 fi
-if [[ "${OUTBOX_OK}" == "False" ]]; then
+if [[ "${OUTBOX_OK}" == "False" || "${OUTBOX_OK}" == "false" ]]; then
   ALERT_MSG="${ALERT_MSG}🚨 Outbox unhealthy%0A"
+fi
+if [[ "${TG_FAIL_24H}" =~ ^[0-9]+$ ]] && [[ "${TG_FAIL_24H}" -ge 1 ]]; then
+  ALERT_MSG="${ALERT_MSG}🚨 Telegram failures in 24h: ${TG_FAIL_24H}%0A"
+fi
+if [[ "${TG_NO_PROOF_7D}" =~ ^[0-9]+$ ]] && [[ "${TG_NO_PROOF_7D}" -ge 1 ]]; then
+  ALERT_MSG="${ALERT_MSG}🚨 Leads without Telegram proof 7d: ${TG_NO_PROOF_7D}%0A"
 fi
 
 if [[ -n "$ALERT_MSG" ]] && [[ -n "${TELEGRAM_BOT_TOKEN:-}" ]] && [[ -n "${TELEGRAM_CHAT_ID:-}" ]]; then
