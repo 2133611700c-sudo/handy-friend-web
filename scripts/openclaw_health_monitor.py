@@ -454,37 +454,47 @@ def build_digest(
 
 
 def send_telegram(token: str, chat_id: str, text: str) -> Tuple[bool, str]:
-    try:
-        proc = subprocess.run(
-            [
-                "node",
-                "scripts/send-telegram.mjs",
-                "--source",
-                "openclaw_health_monitor",
-                "--category",
-                "source_health_report",
-                "--actionable",
-                "1",
-                "--token",
-                token,
-                "--chat-id",
-                chat_id,
-                "--text",
-                text,
-            ],
-            capture_output=True,
-            text=True,
-            timeout=20,
-            check=False,
-        )
-        if proc.returncode != 0:
-            return False, f"telegram failed exit={proc.returncode} err={proc.stderr.strip()[:200]}"
-        payload = json.loads(proc.stdout.strip() or "{}")
-        if payload.get("ok") is True:
-            return True, "sent"
-        return False, f"telegram not ok: {str(payload)[:200]}"
-    except Exception as exc:
-        return False, f"telegram exception: {str(exc)[:200]}"
+    timeout_sec = int(os.getenv("OPENCLAW_TELEGRAM_TIMEOUT_SEC", "45"))
+    retries = max(1, int(os.getenv("OPENCLAW_TELEGRAM_RETRIES", "2")))
+    last_error = "unknown"
+    for attempt in range(1, retries + 1):
+        try:
+            proc = subprocess.run(
+                [
+                    "node",
+                    "scripts/send-telegram.mjs",
+                    "--source",
+                    "openclaw_health_monitor",
+                    "--category",
+                    "source_health_report",
+                    "--actionable",
+                    "1",
+                    "--token",
+                    token,
+                    "--chat-id",
+                    chat_id,
+                    "--text",
+                    text,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=timeout_sec,
+                check=False,
+            )
+            if proc.returncode != 0:
+                last_error = f"telegram failed exit={proc.returncode} err={proc.stderr.strip()[:200]}"
+            else:
+                payload = json.loads(proc.stdout.strip() or "{}")
+                if payload.get("ok") is True:
+                    return True, f"sent attempt={attempt}"
+                last_error = f"telegram not ok: {str(payload)[:200]}"
+        except Exception as exc:
+            last_error = f"telegram exception: {str(exc)[:200]}"
+        if attempt < retries:
+            # Brief linear backoff to tolerate transient Telegram/API latency spikes.
+            import time
+            time.sleep(attempt)
+    return False, last_error
 
 
 def _alert_state_path() -> pathlib.Path:
