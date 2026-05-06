@@ -204,8 +204,8 @@
       {"@type":"Offer","itemOffered":{"@type":"Service","name":"Furniture Assembly"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"}},
       {"@type":"Offer","itemOffered":{"@type":"Service","name":"Interior Painting"},"priceSpecification":{"@type":"UnitPriceSpecification","price":"3.00","priceCurrency":"USD","unitCode":"FTK","unitText":"per sq ft"}},
       {"@type":"Offer","itemOffered":{"@type":"Service","name":"Flooring Installation"},"priceSpecification":{"@type":"UnitPriceSpecification","price":"3.00","priceCurrency":"USD","unitCode":"FTK","unitText":"per sq ft"}},
-      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Plumbing"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"}},
-      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Electrical"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"}},
+      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Minor Plumbing Fixtures"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"}},
+      {"@type":"Offer","itemOffered":{"@type":"Service","name":"Minor Electrical Fixtures"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"}},
       {"@type":"Offer","itemOffered":{"@type":"Service","name":"Art & Mirror Hanging"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD","minPrice":"150"}},
       {"@type":"Offer","itemOffered":{"@type":"Service","name":"Drywall Repair"},"priceSpecification":{"@type":"PriceSpecification","price":"150","priceCurrency":"USD"},"description":"Service Call $150 — includes up to 2 hours on-site. Larger repairs quoted after photos."},
       {"@type":"Offer","itemOffered":{"@type":"Service","name":"Door Installation"},"description":"Quote after photos — written price before work starts","priceCurrency":"USD"},
@@ -1008,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div style="max-width:720px;margin:0 auto;text-align:center">
     <div style="font-size:48px;margin-bottom:14px">🛡️</div>
     <h2 style="font-size:32px;font-weight:700;font-family:var(--fs);margin-bottom:16px;color:#F5C542" data-i18n="doneRightTitle">The Done-Right Promise</h2>
-    <p style="font-size:17px;line-height:1.7;color:rgba(255,255,255,0.90);margin:0" data-i18n="doneRightBody">If the work isn't right, we come back and fix it at no extra cost. 1-year on workmanship. If we can't finish what we quoted, you don't pay for it.</p>
+    <p style="font-size:17px;line-height:1.7;color:rgba(255,255,255,0.90);margin:0" data-i18n="doneRightBody">If something in the agreed scope is not right, tell us within 7 days and we will schedule a touch-up at no extra labor charge.</p>
   </div>
 </section>
 
@@ -1028,11 +1028,11 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div style="padding:20px 16px;background:#f9f7f4;border-radius:12px;border:1px solid var(--st);text-align:center">
         <div style="font-size:28px;margin-bottom:8px">🔌</div>
-        <div style="font-weight:700;color:var(--ink);font-size:15px" data-i18n="fhsItem2">Electrical Help</div>
+        <div style="font-weight:700;color:var(--ink);font-size:15px" data-i18n="fhsItem2">Minor Electrical Fixtures</div>
       </div>
       <div style="padding:20px 16px;background:#f9f7f4;border-radius:12px;border:1px solid var(--st);text-align:center">
         <div style="font-size:28px;margin-bottom:8px">🚿</div>
-        <div style="font-weight:700;color:var(--ink);font-size:15px" data-i18n="fhsItem3">Plumbing Fixes</div>
+        <div style="font-weight:700;color:var(--ink);font-size:15px" data-i18n="fhsItem3">Minor Plumbing Fixtures</div>
       </div>
       <div style="padding:20px 16px;background:#f9f7f4;border-radius:12px;border:1px solid var(--st);text-align:center">
         <div style="font-size:28px;margin-bottom:8px">🎨</div>
@@ -1097,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- MORE SERVICES STRIP -->
 <div id="moreServicesStrip" style="padding:18px 16px;background:#2A1F14;text-align:center;overflow:hidden">
-  <p style="color:#F5C542;font-size:13px;font-weight:700;letter-spacing:.04em;margin:0;line-height:1.6" data-i18n="moreServicesStrip">TV mounting · drywall · assembly · electrical · plumbing · painting · doors · and more</p>
+  <p style="color:#F5C542;font-size:13px;font-weight:700;letter-spacing:.04em;margin:0;line-height:1.6" data-i18n="moreServicesStrip">TV mounting · drywall · assembly · minor electrical fixtures · minor plumbing fixtures · painting · doors · and more</p>
 </div>
 
 
@@ -1120,8 +1120,8 @@ document.addEventListener('DOMContentLoaded', function() {
         <option value="door-installation" data-i18n="leadServiceDoor">🚪 Door Installation</option>
         <option value="painting" data-i18n="leadServicePainting">🎨 Painting & Walls</option>
         <option value="flooring" data-i18n="leadServiceFlooring">🏠 Flooring</option>
-        <option value="plumbing" data-i18n="leadServicePlumbing">🚰 Plumbing</option>
-        <option value="electrical" data-i18n="leadServiceElectrical">⚡ Electrical</option>
+        <option value="plumbing" data-i18n="leadServicePlumbing">🚰 Minor Plumbing Fixtures</option>
+        <option value="electrical" data-i18n="leadServiceElectrical">⚡ Minor Electrical Fixtures</option>
         <option value="mirrors" data-i18n="leadServiceMirrors">🪞 Mirrors & Art Hanging</option>
         <option value="other" data-i18n="leadServiceOther">✋ Other Service</option>
       </select>
@@ -1724,7 +1724,7 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
       <div>
         <h3 style="color:#B8892C;font-size:14px;font-weight:700;margin-bottom:12px;letter-spacing:.05em;text-transform:uppercase">Services</h3>
         <p style="color:rgba(255,255,255,0.75);font-size:13px;line-height:1.6;margin:0">
-          TV Mounting • Furniture Assembly • Painting • Flooring • Plumbing • Electrical • Art & Mirror Hanging
+          TV Mounting • Furniture Assembly • Painting • Flooring • Minor Plumbing Fixtures • Minor Electrical Fixtures • Art & Mirror Hanging
         </p>
       </div>
 
@@ -1877,7 +1877,7 @@ document.getElementById('leadPhotos')?.addEventListener('change', (e) => {
 <script>
 (function(){
   var GREET = {
-    en:"Hi! I'm Alex 👋 I help with quotes for painting, flooring, TV mounting, plumbing, and more. What can we help you with today?",
+    en:"Hi! I'm Alex 👋 I help with quotes for painting, flooring, TV mounting, and minor fixture work. What can we help you with today?",
     ru:"Привет! Я Алекс 👋 Помогаю с расчётом стоимости покраски, полов, монтажа ТВ, сантехники и других работ. Чем могу помочь?",
     uk:"Привіт! Я Алекс 👋 Допомагаю з розрахунком вартості покраски, підлоги, монтажу ТВ, сантехніки та інших робіт. Чим можу допомогти?",
     es:"¡Hola! Soy Alex 👋 Ayudo con cotizaciones de pintura, pisos, montaje de TV, plomería y más. ¿En qué puedo ayudarte hoy?"
