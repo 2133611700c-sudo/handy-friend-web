@@ -1,0 +1,44 @@
+{
+  "id": "OC-001",
+  "title": "Run Dell OpenClaw self-check",
+  "priority": "P0",
+  "executor": "dell-openclaw",
+  "mode": "evidence_only",
+  "status": "TASK_CREATED",
+  "created_at": "2026-05-12T16:25:00Z",
+  "scope": {
+    "repo": "2133611700c-sudo/handy-friend-web",
+    "branch": "main",
+    "files": [
+      "ops/openclaw/dell/dell-self-check.sh",
+      "scripts/openclaw-virtual-browser-audit.mjs"
+    ]
+  },
+  "rules": {
+    "no_real_customer_messages": true,
+    "no_secrets_in_logs": true,
+    "no_destructive_actions": true,
+    "no_social_posting": true
+  },
+  "steps": [
+    "cd ~/work/handy-friend-web or the active repo checkout",
+    "git status --short",
+    "git pull --ff-only origin main",
+    "bash ops/openclaw/dell/dell-self-check.sh"
+  ],
+  "evidence_required": [
+    "full command output",
+    "repo path",
+    "current git commit",
+    "node/npm/python/git versions",
+    "PASS/FAIL for required files",
+    "network fetch status for homepage and /api/health"
+  ],
+  "stop_conditions": [
+    "local repo has uncommitted changes",
+    "git pull cannot fast-forward",
+    "any secret appears in terminal output",
+    "required file missing"
+  ],
+  "expected_output": "ops/openclaw/reports/dell-self-check/OC-001-output.txt"
+}
