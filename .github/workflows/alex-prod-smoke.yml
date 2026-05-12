@@ -1,5 +1,7 @@
 name: Alex Production Smoke
 
+# Permanent smoke check for production Alex intake.
+# It does not touch billing, secrets, Supabase writes, or Vercel functions.
 on:
   push:
     branches: [main]
