@@ -11,6 +11,14 @@ if [ -z "${DATABASE_URL:-}" ]; then
   exit 1
 fi
 
+case "$DATABASE_URL" in
+  postgres://*|postgresql://*) ;;
+  *)
+    echo "ERROR: DATABASE_URL must start with postgres:// or postgresql://. Current value is not a PostgreSQL connection URL." >&2
+    exit 1
+    ;;
+esac
+
 OUT_DIR="${OUT_DIR:-ops/reports/sql/$(date -u +%Y%m%dT%H%M%SZ)}"
 mkdir -p "$OUT_DIR"
 
@@ -30,9 +38,14 @@ REPORTS=(
 
 echo "SQL report output: $OUT_DIR"
 
+failures=0
+missing=0
+passed=0
+
 for report in "${REPORTS[@]}"; do
   if [ ! -f "$report" ]; then
     echo "WARN: missing report file: $report" | tee -a "$OUT_DIR/_summary.txt"
+    missing=$((missing + 1))
     continue
   fi
 
@@ -43,11 +56,23 @@ for report in "${REPORTS[@]}"; do
   if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$report" > "$out" 2>&1; then
     lines="$(wc -l < "$out" | tr -d ' ')"
     echo "PASS $report lines=$lines" | tee -a "$OUT_DIR/_summary.txt"
+    passed=$((passed + 1))
   else
     echo "FAIL $report" | tee -a "$OUT_DIR/_summary.txt"
     tail -n 40 "$out" | tee -a "$OUT_DIR/_summary.txt"
+    failures=$((failures + 1))
   fi
 
 done
 
-echo "DONE. Attach $OUT_DIR outputs to the related GitHub issue or ops report."
+{
+  echo "SUMMARY passed=$passed failed=$failures missing=$missing"
+  echo "OUTPUT_DIR=$OUT_DIR"
+} | tee -a "$OUT_DIR/_summary.txt"
+
+if [ "$failures" -gt 0 ] || [ "$missing" -gt 0 ]; then
+  echo "ERROR: SQL report run had failures or missing report files. Attach $OUT_DIR outputs to the related GitHub issue or ops report." >&2
+  exit 1
+fi
+
+echo "DONE. All SQL reports passed. Attach $OUT_DIR outputs to the related GitHub issue or ops report."
