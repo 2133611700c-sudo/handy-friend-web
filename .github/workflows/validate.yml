@@ -63,6 +63,8 @@ jobs:
           node --check scripts/build-browser-price-registry.mjs
           node --check scripts/alex-prod-smoke.mjs
           node --check scripts/openclaw-virtual-browser-audit.mjs
+          node --check scripts/agent-policy-scan.mjs
+          node --check scripts/homepage-final-sanitize.mjs
           node --check lib/price-registry.js
           node --check lib/pricing-policy.js
           node --check lib/attribution.js
@@ -73,6 +75,11 @@ jobs:
           node --check api/submit-lead.js
           node --check api/health.js
           echo "✅ Factory scripts syntax OK"
+
+      - name: Agent repo policy scan
+        run: |
+          node scripts/agent-policy-scan.mjs
+          echo "✅ Agent repo policy scan completed"
 
       - name: Verify browser price registry is generated from canonical source
         run: |
