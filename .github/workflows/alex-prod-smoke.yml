@@ -1,6 +1,8 @@
 name: Alex Production Smoke
 
 on:
+  push:
+    branches: [alex-prod-smoke-action]
   workflow_dispatch:
 
 jobs:
