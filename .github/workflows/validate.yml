@@ -62,6 +62,7 @@ jobs:
           node --check ops/factory-guard.mjs
           node --check scripts/build-browser-price-registry.mjs
           node --check scripts/alex-prod-smoke.mjs
+          node --check scripts/openclaw-virtual-browser-audit.mjs
           node --check lib/price-registry.js
           node --check lib/pricing-policy.js
           node --check lib/attribution.js
