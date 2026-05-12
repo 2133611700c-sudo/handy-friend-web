@@ -1,0 +1,110 @@
+name: HF Policy Copy Sanitizer Final Pass
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ops/triggers/hf-policy-copy-sanitize-final-*.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  sanitize-copy-final-pass:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply final claim-safe replacements
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          files = list(Path('.').rglob('*.html')) + [Path('assets/js/shared.js')]
+          files = [p for p in files if p.exists() and 'node_modules' not in p.parts and '.git' not in p.parts]
+
+          replacements = {
+              # Public email canonicalization.
+              'hello@handyandfriend.com': '2133611700c@gmail.com',
+              'mailto:hello@handyandfriend.com': 'mailto:2133611700c@gmail.com',
+
+              # Remove remaining rating/review proof claims.
+              '⭐ 5.0 Rated': 'Written scope first',
+              '⭐ 5.0 valorado': 'Alcance escrito primero',
+              '⭐ 5.0 рейтинг': 'Письменный объём работ',
+              '⭐ 5.0 рейтинг': 'Письмовий обсяг робіт',
+              '5 &#9733;': 'Written',
+              'Customer Rating': 'Scope First',
+
+              # Insurance word in headings/trust. Use scope/legal wording instead.
+              'Insured and legal-safe scope?': 'What work can you handle?',
+              '¿Seguro y alcance legal?': '¿Qué trabajos podemos hacer?',
+              'Страховка и легальный объём работ?': 'Какие работы мы можем выполнять?',
+              'Страхування та легальний обсяг робіт?': 'Які роботи ми можемо виконувати?',
+              '✅ Professional local service': '✅ Written scope first',
+              '✅ Profesional y asegurado': '✅ Alcance escrito primero',
+              '✅ Servicio local profesional': '✅ Alcance escrito primero',
+              '✅ Профессиональный локальный сервис': '✅ Письменный объём работ',
+              '✅ Професійний локальний сервіс': '✅ Письмовий обсяг робіт',
+              'asegurado': 'con alcance escrito',
+              'asegurados': 'con alcance escrito',
+              'застраховано': 'с письменным объёмом работ',
+              'застраховані': 'з письмовим обсягом робіт',
+              'Страховка': 'Объём работ',
+              'Страхування': 'Обсяг робіт',
+              'Insured': 'Written scope',
+              'insured': 'written scope',
+
+              # Hours and SLA leftovers.
+              '7 days a week': 'Monday through Saturday',
+              '8 AM–7 PM': '8 AM–8 PM',
+              '8AM–7PM': '8AM–8PM',
+              '8am–7pm': '8am–8pm',
+              '8am-7pm': '8am-8pm',
+              '"closes": "19:00"': '"closes": "20:00"',
+              'within 30 minutes': 'within 15 minutes',
+              '2 minutes': 'a few minutes',
+
+              # Avoid broad trade labels in visible service menus/text where exact string occurs.
+              '>Plumbing</a>': '>Minor Plumbing Fixtures</a>',
+              '>Electrical</a>': '>Minor Electrical Fixtures</a>',
+              '>Plumbing</option>': '>Minor Plumbing Fixtures</option>',
+              '>Electrical</option>': '>Minor Electrical Fixtures</option>',
+              '<h3>Plumbing</h3>': '<h3>Minor Plumbing Fixtures</h3>',
+              '<h3>Electrical</h3>': '<h3>Minor Electrical Fixtures</h3>',
+              '"name": "Plumbing"': '"name": "Minor Plumbing Fixtures"',
+              '"name": "Electrical"': '"name": "Minor Electrical Fixtures"',
+          }
+
+          changed = []
+          for path in files:
+              text = path.read_text(encoding='utf-8')
+              original = text
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              if text != original:
+                  path.write_text(text, encoding='utf-8')
+                  changed.append(str(path))
+
+          print('Changed files:')
+          for f in changed:
+              print(f)
+          if not changed:
+              print('(none)')
+          PY
+
+      - name: Show diff
+        run: git diff -- '*.html' assets/js/shared.js || true
+
+      - name: Commit final sanitized copy
+        run: |
+          if git diff --quiet -- '*.html' assets/js/shared.js; then
+            echo "No copy changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '*.html' assets/js/shared.js
+          git commit -m "fix(copy): remove remaining unverified public claims"
+          git push
