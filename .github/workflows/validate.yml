@@ -115,3 +115,19 @@ jobs:
             echo "ERROR: Banned discount messaging found!" && exit 1
           fi
           echo "✅ No banned discount strings"
+
+      - name: Agent policy drift scan (warn-only)
+        run: |
+          echo "=== Agent policy drift scan ==="
+          FOUND=0
+          for pattern in "General Liability" "licensed and bonded" "best in LA" "#1 handyman" "hello@handyandfriend.com" "8 AM–7 PM" "8am-7pm" "5.0 Rated" "Customer Rating"; do
+            if git grep -n -i "$pattern" -- '*.html' '*.js' '*.md' ':!node_modules' ':!package-lock.json' 2>/dev/null; then
+              echo "WARN: policy drift pattern found: $pattern"
+              FOUND=1
+            fi
+          done
+          if [ "$FOUND" -eq 0 ]; then
+            echo "✅ No known public policy drift patterns found"
+          else
+            echo "⚠️ Policy drift found. Warn-only for now; fix via sanitizer before turning hard-fail."
+          fi
