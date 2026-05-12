@@ -2,6 +2,9 @@ name: Alex Smoke
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'ops/agent-control/triggers/alex-smoke-*.txt'
 
 jobs:
   smoke:
