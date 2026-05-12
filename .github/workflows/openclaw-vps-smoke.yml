@@ -1,0 +1,23 @@
+name: OpenClaw VPS Smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, linux, x64, openclaw, handy-friend]
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Print runtime versions
+        run: |
+          echo "runner=$(hostname)"
+          git --version
+          node --version
+          npm --version
+          python3 --version || true
+
+      - name: Check OpenClaw virtual browser runner syntax
+        run: node --check scripts/openclaw-virtual-browser-audit.mjs
