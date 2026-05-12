@@ -6,6 +6,9 @@ on:
     paths:
       - 'ops/agent-control/triggers/alex-smoke-*.txt'
 
+permissions:
+  contents: write
+
 jobs:
   smoke:
     runs-on: ubuntu-latest
@@ -14,5 +17,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Run Alex production smoke
-        run: npm run -s smoke:alex
+      - name: Run Alex production smoke with evidence
+        run: |
+          mkdir -p ops/agent-control/reports/alex-smoke
+          TS=$(date -u +%Y%m%dT%H%M%SZ)
+          OUT="ops/agent-control/reports/alex-smoke/${TS}.md"
+          LOG="/tmp/alex-smoke.log"
+          echo "# Alex Smoke Agent Report" > "$OUT"
+          echo "" >> "$OUT"
+          echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$OUT"
+          echo "Commit: ${GITHUB_SHA}" >> "$OUT"
+          echo "" >> "$OUT"
+          set +e
+          npm run -s smoke:alex > "$LOG" 2>&1
+          CODE=$?
+          set -e
+          if [ "$CODE" -eq 0 ]; then
+            echo "Result: PASS" >> "$OUT"
+          else
+            echo "Result: FAIL" >> "$OUT"
+          fi
+          echo "Exit code: $CODE" >> "$OUT"
+          echo "" >> "$OUT"
+          echo "## Log" >> "$OUT"
+          echo '```text' >> "$OUT"
+          sed -E 's/(key|token|secret|password)=([^ ]+)/\1=REDACTED/Ig' "$LOG" >> "$OUT"
+          echo '```' >> "$OUT"
+          cat "$OUT"
+          if ! git diff --quiet -- ops/agent-control/reports/alex-smoke; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add ops/agent-control/reports/alex-smoke
+            git commit -m "ops(agent): add Alex smoke evidence"
+            git push
+          fi
+          exit "$CODE"
