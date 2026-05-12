@@ -1,0 +1,47 @@
+name: OpenClaw Virtual Browser
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_origin:
+        description: Target origin to audit
+        required: false
+        default: https://handyandfriend.com
+      routes:
+        description: Comma-separated routes
+        required: false
+        default: /,/book,/pricing,/services,/messenger
+
+jobs:
+  virtual-browser-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      TARGET_ORIGIN: ${{ github.event.inputs.target_origin || 'https://handyandfriend.com' }}
+      ROUTES: ${{ github.event.inputs.routes || '/,/book,/pricing,/services,/messenger' }}
+      OUT_DIR: ops/openclaw/reports/virtual-browser
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Install npm dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+
+      - name: Run virtual browser audit
+        run: node scripts/openclaw-virtual-browser-audit.mjs
+
+      - name: Upload OpenClaw virtual browser artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openclaw-virtual-browser
+          path: ops/openclaw/reports/virtual-browser/
+          if-no-files-found: warn
