@@ -2,6 +2,13 @@ name: Supabase SQL Reports
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/supabase-sql-reports.yml'
+      - 'scripts/run-supabase-sql-reports.sh'
+      - 'ops/sql/**'
 
 jobs:
   reports:
