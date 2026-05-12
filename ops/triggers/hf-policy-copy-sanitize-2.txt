@@ -1,0 +1,2 @@
+run_at: 2026-05-12T15:56:00Z
+reason: second pass for escaped JSON-LD hours and service subtitle drift
