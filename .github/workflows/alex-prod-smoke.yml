@@ -1,0 +1,39 @@
+name: Alex Production Smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: POST /api/ai-chat production smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload='{"sessionId":"prod-alex-smoke-gha-20260512","lang":"en","messages":[{"role":"user","content":"How much for standard TV mounting in Burbank? My ZIP is 91502."}],"attribution":{"utm_source":"github_actions","utm_medium":"smoke","utm_campaign":"alex_fix"}}'
+          started=$(date +%s%3N)
+          http_code=$(curl -sS -m 20 -o /tmp/alex-response.json -w "%{http_code}" \
+            -H 'content-type: application/json' \
+            -d "$payload" \
+            https://handyandfriend.com/api/ai-chat)
+          ended=$(date +%s%3N)
+          latency=$((ended-started))
+          echo "HTTP=$http_code"
+          echo "LATENCY_MS=$latency"
+          cat /tmp/alex-response.json
+          echo
+          test "$http_code" = "200"
+          test "$latency" -le 15000
+          node <<'NODE'
+          const fs = require('fs');
+          const raw = fs.readFileSync('/tmp/alex-response.json', 'utf8');
+          const j = JSON.parse(raw);
+          const reply = String(j.reply || j.message || j.text || '');
+          if (!reply) throw new Error('missing reply');
+          if (reply.includes('$185') || reply.includes('$105')) throw new Error('legacy price leaked');
+          if (!reply.includes('$150')) throw new Error('missing $150 pricing signal');
+          console.log('reply_ok=true');
+          console.log('reply_preview=' + reply.slice(0, 300));
+          NODE
