@@ -2,6 +2,8 @@ name: Alex Smoke
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 15 * * *'
   push:
     paths:
       - 'ops/agent-control/triggers/alex-smoke-*.txt'
@@ -27,6 +29,7 @@ jobs:
           echo "" >> "$OUT"
           echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$OUT"
           echo "Commit: ${GITHUB_SHA}" >> "$OUT"
+          echo "Trigger: ${GITHUB_EVENT_NAME}" >> "$OUT"
           echo "" >> "$OUT"
           set +e
           npm run -s smoke:alex > "$LOG" 2>&1
