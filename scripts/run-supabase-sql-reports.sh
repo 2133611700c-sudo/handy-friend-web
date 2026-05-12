@@ -19,6 +19,18 @@ case "$DATABASE_URL" in
     ;;
 esac
 
+if printf '%s' "$DATABASE_URL" | grep -Eq '<[^>]+>|\[[^]]+\]|YOUR_PASSWORD|REAL_PASSWORD|xxxxx|XXXX|REGION|PROJECT_REF|YOUR-PROJECT-REF'; then
+  echo "ERROR: DATABASE_URL still contains placeholder text such as <REGION>, [YOUR-PASSWORD], YOUR_PASSWORD, xxxxx, or PROJECT_REF." >&2
+  echo "Use the real Supabase Connect string and replace every placeholder with the real database password, project ref, and region." >&2
+  exit 1
+fi
+
+if ! printf '%s' "$DATABASE_URL" | grep -Eq '@[^/:]+\.[^/:]+'; then
+  echo "ERROR: DATABASE_URL does not appear to contain a real hostname after '@'." >&2
+  echo "Expected a host like db.<project-ref>.supabase.co or aws-0-<real-region>.pooler.supabase.com." >&2
+  exit 1
+fi
+
 OUT_DIR="${OUT_DIR:-ops/reports/sql/$(date -u +%Y%m%dT%H%M%SZ)}"
 mkdir -p "$OUT_DIR"
 
