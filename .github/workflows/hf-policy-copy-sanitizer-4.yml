@@ -1,0 +1,107 @@
+name: HF Trade Scope Copy Sanitizer
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ops/triggers/hf-trade-scope-sanitize-*.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  sanitize-trade-scope-copy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply trade-scope-safe replacements
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          files = list(Path('.').rglob('*.html')) + [Path('assets/js/shared.js')]
+          files = [p for p in files if p.exists() and 'node_modules' not in p.parts and '.git' not in p.parts]
+
+          replacements = {
+              # Availability: avoid Sunday/daily promise.
+              'Available Mon–Sat 8am–8pm': 'Available Mon–Sat 8am–8pm',
+              'Disponibles lun–sáb 8am–8pm': 'Disponibles lun–sáb 8am–8pm',
+              'Работаем пн–сб 8:00–20:00': 'Работаем пн–сб 8:00–20:00',
+              'Працюємо 8:00–20:00 щодня': 'Працюємо пн–сб 8:00–20:00',
+              'Доступні пн–сб 8:00–20:00': 'Доступні пн–сб 8:00–20:00',
+              'every day': 'Monday through Saturday',
+              'daily': 'Mon–Sat',
+              'todos los días': 'lun–sáb',
+              'ежедневно': 'пн–сб',
+              'щодня': 'пн–сб',
+
+              # Weekend wording: do not imply Sunday by default.
+              'Weekend service?': 'Saturday service?',
+              '¿Servicio en fin de semana?': '¿Servicio los sábados?',
+              'Работаете в выходные?': 'Работаете по субботам?',
+              'Працюєте у вихідні?': 'Працюєте по суботах?',
+              'weekend/evening appointments': 'Saturday/evening appointments',
+              'fines de semana o noches': 'sábados o noches',
+              'вечернее и выходное время': 'вечернее время и субботу',
+              'вечірній та вихідний час': 'вечірній час і суботу',
+
+              # Permit/code/licensed/referral language: safer trade-regulated wording.
+              'No permits required': 'Minor fixture scope only',
+              'Sin permisos requeridos': 'Solo alcance menor de accesorios',
+              'Разрешения не требуются': 'Только мелкий fixture scope',
+              'Дозволи не потрібні': 'Тільки дрібний fixture scope',
+              'No permits': 'Minor fixture scope',
+              'Sin permisos': 'Alcance menor',
+              'Без разрешений': 'Мелкий fixture scope',
+              'Без дозволів': 'Дрібний fixture scope',
+              'Conforme a código': 'Alcance menor',
+              'Соответствие нормам': 'Мелкий fixture scope',
+              'Відповідність нормам': 'Дрібний fixture scope',
+              'Garantía de calidad': 'Alcance confirmado por escrito',
+              'Гарантия качества': 'Письменное подтверждение scope',
+              'Гарантія якості': 'Письмове підтвердження scope',
+              'Líneas nuevas → referencia C-36 licenciado': 'New supply lines → trade-regulated work referral',
+              'Trabajo de panel → referencia C-10 licenciado': 'Panel work → trade-regulated work referral',
+              'Новые подводки → рефф. лицензированного C-36': 'Новые подводки → referral к trade contractor',
+              'Работы со щитком → рефф. лицензированного C-10': 'Работы со щитком → referral к trade contractor',
+              'Нові підводки → рефф. ліцензованого C-36': 'Нові підводки → referral до trade contractor',
+              'Роботи зі щитком → рефф. ліцензованого C-10': 'Роботи зі щитком → referral до trade contractor',
+              'licensed': 'trade-regulated',
+              'licenciado': 'regulado',
+              'лицензированного': 'профильного',
+              'ліцензованого': 'профільного',
+          }
+
+          changed = []
+          for path in files:
+              text = path.read_text(encoding='utf-8')
+              original = text
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              if text != original:
+                  path.write_text(text, encoding='utf-8')
+                  changed.append(str(path))
+
+          print('Changed files:')
+          for f in changed:
+              print(f)
+          if not changed:
+              print('(none)')
+          PY
+
+      - name: Show diff
+        run: git diff -- '*.html' assets/js/shared.js || true
+
+      - name: Commit trade scope sanitized copy
+        run: |
+          if git diff --quiet -- '*.html' assets/js/shared.js; then
+            echo "No copy changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '*.html' assets/js/shared.js
+          git commit -m "fix(copy): tighten trade-scope public language"
+          git push
