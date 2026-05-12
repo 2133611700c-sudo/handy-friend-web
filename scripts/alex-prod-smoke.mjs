@@ -5,83 +5,113 @@ const TARGET_URL = process.env.ALEX_SMOKE_URL || DEFAULT_URL;
 const TIMEOUT_MS = Number(process.env.ALEX_SMOKE_TIMEOUT_MS || 20000);
 const MAX_LATENCY_MS = Number(process.env.ALEX_SMOKE_MAX_LATENCY_MS || 15000);
 
-const payload = {
-  sessionId: process.env.ALEX_SMOKE_SESSION_ID || `prod-alex-smoke-${Date.now()}`,
-  lang: 'en',
-  messages: [
-    {
-      role: 'user',
-      content: process.env.ALEX_SMOKE_MESSAGE || 'How much for standard TV mounting in Burbank? My ZIP is 91502.'
-    }
-  ],
-  attribution: {
-    utm_source: process.env.ALEX_SMOKE_UTM_SOURCE || 'smoke',
-    utm_medium: process.env.ALEX_SMOKE_UTM_MEDIUM || 'ci',
-    utm_campaign: process.env.ALEX_SMOKE_UTM_CAMPAIGN || 'alex_prod_smoke'
+const defaultCases = [
+  {
+    id: 'tv_mount_standard',
+    message: 'How much for standard TV mounting in Burbank? My ZIP is 91502.',
+    mustInclude: ['$150']
+  },
+  {
+    id: 'furniture_assembly_standard',
+    message: 'I need help assembling an IKEA dresser in Los Angeles. What is the starting service call?',
+    mustInclude: ['$150']
+  },
+  {
+    id: 'mirror_hanging_standard',
+    message: 'Can you hang a heavy mirror on drywall in Hollywood? What is the basic price?',
+    mustInclude: ['$150']
   }
-};
+];
 
-const started = Date.now();
-const controller = new AbortController();
-const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+const cases = process.env.ALEX_SMOKE_MESSAGE
+  ? [{ id: 'custom', message: process.env.ALEX_SMOKE_MESSAGE, mustInclude: ['$150'] }]
+  : defaultCases;
 
-try {
-  const response = await fetch(TARGET_URL, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(payload),
-    signal: controller.signal
-  });
+const startedAll = Date.now();
+const results = [];
 
-  const latencyMs = Date.now() - started;
-  const raw = await response.text();
-  let body;
-  try {
-    body = JSON.parse(raw);
-  } catch {
-    body = null;
-  }
-
-  const reply = String(body?.reply || body?.message || body?.text || '');
-  const result = {
-    ok: response.ok,
-    http_status: response.status,
-    latency_ms: latencyMs,
-    has_reply: reply.length > 0,
-    contains_150: reply.includes('$150'),
-    contains_legacy_price: reply.includes('$185') || reply.includes('$105'),
-    reply_preview: reply.slice(0, 300),
-    target_url: TARGET_URL,
-    session_id: payload.sessionId
-  };
-
-  console.log(JSON.stringify(result, null, 2));
-
-  if (response.status !== 200) fail(`expected HTTP 200, got ${response.status}`);
-  if (latencyMs > MAX_LATENCY_MS) fail(`expected latency <=${MAX_LATENCY_MS}ms, got ${latencyMs}ms`);
-  if (!reply) fail('missing reply');
-  if (!reply.includes('$150')) fail('missing $150 pricing signal');
-  if (reply.includes('$185') || reply.includes('$105')) fail('legacy price leaked');
-  if (/licensed|bonded|certified|best in LA/i.test(reply)) fail('banned business claim leaked');
-
-  console.log('✅ Alex production smoke passed');
-} catch (err) {
-  const latencyMs = Date.now() - started;
-  const category = err?.name === 'AbortError' ? 'timeout' : 'request_failed';
-  console.error(JSON.stringify({
-    ok: false,
-    category,
-    latency_ms: latencyMs,
-    error: String(err?.message || err),
-    target_url: TARGET_URL,
-    session_id: payload.sessionId
-  }, null, 2));
-  process.exit(1);
-} finally {
-  clearTimeout(timer);
+for (const testCase of cases) {
+  results.push(await runCase(testCase));
 }
 
-function fail(message) {
-  console.error(`❌ Alex production smoke failed: ${message}`);
+const summary = {
+  ok: results.every((r) => r.ok),
+  target_url: TARGET_URL,
+  cases: results.length,
+  passed: results.filter((r) => r.ok).length,
+  failed: results.filter((r) => !r.ok).length,
+  total_latency_ms: Date.now() - startedAll,
+  results
+};
+
+console.log(JSON.stringify(summary, null, 2));
+
+if (!summary.ok) {
+  console.error('❌ Alex production smoke failed');
   process.exit(1);
+}
+
+console.log('✅ Alex production smoke passed');
+
+async function runCase(testCase) {
+  const sessionId = `${process.env.ALEX_SMOKE_SESSION_ID || 'prod-alex-smoke'}-${testCase.id}-${Date.now()}`;
+  const payload = {
+    sessionId,
+    lang: 'en',
+    messages: [{ role: 'user', content: testCase.message }],
+    attribution: {
+      utm_source: process.env.ALEX_SMOKE_UTM_SOURCE || 'smoke',
+      utm_medium: process.env.ALEX_SMOKE_UTM_MEDIUM || 'ci',
+      utm_campaign: process.env.ALEX_SMOKE_UTM_CAMPAIGN || 'alex_prod_smoke'
+    }
+  };
+
+  const started = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    const response = await fetch(TARGET_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
+    const latencyMs = Date.now() - started;
+    const raw = await response.text();
+    let body;
+    try { body = JSON.parse(raw); } catch { body = null; }
+
+    const reply = String(body?.reply || body?.message || body?.text || '');
+    const bannedClaim = /licensed\s+and\s+bonded|certified|best\s+in\s+LA|#1\s+handyman/i.test(reply);
+    const legacyPrice = /\$185|\$105/.test(reply);
+    const missing = (testCase.mustInclude || []).filter((needle) => !reply.includes(needle));
+    const ok = response.status === 200 && latencyMs <= MAX_LATENCY_MS && reply.length > 0 && !legacyPrice && !bannedClaim && missing.length === 0;
+
+    return {
+      id: testCase.id,
+      ok,
+      http_status: response.status,
+      latency_ms: latencyMs,
+      has_reply: reply.length > 0,
+      missing_required_signals: missing,
+      contains_150: reply.includes('$150'),
+      contains_legacy_price: legacyPrice,
+      banned_claim_leaked: bannedClaim,
+      reply_preview: reply.slice(0, 300),
+      session_id: payload.sessionId
+    };
+  } catch (err) {
+    return {
+      id: testCase.id,
+      ok: false,
+      category: err?.name === 'AbortError' ? 'timeout' : 'request_failed',
+      latency_ms: Date.now() - started,
+      error: String(err?.message || err).slice(0, 220),
+      session_id: payload.sessionId
+    };
+  } finally {
+    clearTimeout(timer);
+  }
 }
