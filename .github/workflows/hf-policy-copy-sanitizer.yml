@@ -1,0 +1,140 @@
+name: HF Policy Copy Sanitizer
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ops/triggers/hf-policy-copy-sanitize.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  sanitize-copy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply policy-safe copy replacements
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          files = [
+              Path('index.html'),
+              Path('book/index.html'),
+              Path('services/index.html'),
+              Path('pricing/index.html'),
+          ]
+
+          replacements = {
+              # Canonical email unless hello@ is later verified in rules-registry.
+              'hello@handyandfriend.com': '2133611700c@gmail.com',
+              'mailto:hello@handyandfriend.com': 'mailto:2133611700c@gmail.com',
+
+              # Remove unverified insurance claims from public copy.
+              'Same-day response. Insured. ': 'Same-day response. ',
+              'Same-day response. Insured.': 'Same-day response.',
+              'Professional & Insured': 'Professional local service',
+              'Professional &amp; Insured': 'Professional local service',
+              'Professional and insured': 'Professional local service',
+              'professional and insured': 'professional local service',
+              'Professional y asegurado': 'Servicio local profesional',
+              'Pрофессионально и застраховано': 'Профессиональный локальный сервис',
+              'Профессионально и застраховано': 'Профессиональный локальный сервис',
+              'Професійно та застраховано': 'Професійний локальний сервіс',
+              'We are fully insured and operate under California minor work exemption limits.': 'We handle minor handyman work within California limits. Permit-required or trade-regulated work is referred out.',
+              'Estamos totalmente asegurados y trabajamos dentro de los límites de trabajo menor en California.': 'Trabajamos en servicios menores dentro de los límites de California. El trabajo que requiere permisos o licencia se refiere a un contratista especializado.',
+              'Мы полностью застрахованы и работаем в рамках California minor work exemption.': 'Мы выполняем мелкие handyman-работы в рамках правил Калифорнии. Работы с разрешениями или лицензируемые работы передаются профильному подрядчику.',
+              'Ми повністю застраховані та працюємо в межах California minor work exemption.': 'Ми виконуємо дрібні handyman-роботи в межах правил Каліфорнії. Роботи з дозволами або ліцензіями передаються профільному підряднику.',
+              ' &bull; Insured': '',
+              ' · Insured': '',
+              ' · insured': '',
+
+              # Insurance FAQ on homepage.
+              'Are you insured?': 'What work can you handle?',
+              'Yes — we carry General Liability Insurance. We handle minor handyman jobs under $500 labor. For bigger projects or work requiring permits we refer you to a trade contractor.': 'We handle minor handyman work within California limits. Permit-required, trade-regulated, or larger projects are referred to a qualified trade contractor.',
+
+              # Canonical legal/pricing limit language.
+              'minor handyman jobs under $500 labor': 'minor handyman work within California limits',
+              'We handle minor handyman jobs under $500 labor. For bigger projects or work requiring permits we refer you to a trade contractor.': 'We handle minor handyman work within California limits. Permit-required, trade-regulated, or larger projects are referred to a qualified trade contractor.',
+
+              # Hours: canonical Mon-Sat 8am-8pm. Do not advertise Sunday/7 days.
+              'Mon–Sat 8 AM–7 PM': 'Mon–Sat 8 AM–8 PM',
+              'Mon-Sat 8am-7pm': 'Mon-Sat 8am-8pm',
+              'Mon–Sat 8am–7pm': 'Mon–Sat 8am–8pm',
+              'Monday through Saturday 8am to 7pm': 'Monday through Saturday 8am to 8pm',
+              'Mon to Sat 8am to 7pm': 'Mon to Sat 8am to 8pm',
+              '8am to 7pm': '8am to 8pm',
+              '08:00",\n      "closes": "19:00': '08:00",\n      "closes": "20:00',
+              'we\'re available 7 days a week, 8am to 8pm.': 'we are available Monday through Saturday, 8am to 8pm.',
+              'Available 8am–8pm daily': 'Available Mon–Sat 8am–8pm',
+              'Доступні 8:00–20:00 щодня': 'Доступні пн–сб 8:00–20:00',
+              'Работаем 8:00–20:00 ежедневно': 'Работаем пн–сб 8:00–20:00',
+              'Disponibles 8am–8pm todos los días': 'Disponibles lun–sáb 8am–8pm',
+
+              # SLA / quote promise: remove 2-min/30-min overpromises.
+              'Get Your Quote in 2 Min': 'Get Your Quote Request',
+              'Free quote in 2 minutes. No spam.': 'Free quote request. No spam.',
+              'Cotización gratis en 2 minutos. Sin spam.': 'Solicitud de cotización gratis. Sin spam.',
+              'Бесплатная смета за 2 минуты. Без спама.': 'Бесплатная заявка на смету. Без спама.',
+              'Безкоштовний кошторис за 2 хвилини. Без спаму.': 'Безкоштовна заявка на кошторис. Без спаму.',
+              'within 30 minutes during business hours': 'within 15 minutes during business hours',
+              'We\'ll get back to you within 30 minutes during business hours.': 'We\'ll get back to you within 15 minutes during business hours.',
+              '<div class="sp-trust-num">30 min</div>\n        <div class="sp-trust-label">Response Time</div>': '<div class="sp-trust-num">15 min</div>\n        <div class="sp-trust-label">Response Target</div>',
+
+              # Unverified trust/review/client-count claims.
+              '<div class="sp-trust-num">5 &#9733;</div>\n        <div class="sp-trust-label">Customer Rating</div>': '<div class="sp-trust-num">Written</div>\n        <div class="sp-trust-label">Scope First</div>',
+              '<div class="sp-trust-num">20+</div>\n          <div class="sp-trust-label">Happy Clients</div>': '<div class="sp-trust-num">Local</div>\n          <div class="sp-trust-label">LA Service</div>',
+              '12+ years fixing LA homes.': 'Direct local service with clear written scope before work starts.',
+              'We stand behind our work for 1 year. Just text us and we come back. Same-number warranty — no runaround.': 'If something in the agreed scope is not right, tell us within 7 days and we will schedule a touch-up at no extra labor charge.',
+              'What if something breaks after the job?': 'What if something is not right after the job?',
+
+              # Safer service labels.
+              '>Plumbing</a>': '>Minor Plumbing Fixtures</a>',
+              '>Electrical</a>': '>Minor Electrical Fixtures</a>',
+              '>Plumbing</option>': '>Minor Plumbing Fixtures</option>',
+              '>Electrical</option>': '>Minor Electrical Fixtures</option>',
+              '<h3>Plumbing</h3>': '<h3>Minor Plumbing Fixtures</h3>',
+              '<h3>Electrical</h3>': '<h3>Minor Electrical Fixtures</h3>',
+              '"name": "Plumbing"': '"name": "Minor Plumbing Fixtures"',
+              '"name": "Electrical"': '"name": "Minor Electrical Fixtures"',
+              'plumbing and electrical': 'minor plumbing/electrical fixtures',
+              'plumbing & electrical': 'minor plumbing/electrical fixtures',
+              'Plumbing Fixtures • Minor Electrical Fixtures': 'Minor Plumbing Fixtures • Minor Electrical Fixtures',
+          }
+
+          changed_files = []
+          for path in files:
+              if not path.exists():
+                  continue
+              text = path.read_text(encoding='utf-8')
+              original = text
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              if text != original:
+                  path.write_text(text, encoding='utf-8')
+                  changed_files.append(str(path))
+
+          print('Changed files:')
+          for f in changed_files:
+              print(f)
+          if not changed_files:
+              print('(none)')
+          PY
+
+      - name: Show diff
+        run: git diff -- index.html book/index.html services/index.html pricing/index.html
+
+      - name: Commit sanitized copy
+        run: |
+          if git diff --quiet -- index.html book/index.html services/index.html pricing/index.html; then
+            echo "No copy changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html book/index.html services/index.html pricing/index.html
+          git commit -m "fix(copy): sanitize public claims and canonical contact policy"
+          git push
