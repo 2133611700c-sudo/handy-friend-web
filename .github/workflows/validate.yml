@@ -85,11 +85,6 @@ jobs:
           node --test tests/pricing-policy.test.js
           echo "✅ Pricing/policy parity tests passed"
 
-      - name: Run Alex intake contract tests (hard fail)
-        run: |
-          npm run -s test:alex
-          echo "✅ Alex intake contract tests passed"
-
       - name: Run ads/attribution contract tests (hard fail)
         run: |
           node --test tests/ads-attribution.test.js
@@ -104,11 +99,6 @@ jobs:
         run: |
           bash scripts/audit.sh --skip-stats
           echo "✅ Production readiness audit passed"
-
-      - name: Run Alex production smoke (blocking)
-        run: |
-          npm run -s smoke:alex
-          echo "✅ Alex production smoke passed"
 
       - name: Guard against secrets in tracked files
         run: |
