@@ -257,7 +257,7 @@
           if (typeof fbq !== 'undefined') fbq('track', 'Lead', { content_name: data.service_type });
 
           /* Show success */
-          formEl.innerHTML = '<div class="sp-form-success"><h3>✓ Request Sent!</h3><p>We\'ll get back to you within 30 minutes during business hours.</p><p style="margin-top:16px"><a href="tel:+12133611700" style="color:#ff6b35;font-weight:700;font-size:18px">📞 Call Now: (213) 361-1700</a></p></div>';
+          formEl.innerHTML = '<div class="sp-form-success"><h3>✓ Request Sent!</h3><p>We\'ll get back to you within 15 minutes during business hours.</p><p style="margin-top:16px"><a href="tel:+12133611700" style="color:#ff6b35;font-weight:700;font-size:18px">📞 Call Now: (213) 361-1700</a></p></div>';
         } else {
           if (btn) { btn.disabled = false; btn.textContent = 'Get Free Estimate'; }
           alert('Something went wrong. Please call us at (213) 361-1700.');
