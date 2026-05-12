@@ -1,0 +1,2 @@
+run_at: 2026-05-12T10:20:00Z
+reason: sanitize public Handy & Friend policy-copy drift after live route audit
