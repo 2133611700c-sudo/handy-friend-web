@@ -1,10 +1,23 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
+function restoreEnv(snapshot) {
+  for (const [key, value] of Object.entries(snapshot)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+}
+
 test('callAlex returns DeepSeek reply when provider succeeds', async () => {
   const originalFetch = global.fetch;
-  const originalKey = process.env.DEEPSEEK_API_KEY;
+  const envSnapshot = {
+    DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
+    ALEX_PROVIDER_MAX_RETRIES: process.env.ALEX_PROVIDER_MAX_RETRIES,
+    ALEX_PROVIDER_TIMEOUT_MS: process.env.ALEX_PROVIDER_TIMEOUT_MS
+  };
   process.env.DEEPSEEK_API_KEY = 'test-key';
+  process.env.ALEX_PROVIDER_MAX_RETRIES = '1';
+  process.env.ALEX_PROVIDER_TIMEOUT_MS = '3000';
 
   delete require.cache[require.resolve('../lib/ai-fallback.js')];
   const { callAlex } = require('../lib/ai-fallback.js');
@@ -30,15 +43,21 @@ test('callAlex returns DeepSeek reply when provider succeeds', async () => {
     assert.match(result.reply, /\$150/);
   } finally {
     global.fetch = originalFetch;
-    process.env.DEEPSEEK_API_KEY = originalKey;
+    restoreEnv(envSnapshot);
     delete require.cache[require.resolve('../lib/ai-fallback.js')];
   }
 });
 
 test('callAlex returns safe static fallback when provider fails', async () => {
   const originalFetch = global.fetch;
-  const originalKey = process.env.DEEPSEEK_API_KEY;
+  const envSnapshot = {
+    DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
+    ALEX_PROVIDER_MAX_RETRIES: process.env.ALEX_PROVIDER_MAX_RETRIES,
+    ALEX_PROVIDER_TIMEOUT_MS: process.env.ALEX_PROVIDER_TIMEOUT_MS
+  };
   process.env.DEEPSEEK_API_KEY = 'test-key';
+  process.env.ALEX_PROVIDER_MAX_RETRIES = '1';
+  process.env.ALEX_PROVIDER_TIMEOUT_MS = '3000';
 
   delete require.cache[require.resolve('../lib/ai-fallback.js')];
   const { callAlex } = require('../lib/ai-fallback.js');
@@ -52,23 +71,25 @@ test('callAlex returns safe static fallback when provider fails', async () => {
     assert.equal(result.model, 'static_fallback');
     assert.equal(result.audit.ok, false);
     assert.equal(result.audit.max_retries, 1);
-    assert.equal(result.audit.timeout_ms, 12000);
+    assert.equal(result.audit.timeout_ms, 3000);
     assert.match(result.reply, /\$150/);
     assert.match(result.reply, /labor only/i);
     assert.doesNotMatch(result.reply, /\$185|\$105/);
     assert.doesNotMatch(result.reply, /licensed|bonded|certified|best in LA/i);
   } finally {
     global.fetch = originalFetch;
-    process.env.DEEPSEEK_API_KEY = originalKey;
+    restoreEnv(envSnapshot);
     delete require.cache[require.resolve('../lib/ai-fallback.js')];
   }
 });
 
 test('callAlex clamps env timeout and retry overrides to safe bounds', async () => {
   const originalFetch = global.fetch;
-  const originalKey = process.env.DEEPSEEK_API_KEY;
-  const originalRetries = process.env.ALEX_PROVIDER_MAX_RETRIES;
-  const originalTimeout = process.env.ALEX_PROVIDER_TIMEOUT_MS;
+  const envSnapshot = {
+    DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
+    ALEX_PROVIDER_MAX_RETRIES: process.env.ALEX_PROVIDER_MAX_RETRIES,
+    ALEX_PROVIDER_TIMEOUT_MS: process.env.ALEX_PROVIDER_TIMEOUT_MS
+  };
 
   process.env.DEEPSEEK_API_KEY = 'test-key';
   process.env.ALEX_PROVIDER_MAX_RETRIES = '99';
@@ -77,7 +98,9 @@ test('callAlex clamps env timeout and retry overrides to safe bounds', async () 
   delete require.cache[require.resolve('../lib/ai-fallback.js')];
   const { callAlex } = require('../lib/ai-fallback.js');
 
+  let calls = 0;
   global.fetch = async () => {
+    calls += 1;
     throw new Error('network_down_for_test');
   };
 
@@ -86,11 +109,10 @@ test('callAlex clamps env timeout and retry overrides to safe bounds', async () 
     assert.equal(result.model, 'static_fallback');
     assert.equal(result.audit.max_retries, 2);
     assert.equal(result.audit.timeout_ms, 15000);
+    assert.equal(calls, 2);
   } finally {
     global.fetch = originalFetch;
-    process.env.DEEPSEEK_API_KEY = originalKey;
-    process.env.ALEX_PROVIDER_MAX_RETRIES = originalRetries;
-    process.env.ALEX_PROVIDER_TIMEOUT_MS = originalTimeout;
+    restoreEnv(envSnapshot);
     delete require.cache[require.resolve('../lib/ai-fallback.js')];
   }
 });
