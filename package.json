@@ -18,7 +18,9 @@
     "backfill:lead-sources": "node scripts/backfill-lead-sources.mjs",
     "ops:audit": "node scripts/daily_ops_audit.mjs",
     "test:pricing-policy": "node --test tests/pricing-policy.test.js",
+    "test:alex": "node --test tests/alex-policy-engine.test.js tests/ai-fallback.test.js",
     "test:ads-attribution": "node --test tests/ads-attribution.test.js",
+    "smoke:alex": "node scripts/alex-prod-smoke.mjs",
     "validate:pricing": "npm run generate:pricing-browser && npm run test:pricing-policy",
     "validate:ads": "npm run test:ads-attribution",
     "close:sheet": "node scripts/update-live-close-sheet.mjs"
