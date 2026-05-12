@@ -61,6 +61,7 @@ jobs:
           node --check ops/build-post-pack.mjs
           node --check ops/factory-guard.mjs
           node --check scripts/build-browser-price-registry.mjs
+          node --check scripts/alex-prod-smoke.mjs
           node --check lib/price-registry.js
           node --check lib/pricing-policy.js
           node --check lib/attribution.js
@@ -86,7 +87,7 @@ jobs:
 
       - name: Run Alex intake contract tests (hard fail)
         run: |
-          node --test tests/alex-policy-engine.test.js tests/ai-fallback.test.js
+          npm run -s test:alex
           echo "✅ Alex intake contract tests passed"
 
       - name: Run ads/attribution contract tests (hard fail)
@@ -106,32 +107,7 @@ jobs:
 
       - name: Run Alex production smoke (blocking)
         run: |
-          set -euo pipefail
-          payload='{"sessionId":"prod-alex-smoke-validate","lang":"en","messages":[{"role":"user","content":"How much for standard TV mounting in Burbank? My ZIP is 91502."}],"attribution":{"utm_source":"github_actions","utm_medium":"validate","utm_campaign":"alex_smoke"}}'
-          started=$(date +%s%3N)
-          http_code=$(curl -sS -m 20 -o /tmp/alex-response.json -w "%{http_code}" \
-            -H 'content-type: application/json' \
-            -d "$payload" \
-            https://handyandfriend.com/api/ai-chat)
-          ended=$(date +%s%3N)
-          latency=$((ended-started))
-          echo "HTTP=$http_code"
-          echo "LATENCY_MS=$latency"
-          cat /tmp/alex-response.json
-          echo
-          test "$http_code" = "200"
-          test "$latency" -le 15000
-          node <<'NODE'
-          const fs = require('fs');
-          const raw = fs.readFileSync('/tmp/alex-response.json', 'utf8');
-          const j = JSON.parse(raw);
-          const reply = String(j.reply || j.message || j.text || '');
-          if (!reply) throw new Error('missing reply');
-          if (reply.includes('$185') || reply.includes('$105')) throw new Error('legacy price leaked');
-          if (!reply.includes('$150')) throw new Error('missing $150 pricing signal');
-          console.log('reply_ok=true');
-          console.log('reply_preview=' + reply.slice(0, 300));
-          NODE
+          npm run -s smoke:alex
           echo "✅ Alex production smoke passed"
 
       - name: Guard against secrets in tracked files
