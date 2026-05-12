@@ -1,0 +1,53 @@
+name: OpenClaw VPS Browser
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_origin:
+        description: Target origin to audit
+        required: false
+        default: https://handyandfriend.com
+      routes:
+        description: Comma-separated routes
+        required: false
+        default: /,/book,/pricing,/services,/messenger
+
+jobs:
+  browser:
+    runs-on: [self-hosted, linux, x64, openclaw, handy-friend]
+    timeout-minutes: 15
+    env:
+      TARGET_ORIGIN: ${{ github.event.inputs.target_origin || 'https://handyandfriend.com' }}
+      ROUTES: ${{ github.event.inputs.routes || '/,/book,/pricing,/services,/messenger' }}
+      OUT_DIR: ops/openclaw/reports/vps-browser
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Print runtime versions
+        run: |
+          echo "runner=$(hostname)"
+          git --version
+          node --version
+          npm --version
+          python3 --version || true
+
+      - name: Install npm dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Ensure Playwright package exists
+        run: npm install --no-save --no-audit --no-fund playwright@latest
+
+      - name: Ensure Chromium exists
+        run: npx playwright install chromium
+
+      - name: Run OpenClaw VPS browser audit
+        run: node scripts/openclaw-virtual-browser-audit.mjs
+
+      - name: Upload OpenClaw VPS browser artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openclaw-vps-browser
+          path: ops/openclaw/reports/vps-browser/
+          if-no-files-found: warn
