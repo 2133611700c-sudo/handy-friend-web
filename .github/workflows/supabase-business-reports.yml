@@ -34,24 +34,48 @@ jobs:
           echo "RUN_ROOT=ops/reports/sql/${RUN_ID}" >> "$GITHUB_ENV"
 
       - name: Run schema gate
-        run: bash scripts/check-supabase-schema-contract.sh
+        run: bash scripts/check-supabase-schema-contract.sh || true
 
       - name: Run business reports
         id: business
+        if: always()
         run: |
           INFRA_STATUS="$(jq -r '.status' "${RUN_ROOT}/infra-gate.json")"
           SCHEMA_STATUS="$(jq -r '.status' "${RUN_ROOT}/schema-contract.json")"
           export INFRA_STATUS SCHEMA_STATUS
-          bash scripts/run-supabase-business-reports.sh
+          if [ "${INFRA_STATUS}" = "PASS" ] && [ "${SCHEMA_STATUS}" = "PASS" ]; then
+            bash scripts/run-supabase-business-reports.sh || true
+          else
+            mkdir -p "${RUN_ROOT}/business"
+            cat > "${RUN_ROOT}/business/summary.json" <<JSON
+            {
+              "run_id": "${RUN_ID}",
+              "status": "BLOCKED",
+              "started_at": "$(date -u +%FT%TZ)",
+              "completed_at": "$(date -u +%FT%TZ)",
+              "reports_count": 0,
+              "passed_reports_count": 0,
+              "failed_reports_count": 0,
+              "degraded_reports_count": 0,
+              "reason": "business reports skipped because infra/schema did not both PASS"
+            }
+            JSON
+            cat > "${RUN_ROOT}/business/summary.md" <<MD
+            # Business Reports Summary
+
+            - status: \`BLOCKED\`
+            - reason: business reports skipped because infra/schema did not both PASS
+            MD
+          fi
 
       - name: Build run metadata + final summary
         if: always()
         run: |
           INFRA_STATUS="$(jq -r '.status' "${RUN_ROOT}/infra-gate.json")"
           SCHEMA_STATUS="$(jq -r '.status' "${RUN_ROOT}/schema-contract.json")"
-          BUSINESS_STATUS="$(jq -r '.status' "${RUN_ROOT}/business/summary.json")"
-          REPORTS_COUNT="$(jq -r '.reports_count' "${RUN_ROOT}/business/summary.json")"
-          FAILED_REPORTS_COUNT="$(jq -r '.failed_reports_count' "${RUN_ROOT}/business/summary.json")"
+          BUSINESS_STATUS="$(jq -r '.status // "BLOCKED"' "${RUN_ROOT}/business/summary.json" 2>/dev/null || echo BLOCKED)"
+          REPORTS_COUNT="$(jq -r '.reports_count // 0' "${RUN_ROOT}/business/summary.json" 2>/dev/null || echo 0)"
+          FAILED_REPORTS_COUNT="$(jq -r '.failed_reports_count // 0' "${RUN_ROOT}/business/summary.json" 2>/dev/null || echo 0)"
           STARTED="$(jq -r '.started_at' "${RUN_ROOT}/infra-gate.json")"
           COMPLETED="$(date -u +%FT%TZ)"
           HOST_REDACTED="$(jq -r '.database_host_redacted' "${RUN_ROOT}/infra-gate.json")"
