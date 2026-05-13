@@ -1,4 +1,4 @@
-# OpenClaw Virtual Browser Audit — 2026-05-13T07:13:35.810Z
+# OpenClaw Virtual Browser Audit — 2026-05-13T07:33:23.262Z
 
 Target: https://handyandfriend.com
 
@@ -8,7 +8,7 @@ Target: https://handyandfriend.com
 {
   "ok": true,
   "target": "https://handyandfriend.com",
-  "generated_at": "2026-05-13T07:13:35.809Z",
+  "generated_at": "2026-05-13T07:33:23.261Z",
   "pages_checked": 10,
   "failed_pages": [],
   "bad_claims": [],
@@ -74,16 +74,16 @@ Target: https://handyandfriend.com
 
 | viewport | route | status | ok | ms | phone | whatsapp | messenger | bad claims | brand errors | screenshot |
 |---|---|---:|---:|---:|---:|---:|---:|---|---|---|
-| desktop | / | 200 | yes | 3398 | 18 | 7 | 3 |  |  | ops/openclaw/reports/virtual-browser/desktop-home.png |
-| desktop | /book | 200 | yes | 1691 | 7 | 3 | 0 |  |  | ops/openclaw/reports/virtual-browser/desktop-book.png |
-| desktop | /pricing | 200 | yes | 2396 | 5 | 3 | 0 |  |  | ops/openclaw/reports/virtual-browser/desktop-pricing.png |
-| desktop | /services | 200 | yes | 1671 | 8 | 2 | 0 |  |  | ops/openclaw/reports/virtual-browser/desktop-services.png |
-| desktop | /messenger | 200 | yes | 2454 | 0 | 0 | 0 |  |  | ops/openclaw/reports/virtual-browser/desktop-messenger.png |
-| mobile | / | 200 | yes | 2113 | 18 | 7 | 3 |  |  | ops/openclaw/reports/virtual-browser/mobile-home.png |
-| mobile | /book | 200 | yes | 1566 | 7 | 3 | 0 |  |  | ops/openclaw/reports/virtual-browser/mobile-book.png |
-| mobile | /pricing | 200 | yes | 2187 | 5 | 3 | 0 |  |  | ops/openclaw/reports/virtual-browser/mobile-pricing.png |
-| mobile | /services | 200 | yes | 1643 | 8 | 2 | 0 |  |  | ops/openclaw/reports/virtual-browser/mobile-services.png |
-| mobile | /messenger | 200 | yes | 2263 | 0 | 0 | 0 |  |  | ops/openclaw/reports/virtual-browser/mobile-messenger.png |
+| desktop | / | 200 | yes | 3434 | 18 | 7 | 3 |  |  | ops/openclaw/reports/virtual-browser/desktop-home.png |
+| desktop | /book | 200 | yes | 1639 | 7 | 3 | 0 |  |  | ops/openclaw/reports/virtual-browser/desktop-book.png |
+| desktop | /pricing | 200 | yes | 2510 | 5 | 3 | 0 |  |  | ops/openclaw/reports/virtual-browser/desktop-pricing.png |
+| desktop | /services | 200 | yes | 1838 | 8 | 2 | 0 |  |  | ops/openclaw/reports/virtual-browser/desktop-services.png |
+| desktop | /messenger | 200 | yes | 1766 | 0 | 0 | 0 |  |  | ops/openclaw/reports/virtual-browser/desktop-messenger.png |
+| mobile | / | 200 | yes | 2194 | 18 | 7 | 3 |  |  | ops/openclaw/reports/virtual-browser/mobile-home.png |
+| mobile | /book | 200 | yes | 1502 | 7 | 3 | 0 |  |  | ops/openclaw/reports/virtual-browser/mobile-book.png |
+| mobile | /pricing | 200 | yes | 2270 | 5 | 3 | 0 |  |  | ops/openclaw/reports/virtual-browser/mobile-pricing.png |
+| mobile | /services | 200 | yes | 1752 | 8 | 2 | 0 |  |  | ops/openclaw/reports/virtual-browser/mobile-services.png |
+| mobile | /messenger | 200 | yes | 1913 | 0 | 0 | 0 |  |  | ops/openclaw/reports/virtual-browser/mobile-messenger.png |
 
 ## Risks and control
 
