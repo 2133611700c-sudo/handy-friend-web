@@ -21,6 +21,26 @@ Harden Supabase SQL reporting from tolerant mode to production-grade gates with 
   - `scripts/run-supabase-business-reports.sh`
   - `scripts/build-sql-remediation-packet.mjs`
 
+## ChatGPT OpenClaw Delegation Rule
+
+`VERIFIED`: OpenClaw is available as ChatGPT's external execution hand through GitHub Actions and evidence commits.
+
+Rule:
+
+- ChatGPT must use direct tools first when it can safely complete the task itself.
+- ChatGPT should delegate to OpenClaw when the task requires cloud browser execution, screenshots, long-running runner work, environment-specific verification, or evidence that ChatGPT cannot obtain directly.
+- OpenClaw is not a replacement brain. ChatGPT remains supervisor: define task, review evidence, verify outcome, decide next action.
+- No OpenClaw result is accepted as DONE without committed evidence, artifact, run URL, or report path.
+- OpenClaw must not perform customer messaging, paid ads changes, DNS/password/payment changes, destructive DB actions, or public posting without explicit approval.
+
+Verified collaboration smoke:
+
+- task file: `ops/agent-control/tasks/chatgpt-collab-smoke-20260513-001.json`
+- workflow run: `25785309596`
+- evidence commit: `fe62ca12b0fc3025de6e9fcc9a9c1dcbbc5085b7`
+- evidence report: `ops/agent-control/reports/openclaw-heartbeat/20260513T073810Z.md`
+- result: `PASS`
+
 ## Status Taxonomy Contract
 
 - Hard gates (`infra`, `schema`): `PASS | FAIL | BLOCKED`.
