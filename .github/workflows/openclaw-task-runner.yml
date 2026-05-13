@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: openclaw-task-runner-${{ github.ref }}
@@ -90,6 +91,7 @@ jobs:
 
       - name: Open/update alert issue (dedupe 12h)
         if: always()
+        continue-on-error: true
         uses: actions/github-script@v8
         env:
           OPENCLAW_LATEST_FILE: /tmp/openclaw-latest.json
@@ -145,8 +147,8 @@ jobs:
             exit 1
           fi
           export OPENCLAW_LATEST_FILE="/tmp/openclaw-latest.json"
-          STATUS="$(jq -r '.status // \"UNKNOWN\"' "${OPENCLAW_LATEST_FILE}")"
-          TASK_TYPE="$(jq -r '.task_type // \"unknown\"' "${OPENCLAW_LATEST_FILE}")"
+          STATUS="$(jq -r '.status // "UNKNOWN"' "${OPENCLAW_LATEST_FILE}")"
+          TASK_TYPE="$(jq -r '.task_type // "unknown"' "${OPENCLAW_LATEST_FILE}")"
           if [ "${TASK_TYPE}" = "synthetic_fail" ]; then
             if [ "${STATUS}" = "FAIL" ]; then
               echo "Synthetic fail drill behaved as expected."
