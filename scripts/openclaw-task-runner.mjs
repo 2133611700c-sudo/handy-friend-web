@@ -7,6 +7,7 @@ const now = new Date();
 const runId = now.toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
 const tasksDir = "ops/agent-control/tasks";
 const reportsRoot = "ops/agent-control/reports";
+const schemaPath = "ops/agent-control/OPENCLAW_TASK_SCHEMA.v1.json";
 const explicitTaskFile = process.env.TASK_FILE?.trim() || "";
 const forceRerun = (process.env.FORCE_RERUN || "").toLowerCase() === "true";
 const dedupeWindowMinutes = Number(process.env.DEDUPE_WINDOW_MINUTES || "15");
@@ -14,6 +15,8 @@ const actor = process.env.GITHUB_ACTOR || "unknown";
 const sha = process.env.GITHUB_SHA || "unknown";
 const runUrl = process.env.GITHUB_RUN_URL || "unknown";
 const latestFile = process.env.OPENCLAW_LATEST_FILE || "ops/agent-control/reports/openclaw-latest.json";
+const supportedTaskTypes = new Set(["heartbeat", "virtual_browser_audit", "synthetic_fail"]);
+const prohibitedSafetyFlags = ["customer_action", "public_posting", "paid_ads_change", "destructive_action"];
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, "utf8"));
@@ -67,6 +70,58 @@ function dedupeCheck(taskId) {
   if (deltaMin < dedupeWindowMinutes) return `task dedupe window active (${deltaMin.toFixed(1)}m < ${dedupeWindowMinutes}m)`;
   return null;
 }
+function validateTask(task) {
+  const errors = [];
+  const req = ["id", "type", "requested_by", "goal", "safety", "expected_status"];
+  for (const key of req) {
+    if (!(key in task)) errors.push(`missing required field: ${key}`);
+  }
+  const statusAllowed = new Set(["PASS", "FAIL", "BLOCKED", "DEGRADED"]);
+  if (task.expected_status && !statusAllowed.has(task.expected_status)) {
+    errors.push(`invalid expected_status: ${task.expected_status}`);
+  }
+  if (task.type === "virtual_browser_audit" && !(task.params?.target_origin || "https://handyandfriend.com")) {
+    errors.push("virtual_browser_audit requires params.target_origin or default origin");
+  }
+  const safetyReq = [
+    "production_code_change",
+    "customer_action",
+    "secrets_required",
+    "public_posting",
+    "paid_ads_change",
+    "destructive_action",
+  ];
+  if (typeof task.safety !== "object" || task.safety === null) {
+    errors.push("safety must be an object");
+  } else {
+    for (const key of safetyReq) {
+      if (!(key in task.safety)) errors.push(`missing safety field: ${key}`);
+    }
+  }
+  return errors;
+}
+function checkUnsafeSafety(task) {
+  if (!task.safety || typeof task.safety !== "object") return null;
+  for (const flag of prohibitedSafetyFlags) {
+    if (task.safety[flag] === true) return `unsafe task blocked by safety flag: ${flag}=true`;
+  }
+  return null;
+}
+function validateArtifacts(taskType, task) {
+  const required = Array.isArray(task.artifacts_required) ? task.artifacts_required : [];
+  if (!required.length) return [];
+  const missing = [];
+  for (const file of required) {
+    if (!fs.existsSync(file)) missing.push(file);
+  }
+  if (taskType === "virtual_browser_audit") {
+    const browserResult = "ops/openclaw/reports/virtual-browser/result.json";
+    const browserReport = "ops/openclaw/reports/virtual-browser/report.md";
+    if (!fs.existsSync(browserResult)) missing.push(browserResult);
+    if (!fs.existsSync(browserReport)) missing.push(browserReport);
+  }
+  return [...new Set(missing)];
+}
 function runBrowserAudit(task) {
   const target = task.params?.target_origin || "https://handyandfriend.com";
   const routes = task.params?.routes || "/,/book,/pricing,/services,/messenger";
@@ -94,32 +149,75 @@ function classifyFailure(taskType, status, errorText) {
   if (status === "BLOCKED") return "blocked_task";
   if (status === "PASS") return "pass";
   if (taskType === "synthetic_fail") return "synthetic_fail";
+  if (/dedupe window active/i.test(errorText)) return "dedupe_window_active";
   if (/unsupported task type/i.test(errorText)) return "unsupported_task_type";
+  if (/unsafe task blocked by safety flag/i.test(errorText)) return "blocked_task";
+  if (/missing required field|missing safety field|invalid expected_status|schema/i.test(errorText)) return "blocked_task";
+  if (/missing required artifacts|screenshot/i.test(errorText)) return "screenshot_missing";
+  if (/permission denied|resource not accessible/i.test(errorText)) return "permission_denied";
+  if (/console error/i.test(errorText)) return "browser_console_error";
+  if (/requestfailed|network/i.test(errorText)) return "browser_network_failure";
   if (/timeout|net::|ECONN|ENOTFOUND/i.test(errorText)) return "network_or_runtime";
   return "execution_error";
+}
+function nextActionFor(status, failureClass, taskType) {
+  if (status === "PASS") return "No action required. Continue with next scoped task.";
+  if (failureClass === "dedupe_window_active") return "Wait for dedupe window expiration or run with FORCE_RERUN=true.";
+  if (failureClass === "unsupported_task_type") return "Add task type implementation or use an implemented type.";
+  if (failureClass === "blocked_task") return "Adjust task safety/schema fields and re-dispatch.";
+  if (failureClass === "screenshot_missing") return "Check browser artifact paths and rerun virtual browser audit.";
+  if (taskType === "synthetic_fail") return "Synthetic fail drill is expected to fail internally; keep workflow success gate.";
+  return "Inspect error details, apply minimal safe fix, rerun task with force_rerun=true.";
 }
 
 function main() {
   const taskFile = explicitTaskFile || latestTaskFile();
+  if (!fs.existsSync(schemaPath)) {
+    throw new Error(`missing schema file: ${schemaPath}`);
+  }
+  readJson(schemaPath);
   const task = readJson(taskFile);
   const taskId = task.id || path.basename(taskFile, ".json");
   const taskType = task.type || "heartbeat";
   let status = "PASS";
   let details = {};
   let errorText = "";
+  let nextAction = "";
 
-  const dedupeReason = dedupeCheck(taskId);
-  if (dedupeReason) {
+  const schemaErrors = validateTask(task);
+  if (schemaErrors.length > 0) {
+    status = "BLOCKED";
+    errorText = `schema validation failed: ${schemaErrors.join("; ")}`;
+  }
+
+  if (status === "PASS" && !supportedTaskTypes.has(taskType)) {
+    status = "BLOCKED";
+    errorText = `Unsupported task type: ${taskType}`;
+  }
+
+  if (status === "PASS") {
+    const unsafeReason = checkUnsafeSafety(task);
+    if (unsafeReason) {
+      status = "BLOCKED";
+      errorText = unsafeReason;
+    }
+  }
+
+  const dedupeReason = status === "PASS" ? dedupeCheck(taskId) : null;
+  if (status === "PASS" && dedupeReason) {
     status = "BLOCKED";
     errorText = dedupeReason;
-  } else {
+  }
+
+  if (status === "PASS") {
     try {
       if (taskType === "heartbeat") details = runHeartbeat();
       else if (taskType === "virtual_browser_audit") details = runBrowserAudit(task);
       else if (taskType === "synthetic_fail") runSyntheticFail();
-      else {
-        status = "BLOCKED";
-        errorText = `Unsupported task type: ${taskType}`;
+      const missingArtifacts = validateArtifacts(taskType, task);
+      if (missingArtifacts.length) {
+        status = "FAIL";
+        errorText = `missing required artifacts: ${missingArtifacts.join(", ")}`;
       }
     } catch (err) {
       status = "FAIL";
@@ -128,6 +226,7 @@ function main() {
   }
 
   const failureClass = classifyFailure(taskType, status, errorText);
+  nextAction = nextActionFor(status, failureClass, taskType);
   const reportDir = taskType === "virtual_browser_audit" ? path.join(reportsRoot, "openclaw-browser-audit") : path.join(reportsRoot, "openclaw-heartbeat");
   const reportFile = writeReport(reportDir, [
     "# OpenClaw Task Report",
@@ -137,6 +236,7 @@ function main() {
     `- task_type: \`${taskType}\``,
     `- failure_class: \`${failureClass}\``,
     `- dedupe_key: \`${taskType}:${failureClass}\``,
+    `- expected_status: \`${task.expected_status || "PASS"}\``,
     `- task_file: \`${taskFile}\``,
     `- run_id: \`${runId}\``,
     `- timestamp_utc: \`${now.toISOString()}\``,
@@ -149,6 +249,10 @@ function main() {
     JSON.stringify(details, null, 2),
     "```",
     ...(errorText ? ["", "## Error", "```text", safe(errorText).slice(-5000), "```"] : []),
+    "",
+    "## Next action",
+    "",
+    nextAction,
   ]);
 
   const summary = {
@@ -158,6 +262,7 @@ function main() {
     failure_class: failureClass,
     dedupe_key: `${taskType}:${failureClass}`,
     report_file: reportFile,
+    next_action: nextAction,
   };
   fs.mkdirSync(path.dirname(latestFile), { recursive: true });
   fs.writeFileSync(latestFile, JSON.stringify(summary, null, 2));

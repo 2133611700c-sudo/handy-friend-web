@@ -1,11 +1,17 @@
 {
   "id": "OC-OPENCLAW-SYNTHETIC-FAIL-001",
   "type": "synthetic_fail",
-  "title": "OpenClaw synthetic fail drill",
+  "requested_by": "ChatGPT",
+  "goal": "Exercise expected FAIL path to validate alerting, evidence, and status enforcement.",
+  "expected_status": "FAIL",
   "params": {},
   "safety": {
-    "no_production_code_changes": true,
-    "no_customer_messages": true,
-    "redact_secrets": true
-  }
+    "production_code_change": false,
+    "customer_action": false,
+    "secrets_required": false,
+    "public_posting": false,
+    "paid_ads_change": false,
+    "destructive_action": false
+  },
+  "handoff_required": true
 }

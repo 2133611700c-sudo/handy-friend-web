@@ -1,18 +1,13 @@
 {
   "id": "OC-001",
-  "title": "Run Dell OpenClaw self-check",
-  "priority": "P0",
-  "executor": "dell-openclaw",
-  "mode": "evidence_only",
-  "status": "TASK_CREATED",
-  "created_at": "2026-05-12T16:25:00Z",
-  "scope": {
-    "repo": "2133611700c-sudo/handy-friend-web",
-    "branch": "main",
-    "files": [
-      "ops/openclaw/dell/dell-self-check.sh",
-      "scripts/openclaw-virtual-browser-audit.mjs"
-    ]
+  "type": "repo_audit",
+  "requested_by": "ChatGPT",
+  "goal": "Run Dell OpenClaw self-check and collect runtime evidence without modifying production code.",
+  "expected_status": "BLOCKED",
+  "params": {
+    "executor": "dell-openclaw",
+    "mode": "evidence_only",
+    "created_at": "2026-05-12T16:25:00Z"
   },
   "rules": {
     "no_real_customer_messages": true,
@@ -34,11 +29,20 @@
     "PASS/FAIL for required files",
     "network fetch status for homepage and /api/health"
   ],
+  "safety": {
+    "production_code_change": false,
+    "customer_action": false,
+    "secrets_required": false,
+    "public_posting": false,
+    "paid_ads_change": false,
+    "destructive_action": false
+  },
   "stop_conditions": [
     "local repo has uncommitted changes",
     "git pull cannot fast-forward",
     "any secret appears in terminal output",
     "required file missing"
   ],
-  "expected_output": "ops/openclaw/reports/dell-self-check/OC-001-output.txt"
+  "expected_output": "ops/openclaw/reports/dell-self-check/OC-001-output.txt",
+  "handoff_required": true
 }
