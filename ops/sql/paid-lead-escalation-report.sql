@@ -16,7 +16,7 @@ select
       and coalesce(stage, '') in ('new','New')
       and lead_detected_at < now() - interval '20 minutes'
       then 'P0_paid_new_sla_breach'
-    when source_details::text ilike '%gclid%'
+    when coalesce(to_jsonb(lead_operational_view)->>'source_details', '') ilike '%gclid%'
       and coalesce(stage, '') in ('new','New')
       and lead_detected_at < now() - interval '20 minutes'
       then 'P0_gclid_new_sla_breach'
@@ -31,7 +31,7 @@ from lead_operational_view
 where coalesce(nullif(to_jsonb(lead_operational_view)->>'lead_detected_at','')::timestamptz, created_at) >= now() - interval '14 days'
   and (
     coalesce(lead_source, to_jsonb(lead_operational_view)->>'source') in ('google_ads_search','google_lsa')
-    or source_details::text ilike '%gclid%'
+    or coalesce(to_jsonb(lead_operational_view)->>'source_details', '') ilike '%gclid%'
   )
   and booked_at is null
 order by

@@ -15,7 +15,7 @@ with base as (
     customer_phone,
     booked_at,
     contacted_at,
-    source_details,
+    to_jsonb(lead_operational_view)->>'source_details' as source_details,
     round((extract(epoch from (now() - lead_detected_at)) / 60)::numeric, 1) as age_minutes
   from lead_operational_view
   where coalesce(nullif(to_jsonb(lead_operational_view)->>'lead_detected_at','')::timestamptz, created_at) >= now() - interval '30 days'

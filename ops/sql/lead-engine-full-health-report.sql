@@ -13,7 +13,7 @@ with leads as (
     contacted_at,
     booked_at,
     completed_at,
-    source_details,
+    to_jsonb(lead_operational_view)->>'source_details' as source_details,
     coalesce(completed_amount, booked_amount, quoted_amount, 0) as amount
   from lead_operational_view
   where coalesce(nullif(to_jsonb(lead_operational_view)->>'lead_detected_at','')::timestamptz, created_at) >= now() - interval '30 days'
@@ -25,7 +25,7 @@ with leads as (
     count(*) filter (where coalesce(stage, '') in ('new','New') and lead_detected_at < now() - interval '20 minutes') as stale_new_leads,
     count(*) filter (where coalesce(source, '') in ('google_ads_search','google_lsa') and coalesce(stage, '') in ('new','New') and lead_detected_at < now() - interval '20 minutes') as stale_paid_leads,
     count(*) filter (where source is null or source in ('unknown','direct')) as attribution_gaps,
-    count(*) filter (where source_details::text ilike '%gclid%' and source <> 'google_ads_search') as gclid_mapping_gaps,
+    count(*) filter (where coalesce(source_details, '') ilike '%gclid%' and source <> 'google_ads_search') as gclid_mapping_gaps,
     count(*) filter (where booked_at is not null or stage = 'booked') as booked,
     count(*) filter (where completed_at is not null or stage = 'completed') as completed,
     sum(amount) as attributed_amount
