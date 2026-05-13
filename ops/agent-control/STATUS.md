@@ -48,8 +48,8 @@ Harden Supabase SQL reporting from tolerant mode to production-grade gates with 
 
 ## Blockers
 
-- `UNVERIFIED`: live workflow run IDs after this hardening change must be captured.
-- If `SUPABASE_DATABASE_URL` secret missing/invalid in target repo, runtime status will be `BLOCKED`/`FAIL` with exact reason.
+- No active blockers for activation baseline.
+- If `SUPABASE_DATABASE_URL` secret missing/invalid in future runs, runtime status will be `BLOCKED`/`FAIL` with exact reason.
 
 ## HF-SUPABASE-SQL-HARDENING-001 Final Activation
 
@@ -120,3 +120,36 @@ Harden Supabase SQL reporting from tolerant mode to production-grade gates with 
 
 - Rollback not required.
 - Failures are expected hard-gate behavior for real schema drift and should be fixed in DB schema or contract versioning path.
+
+## HF-SUPABASE-SQL-HARDENING-001 Final Revalidation (PASS)
+
+- Contract resiliency fix merged: https://github.com/2133611700c-sudo/handy-friend-web/pull/105
+- PR #105 merge SHA / main SHA: `549f2417b2388fd4b4d0d4bbbdbabe4551bfc625`
+
+### Live Workflow Runs (from `main`, final)
+
+- Infra Gate:
+  - run_id: `25782905075`
+  - url: https://github.com/2133611700c-sudo/handy-friend-web/actions/runs/25782905075
+  - workflow conclusion: `success`
+  - classification: `PASS`
+  - artifact: `supabase-infra-gate-25782905075` (id `6963282239`)
+- Schema Contract:
+  - run_id: `25782947914`
+  - url: https://github.com/2133611700c-sudo/handy-friend-web/actions/runs/25782947914
+  - workflow conclusion: `success`
+  - classification: `PASS`
+  - artifact: `supabase-schema-contract-25782947914` (id `6963293945`)
+- Business Reports:
+  - run_id: `25782979827`
+  - url: https://github.com/2133611700c-sudo/handy-friend-web/actions/runs/25782979827
+  - workflow conclusion: `success`
+  - classification: `PASS`
+  - artifact: `supabase-business-reports-25782979827` (id `6963315297`)
+
+### Final Status
+
+- Infra gate: `PASS`
+- Schema gate: `PASS`
+- Business reports: `PASS`
+- Activation: `PASS`
