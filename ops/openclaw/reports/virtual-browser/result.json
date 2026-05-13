@@ -2,7 +2,7 @@
   "summary": {
     "ok": true,
     "target": "https://handyandfriend.com",
-    "generated_at": "2026-05-13T07:46:47.283Z",
+    "generated_at": "2026-05-13T07:57:51.429Z",
     "pages_checked": 10,
     "failed_pages": [],
     "bad_claims": [],
@@ -69,7 +69,7 @@
       "url": "https://handyandfriend.com/",
       "ok": true,
       "status": 200,
-      "ms": 3594,
+      "ms": 3381,
       "title": "Handy & Friend | Los Angeles Handyman",
       "phone_links": [
         {
@@ -238,7 +238,7 @@
       "console_errors": [],
       "request_failures": [
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658386616&cv=11&fst=1778658386616&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zb9244669510zd9244669510xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938465~",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659049330&cv=11&fst=1778659049330&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938469~11",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -250,7 +250,7 @@
       "url": "https://handyandfriend.com/book",
       "ok": true,
       "status": 200,
-      "ms": 1688,
+      "ms": 1656,
       "title": "Book a Handyman in Los Angeles | Free Estimate",
       "phone_links": [
         {
@@ -310,11 +310,11 @@
       "console_errors": [],
       "request_failures": [
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658386616&cv=11&fst=1778658386616&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zb9244669510zd9244669510xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938465~",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659049330&cv=11&fst=1778659049330&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938469~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658389605&cv=11&fst=1778658389605&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938466~115938469~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659052269&cv=11&fst=1778659052269&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938468~118463261~11",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -326,7 +326,7 @@
       "url": "https://handyandfriend.com/pricing",
       "ok": true,
       "status": 200,
-      "ms": 2500,
+      "ms": 2512,
       "title": "Handyman Pricing in Los Angeles | Handy & Friend",
       "phone_links": [
         {
@@ -385,15 +385,15 @@
       "console_errors": [],
       "request_failures": [
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658386616&cv=11&fst=1778658386616&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zb9244669510zd9244669510xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938465~",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659049330&cv=11&fst=1778659049330&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938469~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658389605&cv=11&fst=1778658389605&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938466~115938469~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659052269&cv=11&fst=1778659052269&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938468~118463261~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658392062&cv=11&fst=1778658392062&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938468~118463261&u_",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659054764&cv=11&fst=1778659054764&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938468~11",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -405,7 +405,7 @@
       "url": "https://handyandfriend.com/services",
       "ok": true,
       "status": 200,
-      "ms": 1815,
+      "ms": 1784,
       "title": "Handyman Services in Los Angeles — Book Online Today | Handy & Friend",
       "phone_links": [
         {
@@ -463,19 +463,19 @@
       "console_errors": [],
       "request_failures": [
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658386616&cv=11&fst=1778658386616&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zb9244669510zd9244669510xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938465~",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659049330&cv=11&fst=1778659049330&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938469~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658389605&cv=11&fst=1778658389605&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938466~115938469~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659052269&cv=11&fst=1778659052269&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938468~118463261~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658392062&cv=11&fst=1778658392062&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938468~118463261&u_",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659054764&cv=11&fst=1778659054764&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938468~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658393687&cv=11&fst=1778658393687&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938468~118463262&u_",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659056338&cv=11&fst=1778659056338&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938468~118463262&u_",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -487,7 +487,7 @@
       "url": "https://handyandfriend.com/messenger",
       "ok": true,
       "status": 200,
-      "ms": 1984,
+      "ms": 3058,
       "title": "Messenger",
       "phone_links": [],
       "whatsapp_links": [],
@@ -511,19 +511,19 @@
       ],
       "request_failures": [
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658386616&cv=11&fst=1778658386616&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zb9244669510zd9244669510xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938465~",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659049330&cv=11&fst=1778659049330&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938469~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658389605&cv=11&fst=1778658389605&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938466~115938469~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659052269&cv=11&fst=1778659052269&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938468~118463261~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658392062&cv=11&fst=1778658392062&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938468~118463261&u_",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659054764&cv=11&fst=1778659054764&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938468~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658393687&cv=11&fst=1778658393687&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938468~118463262&u_",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659056338&cv=11&fst=1778659056338&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938468~118463262&u_",
           "failure": "net::ERR_ABORTED"
         },
         {
@@ -571,7 +571,7 @@
       "url": "https://handyandfriend.com/",
       "ok": true,
       "status": 200,
-      "ms": 2309,
+      "ms": 2291,
       "title": "Handy & Friend | Los Angeles Handyman",
       "phone_links": [
         {
@@ -740,7 +740,7 @@
       "console_errors": [],
       "request_failures": [
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658397873&cv=11&fst=1778658397873&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938469~118463261~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659061565&cv=11&fst=1778659061565&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zb9244669510zd9244669510xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938466~",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -752,7 +752,7 @@
       "url": "https://handyandfriend.com/book",
       "ok": true,
       "status": 200,
-      "ms": 1599,
+      "ms": 1521,
       "title": "Book a Handyman in Los Angeles | Free Estimate",
       "phone_links": [
         {
@@ -812,11 +812,11 @@
       "console_errors": [],
       "request_failures": [
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658397873&cv=11&fst=1778658397873&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938469~118463261~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659061565&cv=11&fst=1778659061565&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zb9244669510zd9244669510xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938466~",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658399938&cv=11&fst=1778658399938&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938466~115938468~118463262~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659063573&cv=11&fst=1778659063573&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938469~118131809~11",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -828,7 +828,7 @@
       "url": "https://handyandfriend.com/pricing",
       "ok": true,
       "status": 200,
-      "ms": 2361,
+      "ms": 2244,
       "title": "Handyman Pricing in Los Angeles | Handy & Friend",
       "phone_links": [
         {
@@ -887,15 +887,15 @@
       "console_errors": [],
       "request_failures": [
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658397873&cv=11&fst=1778658397873&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938469~118463261~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659061565&cv=11&fst=1778659061565&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zb9244669510zd9244669510xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938466~",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658399938&cv=11&fst=1778658399938&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938466~115938468~118463262~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659063573&cv=11&fst=1778659063573&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938469~118131809~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658402343&cv=11&fst=1778658402343&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938466~115938468~118463261&u_",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659065877&cv=11&fst=1778659065877&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938466~115938468~118131809~11",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -907,7 +907,7 @@
       "url": "https://handyandfriend.com/services",
       "ok": true,
       "status": 200,
-      "ms": 1731,
+      "ms": 1756,
       "title": "Handyman Services in Los Angeles — Book Online Today | Handy & Friend",
       "phone_links": [
         {
@@ -965,19 +965,19 @@
       "console_errors": [],
       "request_failures": [
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658397873&cv=11&fst=1778658397873&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938469~118463261~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659061565&cv=11&fst=1778659061565&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zb9244669510zd9244669510xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938466~",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658399938&cv=11&fst=1778658399938&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938466~115938468~118463262~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659063573&cv=11&fst=1778659063573&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938469~118131809~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658402343&cv=11&fst=1778658402343&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938466~115938468~118463261&u_",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659065877&cv=11&fst=1778659065877&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938466~115938468~118131809~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658403722&cv=11&fst=1778658403722&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938469~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659067242&cv=11&fst=1778659067242&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938469~11",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -989,7 +989,7 @@
       "url": "https://handyandfriend.com/messenger",
       "ok": true,
       "status": 200,
-      "ms": 1876,
+      "ms": 2467,
       "title": "Messenger",
       "phone_links": [],
       "whatsapp_links": [],
@@ -1013,19 +1013,19 @@
       ],
       "request_failures": [
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658397873&cv=11&fst=1778658397873&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938469~118463261~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659061565&cv=11&fst=1778659061565&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zb9244669510zd9244669510xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616986~115938466~",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658399938&cv=11&fst=1778658399938&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938466~115938468~118463262~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659063573&cv=11&fst=1778659063573&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938465~115938469~118131809~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658402343&cv=11&fst=1778658402343&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938466~115938468~118463261&u_",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659065877&cv=11&fst=1778659065877&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115938466~115938468~118131809~11",
           "failure": "net::ERR_ABORTED"
         },
         {
-          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778658403722&cv=11&fst=1778658403722&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938469~11",
+          "url": "https://www.google.com/rmkt/collect/17971094967/?random=1778659067242&cv=11&fst=1778659067242&fmt=8&bg=ffffff&guid=ON&async=1&en=gtag.config&gtm=45je6581v9244373497za200zd9244373497xec&gcd=13l3l3l3l1l1&dma=0&tag_exp=0~115616985~115938466~115938469~11",
           "failure": "net::ERR_ABORTED"
         },
         {
