@@ -48,11 +48,21 @@ Recover agent workflows to stable green across:
 ## Current state
 
 - `opencloud-gpt-agent`: GREEN for target workflows.
-- `handy-friend-web`: PARTIAL; SQL reports blocked by invalid `SUPABASE_DATABASE_URL` secret format.
+- `handy-friend-web`: GREEN for target workflows.
 
-## Single remaining blocker
+## Final recovery closure (2026-05-13)
 
-- Repository secret `SUPABASE_DATABASE_URL` is not a PostgreSQL URI.
-- Required contract:
-  - Must start with `postgres://` or `postgresql://`.
-  - Must be a real Supabase database connection DSN (no placeholders).
+- `SUPABASE_DATABASE_URL` secret fixed to valid PostgreSQL URI in GitHub Secrets.
+- Connection routing fixed for GitHub runners via IPv4 pooler host.
+- `Supabase SQL Reports` success (push):
+  - https://github.com/2133611700c-sudo/handy-friend-web/actions/runs/25772478363
+- `Supabase SQL Reports` success (workflow_dispatch):
+  - https://github.com/2133611700c-sudo/handy-friend-web/actions/runs/25772478164
+- SQL runner behavior hardened:
+  - hard-fail on infrastructure/auth/missing files
+  - schema-drift failures kept in artifact summary (non-silent), without killing whole run
+
+## Remaining notes
+
+- GitHub warning remains about `actions/upload-artifact@v4` node runtime deprecation.
+- This warning is non-blocking for current recovery scope.
