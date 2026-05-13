@@ -47,25 +47,29 @@ jobs:
             bash scripts/run-supabase-business-reports.sh || true
           else
             mkdir -p "${RUN_ROOT}/business"
-            cat > "${RUN_ROOT}/business/summary.json" <<JSON
-            {
-              "run_id": "${RUN_ID}",
-              "status": "BLOCKED",
-              "started_at": "$(date -u +%FT%TZ)",
-              "completed_at": "$(date -u +%FT%TZ)",
-              "reports_count": 0,
-              "passed_reports_count": 0,
-              "failed_reports_count": 0,
-              "degraded_reports_count": 0,
-              "reason": "business reports skipped because infra/schema did not both PASS"
-            }
-            JSON
-            cat > "${RUN_ROOT}/business/summary.md" <<MD
-            # Business Reports Summary
-
-            - status: \`BLOCKED\`
-            - reason: business reports skipped because infra/schema did not both PASS
-            MD
+            NOW_UTC="$(date -u +%FT%TZ)"
+            jq -n \
+              --arg run_id "${RUN_ID}" \
+              --arg started_at "${NOW_UTC}" \
+              --arg completed_at "${NOW_UTC}" \
+              --arg reason "business reports skipped because infra/schema did not both PASS" \
+              '{
+                run_id: $run_id,
+                status: "BLOCKED",
+                started_at: $started_at,
+                completed_at: $completed_at,
+                reports_count: 0,
+                passed_reports_count: 0,
+                failed_reports_count: 0,
+                degraded_reports_count: 0,
+                reason: $reason
+              }' > "${RUN_ROOT}/business/summary.json"
+            printf '%s\n' \
+              '# Business Reports Summary' \
+              '' \
+              '- status: `BLOCKED`' \
+              '- reason: business reports skipped because infra/schema did not both PASS' \
+              > "${RUN_ROOT}/business/summary.md"
           fi
 
       - name: Build run metadata + final summary
