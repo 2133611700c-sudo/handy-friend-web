@@ -63,10 +63,13 @@ jobs:
       - name: Commit evidence
         if: always()
         run: |
-          if [ -n "$(git status --short -- ops/agent-control/reports ops/openclaw/reports/virtual-browser)" ]; then
+          if [ -n "$(git status --short -- ops/agent-control/reports ops/openclaw/reports)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add ops/agent-control/reports ops/openclaw/reports/virtual-browser
+            git add -A ops/agent-control/reports
+            if [ -d "ops/openclaw/reports/virtual-browser" ]; then
+              git add -A ops/openclaw/reports/virtual-browser
+            fi
             git commit -m "ops(agent): add OpenClaw task evidence"
             git pull --rebase origin main
             git push origin HEAD:main
