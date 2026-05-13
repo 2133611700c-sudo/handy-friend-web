@@ -24,7 +24,6 @@ contract:
       - created_at
       - stage
       - service_type
-      - source_details
     lead_events:
       - lead_id
       - created_at
