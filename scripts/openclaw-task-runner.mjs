@@ -22,10 +22,25 @@ function readJson(file) {
   return JSON.parse(fs.readFileSync(file, "utf8"));
 }
 function latestTaskFile() {
+  const changedTask = lastChangedTaskFromPush();
+  if (changedTask) return changedTask;
   const files = fs.readdirSync(tasksDir).filter((f) => f.endsWith(".json")).map((f) => path.join(tasksDir, f));
   if (!files.length) throw new Error(`No task files found in ${tasksDir}`);
   files.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
   return files[0];
+}
+function lastChangedTaskFromPush() {
+  try {
+    const out = execFileSync("git", ["diff", "--name-only", "HEAD~1", "HEAD", "--", "ops/agent-control/tasks/*.json"], { encoding: "utf8" });
+    const files = out
+      .split("\n")
+      .map((x) => x.trim())
+      .filter((x) => x.endsWith(".json") && fs.existsSync(x));
+    if (files.length === 0) return null;
+    return files[files.length - 1];
+  } catch {
+    return null;
+  }
 }
 function safe(text) {
   return String(text)
@@ -115,8 +130,9 @@ function validateArtifacts(taskType, task) {
     if (!fs.existsSync(file)) missing.push(file);
   }
   if (taskType === "virtual_browser_audit") {
-    const browserResult = "ops/openclaw/reports/virtual-browser/result.json";
-    const browserReport = "ops/openclaw/reports/virtual-browser/report.md";
+    const browserDir = `ops/openclaw/reports/virtual-browser/${runId}`;
+    const browserResult = path.join(browserDir, "result.json");
+    const browserReport = path.join(browserDir, "report.md");
     if (!fs.existsSync(browserResult)) missing.push(browserResult);
     if (!fs.existsSync(browserReport)) missing.push(browserReport);
   }
@@ -126,7 +142,7 @@ function runBrowserAudit(task) {
   const target = task.params?.target_origin || "https://handyandfriend.com";
   const routes = task.params?.routes || "/,/book,/pricing,/services,/messenger";
   const attempts = Number(task.params?.max_attempts || 2);
-  const env = { ...process.env, TARGET_ORIGIN: target, ROUTES: routes, OUT_DIR: "ops/openclaw/reports/virtual-browser" };
+  const env = { ...process.env, TARGET_ORIGIN: target, ROUTES: routes, OUT_DIR: `ops/openclaw/reports/virtual-browser/${runId}` };
   let lastError;
   for (let i = 1; i <= attempts; i += 1) {
     try {
