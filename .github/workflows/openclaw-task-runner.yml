@@ -34,6 +34,7 @@ jobs:
       DEDUPE_WINDOW_MINUTES: "15"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+      OPENCLAW_LATEST_FILE: ${{ runner.temp }}/openclaw-latest.json
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -52,6 +53,8 @@ jobs:
         run: npx playwright install chromium
 
       - name: Run OpenClaw task
+        id: run_task
+        continue-on-error: true
         run: node scripts/openclaw-task-runner.mjs
 
       - name: Upload OpenClaw artifacts
@@ -62,23 +65,23 @@ jobs:
           path: |
             ops/agent-control/reports/openclaw-heartbeat/
             ops/agent-control/reports/openclaw-browser-audit/
-            ops/agent-control/reports/openclaw-latest.json
             ops/openclaw/reports/virtual-browser/
+            ${{ runner.temp }}/openclaw-latest.json
           retention-days: 30
           if-no-files-found: warn
 
       - name: Commit evidence
         if: always()
         run: |
-          if [ -n "$(git status --short -- ops/agent-control/reports ops/openclaw/reports)" ]; then
+          if [ -n "$(git status --short -- ops/agent-control/reports/openclaw-heartbeat ops/agent-control/reports/openclaw-browser-audit ops/openclaw/reports)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A ops/agent-control/reports
+            git pull --ff-only origin main || true
+            git add -A ops/agent-control/reports/openclaw-heartbeat ops/agent-control/reports/openclaw-browser-audit
             if [ -d "ops/openclaw/reports/virtual-browser" ]; then
               git add -A ops/openclaw/reports/virtual-browser
             fi
             git commit -m "ops(agent): add OpenClaw task evidence"
-            git pull --rebase origin main
             git push origin HEAD:main
           else
             echo "No evidence changes to commit."
@@ -90,9 +93,14 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const latestPath = 'ops/agent-control/reports/openclaw-latest.json';
+            const latestPath = process.env.OPENCLAW_LATEST_FILE;
             if (!fs.existsSync(latestPath)) return;
-            const latest = JSON.parse(fs.readFileSync(latestPath, 'utf8'));
+            let latest;
+            try {
+              latest = JSON.parse(fs.readFileSync(latestPath, 'utf8'));
+            } catch {
+              return;
+            }
             const status = latest.status || 'UNKNOWN';
             if (!['FAIL', 'BLOCKED', 'DEGRADED'].includes(status)) return;
             const dedupeKey = latest.dedupe_key || `${latest.task_type || 'task'}:${status}`;
@@ -125,3 +133,22 @@ jobs:
                 labels: ['ops', 'openclaw-alert']
               });
             }
+
+      - name: Enforce expected status
+        if: always()
+        run: |
+          STATUS="$(jq -r '.status // \"UNKNOWN\"' "${OPENCLAW_LATEST_FILE}")"
+          TASK_TYPE="$(jq -r '.task_type // \"unknown\"' "${OPENCLAW_LATEST_FILE}")"
+          if [ "${TASK_TYPE}" = "synthetic_fail" ]; then
+            if [ "${STATUS}" = "FAIL" ]; then
+              echo "Synthetic fail drill behaved as expected."
+              exit 0
+            fi
+            echo "Synthetic fail drill expected FAIL, got ${STATUS}"
+            exit 1
+          fi
+          if [ "${STATUS}" = "PASS" ] || [ "${STATUS}" = "DEGRADED" ]; then
+            exit 0
+          fi
+          echo "Task status is ${STATUS}"
+          exit 1
