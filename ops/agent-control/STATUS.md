@@ -50,3 +50,73 @@ Harden Supabase SQL reporting from tolerant mode to production-grade gates with 
 
 - `UNVERIFIED`: live workflow run IDs after this hardening change must be captured.
 - If `SUPABASE_DATABASE_URL` secret missing/invalid in target repo, runtime status will be `BLOCKED`/`FAIL` with exact reason.
+
+## HF-SUPABASE-SQL-HARDENING-001 Final Activation
+
+- PR #101 merged: https://github.com/2133611700c-sudo/handy-friend-web/pull/101
+- PR #101 merge SHA: `4d96b70da889236f0439cae56385ce19688991df`
+- Main SHA after activation fixes: `a5af2844633f84203764a6b97bf00bf867872972`
+- Follow-up hardening hotfix merges:
+  - PR #102: https://github.com/2133611700c-sudo/handy-friend-web/pull/102
+  - PR #103: https://github.com/2133611700c-sudo/handy-friend-web/pull/103
+
+### Live Workflow Runs (from `main`)
+
+- Infra Gate:
+  - run_id: `25773380346`
+  - url: https://github.com/2133611700c-sudo/handy-friend-web/actions/runs/25773380346
+  - workflow conclusion: `success`
+  - classification: `PASS`
+- Schema Contract:
+  - run_id: `25773401913`
+  - url: https://github.com/2133611700c-sudo/handy-friend-web/actions/runs/25773401913
+  - workflow conclusion: `failure`
+  - classification: `FAIL`
+  - exact missing column: `lead_operational_view.source_details`
+- Business Reports:
+  - run_id: `25773430807`
+  - url: https://github.com/2133611700c-sudo/handy-friend-web/actions/runs/25773430807
+  - workflow conclusion: `failure`
+  - classification: `FAIL` (because schema gate failed)
+  - business summary status: `BLOCKED` (skipped due non-PASS schema)
+
+### Artifacts Summary
+
+- Infra artifacts:
+  - `infra-gate.md`
+  - `infra-gate.json`
+  - `run-meta.json`
+- Schema artifacts:
+  - `schema-contract.md`
+  - `schema-contract.json`
+  - `schema-missing-columns.txt`
+  - `run-meta.json`
+  - `REMEDIATION.md`
+- Business artifacts:
+  - `summary.md`
+  - `business/summary.md`
+  - `business/summary.json`
+  - `run-meta.json`
+  - `REMEDIATION.md`
+  - `alerts/github-issue-comment.md`
+
+### Known Blockers
+
+- `FAIL`: schema contract requires `lead_operational_view.source_details`, missing in current DB.
+- This is a real DB/schema mismatch, not a workflow wiring issue.
+
+### Remediation Packet Paths
+
+- `ops/reports/sql/20260513T015536Z/REMEDIATION.md`
+- `ops/reports/sql/20260513T015629Z/REMEDIATION.md`
+
+### Next Scheduled Run
+
+- Infra gate: daily cron `17 15 * * *` (UTC).
+- Schema gate: daily cron `27 15 * * *` (UTC).
+- Business reports: daily cron `37 15 * * *` (UTC).
+
+### Rollback Note
+
+- Rollback not required.
+- Failures are expected hard-gate behavior for real schema drift and should be fixed in DB schema or contract versioning path.
