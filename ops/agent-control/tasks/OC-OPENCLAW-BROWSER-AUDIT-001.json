@@ -1,0 +1,15 @@
+{
+  "id": "OC-OPENCLAW-BROWSER-AUDIT-001",
+  "type": "virtual_browser_audit",
+  "title": "OpenClaw browser audit proof",
+  "params": {
+    "target_origin": "https://handyandfriend.com",
+    "routes": "/,/book,/pricing,/services,/messenger",
+    "max_attempts": 2
+  },
+  "safety": {
+    "no_production_code_changes": true,
+    "no_customer_messages": true,
+    "redact_secrets": true
+  }
+}
