@@ -1,0 +1,13 @@
+{
+  "id": "chatgpt-openclaw-rule-check-20260513-001",
+  "type": "heartbeat",
+  "requested_by": "ChatGPT",
+  "goal": "Verify OpenClaw remains usable as ChatGPT external execution hand after documenting the delegation rule.",
+  "safety": {
+    "production_code_change": false,
+    "customer_action": false,
+    "secrets_required": false,
+    "public_posting": false
+  },
+  "expected_status": "PASS"
+}
