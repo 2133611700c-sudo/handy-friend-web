@@ -18,8 +18,7 @@
     "destructive_action": false
   },
   "artifacts_required": [
-    "ops/openclaw/reports/virtual-browser/result.json",
-    "ops/openclaw/reports/virtual-browser/report.md"
+    "ops/openclaw/reports/virtual-browser"
   ],
   "handoff_required": true
 }
