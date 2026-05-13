@@ -275,6 +275,7 @@ function main() {
     status,
     task_id: taskId,
     task_type: taskType,
+    expected_status: task.expected_status || "PASS",
     failure_class: failureClass,
     dedupe_key: `${taskType}:${failureClass}`,
     report_file: reportFile,
