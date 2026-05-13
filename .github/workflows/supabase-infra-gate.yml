@@ -1,0 +1,86 @@
+name: Supabase Infra Gate
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 15 * * *"
+
+concurrency:
+  group: supabase-sql-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  infra:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Run infra gate
+        id: infra
+        run: |
+          bash scripts/check-supabase-infra.sh || true
+          echo "RUN_ID=${RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)}" >> "$GITHUB_ENV"
+
+      - name: Build run meta + summary
+        if: always()
+        run: |
+          RUN_ID="$(ls -1 ops/reports/sql | tail -n1)"
+          RUN_ROOT="ops/reports/sql/${RUN_ID}"
+          STATUS="$(jq -r '.status' "${RUN_ROOT}/infra-gate.json")"
+          STARTED="$(jq -r '.started_at' "${RUN_ROOT}/infra-gate.json")"
+          COMPLETED="$(jq -r '.completed_at' "${RUN_ROOT}/infra-gate.json")"
+          HOST_REDACTED="$(jq -r '.database_host_redacted' "${RUN_ROOT}/infra-gate.json")"
+          cat > "${RUN_ROOT}/run-meta.json" <<JSON
+          {
+            "run_id": "${RUN_ID}",
+            "git_sha": "${GITHUB_SHA}",
+            "workflow_name": "${GITHUB_WORKFLOW}",
+            "workflow_run_id": "${GITHUB_RUN_ID}",
+            "started_at": "${STARTED}",
+            "completed_at": "${COMPLETED}",
+            "status": "${STATUS}",
+            "database_host_redacted": "${HOST_REDACTED}",
+            "reports_count": 0,
+            "failed_reports_count": 0
+          }
+          JSON
+          {
+            echo "# SQL Summary"
+            echo
+            echo "- status: \`${STATUS}\`"
+            echo "- run_id: \`${RUN_ID}\`"
+            echo "- workflow_run_id: \`${GITHUB_RUN_ID}\`"
+          } > "${RUN_ROOT}/summary.md"
+
+      - name: Upload infra artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-infra-gate-${{ github.run_id }}
+          path: ops/reports/sql/
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Enforce hard gate status
+        if: always()
+        run: |
+          RUN_ID="$(ls -1 ops/reports/sql | tail -n1)"
+          STATUS="$(jq -r '.status' "ops/reports/sql/${RUN_ID}/infra-gate.json")"
+          if [ "${STATUS}" = "PASS" ]; then
+            exit 0
+          fi
+          if [ "${STATUS}" = "BLOCKED" ]; then
+            echo "BLOCKED: Missing secret/access."
+            exit 1
+          fi
+          echo "FAIL: Infra gate failed."
+          exit 1

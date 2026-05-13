@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-05-13T00:00:00Z",
+  "source_paths": [
+    "ops/sql/*.sql",
+    "scripts/run-supabase-sql-reports.sh"
+  ],
+  "objects": {
+    "tables": [
+      "lead_events"
+    ],
+    "views": [
+      "lead_operational_view"
+    ],
+    "system_catalog": [
+      "information_schema.tables",
+      "information_schema.views",
+      "pg_class",
+      "pg_namespace",
+      "pg_policies"
+    ]
+  },
+  "notes": [
+    "CTE names are excluded from required object lists.",
+    "Optional business dashboards are not hard requirements for schema gate in v1."
+  ]
+}

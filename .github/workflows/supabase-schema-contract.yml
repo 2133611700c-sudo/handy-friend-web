@@ -1,0 +1,90 @@
+name: Supabase Schema Contract
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "ops/sql/contracts/**"
+      - "ops/sql/**/*.sql"
+      - "scripts/check-supabase-schema-contract.sh"
+      - ".github/workflows/supabase-schema-contract.yml"
+  schedule:
+    - cron: "27 15 * * *"
+
+concurrency:
+  group: supabase-sql-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  schema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client jq
+
+      - name: Run infra gate prerequisite
+        run: bash scripts/check-supabase-infra.sh
+
+      - name: Detect run id
+        id: rid
+        run: |
+          RUN_ID="$(ls -1 ops/reports/sql | tail -n1)"
+          echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
+          echo "RUN_ID=${RUN_ID}" >> "$GITHUB_ENV"
+          echo "RUN_ROOT=ops/reports/sql/${RUN_ID}" >> "$GITHUB_ENV"
+
+      - name: Run schema gate
+        run: |
+          bash scripts/check-supabase-schema-contract.sh
+
+      - name: Build summary
+        if: always()
+        run: |
+          STATUS="$(jq -r '.status' "${RUN_ROOT}/schema-contract.json")"
+          STARTED="$(jq -r '.started_at' "${RUN_ROOT}/schema-contract.json")"
+          COMPLETED="$(jq -r '.completed_at' "${RUN_ROOT}/schema-contract.json")"
+          HOST_REDACTED="$(jq -r '.database_host_redacted // "unknown"' "${RUN_ROOT}/infra-gate.json")"
+          cat > "${RUN_ROOT}/run-meta.json" <<JSON
+          {
+            "run_id": "${RUN_ID}",
+            "git_sha": "${GITHUB_SHA}",
+            "workflow_name": "${GITHUB_WORKFLOW}",
+            "workflow_run_id": "${GITHUB_RUN_ID}",
+            "started_at": "${STARTED}",
+            "completed_at": "${COMPLETED}",
+            "status": "${STATUS}",
+            "database_host_redacted": "${HOST_REDACTED}",
+            "reports_count": 0,
+            "failed_reports_count": 0
+          }
+          JSON
+          {
+            echo "# SQL Summary"
+            echo
+            echo "- status: \`${STATUS}\`"
+            echo "- run_id: \`${RUN_ID}\`"
+            echo "- workflow_run_id: \`${GITHUB_RUN_ID}\`"
+          } > "${RUN_ROOT}/summary.md"
+
+      - name: Build remediation packet
+        if: always()
+        run: node scripts/build-sql-remediation-packet.mjs "${RUN_ROOT}"
+
+      - name: Upload schema artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-schema-contract-${{ github.run_id }}
+          path: ops/reports/sql/
+          retention-days: 30
+          if-no-files-found: error
