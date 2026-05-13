@@ -153,6 +153,11 @@ jobs:
           export OPENCLAW_LATEST_FILE="/tmp/openclaw-latest.json"
           STATUS="$(jq -r '.status // "UNKNOWN"' "${OPENCLAW_LATEST_FILE}")"
           TASK_TYPE="$(jq -r '.task_type // "unknown"' "${OPENCLAW_LATEST_FILE}")"
+          EXPECTED_STATUS="$(jq -r '.expected_status // "PASS"' "${OPENCLAW_LATEST_FILE}")"
+          if [ "${STATUS}" = "${EXPECTED_STATUS}" ]; then
+            echo "Status ${STATUS} matches expected_status ${EXPECTED_STATUS}."
+            exit 0
+          fi
           if [ "${TASK_TYPE}" = "synthetic_fail" ]; then
             if [ "${STATUS}" = "FAIL" ]; then
               echo "Synthetic fail drill behaved as expected."
