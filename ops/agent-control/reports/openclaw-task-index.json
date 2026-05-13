@@ -1,0 +1,10 @@
+{
+  "entries": [
+    {
+      "task_id": "OC-OPENCLAW-BROWSER-AUDIT-001",
+      "timestamp_utc": "2026-05-13T06:59:51.305Z",
+      "status": "FAIL",
+      "dedupe_key": "virtual_browser_audit:execution_error"
+    }
+  ]
+}
