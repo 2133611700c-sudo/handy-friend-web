@@ -4,11 +4,11 @@
 
 select
   id,
-  coalesce(lead_source, source) as source,
+  coalesce(lead_source, to_jsonb(lead_operational_view)->>'source') as source,
   service_type,
   zip,
   stage,
-  lead_detected_at,
+  coalesce(nullif(to_jsonb(lead_operational_view)->>'lead_detected_at','')::timestamptz, created_at) as lead_detected_at,
   contacted_at,
   booked_at,
   round((extract(epoch from (now() - lead_detected_at)) / 60)::numeric, 1) as age_minutes,
@@ -20,7 +20,7 @@ select
     else 'review_stage'
   end as next_action
 from lead_operational_view
-where lead_detected_at >= now() - interval '14 days'
+where coalesce(nullif(to_jsonb(lead_operational_view)->>'lead_detected_at','')::timestamptz, created_at) >= now() - interval '14 days'
   and (
     coalesce(stage, '') in ('new','New','contacted')
     or contacted_at is null

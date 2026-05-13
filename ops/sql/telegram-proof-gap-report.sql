@@ -6,13 +6,13 @@
 with recent_leads as (
   select
     id,
-    coalesce(lead_source, source) as source,
+    coalesce(lead_source, to_jsonb(lead_operational_view)->>'source') as source,
     service_type,
     zip,
     stage,
     lead_detected_at
   from lead_operational_view
-  where lead_detected_at >= now() - interval '7 days'
+  where coalesce(nullif(to_jsonb(lead_operational_view)->>'lead_detected_at','')::timestamptz, created_at) >= now() - interval '7 days'
 ), telegram_proofs as (
   select
     lead_id,

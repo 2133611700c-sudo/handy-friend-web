@@ -5,15 +5,15 @@
 with base as (
   select
     id,
-    coalesce(lead_source, source) as source,
+    coalesce(lead_source, to_jsonb(lead_operational_view)->>'source') as source,
     service_type,
     zip,
     stage,
-    lead_detected_at,
+    coalesce(nullif(to_jsonb(lead_operational_view)->>'lead_detected_at','')::timestamptz, created_at) as lead_detected_at,
     coalesce(phone, customer_phone) as phone_key,
     lower(trim(coalesce(message, summary, service_type, ''))) as text_key
   from lead_operational_view
-  where lead_detected_at >= now() - interval '30 days'
+  where coalesce(nullif(to_jsonb(lead_operational_view)->>'lead_detected_at','')::timestamptz, created_at) >= now() - interval '30 days'
 ), grouped as (
   select
     coalesce(phone_key, '') as phone_key,
