@@ -27,5 +27,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
   }
 }
