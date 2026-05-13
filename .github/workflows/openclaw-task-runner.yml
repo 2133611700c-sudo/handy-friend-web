@@ -1,0 +1,75 @@
+name: OpenClaw Task Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_file:
+        description: Optional task file path under ops/agent-control/tasks
+        required: false
+        default: ""
+  push:
+    branches:
+      - main
+    paths:
+      - "ops/agent-control/tasks/*.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: openclaw-task-runner-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run-task:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TASK_FILE: ${{ github.event.inputs.task_file || '' }}
+      GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Install npm dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+
+      - name: Run OpenClaw task
+        run: node scripts/openclaw-task-runner.mjs
+
+      - name: Upload OpenClaw artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openclaw-task-runner-${{ github.run_id }}
+          path: |
+            ops/agent-control/reports/openclaw-heartbeat/
+            ops/agent-control/reports/openclaw-browser-audit/
+            ops/agent-control/reports/openclaw-latest.json
+            ops/openclaw/reports/virtual-browser/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Commit evidence
+        if: always()
+        run: |
+          if [ -n "$(git status --short -- ops/agent-control/reports ops/openclaw/reports/virtual-browser)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add ops/agent-control/reports ops/openclaw/reports/virtual-browser
+            git commit -m "ops(agent): add OpenClaw task evidence"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          else
+            echo "No evidence changes to commit."
+          fi
