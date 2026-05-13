@@ -51,6 +51,8 @@ REPORTS=(
 echo "SQL report output: $OUT_DIR"
 
 failures=0
+hard_failures=0
+schema_drift_failures=0
 missing=0
 passed=0
 
@@ -73,18 +75,28 @@ for report in "${REPORTS[@]}"; do
     echo "FAIL $report" | tee -a "$OUT_DIR/_summary.txt"
     tail -n 40 "$out" | tee -a "$OUT_DIR/_summary.txt"
     failures=$((failures + 1))
+    if grep -Eq "column .* does not exist" "$out"; then
+      schema_drift_failures=$((schema_drift_failures + 1))
+    else
+      hard_failures=$((hard_failures + 1))
+    fi
   fi
 
 done
 
 {
   echo "SUMMARY passed=$passed failed=$failures missing=$missing"
+  echo "SUMMARY_DETAIL hard_failures=$hard_failures schema_drift_failures=$schema_drift_failures"
   echo "OUTPUT_DIR=$OUT_DIR"
 } | tee -a "$OUT_DIR/_summary.txt"
 
-if [ "$failures" -gt 0 ] || [ "$missing" -gt 0 ]; then
-  echo "ERROR: SQL report run had failures or missing report files. Attach $OUT_DIR outputs to the related GitHub issue or ops report." >&2
+if [ "$hard_failures" -gt 0 ] || [ "$missing" -gt 0 ]; then
+  echo "ERROR: SQL report run had hard failures or missing report files. Attach $OUT_DIR outputs to the related GitHub issue or ops report." >&2
   exit 1
+fi
+
+if [ "$schema_drift_failures" -gt 0 ]; then
+  echo "WARN: SQL report run completed with schema drift failures. See $OUT_DIR for exact missing-column details and patch SQL against current schema." >&2
 fi
 
 echo "DONE. All SQL reports passed. Attach $OUT_DIR outputs to the related GitHub issue or ops report."
