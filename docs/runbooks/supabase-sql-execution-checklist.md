@@ -12,6 +12,8 @@ Run the ops SQL reports safely and turn raw results into fixes.
 - Do not run from browser/client code.
 - Do not expose service role keys.
 - Save raw output for each report.
+- In GitHub Actions, `SUPABASE_DATABASE_URL` must be a real PostgreSQL DSN and start with `postgres://` or `postgresql://`.
+- Canonical recommendation: use Supabase session-mode pooler DSN in PostgreSQL URI format.
 
 ## Reports to run first
 
