@@ -34,7 +34,6 @@ jobs:
       DEDUPE_WINDOW_MINUTES: "15"
       GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-      OPENCLAW_LATEST_FILE: ${{ runner.temp }}/openclaw-latest.json
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -55,6 +54,8 @@ jobs:
       - name: Run OpenClaw task
         id: run_task
         continue-on-error: true
+        env:
+          OPENCLAW_LATEST_FILE: /tmp/openclaw-latest.json
         run: node scripts/openclaw-task-runner.mjs
 
       - name: Upload OpenClaw artifacts
@@ -66,7 +67,7 @@ jobs:
             ops/agent-control/reports/openclaw-heartbeat/
             ops/agent-control/reports/openclaw-browser-audit/
             ops/openclaw/reports/virtual-browser/
-            ${{ runner.temp }}/openclaw-latest.json
+            /tmp/openclaw-latest.json
           retention-days: 30
           if-no-files-found: warn
 
@@ -90,6 +91,8 @@ jobs:
       - name: Open/update alert issue (dedupe 12h)
         if: always()
         uses: actions/github-script@v8
+        env:
+          OPENCLAW_LATEST_FILE: /tmp/openclaw-latest.json
         with:
           script: |
             const fs = require('fs');
@@ -137,6 +140,11 @@ jobs:
       - name: Enforce expected status
         if: always()
         run: |
+          if [ ! -f "/tmp/openclaw-latest.json" ]; then
+            echo "Missing /tmp/openclaw-latest.json"
+            exit 1
+          fi
+          export OPENCLAW_LATEST_FILE="/tmp/openclaw-latest.json"
           STATUS="$(jq -r '.status // \"UNKNOWN\"' "${OPENCLAW_LATEST_FILE}")"
           TASK_TYPE="$(jq -r '.task_type // \"unknown\"' "${OPENCLAW_LATEST_FILE}")"
           if [ "${TASK_TYPE}" = "synthetic_fail" ]; then
