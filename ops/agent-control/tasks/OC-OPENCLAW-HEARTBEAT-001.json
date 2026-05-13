@@ -1,0 +1,11 @@
+{
+  "id": "OC-OPENCLAW-HEARTBEAT-001",
+  "type": "heartbeat",
+  "title": "OpenClaw cloud heartbeat proof",
+  "params": {},
+  "safety": {
+    "no_production_code_changes": true,
+    "no_customer_messages": true,
+    "redact_secrets": true
+  }
+}
