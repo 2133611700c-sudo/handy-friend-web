@@ -1,0 +1,55 @@
+contract:
+  name: lead_operational_view
+  version: v1
+  generated_inventory: ops/sql/contracts/generated-inventory.json
+  status_model:
+    hard_gate_statuses:
+      - PASS
+      - FAIL
+      - BLOCKED
+    soft_report_statuses:
+      - PASS
+      - DEGRADED
+      - FAIL
+    degraded_forbidden_for:
+      - infra_gate
+      - schema_gate
+  required_tables:
+    - lead_events
+  required_views:
+    - lead_operational_view
+  required_columns:
+    lead_operational_view:
+      - id
+      - created_at
+      - stage
+      - service_type
+      - source_details
+    lead_events:
+      - lead_id
+      - created_at
+      - event_type
+      - event_data
+  optional_views:
+    - response_queue
+    - followup_queue
+    - lead_sla_monitor
+    - lead_source_performance
+    - source_health_status
+    - duplicate_lead_candidates
+    - lead_timeline
+    - weekly_kpi
+    - daily_cost_summary
+  redaction_policy:
+    never_print:
+      - SUPABASE_DATABASE_URL
+      - password
+      - service_role
+      - jwt
+      - token
+    pii_forbidden:
+      - customer_phone
+      - customer_email
+      - customer_address
+      - message_body
+      - media_urls

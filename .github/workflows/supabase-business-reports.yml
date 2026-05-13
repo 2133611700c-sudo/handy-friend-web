@@ -1,9 +1,9 @@
-name: Supabase SQL Reports
+name: Supabase Business Reports
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "47 15 * * *"
+    - cron: "37 15 * * *"
 
 concurrency:
   group: supabase-sql-${{ github.ref }}
@@ -24,26 +24,27 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client jq
 
-      - name: Infra gate
-        run: |
-          bash scripts/check-supabase-infra.sh
+      - name: Run infra gate
+        run: bash scripts/check-supabase-infra.sh
 
-      - name: Resolve run id
+      - name: Detect run id
         run: |
           RUN_ID="$(ls -1 ops/reports/sql | tail -n1)"
           echo "RUN_ID=${RUN_ID}" >> "$GITHUB_ENV"
           echo "RUN_ROOT=ops/reports/sql/${RUN_ID}" >> "$GITHUB_ENV"
 
-      - name: Schema contract gate
+      - name: Run schema gate
         run: bash scripts/check-supabase-schema-contract.sh
 
-      - name: Business reports
+      - name: Run business reports
+        id: business
         run: |
-          export INFRA_STATUS="PASS"
-          export SCHEMA_STATUS="PASS"
+          INFRA_STATUS="$(jq -r '.status' "${RUN_ROOT}/infra-gate.json")"
+          SCHEMA_STATUS="$(jq -r '.status' "${RUN_ROOT}/schema-contract.json")"
+          export INFRA_STATUS SCHEMA_STATUS
           bash scripts/run-supabase-business-reports.sh
 
-      - name: Final summary + run meta
+      - name: Build run metadata + final summary
         if: always()
         run: |
           INFRA_STATUS="$(jq -r '.status' "${RUN_ROOT}/infra-gate.json")"
@@ -81,17 +82,47 @@ jobs:
             echo "- status: \`${FINAL_STATUS}\`"
             echo "- run_id: \`${RUN_ID}\`"
             echo "- workflow_run_id: \`${GITHUB_RUN_ID}\`"
+            echo "- infra_status: \`${INFRA_STATUS}\`"
+            echo "- schema_status: \`${SCHEMA_STATUS}\`"
+            echo "- business_status: \`${BUSINESS_STATUS}\`"
+            echo "- reports_count: ${REPORTS_COUNT}"
+            echo "- failed_reports_count: ${FAILED_REPORTS_COUNT}"
           } > "${RUN_ROOT}/summary.md"
 
-      - name: Remediation packet
+      - name: Build remediation packet
         if: always()
-        run: node scripts/build-sql-remediation-packet.mjs "${RUN_ROOT}"
+        run: |
+          node scripts/build-sql-remediation-packet.mjs "${RUN_ROOT}"
 
-      - name: Upload SQL report artifacts
+      - name: Build alert draft (throttled placeholder)
+        if: always()
+        run: |
+          mkdir -p "${RUN_ROOT}/alerts"
+          STATUS="$(jq -r '.status' "${RUN_ROOT}/run-meta.json")"
+          if [ "${STATUS}" = "FAIL" ] || [ "${STATUS}" = "BLOCKED" ] || [ "${STATUS}" = "DEGRADED" ]; then
+            cat > "${RUN_ROOT}/alerts/github-issue-comment.md" <<EOF
+          SQL reports status: ${STATUS}
+          workflow_run_id: ${GITHUB_RUN_ID}
+          remediation: ${RUN_ROOT}/REMEDIATION.md
+          dedupe_key: ${GITHUB_WORKFLOW}-${STATUS}
+          throttle_window_hours: 12
+          EOF
+          fi
+
+      - name: Upload business artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: supabase-sql-reports-${{ github.run_id }}
+          name: supabase-business-reports-${{ github.run_id }}
           path: ops/reports/sql/
           retention-days: 30
           if-no-files-found: error
+
+      - name: Enforce final status semantics
+        if: always()
+        run: |
+          STATUS="$(jq -r '.status' "${RUN_ROOT}/run-meta.json")"
+          if [ "${STATUS}" = "PASS" ] || [ "${STATUS}" = "DEGRADED" ]; then
+            exit 0
+          fi
+          exit 1
