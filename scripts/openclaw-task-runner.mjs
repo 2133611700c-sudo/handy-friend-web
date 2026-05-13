@@ -41,7 +41,7 @@ function sleep(ms) {
 function parseTaskReport(file) {
   const text = fs.readFileSync(file, "utf8");
   const get = (k) => {
-    const m = text.match(new RegExp(`- ${k}: \\`([^\\`]+)\\``));
+    const m = text.match(new RegExp(`- ${k}: \`([^\`]+)\``));
     return m ? m[1] : "";
   };
   return { task_id: get("task_id"), timestamp_utc: get("timestamp_utc") };
