@@ -29,6 +29,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install dependencies
+        run: npm install --prefer-offline --no-audit --no-fund
+
       - name: Guard canonical Vercel project linkage
         run: npm run -s vercel:guard
 
