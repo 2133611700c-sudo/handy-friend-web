@@ -564,7 +564,6 @@ function buildFullSummary({ service, message, preferredContact, source }) {
  * Only works when RESEND_API_KEY is configured and domain is verified.
  */
 function buildCustomerAutoResponderHtml({ name, service, phone }) {
-  const firstName = String(name || 'there').split(' ')[0] || 'there';
   const serviceName = String(service || 'your project');
   const safePhone = String(phone || '').replace(/\D/g, '');
   return `
@@ -576,16 +575,15 @@ function buildCustomerAutoResponderHtml({ name, service, phone }) {
     <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:14px">Los Angeles Handyman Service</p>
   </div>
   <div style="background:#fff;padding:28px;border:1px solid #e5dfd5">
-    <h2 style="color:#1a237e;font-size:20px;margin-top:0">Got your request, ${escapeHtml(firstName)}!</h2>
+    <h2 style="color:#1a237e;font-size:20px;margin-top:0">Request Received</h2>
     <p style="font-size:15px;line-height:1.6;color:#333">
-      Thanks for reaching out about <strong>${escapeHtml(serviceName)}</strong>.
-      We've received your details and typically respond within <strong>1 hour</strong> during business hours (8am-8pm PT, Mon-Sat).
+      Thanks for reaching out about <strong>${escapeHtml(serviceName)}</strong>. We've received your request and will review the details. A member of Handy & Friend will contact you as soon as possible to confirm the scope, availability, access, and next steps.
     </p>
     <h3 style="color:#1a237e;font-size:16px">What happens next:</h3>
     <ol style="font-size:14px;line-height:1.8;color:#333;padding-left:20px">
-      <li>We review your project details</li>
-      <li>You'll get a call or text with your exact price — no surprises</li>
-      <li>We schedule at your convenience (same-day often available)</li>
+      <li>We review your project details and any photos or notes provided.</li>
+      <li>We contact you to clarify the scope, access, timing, and estimated cost.</li>
+      <li>Any materials or additional work will be confirmed with you before proceeding.</li>
     </ol>
     <div style="text-align:center;margin:24px 0">
       <a href="tel:+12133611700" style="display:inline-block;background:#1a237e;color:#fff;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:15px">📞 Call Us: (213) 361-1700</a>
@@ -593,7 +591,7 @@ function buildCustomerAutoResponderHtml({ name, service, phone }) {
     ${safePhone ? `<p style="text-align:center;font-size:14px;color:#666">Or text/WhatsApp: <a href="https://wa.me/12133611700" style="color:#1a237e">(213) 361-1700</a></p>` : ''}
     <hr style="border:none;border-top:1px solid #e5dfd5;margin:24px 0">
     <p style="font-size:13px;color:#888;text-align:center">
-      Insured · Upfront pricing · No hidden fees<br>
+      Handy & Friend · Los Angeles Handyman Service<br>
       <a href="https://handyandfriend.com" style="color:#1a237e">handyandfriend.com</a>
     </p>
   </div>
@@ -604,7 +602,6 @@ function buildCustomerAutoResponderHtml({ name, service, phone }) {
 async function sendCustomerAutoResponder({ leadId, name, email, service, phone }) {
   if (!process.env.RESEND_API_KEY || !email) return;
 
-  const firstName = String(name || 'there').split(' ')[0] || 'there';
   const serviceName = String(service || 'your project');
   const safePhone = String(phone || '').replace(/\D/g, '');
 
@@ -617,16 +614,15 @@ async function sendCustomerAutoResponder({ leadId, name, email, service, phone }
     <p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:14px">Los Angeles Handyman Service</p>
   </div>
   <div style="background:#fff;padding:28px;border:1px solid #e5dfd5">
-    <h2 style="color:#1a237e;font-size:20px;margin-top:0">Got your request, ${escapeHtml(firstName)}!</h2>
+    <h2 style="color:#1a237e;font-size:20px;margin-top:0">Request Received</h2>
     <p style="font-size:15px;line-height:1.6;color:#333">
-      Thanks for reaching out about <strong>${escapeHtml(serviceName)}</strong>.
-      We've received your details and typically respond within <strong>1 hour</strong> during business hours (8am-8pm PT, Mon-Sat).
+      Thanks for reaching out about <strong>${escapeHtml(serviceName)}</strong>. We've received your request and will review the details. A member of Handy & Friend will contact you as soon as possible to confirm the scope, availability, access, and next steps.
     </p>
     <h3 style="color:#1a237e;font-size:16px">What happens next:</h3>
     <ol style="font-size:14px;line-height:1.8;color:#333;padding-left:20px">
-      <li>We review your project details</li>
-      <li>You'll get a call or text with your exact price — no surprises</li>
-      <li>We schedule at your convenience (same-day often available)</li>
+      <li>We review your project details and any photos or notes provided.</li>
+      <li>We contact you to clarify the scope, access, timing, and estimated cost.</li>
+      <li>Any materials or additional work will be confirmed with you before proceeding.</li>
     </ol>
     <div style="text-align:center;margin:24px 0">
       <a href="tel:+12133611700" style="display:inline-block;background:#1a237e;color:#fff;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:15px">📞 Call Us: (213) 361-1700</a>
@@ -634,7 +630,7 @@ async function sendCustomerAutoResponder({ leadId, name, email, service, phone }
     ${safePhone ? `<p style="text-align:center;font-size:14px;color:#666">Or text/WhatsApp: <a href="https://wa.me/12133611700" style="color:#1a237e">(213) 361-1700</a></p>` : ''}
     <hr style="border:none;border-top:1px solid #e5dfd5;margin:24px 0">
     <p style="font-size:13px;color:#888;text-align:center">
-      Insured · Upfront pricing · No hidden fees<br>
+      Handy & Friend · Los Angeles Handyman Service<br>
       <a href="https://handyandfriend.com" style="color:#1a237e">handyandfriend.com</a>
     </p>
   </div>
