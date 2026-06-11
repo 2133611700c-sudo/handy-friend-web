@@ -1,7 +1,9 @@
 name: SLA Escalation Check
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    # Reduced from */5 (every 5 min → 288 runs/day) to */30 (every 30 min → 48 runs/day)
+    # to stop GitHub Actions failure email spam. SLA window is 2h; 30-min polling is sufficient.
+    - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
       mode:

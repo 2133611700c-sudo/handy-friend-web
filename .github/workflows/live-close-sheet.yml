@@ -2,7 +2,9 @@ name: Live Close Sheet
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    # Reduced from */30 (every 30 min → 48 runs/day) to every 2h to cut email spam.
+    # The live close sheet is a reference dashboard, not a real-time feed.
+    - cron: '0 */2 * * *'
   workflow_dispatch:
 
 env:

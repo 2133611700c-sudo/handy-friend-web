@@ -19,6 +19,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install --prefer-offline --no-audit --no-fund
+
       - name: Run Alex production smoke with evidence
         run: |
           mkdir -p ops/agent-control/reports/alex-smoke

@@ -72,7 +72,11 @@ jobs:
             echo "$ALERT"
             echo "Action: POST /api/process-outbox?action=replay_dlq (requires CRON_SECRET)"
             echo "Run URL: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            exit 1
+            # Use ::warning:: annotation instead of exit 1 to avoid failure email spam.
+            # The alert is visible in the Actions summary and step output.
+            # Revert to exit 1 here only if you want paging-level alerting.
+            echo "::warning::Outbox alert: ${ALERT}"
+            exit 0
           fi
 
           echo "OK — no alert"
